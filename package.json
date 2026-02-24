@@ -4,11 +4,21 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.16.9"
+    "@astrojs/netlify": "^6.6.3",
+    "@pagefind/default-ui": "^1.4.0",
+    "astro": "^5.16.9",
+    "mdast": "^3.0.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/mdast": "^4.0.4",
+    "pagefind": "^1.4.0",
+    "typescript": "^5.9.3"
   }
 }

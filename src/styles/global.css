@@ -1,0 +1,204 @@
+/* 导航样式 */
+.menu {
+  background-color: #0d0950;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 5px 10px;
+}
+
+.nav-links {
+  width: 100%;
+  display: none;
+  margin: 0;
+}
+
+.nav-links a {
+  display: block;
+  text-align: center;
+  padding: 10px 0;
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #0d0950;
+}
+
+.nav-links a:hover,
+.nav-links a:focus{
+  background-color: #ff9776;
+}
+
+/* 使用 :has() 选择器：当父元素（例如 <nav>）包含一个已展开的 .menu 时显示 .nav-links。
+   注意：:has() 在旧版浏览器中可能不被支持，因此保留 .nav-links.expanded 作为回退。 */
+:has(.menu[aria-expanded="true"]) .nav-links,
+.nav-links.expanded {
+  display: block !important;
+}
+
+@media screen and (min-width: 636px) {
+  .nav-links {
+    margin-left: 5em;
+    display: block;
+    position: static;
+    width: auto;
+    background: none;
+  }
+
+  .nav-links a {
+    display: inline-block;
+    padding: 15px 20px;
+  }
+
+  .menu {
+    display: none;
+  }
+}
+
+
+html.dark {
+  background-color: #0d0950;
+  color: #fff;
+}
+
+.dark .menu {
+  background-color: #fff;
+  color: #000;
+}
+
+.dark .nav-links a:hover,
+.dark .nav-links a:focus {
+  color: #0d0950;
+}
+
+.dark .nav-links a {
+  color: #fff;
+}
+
+.dark a {
+  color: #ff9776;
+}
+
+/* Wikilink styles */
+.wikilink {
+  color: var(--accent-color, #0066cc);
+  text-decoration: none;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.wikilink:hover {
+  text-decoration: underline;
+  background: rgba(0, 102, 204, 0.1);
+}
+
+.wikilink-broken {
+  color: var(--text-secondary, #888);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--text-secondary, #888);
+  cursor: help;
+}
+
+.wikilink-broken:hover {
+  color: var(--warning-color, #cc6600);
+  border-color: var(--warning-color, #cc6600);
+}
+
+.wikilink-broken::after {
+  content: '?';
+  font-size: 0.75em;
+  vertical-align: super;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+
+/* Pagefind overrides */
+:root {
+  --pagefind-ui-scale: 1;
+  --pagefind-ui-primary: #0066cc;
+  --pagefind-ui-text: #333;
+  --pagefind-ui-background: #ffffff;
+  --pagefind-ui-border: #eeeeee;
+  --pagefind-ui-tag: #eeeeee;
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: 8px;
+  --pagefind-ui-image-border-radius: 8px;
+  --pagefind-ui-image-box-ratio: 3 / 2;
+  --pagefind-ui-font: inherit;
+}
+
+:global(html.dark) {
+  --pagefind-ui-text: #e8e8e8;
+  --pagefind-ui-background: #1a1a1a;
+  --pagefind-ui-border: #2d2d2d;
+  --pagefind-ui-tag: #2d2d2d;
+}
+
+/* Print styles */
+@media print {
+  * {
+    color: #000 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  h1 { font-size: 20pt; }
+  h2 { font-size: 14pt; }
+  h3 { font-size: 12pt; }
+
+  a {
+    text-decoration: underline;
+    color: #000 !important;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666 !important;
+  }
+
+  .no-print,
+  nav,
+  .print-hide,
+  .resume-nav,
+  .dashboard-nav,
+  .wiki-sidebar {
+    display: none !important;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  .resume-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  .timeline-item {
+    page-break-inside: avoid;
+  }
+
+  .skill-category {
+    page-break-inside: avoid;
+  }
+}

@@ -1,0 +1,21 @@
+# 开发资源
+title: 开发资源
+icon: 💻
+order: 2
+links:
+  - name: MDN
+    url: https://developer.mozilla.org
+    icon: 📚
+    description: Web 文档
+  - name: Stack Overflow
+    url: https://stackoverflow.com
+    icon: 💬
+    description: 技术问答
+  - name: NPM
+    url: https://www.npmjs.com
+    icon: 📦
+    description: 包管理
+  - name: CodePen
+    url: https://codepen.io
+    icon: ✏️
+    description: 代码演示

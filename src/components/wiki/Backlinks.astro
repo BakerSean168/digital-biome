@@ -1,0 +1,78 @@
+---
+import { getPublicNotes } from '../../utils/notes';
+
+interface Props {
+  currentSlug: string;
+}
+
+const { currentSlug } = Astro.props;
+
+const allNotes = await getPublicNotes();
+
+const backlinks = allNotes.filter(note => {
+  const body = note.body?.toLowerCase() || '';
+  const title = note.data.title.toLowerCase();
+  const slug = currentSlug.toLowerCase();
+  return body.includes(`[[${title}]]`) || 
+         body.includes(`[[${slug}]]`) ||
+         body.includes(`(${slug})`);
+});
+---
+
+{backlinks.length > 0 && (
+  <aside class="backlinks">
+    <h4 class="backlinks-title">反向链接 ({backlinks.length})</h4>
+    <ul class="backlinks-list">
+      {backlinks.map((note) => (
+        <li>
+          <a href={`/wiki/${note.slug}`}>{note.data.title}</a>
+          {note.data.description && (
+            <span class="backlink-desc">{note.data.description}</span>
+          )}
+        </li>
+      ))}
+    </ul>
+  </aside>
+)}
+
+<style>
+  .backlinks {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  }
+
+  .backlinks-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary, #888);
+    margin-bottom: 1rem;
+  }
+
+  .backlinks-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .backlinks-list li {
+    margin-bottom: 0.75rem;
+  }
+
+  .backlinks-list a {
+    color: var(--accent-color, #0066cc);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .backlinks-list a:hover {
+    text-decoration: underline;
+  }
+
+  .backlink-desc {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #888);
+    margin-top: 0.25rem;
+  }
+</style>

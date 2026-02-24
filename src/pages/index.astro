@@ -1,11 +1,64 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+/**
+ * 首页 - Dashboard 模式
+ * 设计为浏览器启动页风格
+ */
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import SearchBox from '../components/dashboard/SearchBox.astro';
+import QuickLinks from '../components/dashboard/QuickLinks.astro';
+import BookmarkGrid from '../components/dashboard/BookmarkGrid.astro';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// 动态问候语
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 6) return '🌙 夜深了，注意休息';
+  if (hour < 12) return '🌅 早上好';
+  if (hour < 14) return '☀️ 中午好';
+  if (hour < 18) return '🌤️ 下午好';
+  return '🌆 晚上好';
+};
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<DashboardLayout title="Digital Biome">
+  <div class="greeting">
+    <h1>{getGreeting()}</h1>
+    <p class="date">{new Date().toLocaleDateString('zh-CN', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })}</p>
+  </div>
+
+  <SearchBox placeholder="搜索或输入命令... (tr/g/gh/w)" />
+
+  <QuickLinks />
+
+  <BookmarkGrid />
+</DashboardLayout>
+
+<style>
+  .greeting {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .greeting h1 {
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin: 0;
+    color: #fff;
+  }
+
+  .date {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0.5rem 0 0 0;
+  }
+
+  @media (max-width: 640px) {
+    .greeting h1 {
+      font-size: 1.75rem;
+    }
+  }
+</style>

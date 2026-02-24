@@ -1,0 +1,109 @@
+---
+interface Props {
+  placeholder?: string;
+}
+
+const { placeholder = '搜索笔记...' } = Astro.props;
+---
+
+<div class="wiki-search" id="search-container">
+  <input 
+    type="text" 
+    id="search-input"
+    placeholder={placeholder}
+    class="search-input"
+    autocomplete="off"
+  />
+  <div id="search-results" class="search-results"></div>
+</div>
+
+<script>
+  let pagefindUI: any = null;
+  
+  async function initSearch() {
+    const container = document.getElementById('search-container');
+    const input = document.getElementById('search-input') as HTMLInputElement;
+    const results = document.getElementById('search-results');
+    
+    if (!input || !results) return;
+    
+    try {
+      const pagefind = await import('@pagefind/default-ui');
+      const ui = new pagefind.UI({
+        element: '#search-container',
+        showSubResults: true,
+        showImages: false,
+      });
+    } catch (e) {
+      console.log('Pagefind not available, using basic search');
+    }
+    
+    input.addEventListener('input', async (e) => {
+      const query = input.value.trim();
+      
+      if (query.length < 2) {
+        results.innerHTML = '';
+        results.classList.remove('active');
+        return;
+      }
+      
+      results.classList.add('active');
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (!container?.contains(e.target as Node)) {
+        results?.classList.remove('active');
+      }
+    });
+  }
+  
+  initSearch();
+</script>
+
+<style>
+  .wiki-search {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: inherit;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent-color, #0066cc);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .search-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    z-index: 100;
+  }
+
+  .search-results.active {
+    display: block;
+  }
+</style>

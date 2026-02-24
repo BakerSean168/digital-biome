@@ -1,0 +1,74 @@
+---
+/**
+ * 快捷入口组件
+ * 显示常用的站内导航
+ */
+
+interface QuickLink {
+  icon: string;
+  label: string;
+  href: string;
+  color?: string;
+}
+
+const quickLinks: QuickLink[] = [
+  { icon: '📚', label: '知识库', href: '/wiki', color: '#4ade80' },
+  { icon: '📦', label: '资源库', href: '/resources', color: '#a78bfa' },
+  { icon: '✍️', label: '博客', href: '/blog', color: '#60a5fa' },
+  { icon: '🛠️', label: '工具箱', href: '/tools', color: '#f472b6' },
+  { icon: '👤', label: '关于我', href: '/about', color: '#fbbf24' },
+];
+---
+
+<div class="quick-links">
+  {quickLinks.map((link) => (
+    <a href={link.href} class="quick-link" style={`--accent: ${link.color || '#fff'}`}>
+      <span class="quick-icon">{link.icon}</span>
+      <span class="quick-label">{link.label}</span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .quick-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+  }
+
+  .quick-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.2s ease;
+    min-width: 80px;
+  }
+
+  .quick-link:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-3px);
+  }
+
+  .quick-link:hover .quick-icon {
+    transform: scale(1.1);
+  }
+
+  .quick-icon {
+    font-size: 1.75rem;
+    transition: transform 0.2s ease;
+  }
+
+  .quick-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.9;
+  }
+</style>

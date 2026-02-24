@@ -1,0 +1,7 @@
+# Example .gitmodules configuration
+# Rename this file to .gitmodules after adding your vault URL
+# Or run: git submodule add <your-vault-url> vault/z
+
+[submodule "vault/z"]
+	path = vault/z
+	url = https://github.com/YOUR_USERNAME/YOUR_VAULT_REPO.git

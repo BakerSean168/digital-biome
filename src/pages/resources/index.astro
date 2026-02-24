@@ -1,0 +1,373 @@
+---
+/**
+ * 资源聚合页面 - 模拟 Obsidian Dataview 功能
+ * 自动从 wiki 集合中筛选 type: resource/tool 的笔记并展示
+ */
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+// 获取所有资源类型的笔记（模拟 Dataview 查询）
+const allWiki = await getCollection('wiki', ({ data }) => !data.draft);
+
+// 筛选资源类笔记
+const resources = allWiki.filter((entry) => 
+  entry.data.type === 'resource' || 
+  entry.data.type === 'tool' ||
+  entry.data.url  // 有 url 字段的也算资源
+);
+
+// 按 category 分组
+const grouped = new Map<string, typeof resources>();
+resources.forEach((entry) => {
+  const cat = entry.data.category || '其他';
+  if (!grouped.has(cat)) grouped.set(cat, []);
+  grouped.get(cat)!.push(entry);
+});
+
+// 排序：按评分降序，无评分的放后面
+const sortByRating = (items: typeof resources) => {
+  return items.sort((a, b) => {
+    const ratingA = a.data.rating || 0;
+    const ratingB = b.data.rating || 0;
+    return ratingB - ratingA;
+  });
+};
+---
+
+<Layout title="资源库 | Digital Biome" description="精选工具和资源推荐">
+  <div class="resources-page">
+    <header class="page-header">
+      <h1>📦 资源库</h1>
+      <p>我收集的好用网站、工具和资源</p>
+      <div class="stats">
+        <span>共 {resources.length} 个资源</span>
+        <span>•</span>
+        <span>{grouped.size} 个分类</span>
+      </div>
+    </header>
+
+    {resources.length === 0 ? (
+      <div class="empty-state">
+        <h2>🌱 还没有资源</h2>
+        <p>在你的 wiki 笔记中添加 <code>type: resource</code> 字段即可展示在这里</p>
+        <pre><code>---
+title: 好用的工具
+type: resource
+category: 效率工具
+url: https://example.com
+rating: 5
+platform: web
+pricing: free
+---</code></pre>
+      </div>
+    ) : (
+      <div class="resources-grid">
+        {Array.from(grouped.entries()).map(([category, items]) => (
+          <section class="category-section">
+            <h2 class="category-title">{category}</h2>
+            <div class="resource-list">
+              {sortByRating(items).map((resource) => (
+                <article class="resource-card">
+                  <div class="card-header">
+                    <span class="icon">{resource.data.icon || '📌'}</span>
+                    <div class="card-title">
+                      {resource.data.url ? (
+                        <a href={resource.data.url} target="_blank" rel="noopener">
+                          {resource.data.title}
+                          <span class="external">↗</span>
+                        </a>
+                      ) : (
+                        <a href={`/wiki/${resource.id.replace(/\.md$/, '')}`}>
+                          {resource.data.title}
+                        </a>
+                      )}
+                    </div>
+                    {resource.data.rating && (
+                      <div class="rating">
+                        {'★'.repeat(resource.data.rating)}
+                        {'☆'.repeat(5 - resource.data.rating)}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {resource.data.description && (
+                    <p class="description">{resource.data.description}</p>
+                  )}
+                  
+                  <div class="card-meta">
+                    {resource.data.platform && (
+                      <span class="tag platform">{resource.data.platform}</span>
+                    )}
+                    {resource.data.pricing && (
+                      <span class={`tag pricing ${resource.data.pricing}`}>
+                        {resource.data.pricing === 'free' ? '免费' : 
+                         resource.data.pricing === 'freemium' ? '免费增值' :
+                         resource.data.pricing === 'paid' ? '付费' : '订阅制'}
+                      </span>
+                    )}
+                    {resource.data.tags?.slice(0, 3).map((tag: string) => (
+                      <span class="tag">{tag}</span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    )}
+
+    <!-- Dataview 风格的表格视图 -->
+    {resources.length > 0 && (
+      <section class="table-view">
+        <h2>📊 表格视图</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>名称</th>
+                <th>分类</th>
+                <th>平台</th>
+                <th>定价</th>
+                <th>评分</th>
+                <th>标签</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resources.map((r) => (
+                <tr>
+                  <td>
+                    {r.data.url ? (
+                      <a href={r.data.url} target="_blank">{r.data.title}</a>
+                    ) : (
+                      <a href={`/wiki/${r.id.replace(/\.md$/, '')}`}>{r.data.title}</a>
+                    )}
+                  </td>
+                  <td>{r.data.category || '-'}</td>
+                  <td>{r.data.platform || '-'}</td>
+                  <td>{r.data.pricing || '-'}</td>
+                  <td>{r.data.rating ? '★'.repeat(r.data.rating) : '-'}</td>
+                  <td>{r.data.tags?.join(', ') || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .resources-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .page-header h1 {
+    font-size: 2.5rem;
+    margin: 0;
+  }
+
+  .page-header p {
+    color: var(--text-secondary, #666);
+    margin: 0.5rem 0;
+  }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #888);
+    margin-top: 1rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--card-bg, #f8f9fa);
+    border-radius: 12px;
+  }
+
+  .empty-state pre {
+    text-align: left;
+    max-width: 400px;
+    margin: 1.5rem auto;
+    padding: 1rem;
+    background: var(--code-bg, #fff);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    overflow-x: auto;
+  }
+
+  .category-section {
+    margin-bottom: 3rem;
+  }
+
+  .category-title {
+    font-size: 1.25rem;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color, #e5e5e5);
+  }
+
+  .resource-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .resource-card {
+    padding: 1.25rem;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e5e5e5);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+  }
+
+  .resource-card:hover {
+    border-color: #0066cc;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .icon {
+    font-size: 1.5rem;
+  }
+
+  .card-title {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  .card-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .card-title a:hover {
+    color: #0066cc;
+  }
+
+  .external {
+    font-size: 0.8em;
+    opacity: 0.5;
+    margin-left: 0.25rem;
+  }
+
+  .rating {
+    color: #f59e0b;
+    font-size: 0.85rem;
+  }
+
+  .description {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #666);
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+  }
+
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--tag-bg, #f0f0f0);
+    border-radius: 4px;
+    color: var(--text-secondary, #666);
+  }
+
+  .tag.platform {
+    background: #e0f2fe;
+    color: #0284c7;
+  }
+
+  .tag.pricing.free {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+
+  .tag.pricing.freemium {
+    background: #fef3c7;
+    color: #d97706;
+  }
+
+  .tag.pricing.paid,
+  .tag.pricing.subscription {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  /* 表格视图 */
+  .table-view {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color, #e5e5e5);
+  }
+
+  .table-view h2 {
+    margin-bottom: 1rem;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color, #e5e5e5);
+  }
+
+  th {
+    background: var(--header-bg, #f8f9fa);
+    font-weight: 600;
+  }
+
+  td a {
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  td a:hover {
+    text-decoration: underline;
+  }
+
+  /* 暗色主题 */
+  :global(html.dark) .resource-card,
+  :global(html.dark) .empty-state {
+    --card-bg: #1e1e3f;
+    --border-color: #2d2d4a;
+  }
+
+  :global(html.dark) .tag.platform {
+    background: rgba(2, 132, 199, 0.2);
+  }
+
+  :global(html.dark) th {
+    --header-bg: #252545;
+  }
+</style>

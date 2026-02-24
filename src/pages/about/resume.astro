@@ -1,0 +1,316 @@
+---
+// 简历页面
+import Layout from '../../layouts/Layout.astro';
+import { SITE_AUTHOR } from '../../constants';
+---
+
+<Layout title="Resume | Digital Biome" description="我的专业简历">
+  <div class="resume-container">
+    <div class="resume-header">
+      <h1>{SITE_AUTHOR}</h1>
+      <p>Web Developer | Passionate Learner</p>
+      <div class="contact-info">
+        <span>📧 your-email@example.com</span>
+        <span>📱 +86 138****8888</span>
+        <span>📍 City, Country</span>
+      </div>
+    </div>
+
+    <div class="resume-content">
+      <section class="resume-section">
+        <h2>Professional Summary</h2>
+        <p>
+          Experienced web developer with expertise in modern JavaScript frameworks and full-stack development.
+          Committed to creating elegant, scalable solutions and continuous learning.
+        </p>
+      </section>
+
+      <section class="resume-section">
+        <h2>Experience</h2>
+        
+        <article class="resume-item">
+          <div class="item-header">
+            <h3>Senior Developer</h3>
+            <span class="date">2024 - Present</span>
+          </div>
+          <p class="company">Company Name</p>
+          <ul>
+            <li>Led development of key features</li>
+            <li>Mentored junior developers</li>
+            <li>Improved performance by 40%</li>
+          </ul>
+        </article>
+
+        <article class="resume-item">
+          <div class="item-header">
+            <h3>Full Stack Developer</h3>
+            <span class="date">2022 - 2024</span>
+          </div>
+          <p class="company">Previous Company</p>
+          <ul>
+            <li>Developed web applications using React and Node.js</li>
+            <li>Managed database design and optimization</li>
+            <li>Collaborated with design and product teams</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="resume-section">
+        <h2>Education</h2>
+        
+        <article class="resume-item">
+          <div class="item-header">
+            <h3>Bachelor of Science</h3>
+            <span class="date">2018 - 2022</span>
+          </div>
+          <p class="company">University Name</p>
+          <p>Major: Computer Science</p>
+        </article>
+      </section>
+
+      <section class="resume-section">
+        <h2>Skills</h2>
+        
+        <div class="skills-list">
+          <div class="skill-row">
+            <strong>Languages:</strong>
+            <span>JavaScript, TypeScript, Python, SQL</span>
+          </div>
+          <div class="skill-row">
+            <strong>Frontend:</strong>
+            <span>React, Vue.js, HTML5, CSS3, Tailwind</span>
+          </div>
+          <div class="skill-row">
+            <strong>Backend:</strong>
+            <span>Node.js, Express, PostgreSQL, MongoDB</span>
+          </div>
+          <div class="skill-row">
+            <strong>Tools:</strong>
+            <span>Git, Docker, CI/CD, AWS, VS Code</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="resume-section">
+        <h2>Projects</h2>
+        
+        <article class="resume-item">
+          <h3>Digital Biome (Personal Website)</h3>
+          <p class="meta">Astro • React • TypeScript</p>
+          <p>Personal portfolio and knowledge sharing platform built with Astro.</p>
+        </article>
+
+        <article class="resume-item">
+          <h3>Project Name 2</h3>
+          <p class="meta">Technology Stack</p>
+          <p>Project description and key achievements.</p>
+        </article>
+      </section>
+
+      <section class="resume-section">
+        <h2>Certifications</h2>
+        
+        <ul>
+          <li>Certification Name - Issuing Organization (Year)</li>
+          <li>Another Certification - Issuing Organization (Year)</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="resume-actions">
+      <button onclick="window.print()" class="print-btn">🖨️ Print / Save as PDF</button>
+      <a href="/about" class="back-btn">← Back to About</a>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .resume-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    background: white;
+  }
+
+  .resume-header {
+    text-align: center;
+    padding-bottom: var(--spacing-2xl);
+    border-bottom: 3px solid var(--color-primary);
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  .resume-header h1 {
+    font-size: 2.5rem;
+    margin: 0 0 var(--spacing-sm) 0;
+  }
+
+  .resume-header p {
+    font-size: 1.2rem;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-md) 0;
+  }
+
+  .contact-info {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    font-size: 0.95rem;
+  }
+
+  .resume-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+  }
+
+  .resume-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .resume-section h2 {
+    margin: 0 0 var(--spacing-lg) 0;
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .resume-item {
+    margin-bottom: var(--spacing-lg);
+    padding-left: var(--spacing-lg);
+    border-left: 2px solid var(--color-border);
+  }
+
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--spacing-sm);
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+  }
+
+  .resume-item h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .date {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  .company {
+    font-weight: 600;
+    color: var(--color-primary);
+    margin: 0;
+  }
+
+  .resume-item ul {
+    margin: var(--spacing-md) 0 0 0;
+    padding-left: var(--spacing-lg);
+  }
+
+  .resume-item li {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .meta {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin: var(--spacing-sm) 0;
+    font-style: italic;
+  }
+
+  .skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .skill-row {
+    display: flex;
+    gap: var(--spacing-lg);
+  }
+
+  .skill-row strong {
+    min-width: 100px;
+    color: var(--color-primary);
+  }
+
+  .resume-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .print-btn,
+  .back-btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    text-decoration: none;
+  }
+
+  .print-btn {
+    background: var(--color-primary);
+    color: white;
+  }
+
+  .print-btn:hover {
+    background: var(--color-primary-hover);
+  }
+
+  .back-btn {
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .back-btn:hover {
+    background: var(--color-primary);
+    color: white;
+  }
+
+  @media print {
+    .resume-container {
+      padding: 0;
+      max-width: 100%;
+    }
+
+    .resume-actions {
+      display: none;
+    }
+
+    body {
+      background: white;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .resume-header h1 {
+      font-size: 1.8rem;
+    }
+
+    .contact-info {
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .resume-actions {
+      flex-direction: column;
+    }
+
+    .print-btn,
+    .back-btn {
+      width: 100%;
+    }
+  }
+</style>

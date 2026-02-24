@@ -1,0 +1,196 @@
+---
+/**
+ * Wiki 布局 - 知识库文档风格
+ * 特点：左侧目录树、右侧大纲、沉浸式阅读
+ */
+import Header from '../components/common/Header.astro';
+import Footer from '../components/common/Footer.astro';
+import WikiSidebar from '../components/wiki/WikiSidebar.astro';
+import TableOfContents from '../components/wiki/TableOfContents.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  headings?: { depth: number; slug: string; text: string }[];
+  currentSlug?: string;
+}
+
+const { title, description, headings = [], currentSlug = '' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description || '知识库文档'} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | Wiki</title>
+  </head>
+  <body class="wiki-body">
+    <Header />
+    
+    <div class="wiki-layout">
+      <!-- 左侧导航 -->
+      <aside class="wiki-sidebar">
+        <div class="sidebar-header">
+          <a href="/wiki" class="sidebar-title">📚 知识库</a>
+        </div>
+        <WikiSidebar currentSlug={currentSlug} />
+      </aside>
+
+      <!-- 主内容区 -->
+      <main class="wiki-content">
+        <article class="wiki-article">
+          <header class="article-header">
+            <h1>{title}</h1>
+            {description && <p class="article-desc">{description}</p>}
+          </header>
+          
+          <div class="article-body">
+            <slot />
+          </div>
+        </article>
+      </main>
+
+      <!-- 右侧目录 -->
+      {headings.length > 0 && (
+        <aside class="wiki-toc">
+          <TableOfContents headings={headings} />
+        </aside>
+      )}
+    </div>
+
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .wiki-body {
+    margin: 0;
+    background: var(--bg-primary, #fafafa);
+    color: var(--text-primary, #1a1a1a);
+  }
+
+  :global(html.dark) .wiki-body {
+    --bg-primary: #1a1a2e;
+    --text-primary: #e8e8e8;
+    --border-color: #2d2d4a;
+  }
+
+  .wiki-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 200px;
+    min-height: calc(100vh - 120px);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 1200px) {
+    .wiki-layout {
+      grid-template-columns: 240px 1fr;
+    }
+    .wiki-toc {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .wiki-layout {
+      grid-template-columns: 1fr;
+    }
+    .wiki-sidebar {
+      display: none;
+    }
+  }
+
+  .wiki-sidebar {
+    border-right: 1px solid var(--border-color, #e5e5e5);
+    padding: 1.5rem 1rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .wiki-content {
+    padding: 2rem 3rem;
+    max-width: 800px;
+  }
+
+  .wiki-article {
+    line-height: 1.8;
+  }
+
+  .article-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color, #e5e5e5);
+  }
+
+  .article-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+  }
+
+  .article-desc {
+    color: var(--text-secondary, #666);
+    margin: 0;
+  }
+
+  .article-body {
+    font-size: 1rem;
+  }
+
+  .article-body :global(h2) {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #e5e5e5);
+  }
+
+  .article-body :global(pre) {
+    background: var(--code-bg, #f4f4f4);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  :global(html.dark) .article-body :global(pre) {
+    --code-bg: #2d2d4a;
+  }
+
+  .article-body :global(code) {
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+  }
+
+  .article-body :global(a) {
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  .article-body :global(a:hover) {
+    text-decoration: underline;
+  }
+
+  .wiki-toc {
+    padding: 1.5rem 1rem;
+    position: sticky;
+    top: 0;
+    height: fit-content;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+</style>

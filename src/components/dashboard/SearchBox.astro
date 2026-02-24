@@ -1,0 +1,167 @@
+---
+/**
+ * 智能搜索框组件
+ * 支持快捷命令：
+ *   tr <text>  → Google 翻译
+ *   g <query>  → Google 搜索
+ *   gh <query> → GitHub 搜索
+ *   b <query>  → Bing 搜索
+ *   w <query>  → Wikipedia
+ *   直接输入   → 默认搜索引擎
+ */
+
+interface Props {
+  placeholder?: string;
+  defaultEngine?: 'google' | 'bing' | 'duckduckgo';
+}
+
+const { 
+  placeholder = '搜索或输入命令 (tr/g/gh/b/w)...', 
+  defaultEngine = 'google' 
+} = Astro.props;
+---
+
+<div class="search-box">
+  <div class="search-container">
+    <span class="search-icon">🔍</span>
+    <input 
+      type="text" 
+      id="smart-search" 
+      placeholder={placeholder}
+      autocomplete="off"
+      data-engine={defaultEngine}
+    />
+    <div class="search-hints" id="search-hints">
+      <span class="hint"><kbd>tr</kbd> 翻译</span>
+      <span class="hint"><kbd>g</kbd> Google</span>
+      <span class="hint"><kbd>gh</kbd> GitHub</span>
+      <span class="hint"><kbd>w</kbd> Wiki</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const searchInput = document.getElementById('smart-search') as HTMLInputElement;
+  const hints = document.getElementById('search-hints');
+  
+  const COMMANDS: Record<string, (query: string) => string> = {
+    'tr': (q) => `https://translate.google.com/?sl=auto&tl=zh-CN&text=${encodeURIComponent(q)}`,
+    'g': (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    'gh': (q) => `https://github.com/search?q=${encodeURIComponent(q)}`,
+    'b': (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+    'w': (q) => `https://zh.wikipedia.org/wiki/${encodeURIComponent(q)}`,
+    'yt': (q) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+  };
+
+  const DEFAULT_ENGINES: Record<string, (q: string) => string> = {
+    'google': (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    'bing': (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+    'duckduckgo': (q) => `https://duckduckgo.com/?q=${encodeURIComponent(q)}`,
+  };
+
+  searchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const value = searchInput.value.trim();
+      if (!value) return;
+
+      const parts = value.split(' ');
+      const cmd = parts[0].toLowerCase();
+      const query = parts.slice(1).join(' ');
+
+      let url: string;
+      if (COMMANDS[cmd] && query) {
+        url = COMMANDS[cmd](query);
+      } else {
+        const engine = searchInput.dataset.engine || 'google';
+        url = DEFAULT_ENGINES[engine](value);
+      }
+
+      window.open(url, '_blank');
+      searchInput.value = '';
+    }
+  });
+
+  searchInput?.addEventListener('focus', () => {
+    hints?.classList.add('visible');
+  });
+
+  searchInput?.addEventListener('blur', () => {
+    setTimeout(() => hints?.classList.remove('visible'), 200);
+  });
+
+  // 自动聚焦
+  searchInput?.focus();
+</script>
+
+<style>
+  .search-box {
+    width: 100%;
+    max-width: 600px;
+    margin: 2rem auto;
+  }
+
+  .search-container {
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3.5rem;
+    font-size: 1.1rem;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  input:focus {
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  .search-hints {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+
+  .search-hints.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .hint kbd {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: inherit;
+    margin-right: 0.25rem;
+  }
+</style>

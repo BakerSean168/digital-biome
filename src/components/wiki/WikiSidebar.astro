@@ -1,0 +1,165 @@
+---
+/**
+ * Wiki 侧边栏组件
+ * 自动从 wiki collection 生成目录树
+ * 支持按 tag 的第一维分类（Obsidian 四维 tag: status/tech/type/...）
+ */
+import { getCollection } from 'astro:content';
+
+interface Props {
+  currentSlug?: string;
+}
+
+const { currentSlug = '' } = Astro.props;
+
+// 获取所有 wiki 文章
+const allWiki = await getCollection('wiki', ({ data }) => !data.draft);
+
+// 从 tags 中提取分类
+// 你的 tag 格式：status/growing, tech/dev/frontend/eng, type/debug
+// 我们取第一个 "/" 前面的部分作为 category
+interface WikiEntry {
+  slug: string;
+  title: string;
+  order?: number;
+}
+
+const categories = new Map<string, WikiEntry[]>();
+
+allWiki.forEach((entry) => {
+  // 优先使用 category 字段，其次从 tags 第一个标签推断
+  let category = entry.data.category;
+  
+  if (!category && entry.data.tags && entry.data.tags.length > 0) {
+    // 从 tags[0] 中提取第一维
+    const firstTag = entry.data.tags[0];
+    category = firstTag.split('/')[0];
+  }
+  
+  category = category || '未分类';
+
+  if (!categories.has(category)) {
+    categories.set(category, []);
+  }
+  
+  // 去掉 .md 扩展名
+  const slug = entry.id.replace(/\.md$/, '');
+  categories.get(category)!.push({
+    slug,
+    title: entry.data.title,
+    order: entry.data.order || 999,
+  });
+});
+
+// 按 order 排序每个分类内的条目
+categories.forEach((entries) => {
+  entries.sort((a, b) => (a.order || 999) - (b.order || 999));
+});
+
+// 按分类名排序
+const sortedCategories = Array.from(categories.entries()).sort((a, b) => 
+  a[0].localeCompare(b[0], 'zh-CN')
+);
+---
+
+<nav class="wiki-nav">
+  {sortedCategories.length === 0 ? (
+    <div class="empty-nav">
+      <p>📂 暂无文档</p>
+      <p class="hint">在 <code>src/content/wiki/</code> 添加 Markdown 文件</p>
+    </div>
+  ) : (
+    sortedCategories.map(([category, entries]) => (
+      <div class="nav-group">
+        <h4 class="nav-category">{category}</h4>
+        <ul class="nav-list">
+          {entries.map((entry) => (
+            <li>
+              <a 
+                href={`/wiki/${entry.slug}`} 
+                class:list={['nav-item', { active: currentSlug === entry.slug }]}
+              >
+                {entry.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))
+  )}
+</nav>
+
+<style>
+  .wiki-nav {
+    font-size: 0.9rem;
+  }
+
+  .empty-nav {
+    color: var(--text-secondary, #888);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .empty-nav code {
+    background: var(--code-bg, #f0f0f0);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+  }
+
+  .nav-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .nav-category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary, #888);
+    margin: 0 0 0.5rem 0;
+    padding-left: 0.5rem;
+  }
+
+  .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary, #333);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+  }
+
+  .nav-item:hover {
+    background: var(--hover-bg, rgba(0, 102, 204, 0.08));
+    color: #0066cc;
+  }
+
+  .nav-item.active {
+    background: var(--active-bg, rgba(0, 102, 204, 0.12));
+    color: #0066cc;
+    font-weight: 500;
+  }
+
+  :global(html.dark) .nav-item {
+    color: #ccc;
+  }
+
+  :global(html.dark) .nav-item:hover,
+  :global(html.dark) .nav-item.active {
+    background: rgba(100, 150, 255, 0.15);
+    color: #6ea8fe;
+  }
+</style>

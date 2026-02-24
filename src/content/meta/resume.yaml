@@ -1,0 +1,70 @@
+# 简历数据
+# 编辑此文件来更新你的简历内容
+
+name: Your Name
+title: Full Stack Developer
+bio: 热爱技术、持续学习的开发者，专注于构建优雅、高效的 Web 应用。
+
+contact:
+  email: your-email@example.com
+  github: github.com/yourusername
+  linkedin: linkedin.com/in/yourusername
+  location: City, Country
+  website: https://yoursite.com
+
+experience:
+  - role: Senior Developer
+    company: Tech Company
+    period: 2024 - Present
+    description: 负责核心产品的架构设计与开发
+    highlights:
+      - 主导重构项目，性能提升 40%
+      - 建立团队代码规范和 CI/CD 流程
+      - 指导初级开发者，推动技术分享
+
+  - role: Full Stack Developer
+    company: Startup Inc
+    period: 2022 - 2024
+    description: 全栈开发，负责前后端开发与部署
+    highlights:
+      - 使用 React + Node.js 开发 SaaS 产品
+      - 设计和优化数据库架构
+      - 与产品、设计团队紧密协作
+
+education:
+  - degree: 计算机科学学士
+    school: University Name
+    period: 2018 - 2022
+    major: 计算机科学与技术
+
+skills:
+  编程语言:
+    - JavaScript
+    - TypeScript
+    - Python
+    - SQL
+  前端技术:
+    - React
+    - Vue.js
+    - Astro
+    - Tailwind CSS
+  后端技术:
+    - Node.js
+    - Express
+    - PostgreSQL
+    - MongoDB
+  工具与平台:
+    - Git
+    - Docker
+    - AWS
+    - Linux
+
+projects:
+  - name: Digital Biome
+    tech: Astro • TypeScript • CSS
+    description: 个人知识管理与展示平台，集成 Dashboard、Wiki、简历三位一体
+    url: https://yoursite.com
+
+  - name: Another Project
+    tech: React • Node.js • PostgreSQL
+    description: 项目描述和主要成就

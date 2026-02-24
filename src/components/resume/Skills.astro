@@ -1,0 +1,82 @@
+---
+interface Props {
+  skills: Record<string, string[]>;
+}
+
+const { skills } = Astro.props;
+
+const skillCategories = Object.entries(skills);
+---
+
+<section class="skills-section">
+  <h2 class="section-title">🛠 技能</h2>
+  
+  <div class="skills-grid">
+    {skillCategories.map(([category, items]) => (
+      <div class="skill-category">
+        <h3 class="category-name">{category}</h3>
+        <div class="skill-tags">
+          {items.map((skill) => (
+            <span class="skill-tag">{skill}</span>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .skills-section {
+    margin-bottom: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-color, #0066cc);
+  }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .skill-category {
+    padding: 1rem;
+    background: var(--card-bg, #f9f9f9);
+    border-radius: 8px;
+  }
+
+  .category-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+    color: var(--text-primary, #333);
+    border-bottom: 1px solid var(--border-color, #e5e5e5);
+    padding-bottom: 0.5rem;
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .skill-tag {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    background: var(--tag-bg, #e8f4fd);
+    color: var(--accent-color, #0066cc);
+    border-radius: 4px;
+  }
+
+  :global(html.dark) .skill-category {
+    --card-bg: #1e1e3f;
+    --border-color: #2d2d4a;
+    --tag-bg: rgba(0, 102, 204, 0.15);
+  }
+</style>

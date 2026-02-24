@@ -1,0 +1,121 @@
+---
+/**
+ * 文章目录组件 (Table of Contents)
+ * 显示当前文章的标题大纲
+ */
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+
+// 只显示 h2 和 h3
+const filteredHeadings = headings.filter(h => h.depth >= 2 && h.depth <= 3);
+---
+
+{filteredHeadings.length > 0 && (
+  <nav class="toc">
+    <h4 class="toc-title">目录</h4>
+    <ul class="toc-list">
+      {filteredHeadings.map((heading) => (
+        <li class={`toc-item depth-${heading.depth}`}>
+          <a href={`#${heading.slug}`} class="toc-link">
+            {heading.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<style>
+  .toc {
+    font-size: 0.85rem;
+  }
+
+  .toc-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary, #888);
+    margin: 0 0 0.75rem 0;
+  }
+
+  .toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .toc-item {
+    margin: 0.25rem 0;
+  }
+
+  .toc-item.depth-3 {
+    padding-left: 1rem;
+  }
+
+  .toc-link {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    color: var(--text-secondary, #666);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+  }
+
+  .toc-link:hover {
+    color: #0066cc;
+    border-left-color: #0066cc;
+  }
+
+  /* 当前阅读位置高亮（需要 JS 配合） */
+  .toc-link.active {
+    color: #0066cc;
+    border-left-color: #0066cc;
+    font-weight: 500;
+  }
+
+  :global(html.dark) .toc-link {
+    color: #999;
+  }
+
+  :global(html.dark) .toc-link:hover,
+  :global(html.dark) .toc-link.active {
+    color: #6ea8fe;
+    border-left-color: #6ea8fe;
+  }
+</style>
+
+<script>
+  // 滚动高亮当前标题
+  const tocLinks = document.querySelectorAll('.toc-link');
+  const headings = document.querySelectorAll('h2[id], h3[id]');
+
+  if (tocLinks.length && headings.length) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            tocLinks.forEach((link) => {
+              link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+            });
+          }
+        });
+      },
+      { rootMargin: '-80px 0px -80% 0px' }
+    );
+
+    headings.forEach((h) => observer.observe(h));
+  }
+</script>

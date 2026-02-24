@@ -1,0 +1,252 @@
+---
+import WikiLayout from '../../layouts/WikiLayout.astro';
+import WikiSearchBox from '../../components/wiki/SearchBox.astro';
+import TagFilter from '../../components/wiki/TagFilter.astro';
+import { getCollection } from 'astro:content';
+import { getCategories } from '../../utils/notes';
+
+const allWiki = await getCollection('wiki', ({ data }) => !data.draft && !(data as any).private);
+
+const categories = new Map<string, typeof allWiki>();
+allWiki.forEach((entry) => {
+  const cat = entry.data.category || '未分类';
+  if (!categories.has(cat)) categories.set(cat, []);
+  categories.get(cat)!.push(entry);
+});
+
+const recentArticles = [...allWiki]
+  .sort((a, b) => {
+    const dateA = a.data.updated || a.data.created || new Date(0);
+    const dateB = b.data.updated || b.data.created || new Date(0);
+    return dateB.getTime() - dateA.getTime();
+  })
+  .slice(0, 5);
+
+const tagCategories = await getCategories();
+const currentTag = Astro.url.searchParams.get('tag') || undefined;
+---
+
+<WikiLayout title="知识库" description="我的数字花园">
+  <section class="wiki-home">
+    <div class="wiki-header">
+      <WikiSearchBox placeholder="搜索笔记..." />
+      <TagFilter currentTag={currentTag} />
+    </div>
+
+    {allWiki.length === 0 ? (
+      <div class="empty-wiki">
+        <h2>🌱 欢迎来到知识库</h2>
+        <p>这里还没有内容。开始添加你的第一篇笔记吧！</p>
+        <div class="instructions">
+          <p>在 <code>src/content/wiki/</code> 目录下创建 Markdown 文件：</p>
+          <pre><code>---
+title: 我的第一篇笔记
+category: 入门
+tags:
+  - type/note
+---
+
+# Hello World
+
+这是我的第一篇笔记内容...</code></pre>
+        </div>
+      </div>
+    ) : (
+      <>
+        <section class="wiki-section">
+          <h2>📖 最近更新</h2>
+          <div class="article-list">
+            {recentArticles.map((article) => (
+              <a href={`/wiki/${article.id.replace(/\.md$/, '')}`} class="article-card">
+                <h3>{article.data.title}</h3>
+                {article.data.description && (
+                  <p>{article.data.description}</p>
+                )}
+                <div class="meta-row">
+                  <span class="meta">{article.data.category || '未分类'}</span>
+                  {article.data.tags && article.data.tags.length > 0 && (
+                    <div class="tags">
+                      {article.data.tags.slice(0, 3).map((tag: string) => (
+                        <span class="tag">#{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <section class="wiki-section">
+          <h2>📂 所有分类</h2>
+          <div class="category-grid">
+            {Array.from(categories.entries()).map(([cat, articles]) => (
+              <a href={`?tag=${encodeURIComponent(cat)}`} class="category-card">
+                <h3>{cat}</h3>
+                <span class="count">{articles.length} 篇文章</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      </>
+    )}
+  </section>
+</WikiLayout>
+
+<style>
+  .wiki-home {
+    padding: 1rem 0;
+  }
+
+  .wiki-header {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .empty-wiki {
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+
+  .empty-wiki h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .instructions {
+    margin-top: 2rem;
+    text-align: left;
+    max-width: 500px;
+    margin-inline: auto;
+  }
+
+  .instructions code {
+    background: var(--code-bg, #f4f4f4);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .instructions pre {
+    background: var(--code-bg, #f4f4f4);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+
+  .wiki-section {
+    margin-bottom: 3rem;
+  }
+
+  .wiki-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+  }
+
+  .article-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .article-card {
+    display: block;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e5e5e5);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .article-card:hover {
+    border-color: #0066cc;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+  }
+
+  .article-card h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    color: #0066cc;
+  }
+
+  .article-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #666);
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .article-card .meta {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--tag-bg, #f0f0f0);
+    border-radius: 4px;
+    color: var(--text-secondary, #666);
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #888);
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .category-card {
+    display: block;
+    padding: 1rem;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--border-color, #e5e5e5);
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .category-card:hover {
+    border-color: #0066cc;
+  }
+
+  .category-card h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+  }
+
+  .category-card .count {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #666);
+  }
+
+  :global(html.dark) .article-card,
+  :global(html.dark) .category-card {
+    --card-bg: #1e1e3f;
+    --border-color: #2d2d4a;
+  }
+
+  :global(html.dark) .instructions pre,
+  :global(html.dark) .instructions code {
+    --code-bg: #2d2d4a;
+  }
+</style>
