@@ -1,15 +1,14 @@
 [build]
-  command = "git submodule update --init --recursive && pnpm build"
-  functions = "netlify/functions"
+  command = "git submodule update --init --recursive && pnpm sync && pnpm build"
   publish = "dist"
 
 [env]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
-  status = 200
+  to = "/404.html"
+  status = 404
 
 # Cache control for static assets
 [[headers]]

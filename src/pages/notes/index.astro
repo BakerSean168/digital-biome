@@ -1,0 +1,348 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+// @ts-ignore - content collections generated at build time
+type NoteEntry = {
+  id: string;
+  data: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    created?: string | Date;
+    updated?: string | Date;
+    draft?: boolean;
+    private?: boolean;
+  };
+};
+
+const allNotes: NoteEntry[] = await (
+  getCollection as unknown as (collection: string) => Promise<NoteEntry[]>
+)('notes');
+
+// Serialize notes to JSON for client-side filtering
+const notesData = allNotes
+  .filter(e => !e.data.draft && !e.data.private)
+  .map(e => ({
+    id: e.id,
+    title: e.data.title || e.id.split('/').pop()?.replace(/-/g, ' ') || e.id,
+    description: e.data.description || '',
+    tags: e.data.tags || [],
+    date: e.data.updated || e.data.created || null,
+  }));
+
+// Sort by date (newest first)
+notesData.sort((a, b) => {
+  const aTime = a.date ? new Date(a.date).getTime() : 0;
+  const bTime = b.date ? new Date(b.date).getTime() : 0;
+  return bTime - aTime;
+});
+---
+
+<Layout title="笔记" description="我的数字花园" variant="wiki" showSidebar={false} showToc={false}>
+  <section class="notes-home">
+    <div class="notes-header">
+      <div class="header-top">
+        <h2 class="section-title">所有笔记1</h2>
+        <div id="result-status" class="result-status">
+          <span id="result-count">加载中...</span>
+        </div>
+      </div>
+      <div class="filter-container">
+        <div class="filter-group">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input
+            id="title-search"
+            type="search"
+            placeholder="搜索标题、描述或标签..."
+            autocomplete="off"
+            class="filter-input"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div id="notes-list" class="notes-list">
+      <!-- populated by client-side JS -->
+    </div>
+
+    <div id="empty-msg" class="empty-msg" hidden>
+      <div class="empty-state">
+        <p>没有找到匹配的笔记</p>
+        <button id="clear-filters" class="clear-btn">清除搜索</button>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script define:vars={{ notesData }}>
+  const notes = notesData;
+  const listEl = document.getElementById('notes-list');
+  const emptyEl = document.getElementById('empty-msg');
+  const countEl = document.getElementById('result-count');
+  const titleInput = document.getElementById('title-search');
+  const clearBtn = document.getElementById('clear-filters');
+
+  function renderNotes(filtered) {
+    listEl.innerHTML = '';
+    
+    if (filtered.length === 0) {
+      listEl.hidden = true;
+      emptyEl.hidden = false;
+      countEl.textContent = `0 / ${notes.length}`;
+      return;
+    }
+
+    listEl.hidden = false;
+    emptyEl.hidden = true;
+    
+    const fragment = document.createDocumentFragment();
+    
+     filtered.forEach(note => {
+      const a = document.createElement('a');
+      a.href = encodeURI(`/notes/${note.id}`);
+      a.className = 'note-card';
+      
+      const tagsHtml = note.tags.length 
+        ? `<div class="note-tags">${note.tags.map(t => `<span class="tag">#${t}</span>`).join('')}</div>`
+        : '';
+        
+      a.innerHTML = `
+        <div class="note-content">
+          <h3 class="note-title">${note.title}</h3>
+          ${note.description ? `<p class="note-desc">${note.description}</p>` : ''}
+          ${tagsHtml}
+        </div>
+      `;
+      fragment.appendChild(a);
+    });
+    
+    listEl.appendChild(fragment);
+    countEl.textContent = filtered.length === notes.length 
+      ? `共 ${filtered.length} 篇笔记` 
+      : `显示 ${filtered.length} / ${notes.length} 篇`;
+  }
+
+  function filter() {
+    const query = titleInput.value.trim().toLowerCase();
+
+    const filtered = notes.filter(note => {
+      if (!query) return true;
+      const title = note.title.toLowerCase();
+      const desc = (note.description || '').toLowerCase();
+      const tags = (note.tags || []).join(' ').toLowerCase();
+      return title.includes(query) || desc.includes(query) || tags.includes(query);
+    });
+
+    renderNotes(filtered);
+  }
+
+  function clearFilters() {
+    titleInput.value = '';
+    filter();
+  }
+
+  titleInput.addEventListener('input', filter);
+  clearBtn?.addEventListener('click', clearFilters);
+
+  // Initial render
+  renderNotes(notes);
+</script>
+
+<style>
+  :global(body) {
+    background: radial-gradient(circle at 10% 10%, rgba(255, 214, 153, 0.35), transparent 45%),
+      radial-gradient(circle at 90% 0%, rgba(186, 230, 253, 0.35), transparent 40%),
+      linear-gradient(180deg, #faf7f2 0%, #f5f3ef 55%, #f6f4f1 100%);
+  }
+
+  :global(html.dark) body {
+    background: radial-gradient(circle at 10% 10%, rgba(78, 128, 160, 0.3), transparent 45%),
+      radial-gradient(circle at 90% 0%, rgba(120, 94, 180, 0.25), transparent 40%),
+      linear-gradient(180deg, #121422 0%, #0f131a 60%, #10151d 100%);
+  }
+
+  .notes-home {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .notes-header {
+    margin-bottom: 2rem;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--text-primary, #1a1a1a);
+  }
+
+  .result-status {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #666);
+  }
+
+  .filter-container {
+    display: flex;
+  }
+
+  .filter-group {
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .filter-input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.75rem;
+    border: 1px solid rgba(24, 24, 28, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--text-primary, #1a1a1a);
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+    box-shadow: 0 12px 30px rgba(20, 20, 30, 0.06);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .filter-input:focus {
+    outline: none;
+    border-color: rgba(0, 84, 143, 0.45);
+    box-shadow: 0 12px 30px rgba(0, 84, 143, 0.12);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .filter-group svg {
+    position: absolute;
+    left: 1.1rem;
+    color: var(--text-tertiary, #8c8c8c);
+    pointer-events: none;
+  }
+
+  .notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .note-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(20, 20, 20, 0.08);
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 10px 24px rgba(18, 18, 25, 0.06);
+    backdrop-filter: blur(12px);
+  }
+
+  .note-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 84, 143, 0.3);
+    box-shadow: 0 18px 30px rgba(18, 18, 25, 0.12);
+  }
+
+  .note-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a1a);
+    line-height: 1.4;
+  }
+
+  .note-desc {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-secondary, #5f5f6a);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    font-size: 0.75rem;
+    color: rgba(0, 84, 143, 0.8);
+    background: rgba(0, 84, 143, 0.08);
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--text-secondary, #666);
+  }
+
+  .clear-btn {
+    margin-top: 1rem;
+    padding: 0.55rem 1.2rem;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(20, 20, 20, 0.08);
+    border-radius: 999px;
+    cursor: pointer;
+    color: inherit;
+    font-size: 0.9rem;
+  }
+
+  .clear-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  :global(html.dark) .filter-input,
+  :global(html.dark) .note-card,
+  :global(html.dark) .clear-btn {
+    background: rgba(18, 21, 32, 0.8);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #e6e6f0;
+  }
+
+  :global(html.dark) .section-title {
+    color: #f0f1f8;
+  }
+
+  :global(html.dark) .note-desc,
+  :global(html.dark) .result-status {
+    color: rgba(230, 230, 240, 0.7);
+  }
+
+  :global(html.dark) .tag {
+    color: rgba(158, 196, 255, 0.9);
+    background: rgba(107, 140, 255, 0.18);
+  }
+
+  @media (max-width: 720px) {
+    .notes-home {
+      padding: 2rem 1.1rem 3.5rem;
+    }
+
+    .header-top {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

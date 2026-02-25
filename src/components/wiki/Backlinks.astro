@@ -25,7 +25,7 @@ const backlinks = allNotes.filter(note => {
     <ul class="backlinks-list">
       {backlinks.map((note) => (
         <li>
-          <a href={`/wiki/${note.slug}`}>{note.data.title}</a>
+          <a href={`/notes/${note.id}`}>{note.data.title}</a>
           {note.data.description && (
             <span class="backlink-desc">{note.data.description}</span>
           )}

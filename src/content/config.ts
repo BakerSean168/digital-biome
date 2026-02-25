@@ -1,70 +1,35 @@
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 /**
- * 博客内容集合
- * 存储位置: src/content/blog/
+ * Notes 笔记集合（统一来源，包含所有 Obsidian 同步笔记）
+ * 来源：src/content/wiki/obsidian/（由 pnpm sync 从 thought-forest submodule 同步生成）
+ * 使用 glob loader 精确锁定目录，避免与其他子目录产生 id 冲突
  */
-const blog = defineCollection({
-  type: 'content',
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    pubDate: z.coerce.date(),
-    updatedDate: z.coerce.date().optional(),
-    tags: z.array(z.string()).default([]),
-    image: z.string().optional(),
-    draft: z.boolean().default(false),
+const notes = defineCollection({
+  loader: glob({
+    pattern: '**/*.md',
+    base: './src/content/wiki/obsidian',
+    generateId: ({ entry }) => `obsidian/${entry.replace(/\.md$/, '')}`,
   }),
-});
-
-/**
- * Wiki 知识库集合
- * 支持两种来源：
- * 1. src/content/wiki/        - 本地笔记
- * 2. vault/z/                 - Git submodule（Obsidian vault）
- */
-const wiki = defineCollection({
-  type: 'content',
-  schema: z.object({
-    title: z.string(),
-    description: z.string().optional(),
-    tags: z.array(z.string()).default([]),
-    created: z.coerce.date().optional(),
-    updated: z.coerce.date().optional(),
-    draft: z.boolean().default(false),
-    private: z.boolean().default(false),
-    
-    type: z.enum(['note', 'resource', 'tool', 'article']).default('note'),
-    url: z.string().url().optional(),
-    icon: z.string().optional(),
-    rating: z.number().min(1).max(5).optional(),
-    platform: z.string().optional(),
-    pricing: z.enum(['free', 'freemium', 'paid', 'subscription']).optional(),
-    status: z.enum(['active', 'archived', 'deprecated']).optional(),
-    
-    aliases: z.array(z.string()).default([]),
-    category: z.string().optional(),
-  }).passthrough(),
-});
-
-/**
- * 书签/导航集合 (Dashboard 数据源)
- * 存储位置: src/content/bookmarks/
- * 使用 YAML 文件存储分组书签
- */
-const bookmarks = defineCollection({
-  type: 'data',
-  schema: z.object({
-    title: z.string(),
-    icon: z.string().optional(),
-    order: z.number().default(0),
-    links: z.array(z.object({
-      name: z.string(),
-      url: z.string().url(),
-      icon: z.string().optional(),
-      description: z.string().optional(),
-    })),
-  }),
+  schema: z.record(z.unknown()).transform(data => ({
+    title: (data as any).title,
+    description: (data as any).description,
+    tags: (data as any).tags || [],
+    created: (data as any).created,
+    updated: (data as any).updated,
+    draft: (data as any).draft || false,
+    private: (data as any).private || false,
+    type: (data as any).type || 'note',
+    url: (data as any).url,
+    icon: (data as any).icon,
+    rating: (data as any).rating,
+    platform: (data as any).platform,
+    pricing: (data as any).pricing,
+    status: (data as any).status,
+    aliases: (data as any).aliases || [],
+    category: (data as any).category,
+  })),
 });
 
 /**
@@ -109,4 +74,4 @@ const meta = defineCollection({
   }),
 });
 
-export const collections = { blog, wiki, bookmarks, meta };
+export const collections = { notes, meta };

@@ -1,9 +1,9 @@
 ---
 /**
- * 首页 - Dashboard 模式
+ * 首页 - Dashboard 模式（导航页）
  * 设计为浏览器启动页风格
  */
-import DashboardLayout from '../layouts/DashboardLayout.astro';
+import Layout from '../layouts/Layout.astro';
 import SearchBox from '../components/dashboard/SearchBox.astro';
 import QuickLinks from '../components/dashboard/QuickLinks.astro';
 import BookmarkGrid from '../components/dashboard/BookmarkGrid.astro';
@@ -11,15 +11,15 @@ import BookmarkGrid from '../components/dashboard/BookmarkGrid.astro';
 // 动态问候语
 const getGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 6) return '🌙 夜深了，注意休息';
-  if (hour < 12) return '🌅 早上好';
-  if (hour < 14) return '☀️ 中午好';
-  if (hour < 18) return '🌤️ 下午好';
-  return '🌆 晚上好';
+  if (hour < 6) return '夜深了，注意休息';
+  if (hour < 12) return '早上好';
+  if (hour < 14) return '中午好';
+  if (hour < 18) return '下午好maya';
+  return '晚上好';
 };
 ---
 
-<DashboardLayout title="Digital Biome">
+<Layout title="Digital Biome" variant="dashboard">
   <div class="greeting">
     <h1>{getGreeting()}</h1>
     <p class="date">{new Date().toLocaleDateString('zh-CN', { 
@@ -35,7 +35,7 @@ const getGreeting = () => {
   <QuickLinks />
 
   <BookmarkGrid />
-</DashboardLayout>
+</Layout>
 
 <style>
   .greeting {

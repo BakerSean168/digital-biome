@@ -3,9 +3,12 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "pnpm sync && astro dev",
+    "dev:pull": "git submodule update --remote --merge && pnpm sync && astro dev",
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
+    "sync": "tsx scripts/sync-obsidian.ts",
+    "pull-notes": "git submodule update --remote --merge",
     "astro": "astro"
   },
   "dependencies": {
@@ -19,6 +22,7 @@
   "devDependencies": {
     "@types/mdast": "^4.0.4",
     "pagefind": "^1.4.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

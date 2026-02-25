@@ -6,30 +6,14 @@
 
 | 集合 | 目录 | 格式 | 用途 |
 |------|------|------|------|
-| blog | `blog/` | Markdown | 博客文章 |
-| wiki | `wiki/` | Markdown | 知识库笔记 |
+| notes | `wiki/obsidian/` | Markdown | 笔记 |
 | bookmarks | `bookmarks/` | YAML | Dashboard 书签 |
 | meta | `meta/` | YAML | 元数据（简历等） |
 
-## 添加博客文章
+## 添加笔记
 
-在 `blog/` 创建 `.md` 文件：
 
-```markdown
----
-title: "文章标题"
-description: "简短描述"
-pubDate: 2026-02-22
-tags: [tag1, tag2]
-draft: false
----
-
-正文内容...
-```
-
-## 添加 Wiki 笔记
-
-在 `wiki/` 创建 `.md` 文件：
+在 `wiki/obsidian/` 创建 `.md` 文件：
 
 ```markdown
 ---
@@ -49,7 +33,7 @@ private: false
 支持 [[双链]] 语法链接到其他笔记。
 ```
 
-### Wiki 笔记类型
+### 笔记类型
 
 | type 值 | 用途 |
 |---------|------|

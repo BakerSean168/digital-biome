@@ -13,7 +13,7 @@ interface Props {
 const { currentSlug = '' } = Astro.props;
 
 // 获取所有 wiki 文章
-const allWiki = await getCollection('wiki', ({ data }) => !data.draft);
+const allWiki = await getCollection('notes', ({ data }) => !data.draft);
 
 // 从 tags 中提取分类
 // 你的 tag 格式：status/growing, tech/dev/frontend/eng, type/debug
@@ -42,12 +42,12 @@ allWiki.forEach((entry) => {
     categories.set(category, []);
   }
   
-  // 去掉 .md 扩展名
-  const slug = entry.id.replace(/\.md$/, '');
+  // glob loader 的 id 已不含 .md 后缀
+  const slug = entry.id;
   categories.get(category)!.push({
     slug,
     title: entry.data.title,
-    order: entry.data.order || 999,
+    order: (entry.data as any).order || 999,
   });
 });
 
@@ -75,8 +75,8 @@ const sortedCategories = Array.from(categories.entries()).sort((a, b) =>
         <ul class="nav-list">
           {entries.map((entry) => (
             <li>
-              <a 
-                href={`/wiki/${entry.slug}`} 
+                <a 
+                href={`/notes/${entry.slug}`} 
                 class:list={['nav-item', { active: currentSlug === entry.slug }]}
               >
                 {entry.title}

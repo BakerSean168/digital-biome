@@ -1,88 +1,63 @@
-/* 导航样式 */
-.menu {
-  background-color: #0d0950;
-  border: none;
-  color: #fff;
-  font-size: 1.2rem;
-  font-weight: bold;
-  padding: 5px 10px;
+/* ===== Design Tokens ===== */
+:root {
+  --color-bg: #ffffff;
+  --color-bg-secondary: #fafafa;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #666;
+  --color-text-tertiary: #999;
+  --color-primary: #0066cc;
+  --color-primary-hover: #0052a3;
+  --color-border: #e5e5e5;
+  --color-card-bg: #ffffff;
+  --color-tag-bg: #f0f0f0;
+  --color-code-bg: #f4f4f4;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Pagefind overrides */
+  --pagefind-ui-scale: 1;
+  --pagefind-ui-primary: #0066cc;
+  --pagefind-ui-text: #333;
+  --pagefind-ui-background: #ffffff;
+  --pagefind-ui-border: #eeeeee;
+  --pagefind-ui-tag: #eeeeee;
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: 8px;
+  --pagefind-ui-image-border-radius: 8px;
+  --pagefind-ui-image-box-ratio: 3 / 2;
+  --pagefind-ui-font: inherit;
 }
-
-.nav-links {
-  width: 100%;
-  display: none;
-  margin: 0;
-}
-
-.nav-links a {
-  display: block;
-  text-align: center;
-  padding: 10px 0;
-  text-decoration: none;
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  color: #0d0950;
-}
-
-.nav-links a:hover,
-.nav-links a:focus{
-  background-color: #ff9776;
-}
-
-/* 使用 :has() 选择器：当父元素（例如 <nav>）包含一个已展开的 .menu 时显示 .nav-links。
-   注意：:has() 在旧版浏览器中可能不被支持，因此保留 .nav-links.expanded 作为回退。 */
-:has(.menu[aria-expanded="true"]) .nav-links,
-.nav-links.expanded {
-  display: block !important;
-}
-
-@media screen and (min-width: 636px) {
-  .nav-links {
-    margin-left: 5em;
-    display: block;
-    position: static;
-    width: auto;
-    background: none;
-  }
-
-  .nav-links a {
-    display: inline-block;
-    padding: 15px 20px;
-  }
-
-  .menu {
-    display: none;
-  }
-}
-
 
 html.dark {
-  background-color: #0d0950;
-  color: #fff;
+  --color-bg: #1a1a2e;
+  --color-bg-secondary: #16213e;
+  --color-text: #e8e8e8;
+  --color-text-secondary: #aaa;
+  --color-text-tertiary: #777;
+  --color-border: #2d2d4a;
+  --color-card-bg: #1e1e3f;
+  --color-tag-bg: #2d2d4a;
+  --color-code-bg: #2d2d4a;
+
+  --pagefind-ui-text: #e8e8e8;
+  --pagefind-ui-background: #1a1a2e;
+  --pagefind-ui-border: #2d2d4a;
+  --pagefind-ui-tag: #2d2d4a;
+
+  background-color: #1a1a2e;
+  color: #e8e8e8;
 }
 
-.dark .menu {
-  background-color: #fff;
-  color: #000;
-}
-
-.dark .nav-links a:hover,
-.dark .nav-links a:focus {
-  color: #0d0950;
-}
-
-.dark .nav-links a {
-  color: #fff;
-}
-
-.dark a {
-  color: #ff9776;
-}
-
-/* Wikilink styles */
+/* ===== Wikilink styles ===== */
 .wikilink {
-  color: var(--accent-color, #0066cc);
+  color: var(--color-primary, #0066cc);
   text-decoration: none;
   border-radius: 3px;
   transition: all 0.2s;
@@ -94,9 +69,9 @@ html.dark {
 }
 
 .wikilink-broken {
-  color: var(--text-secondary, #888);
+  color: var(--color-text-secondary, #888);
   text-decoration: none;
-  border-bottom: 1px dashed var(--text-secondary, #888);
+  border-bottom: 1px dashed var(--color-text-secondary, #888);
   cursor: help;
 }
 
@@ -113,29 +88,7 @@ html.dark {
   opacity: 0.7;
 }
 
-/* Pagefind overrides */
-:root {
-  --pagefind-ui-scale: 1;
-  --pagefind-ui-primary: #0066cc;
-  --pagefind-ui-text: #333;
-  --pagefind-ui-background: #ffffff;
-  --pagefind-ui-border: #eeeeee;
-  --pagefind-ui-tag: #eeeeee;
-  --pagefind-ui-border-width: 1px;
-  --pagefind-ui-border-radius: 8px;
-  --pagefind-ui-image-border-radius: 8px;
-  --pagefind-ui-image-box-ratio: 3 / 2;
-  --pagefind-ui-font: inherit;
-}
-
-:global(html.dark) {
-  --pagefind-ui-text: #e8e8e8;
-  --pagefind-ui-background: #1a1a1a;
-  --pagefind-ui-border: #2d2d2d;
-  --pagefind-ui-tag: #2d2d2d;
-}
-
-/* Print styles */
+/* ===== Print styles ===== */
 @media print {
   * {
     color: #000 !important;
@@ -170,10 +123,9 @@ html.dark {
   }
 
   .no-print,
-  nav,
+  .site-header,
+  .footer,
   .print-hide,
-  .resume-nav,
-  .dashboard-nav,
   .wiki-sidebar {
     display: none !important;
   }

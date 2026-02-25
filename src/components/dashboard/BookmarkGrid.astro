@@ -1,142 +1,30 @@
 ---
 import { getBookmarksByCategory } from '../../utils/notes';
 import BookmarkCategory from './BookmarkCategory.astro';
-import { getCollection } from 'astro:content';
 
-const notesBookmarks = await getBookmarksByCategory();
-const yamlBookmarks = await getCollection('bookmarks');
-const sortedYamlGroups = yamlBookmarks.sort((a, b) => a.data.order - b.data.order);
-
-const hasNotesBookmarks = notesBookmarks.size > 0;
-const hasYamlBookmarks = sortedYamlGroups.length > 0;
+const bookmarksByCategory = await getBookmarksByCategory();
+const hasBookmarks = bookmarksByCategory.size > 0;
 ---
 
 <div class="bookmark-grid">
-  {hasNotesBookmarks && (
-    <section class="notes-bookmarks">
-      <h2 class="section-title">📌 从笔记提取</h2>
-      {Array.from(notesBookmarks.entries()).map(([category, bookmarks]) => (
+  {hasBookmarks
+    ? Array.from(bookmarksByCategory.entries()).map(([category, bookmarks]) => (
         <BookmarkCategory name={category} bookmarks={bookmarks} />
-      ))}
-    </section>
-  )}
-
-  {hasYamlBookmarks && (
-    <section class="yaml-bookmarks">
-      <h2 class="section-title">📚 快捷导航</h2>
-      {sortedYamlGroups.map((group) => (
-        <div class="bookmark-group">
-          <h3 class="group-title">
-            {group.data.icon && <span class="group-icon">{group.data.icon}</span>}
-            {group.data.title}
-          </h3>
-          <div class="links-grid">
-            {group.data.links.map((link) => (
-              <a href={link.url} class="link-card" target="_blank" rel="noopener">
-                <span class="link-icon">{link.icon || '🔗'}</span>
-                <span class="link-name">{link.name}</span>
-                {link.description && (
-                  <span class="link-desc">{link.description}</span>
-                )}
-              </a>
-            ))}
-          </div>
-        </div>
-      ))}
-    </section>
-  )}
+      ))
+    : (
+      <div class="empty-state">
+        <p>还没有书签</p>
+        <p class="hint">在笔记中添加 <code>url</code> 字段和 <code>website/&lt;分类&gt;</code> 标签即可在此显示</p>
+      </div>
+    )
+  }
 </div>
-
-{!hasNotesBookmarks && !hasYamlBookmarks && (
-  <div class="empty-state">
-    <p>📌 还没有书签</p>
-    <p class="hint">在笔记中添加 <code>url</code> 和 <code>type/resource</code> 标签</p>
-    <p class="hint">或在 <code>src/content/bookmarks/</code> 添加 YAML 文件</p>
-  </div>
-)}
 
 <style>
   .bookmark-grid {
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
-  }
-
-  .section-title {
-    font-size: 1rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .notes-bookmarks,
-  .yaml-bookmarks {
-    margin-bottom: 2rem;
-  }
-
-  .bookmark-group {
-    margin-bottom: 2rem;
-  }
-
-  .group-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 1rem;
-  }
-
-  .group-icon {
-    font-size: 1rem;
-  }
-
-  .links-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
-  }
-
-  .link-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1.25rem 1rem;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    text-decoration: none;
-    color: #fff;
-    transition: all 0.2s ease;
-    border: 1px solid transparent;
-  }
-
-  .link-card:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-  }
-
-  .link-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .link-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-align: center;
-  }
-
-  .link-desc {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
-    margin-top: 0.25rem;
   }
 
   .empty-state {

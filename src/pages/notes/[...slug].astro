@@ -1,0 +1,104 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Backlinks from '../../components/wiki/Backlinks.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('notes', ({ data }) => !data.draft && !(data as any).private);
+
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: any;
+}
+
+const { entry } = Astro.props;
+const slug = entry.id;
+
+const { Content, headings } = await render(entry);
+const { title, description, tags, created, updated } = entry.data;
+---
+
+<Layout
+  title={title}
+  description={description || ''}
+  variant="wiki"
+  headings={headings}
+  currentSlug={slug}
+>
+  <header class="article-header">
+    <h1>{title}</h1>
+    {description && <p class="article-desc">{description}</p>}
+  </header>
+
+  {tags?.length > 0 && (
+    <div class="wiki-tags">
+      {tags.map((tag: string) => (
+        <span class="tag">#{tag}</span>
+      ))}
+    </div>
+  )}
+
+  <Content />
+
+  {(created || updated) && (
+    <footer class="article-meta">
+      {created && <span>创建于 {new Date(created).toLocaleDateString('zh-CN')}</span>}
+      {updated && <span>更新于 {new Date(updated).toLocaleDateString('zh-CN')}</span>}
+    </footer>
+  )}
+
+  <Backlinks currentSlug={slug} />
+</Layout>
+
+<style>
+  .article-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border, #e5e5e5);
+  }
+
+  .article-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+  }
+
+  .article-desc {
+    color: var(--color-text-secondary, #666);
+    margin: 0;
+  }
+
+  .wiki-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .tag {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    background: var(--tag-bg, #e8f4fd);
+    color: #0066cc;
+    border-radius: 4px;
+  }
+
+  :global(html.dark) .tag {
+    --tag-bg: rgba(100, 150, 255, 0.15);
+    color: #6ea8fe;
+  }
+
+  .article-meta {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #e5e5e5);
+    font-size: 0.85rem;
+    color: var(--text-secondary, #888);
+    display: flex;
+    gap: 1.5rem;
+  }
+</style>

@@ -1,23 +1,228 @@
 ---
-import Navigation from './Navigation.astro';
-import Menu from './Menu.astro';
 import ThemeIcon from './ThemeIcon.astro';
 ---
-<header>
- <nav>
-  <div>
-       <Menu />
-       <ThemeIcon />
+
+<header class="site-header">
+  <div class="header-inner">
+    <!-- Hamburger button (top-left) -->
+    <button
+      id="hamburger-btn"
+      class="hamburger-btn"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+      aria-controls="hamburger-menu"
+    >
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+
+    <!-- Site title / home link -->
+    <a href="/" class="site-title">Digital Biome</a>
   </div>
 
-   <Navigation />
-
- </nav>
+  <!-- Slide-down menu panel -->
+  <div id="hamburger-menu" class="hamburger-menu" hidden>
+    <nav class="menu-nav">
+      <a href="/" class="menu-link">导航</a>
+      <a href="/notes" class="menu-link">笔记</a>
+      <a href="/about" class="menu-link">个人主页</a>
+      <a href="/about/resume" class="menu-link">简历</a>
+    </nav>
+    <div class="menu-footer">
+      <ThemeIcon />
+    </div>
+  </div>
 </header>
 
 <style>
- div {
-   display: flex;
-   justify-content: space-between;
- }
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--header-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-color, #e5e5e5);
+    height: 60px;
+  }
+
+  :global(html.dark) .site-header {
+    --header-bg: rgba(26, 26, 46, 0.95);
+    --border-color: #2d2d4a;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1.25rem;
+    max-width: 1400px;
+    height: 100%;
+    margin: 0 auto;
+  }
+
+  .hamburger-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn:hover {
+    background: var(--hover-bg, rgba(0, 0, 0, 0.05));
+  }
+
+  :global(html.dark) .hamburger-btn:hover {
+    --hover-bg: rgba(255, 255, 255, 0.1);
+  }
+
+  .bar {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--text-primary, #1a1a1a);
+    border-radius: 2px;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  :global(html.dark) .bar {
+    background: #e8e8e8;
+  }
+
+  /* Animate to X when open */
+  .hamburger-btn[aria-expanded="true"] .bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .hamburger-btn[aria-expanded="true"] .bar:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger-btn[aria-expanded="true"] .bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .site-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a1a);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+
+  :global(html.dark) .site-title {
+    color: #e8e8e8;
+  }
+
+  /* Menu panel */
+  .hamburger-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--header-bg, #fff);
+    border-bottom: 1px solid var(--border-color, #e5e5e5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 1rem 1.5rem 1.5rem;
+    animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  :global(html.dark) .hamburger-menu {
+    --header-bg: #1a1a2e;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .menu-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .menu-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary, #1a1a1a);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+
+  :global(html.dark) .menu-link {
+    color: #e8e8e8;
+  }
+
+  .menu-link:hover {
+    background: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    transform: translateX(4px);
+  }
+  
+  :global(html.dark) .menu-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .menu-footer {
+    border-top: 1px solid var(--border-color, #e5e5e5);
+    padding-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
 </style>
+
+<script is:inline>
+  const btn = document.getElementById('hamburger-btn');
+  const menu = document.getElementById('hamburger-menu');
+
+  function toggleMenu() {
+    const isOpen = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!isOpen));
+    menu.hidden = !isOpen; // Only set hidden=false if open
+    
+    // Logic fix: toggle logic was slightly reversed in previous version
+    if (!isOpen) {
+        menu.hidden = false;
+    } else {
+        // Wait for animation if we wanted to animate out, but for now simple hide
+        menu.hidden = true;
+    }
+  }
+
+  // Re-implement simpler toggle logic to match previous working version but cleaner
+  btn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!isExpanded));
+    menu.hidden = isExpanded; // If it WAS expanded, now we hide it
+  });
+
+  // Close on click outside
+  document.addEventListener('click', (e) => {
+    if (!menu?.hidden && !menu.contains(e.target) && !btn.contains(e.target)) {
+      btn.setAttribute('aria-expanded', 'false');
+      menu.hidden = true;
+    }
+  });
+
+  // Close on nav link click
+  menu?.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      btn?.setAttribute('aria-expanded', 'false');
+      menu.hidden = true;
+    });
+  });
+</script>

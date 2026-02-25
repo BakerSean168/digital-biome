@@ -38,9 +38,9 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
           });
         }
 
-        const slug = target.trim().toLowerCase().replace(/\s+/g, '-');
+        const slug = target.trim();
         const text = displayText ?? target;
-        const href = hrefTemplate(slug);
+        const href = encodeURI(hrefTemplate(slug));
 
         const linkNode: Link = {
           type: 'link',

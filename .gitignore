@@ -47,5 +47,11 @@ dist-ssr/
 .obsidian/
 *.md.bak
 
+# Synced notes - generated at build time, do not commit
+src/content/wiki/obsidian/
+
+# Synced vault assets - generated at build time, do not commit
+public/vault-assets/
+
 # Local Netlify folder
 .netlify
