@@ -3,28 +3,35 @@
  * 快捷入口组件
  * 显示常用的站内导航
  */
+import { BookOpen, User, FileText } from '@lucide/astro';
 
 interface QuickLink {
-  icon: string;
   label: string;
   href: string;
   color?: string;
 }
 
 const quickLinks: QuickLink[] = [
-  { icon: '📚', label: '笔记', href: '/notes', color: '#4ade80' },
-  { icon: '👤', label: '个人主页', href: '/about', color: '#fbbf24' },
-  { icon: '📄', label: '简历', href: '/about/resume', color: '#a78bfa' },
+  { label: '笔记', href: '/notes', color: '#4ade80' },
+  { label: '个人主页', href: '/about', color: '#fbbf24' },
+  { label: '简历', href: '/about/resume', color: '#a78bfa' },
 ];
+
+const iconMap = { '笔记': BookOpen, '个人主页': User, '简历': FileText };
 ---
 
 <div class="quick-links">
-  {quickLinks.map((link) => (
-    <a href={link.href} class="quick-link" style={`--accent: ${link.color || '#fff'}`}>
-      <span class="quick-icon">{link.icon}</span>
-      <span class="quick-label">{link.label}</span>
-    </a>
-  ))}
+  {quickLinks.map((link) => {
+    const Icon = iconMap[link.label as keyof typeof iconMap];
+    return (
+      <a href={link.href} class="quick-link" style={`--accent: ${link.color || '#fff'}`}>
+        <span class="quick-icon">
+          <Icon size={28} color={link.color} />
+        </span>
+        <span class="quick-label">{link.label}</span>
+      </a>
+    );
+  })}
 </div>
 
 <style>

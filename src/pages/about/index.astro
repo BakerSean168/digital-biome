@@ -1,10 +1,10 @@
 ---
 // 关于和简历页面
-import Layout from '../../layouts/Layout.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_AUTHOR, SOCIAL_LINKS } from '../../constants';
 ---
 
-<Layout title="About | Digital Biome" description="关于我和我的专业背景">
+<BaseLayout title="About | Digital Biome" description="关于我和我的专业背景">
   <div class="about-container">
     <div class="about-header">
       <h1>About Me</h1>
@@ -129,7 +129,7 @@ import { SITE_AUTHOR, SOCIAL_LINKS } from '../../constants';
       <a href="/about/resume" class="resume-button">查看简历</a>
     </div>
   </div>
-</Layout>
+</BaseLayout>
 
 <style>
   .about-container {

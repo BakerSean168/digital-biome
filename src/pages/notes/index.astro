@@ -1,5 +1,6 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import NotesLayout from '../../layouts/NotesLayout.astro';
+import { Search } from '@lucide/astro';
 import { getCollection } from 'astro:content';
 
 // @ts-ignore - content collections generated at build time
@@ -39,18 +40,18 @@ notesData.sort((a, b) => {
 });
 ---
 
-<Layout title="笔记" description="我的数字花园" variant="wiki" showSidebar={false} showToc={false}>
+<NotesLayout title="笔记" description="我的数字花园" showSidebar={false} showToc={false}>
   <section class="notes-home">
     <div class="notes-header">
       <div class="header-top">
-        <h2 class="section-title">所有笔记1</h2>
+        <h2 class="section-title">所有笔记</h2>
         <div id="result-status" class="result-status">
           <span id="result-count">加载中...</span>
         </div>
       </div>
       <div class="filter-container">
         <div class="filter-group">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <Search size={18} class="search-icon" />
           <input
             id="title-search"
             type="search"
@@ -73,7 +74,7 @@ notesData.sort((a, b) => {
       </div>
     </div>
   </section>
-</Layout>
+</NotesLayout>
 
 <script define:vars={{ notesData }}>
   const notes = notesData;

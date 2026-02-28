@@ -1,0 +1,170 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import WikiSidebar from '../components/wiki/WikiSidebar.astro';
+import TableOfContents from '../components/wiki/TableOfContents.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  headings?: { depth: number; slug: string; text: string }[];
+  currentSlug?: string;
+  showSidebar?: boolean;
+  showToc?: boolean;
+}
+
+const {
+  title,
+  description = '个人知识生态网站',
+  headings = [],
+  currentSlug = '',
+  showSidebar = true,
+  showToc = true,
+} = Astro.props;
+
+const hasToc = showToc && headings.length > 0;
+---
+
+<BaseLayout title={title} description={description}>
+  <div
+    class:list={[
+      'notes-layout',
+      { 'notes-layout--no-sidebar': !showSidebar },
+      { 'notes-layout--no-toc': !hasToc },
+    ]}
+  >
+    {showSidebar && (
+      <aside class="notes-sidebar">
+        <div class="sidebar-header">
+          <a href="/notes" class="sidebar-title">笔记</a>
+        </div>
+        <WikiSidebar currentSlug={currentSlug} />
+      </aside>
+    )}
+
+    <main class="notes-content">
+      <article class="notes-article">
+        <div class="article-body">
+          <slot />
+        </div>
+      </article>
+    </main>
+
+    {hasToc && (
+      <aside class="notes-toc">
+        <TableOfContents headings={headings} />
+      </aside>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .notes-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 200px;
+    min-height: calc(100vh - 120px);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .notes-layout--no-sidebar {
+    grid-template-columns: 1fr 200px;
+  }
+
+  .notes-layout--no-toc {
+    grid-template-columns: 260px 1fr;
+  }
+
+  .notes-layout--no-sidebar.notes-layout--no-toc {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 1200px) {
+    .notes-layout {
+      grid-template-columns: 240px 1fr;
+    }
+    .notes-layout--no-sidebar {
+      grid-template-columns: 1fr;
+    }
+    .notes-toc {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .notes-layout {
+      grid-template-columns: 1fr;
+    }
+    .notes-sidebar {
+      display: none;
+    }
+  }
+
+  .notes-sidebar {
+    border-right: 1px solid var(--color-border, #e5e5e5);
+    padding: 1.5rem 1rem;
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .notes-content {
+    padding: 2rem 3rem;
+    max-width: 800px;
+  }
+
+  .notes-article {
+    line-height: 1.8;
+  }
+
+  .article-body {
+    font-size: 1rem;
+  }
+
+  .article-body :global(h2) {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border, #e5e5e5);
+  }
+
+  .article-body :global(pre) {
+    background: var(--color-code-bg, #f4f4f4);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .article-body :global(code) {
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+  }
+
+  .article-body :global(a) {
+    color: var(--color-primary, #0066cc);
+    text-decoration: none;
+  }
+
+  .article-body :global(a:hover) {
+    text-decoration: underline;
+  }
+
+  .notes-toc {
+    padding: 1.5rem 1rem;
+    position: sticky;
+    top: 60px;
+    height: fit-content;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+</style>

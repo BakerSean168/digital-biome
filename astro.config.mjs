@@ -4,6 +4,8 @@ import netlify from '@astrojs/netlify';
 import remarkNormalizeCodeLang from './src/utils/remark-normalize-code-lang.ts';
 import remarkWikilinks from './src/utils/remark-wikilinks.ts';
 
+import tailwindcss from '@tailwindcss/vite';
+
 // https://astro.build/config
 export default defineConfig({
   adapter: netlify(),
@@ -17,11 +19,14 @@ export default defineConfig({
     ssr: {
       external: ['svgo']
     },
+
     resolve: {
       alias: {
         '@components': './src/components',
       }
-    }
+    },
+
+    plugins: [tailwindcss()]
   },
 
   markdown: {

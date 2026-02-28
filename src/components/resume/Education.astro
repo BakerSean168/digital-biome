@@ -1,4 +1,6 @@
 ---
+import { GraduationCap } from '@lucide/astro';
+
 interface EducationItem {
   degree: string;
   school: string;
@@ -14,7 +16,7 @@ const { education } = Astro.props;
 ---
 
 <section class="education-section">
-  <h2 class="section-title">🎓 教育背景</h2>
+  <h2 class="section-title"><GraduationCap size={20} class="inline-icon" /> 教育背景</h2>
   
   <div class="education-list">
     {education.map((edu) => (
@@ -43,6 +45,9 @@ const { education } = Astro.props;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--accent-color, #0066cc);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
   }
 
   .education-list {

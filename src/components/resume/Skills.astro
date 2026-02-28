@@ -1,4 +1,6 @@
 ---
+import { Wrench } from '@lucide/astro';
+
 interface Props {
   skills: Record<string, string[]>;
 }
@@ -9,7 +11,7 @@ const skillCategories = Object.entries(skills);
 ---
 
 <section class="skills-section">
-  <h2 class="section-title">🛠 技能</h2>
+  <h2 class="section-title"><Wrench size={20} class="inline-icon" /> 技能</h2>
   
   <div class="skills-grid">
     {skillCategories.map(([category, items]) => (
@@ -36,6 +38,9 @@ const skillCategories = Object.entries(skills);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--accent-color, #0066cc);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
   }
 
   .skills-grid {

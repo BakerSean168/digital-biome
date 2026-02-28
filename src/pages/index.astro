@@ -3,7 +3,7 @@
  * 首页 - Dashboard 模式（导航页）
  * 设计为浏览器启动页风格
  */
-import Layout from '../layouts/Layout.astro';
+import DashboardLayout from '../layouts/DashboardLayout.astro';
 import SearchBox from '../components/dashboard/SearchBox.astro';
 import QuickLinks from '../components/dashboard/QuickLinks.astro';
 import BookmarkGrid from '../components/dashboard/BookmarkGrid.astro';
@@ -19,7 +19,7 @@ const getGreeting = () => {
 };
 ---
 
-<Layout title="Digital Biome" variant="dashboard">
+<DashboardLayout title="Digital Biome">
   <div class="greeting">
     <h1>{getGreeting()}</h1>
     <p class="date">{new Date().toLocaleDateString('zh-CN', { 
@@ -35,7 +35,7 @@ const getGreeting = () => {
   <QuickLinks />
 
   <BookmarkGrid />
-</Layout>
+</DashboardLayout>
 
 <style>
   .greeting {

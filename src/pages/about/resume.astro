@@ -1,10 +1,10 @@
 ---
 // 简历页面
-import Layout from '../../layouts/Layout.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_AUTHOR } from '../../constants';
 ---
 
-<Layout title="Resume | Digital Biome" description="我的专业简历">
+<BaseLayout title="Resume | Digital Biome" description="我的专业简历">
   <div class="resume-container">
     <div class="resume-header">
       <h1>{SITE_AUTHOR}</h1>
@@ -122,7 +122,7 @@ import { SITE_AUTHOR } from '../../constants';
       <a href="/about" class="back-btn">← Back to About</a>
     </div>
   </div>
-</Layout>
+</BaseLayout>
 
 <style>
   .resume-container {

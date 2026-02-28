@@ -13,9 +13,12 @@
   },
   "dependencies": {
     "@astrojs/netlify": "^6.6.3",
+    "@lucide/astro": "^0.575.0",
     "@pagefind/default-ui": "^1.4.0",
+    "@tailwindcss/vite": "^4.2.1",
     "astro": "^5.16.9",
     "mdast": "^3.0.0",
+    "tailwindcss": "^4.2.1",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0"
   },

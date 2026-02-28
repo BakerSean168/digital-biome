@@ -9,6 +9,7 @@
  *   w <query>  → Wikipedia
  *   直接输入   → 默认搜索引擎
  */
+import { Search } from '@lucide/astro';
 
 interface Props {
   placeholder?: string;
@@ -23,7 +24,7 @@ const {
 
 <div class="search-box">
   <div class="search-container">
-    <span class="search-icon">🔍</span>
+    <Search class="search-icon" size={20} />
     <input 
       type="text" 
       id="smart-search" 

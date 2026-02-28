@@ -1,0 +1,71 @@
+---
+import Header from '../components/common/Header.astro';
+import Footer from '../components/common/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  bodyClass?: string;
+  showHeader?: boolean;
+  showFooter?: boolean;
+}
+
+const {
+  title,
+  description = '个人知识生态网站',
+  image = '/og-image.png',
+  type = 'website',
+  bodyClass,
+  showHeader = true,
+  showFooter = true,
+} = Astro.props;
+
+const siteUrl = 'https://digital-biome.netlify.app';
+const fullUrl = siteUrl + Astro.url.pathname;
+const fullTitle = title === 'Digital Biome' ? title : `${title} | Digital Biome`;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="author" content="Digital Biome" />
+
+    <title>{fullTitle}</title>
+
+    <link rel="canonical" href={fullUrl} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <meta name="theme-color" content="#0066cc" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={siteUrl + image} />
+    <meta property="og:url" content={fullUrl} />
+    <meta property="og:site_name" content="Digital Biome" />
+    <meta property="og:locale" content="zh_CN" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={siteUrl + image} />
+  </head>
+  <body class={bodyClass}>
+    {showHeader && <Header />}
+    <slot />
+    {showFooter && <Footer />}
+  </body>
+</html>
+
+<style is:global>
+  html {
+    color-scheme: light dark;
+  }
+</style>

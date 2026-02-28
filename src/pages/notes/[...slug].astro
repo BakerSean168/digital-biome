@@ -1,6 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
-import Layout from '../../layouts/Layout.astro';
+import NotesLayout from '../../layouts/NotesLayout.astro';
 import Backlinks from '../../components/wiki/Backlinks.astro';
 
 export async function getStaticPaths() {
@@ -23,10 +23,9 @@ const { Content, headings } = await render(entry);
 const { title, description, tags, created, updated } = entry.data;
 ---
 
-<Layout
+<NotesLayout
   title={title}
   description={description || ''}
-  variant="wiki"
   headings={headings}
   currentSlug={slug}
 >
@@ -53,7 +52,7 @@ const { title, description, tags, created, updated } = entry.data;
   )}
 
   <Backlinks currentSlug={slug} />
-</Layout>
+</NotesLayout>
 
 <style>
   .article-header {
