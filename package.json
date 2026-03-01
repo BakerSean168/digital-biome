@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@astrojs/netlify": "^6.6.3",
+    "@astrojs/sitemap": "^3.7.0",
     "@lucide/astro": "^0.575.0",
     "@pagefind/default-ui": "^1.4.0",
     "@tailwindcss/typography": "^0.5.19",

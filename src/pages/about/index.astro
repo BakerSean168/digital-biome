@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BookOpen, Github, Tag, BookMarked } from '@lucide/astro';
+import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../constants';
 
 const tags = [
   'obsidian',
@@ -36,8 +37,8 @@ const weeks = Array.from({ length: 52 }, () =>
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 ---
 
-<BaseLayout title="About | Digital Biome" description="关于我和我的专业背景">
-  <div class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+<BaseLayout title={`About | ${SITE_NAME}`} description="关于我和我的专业背景">
+  <main class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     
     <div class="flex flex-col gap-6">
       
@@ -54,7 +55,7 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
           <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 h-full">
             <div class="flex flex-col gap-4">
               <h1 class="text-4xl sm:text-5xl font-bold text-foreground">
-                Hi, I'm Baker <span class="inline-block origin-[70%_70%] animate-wave">👋</span>
+                Hi, I'm {AUTHOR_NAME} <span class="inline-block origin-[70%_70%] animate-wave">👋</span>
               </h1>
               <h2 class="text-xl sm:text-2xl font-semibold text-foreground mt-2">
                 全栈开发者 / 数字园丁 / 终身学习者
@@ -64,10 +65,10 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
               </p>
               
               <div class="flex flex-wrap gap-4 mt-6">
-                <a href="/notes" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-foreground hover:bg-card-hover transition-colors font-medium">
+                <a href="/notes" class="btn-outline">
                   浏览笔记 <BookOpen size={18} />
                 </a>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-foreground hover:bg-card-hover transition-colors font-medium">
+                <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline">
                   GitHub <Github size={18} />
                 </a>
               </div>
@@ -117,7 +118,7 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-medium text-foreground hidden sm:block">GitHub Contributions</h3>
             <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-card-hover transition-colors">
+              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline-sm">
                 GitHub <Github size={16} />
               </a>
             </div>
@@ -178,7 +179,7 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
       </div>
     </div>
-  </div>
+  </main>
 </BaseLayout>
 
 <style>

@@ -1,21 +1,21 @@
 ---
 // 简历页面
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SITE_AUTHOR } from '../../constants';
+import { SITE_AUTHOR, SITE_NAME, AUTHOR_EMAIL, AUTHOR_PHONE, AUTHOR_LOCATION } from '../../constants';
 import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
 ---
 
-<BaseLayout title="Resume | Digital Biome" description="我的专业简历">
-  <div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 print:max-w-full print:p-0 print:bg-white">
+<BaseLayout title={`Resume | ${SITE_NAME}`} description="我的专业简历">
+  <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 print:max-w-full print:p-0 print:bg-white">
     
     <!-- Header -->
     <div class="text-center pb-8 border-b-2 border-primary mb-8 print:border-black">
       <h1 class="text-4xl font-bold text-foreground mb-2 print:text-black">{SITE_AUTHOR}</h1>
       <p class="text-lg text-muted-foreground mb-4 print:text-gray-700">Web Developer | Passionate Learner</p>
       <div class="flex flex-wrap justify-center gap-6 text-sm text-foreground print:text-black">
-        <span class="flex items-center gap-1.5"><Mail size={16} class="text-primary print:text-black"/> your-email@example.com</span>
-        <span class="flex items-center gap-1.5"><Phone size={16} class="text-primary print:text-black"/> +86 138****8888</span>
-        <span class="flex items-center gap-1.5"><MapPin size={16} class="text-primary print:text-black"/> City, Country</span>
+        <span class="flex items-center gap-1.5"><Mail size={16} class="text-primary print:text-black"/> {AUTHOR_EMAIL}</span>
+        <span class="flex items-center gap-1.5"><Phone size={16} class="text-primary print:text-black"/> {AUTHOR_PHONE}</span>
+        <span class="flex items-center gap-1.5"><MapPin size={16} class="text-primary print:text-black"/> {AUTHOR_LOCATION}</span>
       </div>
     </div>
 
@@ -104,7 +104,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
         <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Projects</h2>
         
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">Digital Biome (Personal Website)</h3>
+          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">{SITE_NAME} (Personal Website)</h3>
           <p class="text-sm text-muted-foreground italic mb-2 print:text-gray-600">Astro • React • TypeScript</p>
           <p class="text-foreground print:text-black">Personal portfolio and knowledge sharing platform built with Astro.</p>
         </article>
@@ -136,5 +136,5 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
         <ArrowLeft size={18} /> Back to About
       </a>
     </div>
-  </div>
+  </main>
 </BaseLayout>

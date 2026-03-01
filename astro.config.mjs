@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import netlify from '@astrojs/netlify';
+import sitemap from '@astrojs/sitemap';
 import remarkNormalizeCodeLang from './src/utils/remark-normalize-code-lang.ts';
 import remarkWikilinks from './src/utils/remark-wikilinks.ts';
 
@@ -10,10 +11,14 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   adapter: netlify(),
 
-  site: 'https://digital-biome.netlify.app/',
+  site: process.env.PUBLIC_SITE_URL || 'https://digital-biome.netlify.app/',
 
   outDir: './dist',
   publicDir: './public',
+
+  integrations: [
+    sitemap(),
+  ],
 
   vite: {
     ssr: {
@@ -38,7 +43,7 @@ export default defineConfig({
     },
     remarkPlugins: [
       remarkNormalizeCodeLang,
-      [remarkWikilinks, { hrefTemplate: (slug) => `/notes/obsidian/${slug}` }],
+      [remarkWikilinks, { hrefTemplate: (/** @type {string} */ slug) => `/notes/obsidian/${slug}` }],
     ],
     rehypePlugins: []
   }

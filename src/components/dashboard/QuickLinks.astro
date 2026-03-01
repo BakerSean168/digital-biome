@@ -20,60 +20,20 @@ const quickLinks: QuickLink[] = [
 const iconMap = { '笔记': BookOpen, '个人主页': User, '简历': FileText };
 ---
 
-<div class="quick-links">
+<nav aria-label="快捷导航" class="flex flex-wrap justify-center gap-6 my-8">
   {quickLinks.map((link) => {
     const Icon = iconMap[link.label as keyof typeof iconMap];
     return (
-      <a href={link.href} class="quick-link" style={`--accent: ${link.color || '#fff'}`}>
-        <span class="quick-icon">
+      <a 
+        href={link.href} 
+        class="group flex flex-col items-center gap-2 px-6 py-4 bg-white/5 rounded-xl text-white no-underline transition-all duration-200 hover:bg-white/10 hover:-translate-y-1 min-w-[80px]"
+        style={`--accent: ${link.color || '#fff'}`}
+      >
+        <span class="text-3xl transition-transform duration-200 group-hover:scale-110">
           <Icon size={28} color={link.color} />
         </span>
-        <span class="quick-label">{link.label}</span>
+        <span class="text-sm font-medium opacity-90">{link.label}</span>
       </a>
     );
   })}
-</div>
-
-<style>
-  .quick-links {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    margin: 2rem 0;
-    flex-wrap: wrap;
-  }
-
-  .quick-link {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    text-decoration: none;
-    color: #fff;
-    transition: all 0.2s ease;
-    min-width: 80px;
-  }
-
-  .quick-link:hover {
-    background: rgba(255, 255, 255, 0.12);
-    transform: translateY(-3px);
-  }
-
-  .quick-link:hover .quick-icon {
-    transform: scale(1.1);
-  }
-
-  .quick-icon {
-    font-size: 1.75rem;
-    transition: transform 0.2s ease;
-  }
-
-  .quick-label {
-    font-size: 0.85rem;
-    font-weight: 500;
-    opacity: 0.9;
-  }
-</style>
+</nav>

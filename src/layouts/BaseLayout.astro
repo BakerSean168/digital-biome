@@ -2,6 +2,7 @@
 import Header from '../components/common/Header.astro';
 import Footer from '../components/common/Footer.astro';
 import '../styles/global.css';
+import { SITE_NAME, SITE_URL, SITE_AUTHOR, SITE_DESCRIPTION } from '../constants';
 
 interface Props {
   title: string;
@@ -15,7 +16,7 @@ interface Props {
 
 const {
   title,
-  description = '个人知识生态网站',
+  description = SITE_DESCRIPTION,
   image = '/og-image.png',
   type = 'website',
   bodyClass,
@@ -23,9 +24,9 @@ const {
   showFooter = true,
 } = Astro.props;
 
-const siteUrl = 'https://digital-biome.netlify.app';
+const siteUrl = SITE_URL;
 const fullUrl = siteUrl + Astro.url.pathname;
-const fullTitle = title === 'Digital Biome' ? title : `${title} | Digital Biome`;
+const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
 ---
 
 <!doctype html>
@@ -34,7 +35,7 @@ const fullTitle = title === 'Digital Biome' ? title : `${title} | Digital Biome`
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <meta name="author" content="Digital Biome" />
+    <meta name="author" content={SITE_AUTHOR} />
 
     <title>{fullTitle}</title>
 
@@ -49,7 +50,7 @@ const fullTitle = title === 'Digital Biome' ? title : `${title} | Digital Biome`
     <meta property="og:description" content={description} />
     <meta property="og:image" content={siteUrl + image} />
     <meta property="og:url" content={fullUrl} />
-    <meta property="og:site_name" content="Digital Biome" />
+    <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:locale" content="zh_CN" />
 
     <meta name="twitter:card" content="summary_large_image" />

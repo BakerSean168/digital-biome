@@ -1,12 +1,15 @@
 ---
 import ThemeIcon from './ThemeIcon.astro';
+import SiteSearch from './SiteSearch.astro';
+import { SITE_NAME } from '../../constants';
+import { Search } from '@lucide/astro';
 ---
 
 <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
   <div class="container mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
     <!-- Site title / home link -->
     <a href="/" class="text-xl font-semibold tracking-tight text-foreground hover:text-primary transition-colors">
-      Digital Biome
+      {SITE_NAME}
     </a>
 
     <!-- Desktop Navigation -->
@@ -17,11 +20,19 @@ import ThemeIcon from './ThemeIcon.astro';
         <a href="/about/resume" class="hover:text-foreground transition-colors">Resume</a>
       </nav>
       <div class="h-4 w-px bg-border"></div>
-      <ThemeIcon />
+      <div class="flex items-center gap-2">
+        <button class="search-trigger flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors" aria-label="Search site" aria-haspopup="dialog">
+          <Search size={20} />
+        </button>
+        <ThemeIcon />
+      </div>
     </div>
 
-    <!-- Mobile Hamburger button -->
-    <div class="flex items-center gap-4 md:hidden">
+    <!-- Mobile Navigation -->
+    <div class="flex items-center gap-2 md:hidden">
+      <button class="search-trigger flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors" aria-label="Search site" aria-haspopup="dialog">
+        <Search size={20} />
+      </button>
       <button
         id="hamburger-btn"
         class="group relative flex h-9 w-9 flex-col items-center justify-center gap-[5px] rounded-md transition-colors hover:bg-card-hover"
@@ -55,7 +66,7 @@ import ThemeIcon from './ThemeIcon.astro';
   </div>
 </header>
 
-<script is:inline>
+<script>
   const btn = document.getElementById('hamburger-btn');
   const menu = document.getElementById('hamburger-menu');
 
@@ -79,7 +90,8 @@ import ThemeIcon from './ThemeIcon.astro';
     });
 
     document.addEventListener('click', (e) => {
-      if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !btn.contains(e.target)) {
+      const target = e.target as Node;
+      if (!menu.classList.contains('hidden') && !menu.contains(target) && !btn.contains(target)) {
         btn.setAttribute('aria-expanded', 'false');
         menu.setAttribute('data-state', 'closed');
         setTimeout(() => {
@@ -99,3 +111,6 @@ import ThemeIcon from './ThemeIcon.astro';
     });
   }
 </script>
+
+<!-- Global Site Search Modal -->
+<SiteSearch />
