@@ -13,7 +13,7 @@ interface Props {
 const { currentSlug = '' } = Astro.props;
 
 // 获取所有 wiki 文章
-const allWiki = await getCollection('notes', ({ data }) => !data.draft);
+const allWiki = await getCollection('notes', ({ data }) => !data.draft && !(data as any).private);
 
 // 从 tags 中提取分类
 // 你的 tag 格式：status/growing, tech/dev/frontend/eng, type/debug
@@ -62,22 +62,27 @@ const sortedCategories = Array.from(categories.entries()).sort((a, b) =>
 );
 ---
 
-<nav class="wiki-nav">
+<nav class="text-sm">
   {sortedCategories.length === 0 ? (
-    <div class="empty-nav">
+    <div class="text-center p-4 text-muted-foreground text-sm">
       <p>📂 暂无文档</p>
-      <p class="hint">在 <code>src/content/wiki/</code> 添加 Markdown 文件</p>
+      <p class="mt-2 text-xs">在 <code class="bg-card px-1.5 py-0.5 rounded text-xs">src/content/wiki/</code> 添加 Markdown 文件</p>
     </div>
   ) : (
     sortedCategories.map(([category, entries]) => (
-      <div class="nav-group">
-        <h4 class="nav-category">{category}</h4>
-        <ul class="nav-list">
+      <div class="mb-6">
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 pl-2">{category}</h4>
+        <ul class="m-0 p-0 list-none space-y-0.5">
           {entries.map((entry) => (
             <li>
                 <a 
                 href={`/notes/${entry.slug}`} 
-                class:list={['nav-item', { active: currentSlug === entry.slug }]}
+                class:list={[
+                  'block px-3 py-1.5 rounded-md transition-colors duration-150',
+                  currentSlug === entry.slug
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-foreground/80 hover:bg-primary/5 hover:text-primary'
+                ]}
               >
                 {entry.title}
               </a>
@@ -88,78 +93,3 @@ const sortedCategories = Array.from(categories.entries()).sort((a, b) =>
     ))
   )}
 </nav>
-
-<style>
-  .wiki-nav {
-    font-size: 0.9rem;
-  }
-
-  .empty-nav {
-    color: var(--text-secondary, #888);
-    font-size: 0.85rem;
-    text-align: center;
-    padding: 1rem;
-  }
-
-  .empty-nav code {
-    background: var(--code-bg, #f0f0f0);
-    padding: 0.15rem 0.4rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-  }
-
-  .hint {
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-  }
-
-  .nav-group {
-    margin-bottom: 1.5rem;
-  }
-
-  .nav-category {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary, #888);
-    margin: 0 0 0.5rem 0;
-    padding-left: 0.5rem;
-  }
-
-  .nav-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .nav-item {
-    display: block;
-    padding: 0.5rem 0.75rem;
-    color: var(--text-primary, #333);
-    text-decoration: none;
-    border-radius: 6px;
-    transition: all 0.15s ease;
-  }
-
-  .nav-item:hover {
-    background: var(--hover-bg, rgba(0, 102, 204, 0.08));
-    color: #0066cc;
-  }
-
-  .nav-item.active {
-    background: var(--active-bg, rgba(0, 102, 204, 0.12));
-    color: #0066cc;
-    font-weight: 500;
-  }
-
-  :global(html.dark) .nav-item {
-    color: #ccc;
-  }
-
-  :global(html.dark) .nav-item:hover,
-  :global(html.dark) .nav-item.active {
-    background: rgba(100, 150, 255, 0.15);
-    color: #6ea8fe;
-  }
-</style>

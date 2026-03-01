@@ -20,59 +20,17 @@ const backlinks = allNotes.filter(note => {
 ---
 
 {backlinks.length > 0 && (
-  <aside class="backlinks">
-    <h4 class="backlinks-title">反向链接 ({backlinks.length})</h4>
-    <ul class="backlinks-list">
+  <aside class="mt-12 pt-6 border-t border-border">
+    <h4 class="text-sm font-semibold text-muted-foreground mb-4">反向链接 ({backlinks.length})</h4>
+    <ul class="m-0 p-0 list-none space-y-3">
       {backlinks.map((note) => (
         <li>
-          <a href={`/notes/${note.id}`}>{note.data.title}</a>
+          <a href={`/notes/${note.id}`} class="text-primary font-medium hover:underline">{note.data.title}</a>
           {note.data.description && (
-            <span class="backlink-desc">{note.data.description}</span>
+            <span class="block text-sm text-muted-foreground mt-1">{note.data.description}</span>
           )}
         </li>
       ))}
     </ul>
   </aside>
 )}
-
-<style>
-  .backlinks {
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-  }
-
-  .backlinks-title {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text-secondary, #888);
-    margin-bottom: 1rem;
-  }
-
-  .backlinks-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .backlinks-list li {
-    margin-bottom: 0.75rem;
-  }
-
-  .backlinks-list a {
-    color: var(--accent-color, #0066cc);
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .backlinks-list a:hover {
-    text-decoration: underline;
-  }
-
-  .backlink-desc {
-    display: block;
-    font-size: 0.85rem;
-    color: var(--text-secondary, #888);
-    margin-top: 0.25rem;
-  }
-</style>

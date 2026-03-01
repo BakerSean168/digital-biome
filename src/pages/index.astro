@@ -1,64 +1,21 @@
 ---
 /**
- * 首页 - Dashboard 模式（导航页）
- * 设计为浏览器启动页风格
+ * 首页 - 导航索引页
  */
-import DashboardLayout from '../layouts/DashboardLayout.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import SearchBox from '../components/dashboard/SearchBox.astro';
-import QuickLinks from '../components/dashboard/QuickLinks.astro';
 import BookmarkGrid from '../components/dashboard/BookmarkGrid.astro';
-
-// 动态问候语
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 6) return '夜深了，注意休息';
-  if (hour < 12) return '早上好';
-  if (hour < 14) return '中午好';
-  if (hour < 18) return '下午好maya';
-  return '晚上好';
-};
 ---
 
-<DashboardLayout title="Digital Biome">
-  <div class="greeting">
-    <h1>{getGreeting()}</h1>
-    <p class="date">{new Date().toLocaleDateString('zh-CN', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })}</p>
-  </div>
+<BaseLayout title="Digital Biome" bodyClass="bg-background min-h-screen relative overflow-x-hidden">
+  <!-- Decorative background glow (the green blur orb from Figma) -->
+  <div class="fixed top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen dark:mix-blend-lighten hidden md:block"></div>
+  <div class="fixed top-[10%] right-[-20%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] pointer-events-none -z-10 md:hidden"></div>
 
-  <SearchBox placeholder="搜索或输入命令... (tr/g/gh/w)" />
-
-  <QuickLinks />
-
-  <BookmarkGrid />
-</DashboardLayout>
-
-<style>
-  .greeting {
-    text-align: center;
-    margin-bottom: 1rem;
-  }
-
-  .greeting h1 {
-    font-size: 2.5rem;
-    font-weight: 300;
-    margin: 0;
-    color: #fff;
-  }
-
-  .date {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin: 0.5rem 0 0 0;
-  }
-
-  @media (max-width: 640px) {
-    .greeting h1 {
-      font-size: 1.75rem;
-    }
-  }
-</style>
+  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-12 md:pt-20">
+    <SearchBox placeholder="Search..." />
+    <div class="mt-16">
+      <BookmarkGrid />
+    </div>
+  </main>
+</BaseLayout>

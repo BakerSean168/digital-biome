@@ -1,324 +1,198 @@
 ---
-// 关于和简历页面
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SITE_AUTHOR, SOCIAL_LINKS } from '../../constants';
+import { BookOpen, Github, Tag, BookMarked } from '@lucide/astro';
+
+const tags = [
+  'obsidian',
+  'vue',
+  'react',
+  'vite',
+  'javascript',
+  'typescript',
+  'Aastro' // Typo in the design, I'll keep it or fix it. Let's use 'astro'. Wait, design says 'Aastro' or 'javascript' and 'jjavascript'. I will use correct spellings.
+];
+
+const correctedTags = [
+  'obsidian',
+  'vue',
+  'react',
+  'vite',
+  'javascript',
+  'typescript',
+  'Astro'
+];
+
+const recentReads = [
+  { title: 'Obsidian 知识库目录结构重构', time: '2 小时前' },
+  { title: 'Docker 部署本地服务的网络配置', time: '2 小时前' },
+  { title: 'DDD 领域驱动设计学习笔记', time: '2 小时前' },
+];
+
+// Mock GitHub contributions data (52 weeks, 7 days)
+const weeks = Array.from({ length: 52 }, () =>
+  Array.from({ length: 7 }, () => Math.random() > 0.7 ? Math.floor(Math.random() * 4) + 1 : 0)
+);
+
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 ---
 
 <BaseLayout title="About | Digital Biome" description="关于我和我的专业背景">
-  <div class="about-container">
-    <div class="about-header">
-      <h1>About Me</h1>
-      <p>了解我的背景和专业经历</p>
-    </div>
-
-    <div class="about-content">
-      <!-- 个人介绍 -->
-      <section class="about-section">
-        <h2>👋 你好！</h2>
-        <p>
-          我是 {SITE_AUTHOR}，一名热爱学习和分享的开发者。我相信通过记录和分享知识，能够帮助自己和他人不断成长。
-        </p>
-        <p>
-          在这个网站上，你会找到我的学习笔记和一些实用工具。欢迎浏览、讨论和合作！
-        </p>
-      </section>
-
-      <!-- 技能 -->
-      <section class="about-section">
-        <h2>🛠️ 技能</h2>
+  <div class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    
+    <div class="flex flex-col gap-6">
+      
+      <!-- Row 1 -->
+      <div class="flex flex-col md:flex-row gap-6">
         
-        <div class="skills-grid">
-          <div class="skill-category">
-            <h3>Frontend</h3>
-            <ul>
-              <li>HTML/CSS/JavaScript</li>
-              <li>React / Vue.js</li>
-              <li>TypeScript</li>
-              <li>Astro</li>
-            </ul>
-          </div>
+        <!-- Hero Card -->
+        <div class="flex-[2] relative rounded-2xl bg-card border border-border p-8 sm:p-10 overflow-hidden shadow-sm group">
+          <!-- Subtle green glow effect -->
+          <div class="absolute inset-0 rounded-2xl border-2 border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+          <div class="absolute -inset-0.5 rounded-2xl bg-primary/5 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+          <div class="absolute inset-0 rounded-2xl ring-1 ring-primary/30 shadow-[0_0_20px_rgba(16,185,129,0.15)] pointer-events-none"></div>
 
-          <div class="skill-category">
-            <h3>Backend</h3>
-            <ul>
-              <li>Node.js</li>
-              <li>Express</li>
-              <li>SQL Database</li>
-              <li>REST API</li>
-            </ul>
-          </div>
-
-          <div class="skill-category">
-            <h3>Tools & Others</h3>
-            <ul>
-              <li>Git & GitHub</li>
-              <li>Docker</li>
-              <li>CI/CD</li>
-              <li>VS Code</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- 经验 -->
-      <section class="about-section">
-        <h2>💼 工作经验</h2>
-        
-        <div class="experience-list">
-          <article class="experience-item">
-            <div class="experience-header">
-              <h3>Job Title</h3>
-              <span class="company">Company Name • 2024-Present</span>
+          <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 h-full">
+            <div class="flex flex-col gap-4">
+              <h1 class="text-4xl sm:text-5xl font-bold text-foreground">
+                Hi, I'm Baker <span class="inline-block origin-[70%_70%] animate-wave">👋</span>
+              </h1>
+              <h2 class="text-xl sm:text-2xl font-semibold text-foreground mt-2">
+                全栈开发者 / 数字园丁 / 终身学习者
+              </h2>
+              <p class="text-muted-foreground leading-relaxed max-w-xl mt-2">
+                欢迎来到我的数字生物群落。这里记录了我的代码实验、全栈开发笔记以及学习日常。
+              </p>
+              
+              <div class="flex flex-wrap gap-4 mt-6">
+                <a href="/notes" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-foreground hover:bg-card-hover transition-colors font-medium">
+                  浏览笔记 <BookOpen size={18} />
+                </a>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border text-foreground hover:bg-card-hover transition-colors font-medium">
+                  GitHub <Github size={18} />
+                </a>
+              </div>
             </div>
-            <p>
-              在这里添加你的工作经验描述。说说你在这个岗位上做过什么重要的项目或取得的成就。
-            </p>
-          </article>
 
-          <article class="experience-item">
-            <div class="experience-header">
-              <h3>Previous Job</h3>
-              <span class="company">Previous Company • 2022-2024</span>
+            <!-- Avatar Circle -->
+            <div class="hidden sm:block shrink-0">
+              <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-primary shadow-[0_0_40px_rgba(16,185,129,0.3)]"></div>
             </div>
-            <p>
-              继续添加更多工作经验...
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <!-- 教育 -->
-      <section class="about-section">
-        <h2>🎓 教育</h2>
-        
-        <article class="experience-item">
-          <div class="experience-header">
-            <h3>学位名称</h3>
-            <span class="company">大学名称 • 毕业年份</span>
           </div>
-          <p>专业或重要课程信息</p>
-        </article>
-      </section>
-
-      <!-- 联系方式 -->
-      <section class="about-section contact-section">
-        <h2>📧 联系我</h2>
-        
-        <div class="contact-links">
-          <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
-            💻 GitHub
-          </a>
-          <a href={SOCIAL_LINKS.twitter} target="_blank" rel="noopener noreferrer">
-            🐦 Twitter
-          </a>
-          <a href={`mailto:${SOCIAL_LINKS.email}`}>
-            📧 Email
-          </a>
         </div>
 
-        <p class="contact-cta">
-          有问题或想合作？欢迎通过上方链接联系我！
-        </p>
-      </section>
-    </div>
+        <!-- Knowledge Graph Nodes -->
+        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 flex flex-col items-center shadow-sm">
+          <h3 class="text-lg font-medium text-foreground mb-6">知识图谱节点</h3>
+          <div class="flex flex-wrap justify-center gap-3">
+            {correctedTags.map(tag => (
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary border border-border text-sm text-foreground hover:border-primary/50 transition-colors cursor-default">
+                {tag} <Tag size={14} class="text-primary" />
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
 
-    <!-- 简历下载 -->
-    <div class="resume-section">
-      <h2>📄 简历</h2>
-      <p>查看或下载我的完整简历</p>
-      <a href="/about/resume" class="resume-button">查看简历</a>
+      <!-- Row 2 -->
+      <div class="flex flex-col md:flex-row gap-6">
+        
+        <!-- Recently Learning -->
+        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-sm">
+          <h3 class="text-lg font-medium text-foreground mb-6">最近在了解</h3>
+          <div class="flex flex-col gap-4">
+            {recentReads.map(item => (
+              <a href="/notes" class="group flex items-center justify-between p-4 rounded-xl bg-background-secondary hover:bg-card-hover border border-transparent hover:border-border transition-all">
+                <div class="flex flex-col gap-1">
+                  <h4 class="text-foreground font-medium group-hover:text-primary transition-colors">{item.title}</h4>
+                  <span class="text-xs text-muted-foreground">更新于 {item.time}</span>
+                </div>
+                <BookMarked size={20} class="text-primary shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- GitHub Contributions -->
+        <div class="flex-[2] rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-sm overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-medium text-foreground hidden sm:block">GitHub Contributions</h3>
+            <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-card-hover transition-colors">
+                GitHub <Github size={16} />
+              </a>
+            </div>
+          </div>
+
+          <div class="flex-1 bg-background-secondary rounded-xl p-4 overflow-x-auto border border-border">
+            <div class="min-w-[700px]">
+              <!-- Months -->
+              <div class="flex justify-between text-xs text-muted-foreground ml-8 mb-2">
+                {months.map(month => <span>{month}</span>)}
+              </div>
+              
+              <!-- Graph -->
+              <div class="flex gap-1">
+                <!-- Days of week -->
+                <div class="flex flex-col gap-1 text-[10px] text-muted-foreground justify-between py-1 mr-2 shrink-0">
+                  <span>Mon</span>
+                  <span>Wed</span>
+                  <span>Fri</span>
+                </div>
+                
+                <!-- Matrix -->
+                <div class="flex gap-1 flex-1">
+                  {weeks.map(week => (
+                    <div class="flex flex-col gap-1 flex-1">
+                      {week.map(day => (
+                        <div class={`w-3 h-3 rounded-sm ${
+                          day === 0 ? 'bg-card' :
+                          day === 1 ? 'bg-primary/30' :
+                          day === 2 ? 'bg-primary/60' :
+                          day === 3 ? 'bg-primary/80' :
+                          'bg-primary'
+                        } border border-border/50`}></div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Legend -->
+              <div class="flex items-center justify-between text-xs text-muted-foreground mt-4">
+                <a href="#" class="hover:text-primary transition-colors">Learn how we count contributions</a>
+                <div class="flex items-center gap-1.5">
+                  <span>Less</span>
+                  <div class="flex gap-1">
+                    <div class="w-3 h-3 rounded-sm bg-card border border-border/50"></div>
+                    <div class="w-3 h-3 rounded-sm bg-primary/30 border border-border/50"></div>
+                    <div class="w-3 h-3 rounded-sm bg-primary/60 border border-border/50"></div>
+                    <div class="w-3 h-3 rounded-sm bg-primary/80 border border-border/50"></div>
+                    <div class="w-3 h-3 rounded-sm bg-primary border border-border/50"></div>
+                  </div>
+                  <span>More</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </BaseLayout>
 
 <style>
-  .about-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: var(--spacing-2xl) var(--spacing-lg);
+  @keyframes wave {
+    0% { transform: rotate(0.0deg) }
+    10% { transform: rotate(14.0deg) }
+    20% { transform: rotate(-8.0deg) }
+    30% { transform: rotate(14.0deg) }
+    40% { transform: rotate(-4.0deg) }
+    50% { transform: rotate(10.0deg) }
+    60% { transform: rotate(0.0deg) }
+    100% { transform: rotate(0.0deg) }
   }
-
-  .about-header {
-    text-align: center;
-    margin-bottom: var(--spacing-2xl);
-  }
-
-  .about-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: var(--spacing-md);
-  }
-
-  .about-header p {
-    font-size: 1.2rem;
-    color: var(--color-text-secondary);
-  }
-
-  .about-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-2xl);
-  }
-
-  .about-section {
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius-md);
-    border-left: 4px solid var(--color-primary);
-  }
-
-  .about-section h2 {
-    margin: 0 0 var(--spacing-lg) 0;
-  }
-
-  .about-section p {
-    margin-bottom: var(--spacing-md);
-    line-height: 1.8;
-  }
-
-  .skills-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-lg);
-  }
-
-  .skill-category h3 {
-    margin: 0 0 var(--spacing-md) 0;
-    color: var(--color-primary);
-  }
-
-  .skill-category ul {
-    list-style: none;
-    margin-left: 0;
-  }
-
-  .skill-category li {
-    padding: var(--spacing-sm) 0;
-    position: relative;
-    padding-left: var(--spacing-md);
-  }
-
-  .skill-category li:before {
-    content: '✓';
-    position: absolute;
-    left: 0;
-    color: var(--color-primary);
-    font-weight: bold;
-  }
-
-  .experience-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg);
-  }
-
-  .experience-item {
-    padding: var(--spacing-md);
-    background: rgba(0, 102, 204, 0.05);
-    border-radius: var(--border-radius-md);
-  }
-
-  .experience-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: var(--spacing-md);
-    flex-wrap: wrap;
-    gap: var(--spacing-md);
-  }
-
-  .experience-header h3 {
-    margin: 0;
-  }
-
-  .company {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    font-style: italic;
-  }
-
-  .experience-item p {
-    margin-bottom: 0;
-  }
-
-  .contact-section {
-    text-align: center;
-  }
-
-  .contact-links {
-    display: flex;
-    gap: var(--spacing-md);
-    justify-content: center;
-    flex-wrap: wrap;
-    margin: var(--spacing-lg) 0;
-  }
-
-  .contact-links a {
-    display: inline-block;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--color-primary);
-    color: white;
-    border-radius: var(--border-radius-md);
-    text-decoration: none;
-    transition: all 0.3s;
-  }
-
-  .contact-links a:hover {
-    background: var(--color-primary-hover);
-    transform: translateY(-2px);
-  }
-
-  .contact-cta {
-    margin: var(--spacing-lg) 0 0 0;
-  }
-
-  .resume-section {
-    text-align: center;
-    padding: var(--spacing-2xl);
-    background: linear-gradient(135deg, rgba(0, 102, 204, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%);
-    border-radius: var(--border-radius-md);
-    margin-top: var(--spacing-2xl);
-  }
-
-  .resume-section h2 {
-    margin: 0 0 var(--spacing-md) 0;
-  }
-
-  .resume-button {
-    display: inline-block;
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-md) var(--spacing-xl);
-    background: var(--color-primary);
-    color: white;
-    border-radius: var(--border-radius-md);
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s;
-  }
-
-  .resume-button:hover {
-    background: var(--color-primary-hover);
-    transform: translateY(-2px);
-  }
-
-  @media (max-width: 768px) {
-    .about-container {
-      padding: var(--spacing-lg);
-    }
-
-    .about-header h1 {
-      font-size: 1.8rem;
-    }
-
-    .experience-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .contact-links {
-      flex-direction: column;
-    }
-
-    .contact-links a {
-      width: 100%;
-    }
+  .animate-wave {
+    animation: wave 2.5s infinite;
   }
 </style>

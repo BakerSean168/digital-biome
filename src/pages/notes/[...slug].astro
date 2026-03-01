@@ -29,75 +29,40 @@ const { title, description, tags, created, updated } = entry.data;
   headings={headings}
   currentSlug={slug}
 >
-  <header class="article-header">
-    <h1>{title}</h1>
-    {description && <p class="article-desc">{description}</p>}
+  <header class="mb-8 pb-4 border-b border-border">
+    <h1 class="text-3xl font-bold mb-2 text-foreground">{title}</h1>
+    {description && <p class="text-muted-foreground m-0">{description}</p>}
   </header>
 
   {tags?.length > 0 && (
-    <div class="wiki-tags">
+    <div class="flex gap-2 flex-wrap mb-6">
       {tags.map((tag: string) => (
-        <span class="tag">#{tag}</span>
+        <span class="text-xs px-2.5 py-1 bg-primary/10 text-primary rounded-md border border-primary/20">#{tag}</span>
       ))}
     </div>
   )}
 
-  <Content />
+  <div class="prose prose-neutral dark:prose-invert max-w-none 
+              prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+              prose-headings:font-bold prose-headings:text-foreground
+              prose-h2:border-b prose-h2:border-border prose-h2:pb-2 prose-h2:mt-10
+              prose-p:text-foreground/90
+              prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
+              prose-pre:bg-card prose-pre:border prose-pre:border-border
+              prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:not-italic prose-blockquote:text-muted-foreground
+              prose-img:rounded-lg prose-img:border prose-img:border-border
+              prose-hr:border-border">
+    <Content />
+  </div>
 
   {(created || updated) && (
-    <footer class="article-meta">
+    <footer class="mt-12 pt-4 border-t border-border text-sm text-muted-foreground flex gap-6">
       {created && <span>创建于 {new Date(created).toLocaleDateString('zh-CN')}</span>}
       {updated && <span>更新于 {new Date(updated).toLocaleDateString('zh-CN')}</span>}
     </footer>
   )}
 
-  <Backlinks currentSlug={slug} />
+  <div class="mt-12">
+    <Backlinks currentSlug={slug} />
+  </div>
 </NotesLayout>
-
-<style>
-  .article-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--color-border, #e5e5e5);
-  }
-
-  .article-header h1 {
-    margin: 0 0 0.5rem 0;
-    font-size: 2rem;
-  }
-
-  .article-desc {
-    color: var(--color-text-secondary, #666);
-    margin: 0;
-  }
-
-  .wiki-tags {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-  }
-
-  .tag {
-    font-size: 0.8rem;
-    padding: 0.2rem 0.6rem;
-    background: var(--tag-bg, #e8f4fd);
-    color: #0066cc;
-    border-radius: 4px;
-  }
-
-  :global(html.dark) .tag {
-    --tag-bg: rgba(100, 150, 255, 0.15);
-    color: #6ea8fe;
-  }
-
-  .article-meta {
-    margin-top: 3rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color, #e5e5e5);
-    font-size: 0.85rem;
-    color: var(--text-secondary, #888);
-    display: flex;
-    gap: 1.5rem;
-  }
-</style>

@@ -21,12 +21,18 @@ const filteredHeadings = headings.filter(h => h.depth >= 2 && h.depth <= 3);
 ---
 
 {filteredHeadings.length > 0 && (
-  <nav class="toc">
-    <h4 class="toc-title">目录</h4>
-    <ul class="toc-list">
+  <nav class="text-sm">
+    <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">目录</h4>
+    <ul class="m-0 p-0 list-none space-y-1">
       {filteredHeadings.map((heading) => (
-        <li class={`toc-item depth-${heading.depth}`}>
-          <a href={`#${heading.slug}`} class="toc-link">
+        <li class="my-1">
+          <a 
+            href={`#${heading.slug}`} 
+            class:list={[
+              'block py-1 px-2 border-l-2 border-transparent text-muted-foreground no-underline hover:text-primary hover:border-primary transition-all duration-150 leading-snug',
+              heading.depth === 3 && 'pl-4'
+            ]}
+          >
             {heading.text}
           </a>
         </li>
@@ -35,71 +41,10 @@ const filteredHeadings = headings.filter(h => h.depth >= 2 && h.depth <= 3);
   </nav>
 )}
 
-<style>
-  .toc {
-    font-size: 0.85rem;
-  }
-
-  .toc-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary, #888);
-    margin: 0 0 0.75rem 0;
-  }
-
-  .toc-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .toc-item {
-    margin: 0.25rem 0;
-  }
-
-  .toc-item.depth-3 {
-    padding-left: 1rem;
-  }
-
-  .toc-link {
-    display: block;
-    padding: 0.25rem 0.5rem;
-    color: var(--text-secondary, #666);
-    text-decoration: none;
-    border-left: 2px solid transparent;
-    transition: all 0.15s ease;
-    line-height: 1.4;
-  }
-
-  .toc-link:hover {
-    color: #0066cc;
-    border-left-color: #0066cc;
-  }
-
-  /* 当前阅读位置高亮（需要 JS 配合） */
-  .toc-link.active {
-    color: #0066cc;
-    border-left-color: #0066cc;
-    font-weight: 500;
-  }
-
-  :global(html.dark) .toc-link {
-    color: #999;
-  }
-
-  :global(html.dark) .toc-link:hover,
-  :global(html.dark) .toc-link.active {
-    color: #6ea8fe;
-    border-left-color: #6ea8fe;
-  }
-</style>
-
 <script>
   // 滚动高亮当前标题
-  const tocLinks = document.querySelectorAll('.toc-link');
-  const headings = document.querySelectorAll('h2[id], h3[id]');
+  const tocLinks = document.querySelectorAll('nav.text-sm a[href^="#"]');
+  const headings = document.querySelectorAll('.prose h2[id], .prose h3[id]');
 
   if (tocLinks.length && headings.length) {
     const observer = new IntersectionObserver(
@@ -108,7 +53,15 @@ const filteredHeadings = headings.filter(h => h.depth >= 2 && h.depth <= 3);
           if (entry.isIntersecting) {
             const id = entry.target.id;
             tocLinks.forEach((link) => {
-              link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+              const isActive = link.getAttribute('href') === `#${id}`;
+              
+              if (isActive) {
+                link.classList.add('text-primary', 'border-primary', 'font-medium');
+                link.classList.remove('text-muted-foreground', 'border-transparent');
+              } else {
+                link.classList.remove('text-primary', 'border-primary', 'font-medium');
+                link.classList.add('text-muted-foreground', 'border-transparent');
+              }
             });
           }
         });

@@ -1,93 +1,103 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-/* ===== Design Tokens ===== */
+@theme {
+  /* Colors */
+  --color-background: var(--bg);
+  --color-background-secondary: var(--bg-secondary);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-pane: var(--pane);
+  --color-border: var(--border-color);
+  
+  --color-foreground: var(--text-main);
+  --color-muted-foreground: var(--text-muted);
+  --color-tertiary-foreground: var(--text-tertiary);
+  
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+}
+
+/* ===== Base Theme Variables ===== */
 :root {
-  --color-bg: #ffffff;
-  --color-bg-secondary: #fafafa;
-  --color-text: #1a1a1a;
-  --color-text-secondary: #666;
-  --color-text-tertiary: #999;
-  --color-primary: #0066cc;
-  --color-primary-hover: #0052a3;
-  --color-border: #e5e5e5;
-  --color-card-bg: #ffffff;
-  --color-tag-bg: #f0f0f0;
-  --color-code-bg: #f4f4f4;
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
+  /* Light Theme (Derived to match the green accent) */
+  --bg: #F8FAFC; 
+  --bg-secondary: #F1F5F9;
+  --card: #FFFFFF;
+  --card-hover: #F1F5F9;
+  --pane: #F8FAFC;
+  --border-color: #E2E8F0;
+  
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --text-tertiary: #94A3B8;
+  
+  --primary: #10B981; /* Accent / Primary */
+  --primary-hover: #059669;
 
   /* Pagefind overrides */
   --pagefind-ui-scale: 1;
-  --pagefind-ui-primary: #0066cc;
-  --pagefind-ui-text: #333;
-  --pagefind-ui-background: #ffffff;
-  --pagefind-ui-border: #eeeeee;
-  --pagefind-ui-tag: #eeeeee;
+  --pagefind-ui-primary: var(--primary);
+  --pagefind-ui-text: var(--text-main);
+  --pagefind-ui-background: var(--card);
+  --pagefind-ui-border: var(--border-color);
+  --pagefind-ui-tag: var(--bg-secondary);
   --pagefind-ui-border-width: 1px;
-  --pagefind-ui-border-radius: 8px;
-  --pagefind-ui-image-border-radius: 8px;
-  --pagefind-ui-image-box-ratio: 3 / 2;
+  --pagefind-ui-border-radius: var(--radius-md);
   --pagefind-ui-font: inherit;
 }
 
 html.dark {
-  --color-bg: #1a1a2e;
-  --color-bg-secondary: #16213e;
-  --color-text: #e8e8e8;
-  --color-text-secondary: #aaa;
-  --color-text-tertiary: #777;
-  --color-border: #2d2d4a;
-  --color-card-bg: #1e1e3f;
-  --color-tag-bg: #2d2d4a;
-  --color-code-bg: #2d2d4a;
+  /* Dark Theme (From Figma) */
+  --bg: #121212;
+  --bg-secondary: #1A1A1A;
+  --card: #1E1E1E;
+  --card-hover: #2D2D2D;
+  --pane: #242424;
+  --border-color: #333333;
+  
+  --text-main: #E2E8F0;
+  --text-muted: #94A3B8;
+  --text-tertiary: #64748B;
+  
+  --primary: #10B981;
+  --primary-hover: #059669;
+}
 
-  --pagefind-ui-text: #e8e8e8;
-  --pagefind-ui-background: #1a1a2e;
-  --pagefind-ui-border: #2d2d4a;
-  --pagefind-ui-tag: #2d2d4a;
-
-  background-color: #1a1a2e;
-  color: #e8e8e8;
+/* Base styles using the new theme variables */
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/30;
+  }
 }
 
 /* ===== Wikilink styles ===== */
 .wikilink {
-  color: var(--color-primary, #0066cc);
-  text-decoration: none;
-  border-radius: 3px;
-  transition: all 0.2s;
+  @apply text-primary no-underline rounded-[3px] transition-all duration-200;
 }
 
 .wikilink:hover {
-  text-decoration: underline;
-  background: rgba(0, 102, 204, 0.1);
+  @apply underline bg-primary/10;
 }
 
 .wikilink-broken {
-  color: var(--color-text-secondary, #888);
-  text-decoration: none;
-  border-bottom: 1px dashed var(--color-text-secondary, #888);
-  cursor: help;
+  @apply text-muted-foreground no-underline border-b border-dashed border-muted-foreground cursor-help;
 }
 
 .wikilink-broken:hover {
-  color: var(--warning-color, #cc6600);
-  border-color: var(--warning-color, #cc6600);
+  @apply text-orange-500 border-orange-500;
 }
 
 .wikilink-broken::after {
   content: '?';
-  font-size: 0.75em;
-  vertical-align: super;
-  margin-left: 2px;
-  opacity: 0.7;
+  @apply text-[0.75em] align-super ml-[2px] opacity-70;
 }
 
 /* ===== Print styles ===== */
@@ -109,50 +119,11 @@ html.dark {
     line-height: 1.4;
   }
 
-  h1 { font-size: 20pt; }
-  h2 { font-size: 14pt; }
-  h3 { font-size: 12pt; }
-
-  a {
-    text-decoration: underline;
-    color: #000 !important;
-  }
-
-  a[href^="http"]::after {
-    content: " (" attr(href) ")";
-    font-size: 9pt;
-    color: #666 !important;
-  }
-
   .no-print,
   .site-header,
   .footer,
   .print-hide,
   .wiki-sidebar {
     display: none !important;
-  }
-
-  .page-break {
-    page-break-before: always;
-  }
-
-  .avoid-break {
-    page-break-inside: avoid;
-  }
-
-  .resume-container {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-  }
-
-  .timeline-item {
-    page-break-inside: avoid;
-  }
-
-  .skill-category {
-    page-break-inside: avoid;
   }
 }

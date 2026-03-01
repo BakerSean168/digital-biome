@@ -5,94 +5,51 @@ import { SITE_NAME, SITE_AUTHOR } from '../../constants';
 const currentYear = new Date().getFullYear();
 ---
 
-<footer class="footer">
-  <div class="footer-content">
-    <div class="footer-section">
-      <h3>About</h3>
-      <p>个人知识生态网站，分享想法和工具。</p>
+<footer class="mt-24 border-t border-border bg-background pt-16 pb-8">
+  <div class="mx-auto max-w-[1180px] px-6">
+    <div class="grid grid-cols-1 gap-12 md:grid-cols-4 lg:gap-8">
+      <div class="col-span-1 md:col-span-2">
+        <h3 class="text-foreground text-lg font-bold tracking-tight">{SITE_NAME}</h3>
+        <p class="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+          个人知识生态网站，分享想法和工具。构建于星海之间，用代码丈量世界。
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <h4 class="text-foreground text-sm font-semibold uppercase tracking-wider">链接</h4>
+        <nav class="flex flex-col gap-3">
+          <a href="/" class="text-muted-foreground hover:text-primary text-sm transition-colors duration-200">导航</a>
+          <a href="/notes" class="text-muted-foreground hover:text-primary text-sm transition-colors duration-200">笔记</a>
+          <a href="/about" class="text-muted-foreground hover:text-primary text-sm transition-colors duration-200">个人主页</a>
+          <a href="/about/resume" class="text-muted-foreground hover:text-primary text-sm transition-colors duration-200">简历</a>
+        </nav>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <h4 class="text-foreground text-sm font-semibold uppercase tracking-wider">Social</h4>
+        <nav class="flex flex-col gap-3">
+          <a href="https://twitter.com" target="_blank" class="text-muted-foreground hover:text-primary text-sm transition-colors duration-200 flex items-center gap-2">
+            Twitter
+          </a>
+          <a href="https://github.com" target="_blank" class="text-muted-foreground hover:text-primary text-sm transition-colors duration-200 flex items-center gap-2">
+            GitHub
+          </a>
+        </nav>
+      </div>
     </div>
 
-    <div class="footer-section">
-      <h3>链接</h3>
-      <ul>
-        <li><a href="/">导航</a></li>
-        <li><a href="/notes">笔记</a></li>
-        <li><a href="/about">个人主页</a></li>
-        <li><a href="/about/resume">简历</a></li>
-      </ul>
-    </div>
+    <div class="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 sm:flex-row">
+      <p class="text-tertiary-foreground text-xs">
+        © {currentYear} {SITE_AUTHOR}. All rights reserved.
+      </p>
 
-    <div class="footer-section">
-      <h3>Social</h3>
-      <ul>
-        <li><a href="https://twitter.com" target="_blank">Twitter</a></li>
-        <li><a href="https://github.com" target="_blank">GitHub</a></li>
-      </ul>
+      <div class="flex items-center gap-2 text-tertiary-foreground text-xs">
+        <span class="relative flex h-2 w-2">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+        </span>
+        All systems operational
+      </div>
     </div>
-  </div>
-
-  <div class="footer-bottom">
-    <p>&copy; {currentYear} {SITE_AUTHOR}. All rights reserved.</p>
   </div>
 </footer>
-
-<style>
-  .footer {
-    background: var(--color-border);
-    color: var(--color-text);
-    padding: var(--spacing-2xl) var(--spacing-lg);
-    margin-top: var(--spacing-2xl);
-  }
-
-  .footer-content {
-    max-width: 1200px;
-    margin: 0 auto var(--spacing-xl);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-xl);
-  }
-
-  .footer-section h3 {
-    margin: 0 0 var(--spacing-md) 0;
-    font-size: 1.1rem;
-  }
-
-  .footer-section ul {
-    list-style: none;
-    margin-left: 0;
-  }
-
-  .footer-section li {
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .footer-section a {
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .footer-section a:hover {
-    color: var(--color-primary);
-  }
-
-  .footer-bottom {
-    text-align: center;
-    padding-top: var(--spacing-lg);
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .footer-bottom p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-  }
-
-  @media (max-width: 768px) {
-    .footer-content {
-      grid-template-columns: 1fr;
-      text-align: center;
-    }
-  }
-</style>

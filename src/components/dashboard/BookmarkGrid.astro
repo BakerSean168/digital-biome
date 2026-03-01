@@ -6,42 +6,16 @@ const bookmarksByCategory = await getBookmarksByCategory();
 const hasBookmarks = bookmarksByCategory.size > 0;
 ---
 
-<div class="bookmark-grid">
+<div class="w-full max-w-5xl mx-auto pb-20 relative z-10 px-4 md:px-0">
   {hasBookmarks
     ? Array.from(bookmarksByCategory.entries()).map(([category, bookmarks]) => (
         <BookmarkCategory name={category} bookmarks={bookmarks} />
       ))
     : (
-      <div class="empty-state">
-        <p>还没有书签</p>
-        <p class="hint">在笔记中添加 <code>url</code> 字段和 <code>website/&lt;分类&gt;</code> 标签即可在此显示</p>
+      <div class="text-center py-12 text-muted-foreground">
+        <p class="mb-2">还没有书签</p>
+        <p class="text-sm">在笔记中添加 <code class="bg-card-hover px-1.5 py-0.5 rounded text-xs">url</code> 字段和 <code class="bg-card-hover px-1.5 py-0.5 rounded text-xs">website/&lt;分类&gt;</code> 标签即可在此显示</p>
       </div>
     )
   }
 </div>
-
-<style>
-  .bookmark-grid {
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem;
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  .empty-state code {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.85rem;
-  }
-
-  .hint {
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-  }
-</style>
