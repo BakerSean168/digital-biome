@@ -32,7 +32,7 @@ export const notesConfig = {
   
   output: {
     /** 同步后的输出目录 */
-    notes: 'src/content/notes/obsidian',
+    notes: 'src/data/obsidian',
 
     /** 图片资源输出目录（相对于 public/）— served as /vault-assets/<filename> */
     assets: 'public/vault-assets',

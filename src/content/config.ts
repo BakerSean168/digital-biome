@@ -9,7 +9,7 @@ import { glob } from 'astro/loaders';
 const notes = defineCollection({
   loader: glob({
     pattern: '**/*.md',
-    base: './src/content/notes/obsidian',
+    base: './src/data/obsidian',
     generateId: ({ entry }) => `obsidian/${entry.replace(/\.md$/, '')}`,
   }),
   schema: z.record(z.unknown()).transform(data => ({

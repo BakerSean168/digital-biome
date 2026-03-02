@@ -1,6 +1,7 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { execSync } from 'child_process';
 import { notesConfig } from '../../notes.config';
+import { RESOURCE_TYPES } from '../constants';
 import type { Note, Bookmark, Category, NoteCollectionEntry } from '../types/notes';
 
 const NOTES_PATH = notesConfig.output.notes; // e.g. 'src/content/notes/obsidian'
@@ -23,10 +24,17 @@ export async function getBookmarks(): Promise<Bookmark[]> {
   const notes = await getPublicNotes();
 
   return notes
-    .filter(note =>
-      note.data.url &&
-      note.data.tags?.some((tag: string) => tag === 'type/resource')
-    )
+    .filter(note => {
+      const tags = note.data.tags || [];
+      const hasWebsite = tags.some((tag: string) => tag.toLowerCase() === 'website');
+      const hasResource = tags.some((tag: string) => tag.toLowerCase() === 'resource');
+      
+      // Keep support for legacy 'type/resource' and 'website/xxx' tags as well as new logic
+      const isLegacy = note.data.url && tags.some((tag: string) => tag === 'type/resource');
+      const isNew = note.data.url && hasWebsite && hasResource && extractCategories(tags).length > 0;
+      
+      return isLegacy || isNew;
+    })
     .map(note => ({
       title: note.data.title,
       url: note.data.url!,
@@ -74,17 +82,29 @@ export async function getBookmarksByCategory(): Promise<Map<string, Bookmark[]>>
 }
 
 /**
- * 从层级标签中提取书签分类
- * 书签笔记使用 website/ 前缀标签，例如 website/video, website/dev/tool
- * 提取最后一段作为分类名
+ * 提取书签分类
+ * 支持传统层级标签 (如 website/video)
+ * 和基于 RESOURCE_TYPES 匹配的扁平标签
  */
 function extractCategories(tags: string[]): string[] {
-  return tags
-    .filter(tag => tag.startsWith('website/'))
-    .map(tag => {
-      const parts = tag.replace('website/', '').split('/');
-      return parts[parts.length - 1];
-    });
+  const categories = new Set<string>();
+
+  tags.forEach(tag => {
+    const lowerTag = tag.toLowerCase();
+    
+    // Legacy support: extract from website/* hierarchy
+    if (lowerTag.startsWith('website/')) {
+      const parts = tag.replace(/^website\//i, '').split('/');
+      categories.add(parts[parts.length - 1]);
+    }
+    
+    // New logic: check against configured resource types
+    if (RESOURCE_TYPES.includes(lowerTag)) {
+      categories.add(lowerTag);
+    }
+  });
+
+  return Array.from(categories);
 }
 
 /**
