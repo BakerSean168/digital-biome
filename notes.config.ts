@@ -6,7 +6,7 @@
  * - vault.assets: 图片资源目录（相对于项目根目录）
  * - vault.include: 要包含的文件模式
  * - vault.exclude: 要排除的文件模式
- * - output.wiki: 同步输出目录
+ * - output.notes: 同步输出目录
  * - output.assets: 图片资源同步输出目录（相对于 public/）
  */
 
@@ -32,7 +32,7 @@ export const notesConfig = {
   
   output: {
     /** 同步后的输出目录 */
-    wiki: 'src/content/wiki/obsidian',
+    notes: 'src/content/notes/obsidian',
 
     /** 图片资源输出目录（相对于 public/）— served as /vault-assets/<filename> */
     assets: 'public/vault-assets',

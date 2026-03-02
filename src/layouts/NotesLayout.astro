@@ -1,7 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-import WikiSidebar from '../components/wiki/WikiSidebar.astro';
-import TableOfContents from '../components/wiki/TableOfContents.astro';
+import NotesSidebar from '../components/notes/NotesSidebar.astro';
+import TableOfContents from '../components/notes/TableOfContents.astro';
 
 interface Props {
   title: string;
@@ -39,7 +39,7 @@ const hasToc = showToc && headings.length > 0;
         <div class="mb-6">
           <a href="/notes" class="text-lg font-semibold text-foreground hover:text-primary transition-colors">笔记</a>
         </div>
-        <WikiSidebar currentSlug={currentSlug} />
+        <NotesSidebar currentSlug={currentSlug} />
       </aside>
     )}
 

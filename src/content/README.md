@@ -6,26 +6,26 @@
 
 | 集合 | 目录 | 格式 | 用途 |
 |------|------|------|------|
-| notes | `wiki/obsidian/` | Markdown | 笔记 |
-| bookmarks | `bookmarks/` | YAML | Dashboard 书签 |
+| notes | `notes/obsidian/` | Markdown | Obsidian 笔记（同步生成） |
 | meta | `meta/` | YAML | 元数据（简历等） |
 
-## 添加笔记
+## 笔记系统
 
+笔记内容来自 Obsidian vault（通过 git submodule 管理），使用 `pnpm sync` 同步到 `notes/obsidian/` 目录。
 
-在 `wiki/obsidian/` 创建 `.md` 文件：
+### 笔记 frontmatter 示例
 
 ```markdown
 ---
 title: "笔记标题"
 description: "简短描述"
-category: 分类名称
 tags:
-  - type/note
-  - category/技术
+  - status/growing
+  - tech/lang/typescript
+  - type/concept
 created: 2026-02-22
+updated: 2026-02-25
 draft: false
-private: false
 ---
 
 正文内容...
@@ -33,16 +33,21 @@ private: false
 支持 [[双链]] 语法链接到其他笔记。
 ```
 
-### 笔记类型
+### 层级标签
 
-| type 值 | 用途 |
-|---------|------|
-| `type/note` | 普通笔记 |
-| `type/resource` | 资源/书签（需配合 `url` 字段） |
-| `type/tool` | 工具 |
-| `type/article` | 文章 |
+标签使用 `/` 分隔的层级格式：
 
-### 书签笔记示例
+| 维度 | 示例 | 用途 |
+|------|------|------|
+| `status/` | `status/growing`, `status/evergreen` | 笔记成熟度 |
+| `tech/` | `tech/lang/typescript`, `tech/dev`, `tech/ops` | 技术分类 |
+| `type/` | `type/concept`, `type/howto`, `type/moc`, `type/resource` | 笔记类型 |
+| `life/` | `life/material`, `life/shopping` | 生活相关 |
+| `website/` | `website/video`, `website/dev/tool` | 书签分类（自动显示在首页） |
+
+### 书签笔记
+
+带有 `type/resource` 标签和 `url` 字段的笔记会自动作为书签显示在首页：
 
 ```markdown
 ---
@@ -52,28 +57,9 @@ url: https://youtube.com
 tags:
   - type/resource
   - website/video
-icon: 📺
+icon: youtube
 rating: 4
 ---
-
-详细的介绍内容...
-```
-
-书签会自动出现在起始页的分类区块中。
-
-## 添加书签分组（YAML 方式）
-
-在 `bookmarks/` 创建 `.yaml` 文件：
-
-```yaml
-title: 分组名称
-icon: 🔧
-order: 1
-links:
-  - name: 链接名称
-    url: https://example.com
-    icon: 🔗
-    description: 可选描述
 ```
 
 ## 更新简历
@@ -87,14 +73,12 @@ bio: 个人简介
 contact:
   email: your@email.com
   github: github.com/username
-  linkedin: linkedin.com/in/username
 experience:
   - role: 职位
     company: 公司
     period: 2024 - Present
     highlights:
       - 成就1
-      - 成就2
 education:
   - degree: 学位
     school: 学校
@@ -107,24 +91,22 @@ skills:
 
 ## 私有笔记
 
-设置 `draft: true` 或 `private: true` 可隐藏笔记：
+在 Obsidian vault 中设置 `draft: true` 或 `private: true` 可隐藏笔记：
 
 ```markdown
 ---
 title: "私人日记"
 draft: true
-# 或
-private: true
 ---
-
-这篇笔记不会发布到网站。
 ```
 
-## Obsidian 同步
+## 同步流程
 
-1. 配置 Git Submodule 指向 Obsidian vault
-2. 确保笔记有标准 frontmatter
-3. 构建时自动处理
+1. Obsidian vault 通过 git submodule 管理
+2. 运行 `pnpm sync` 将 vault 笔记同步到 `notes/obsidian/`
+3. 同步脚本会保留原始 frontmatter，补充缺失的 title 字段
+4. 图片资源同步到 `public/vault-assets/`
+5. 构建时 Astro Content Collections 读取同步后的笔记
 
 ## Schema 定义
 

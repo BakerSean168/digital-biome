@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import NotesLayout from '../../layouts/NotesLayout.astro';
-import Backlinks from '../../components/wiki/Backlinks.astro';
+import Backlinks from '../../components/notes/Backlinks.astro';
 
 export async function getStaticPaths() {
   const entries = await getCollection('notes', ({ data }) => !data.draft && !(data as any).private);
@@ -36,9 +36,14 @@ const { title, description, tags, created, updated } = entry.data;
 
   {tags?.length > 0 && (
     <div class="flex gap-2 flex-wrap mb-6">
-      {tags.map((tag: string) => (
-        <span class="text-xs px-2.5 py-1 bg-primary/10 text-primary rounded-md border border-primary/20">#{tag}</span>
-      ))}
+      {tags.map((tag: string) => {
+        const display = tag.includes('/') ? tag.split('/').join(' / ') : tag;
+        return (
+          <span class="text-xs px-2.5 py-1 bg-primary/10 text-primary rounded-md border border-primary/20" title={tag}>
+            #{display}
+          </span>
+        );
+      })}
     </div>
   )}
 

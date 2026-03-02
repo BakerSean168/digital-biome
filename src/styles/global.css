@@ -132,7 +132,7 @@ html.dark {
   .site-header,
   .footer,
   .print-hide,
-  .wiki-sidebar {
+  .notes-sidebar {
     display: none !important;
   }
 }

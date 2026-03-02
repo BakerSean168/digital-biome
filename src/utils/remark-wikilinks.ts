@@ -7,7 +7,7 @@ export interface WikiLinkOptions {
   classTemplate?: (exists: boolean) => string;
 }
 
-const defaultHrefTemplate = (slug: string) => `/wiki/${slug}`;
+const defaultHrefTemplate = (slug: string) => `/notes/${slug}`;
 const defaultClassTemplate = (exists: boolean) => exists ? 'wikilink' : 'wikilink wikilink-broken';
 
 export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) => {

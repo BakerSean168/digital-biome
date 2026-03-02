@@ -38,7 +38,7 @@ export interface Category {
   count: number;
 }
 
-export interface WikiLink {
+export interface NoteLink {
   target: string;
   displayText: string;
   exists: boolean;

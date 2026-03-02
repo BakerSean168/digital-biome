@@ -21,8 +21,8 @@ export const SOCIAL_LINKS = {
   email: AUTHOR_EMAIL
 };
 
-// 博客配置
-export const BLOG_CONFIG = {
-  postsPerPage: 10,
+// 笔记配置
+export const NOTES_CONFIG = {
+  notesPerPage: 12,
   tagsPerPage: 20
 };

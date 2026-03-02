@@ -48,7 +48,7 @@ dist-ssr/
 *.md.bak
 
 # Synced notes - generated at build time, do not commit
-src/content/wiki/obsidian/
+src/content/notes/obsidian/
 
 # Synced vault assets - generated at build time, do not commit
 public/vault-assets/

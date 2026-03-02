@@ -3,13 +3,13 @@ import { glob } from 'astro/loaders';
 
 /**
  * Notes 笔记集合（统一来源，包含所有 Obsidian 同步笔记）
- * 来源：src/content/wiki/obsidian/（由 pnpm sync 从 thought-forest submodule 同步生成）
+ * 来源：src/content/notes/obsidian/（由 pnpm sync 从 thought-forest submodule 同步生成）
  * 使用 glob loader 精确锁定目录，避免与其他子目录产生 id 冲突
  */
 const notes = defineCollection({
   loader: glob({
     pattern: '**/*.md',
-    base: './src/content/wiki/obsidian',
+    base: './src/content/notes/obsidian',
     generateId: ({ entry }) => `obsidian/${entry.replace(/\.md$/, '')}`,
   }),
   schema: z.record(z.unknown()).transform(data => ({

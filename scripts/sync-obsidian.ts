@@ -22,7 +22,7 @@ import { notesConfig } from '../notes.config';
 
 const VAULT_PATH = path.join(process.cwd(), notesConfig.vault.path);
 const ASSETS_SRC = path.join(process.cwd(), notesConfig.vault.assets);
-const WIKI_DEST = path.join(process.cwd(), notesConfig.output.wiki);
+const NOTES_DEST = path.join(process.cwd(), notesConfig.output.notes);
 const ASSETS_DEST = path.join(process.cwd(), notesConfig.output.assets);
 
 // URL prefix used in rewritten markdown image paths
@@ -94,6 +94,9 @@ function rewriteImagePaths(content: string): string {
 
 /**
  * 处理 markdown 内容 - 标准化 frontmatter + 重写图片路径
+ * 
+ * 保留原始 frontmatter 中的所有字段（tags, created, updated 等），
+ * 仅在缺少 title 时补充，修复缩进问题而非丢弃整个 frontmatter。
  */
 function processContent(content: string, filename: string): string {
   const baseName = filename.replace(/\.md$/, '');
@@ -101,25 +104,88 @@ function processContent(content: string, filename: string): string {
   let processed: string;
 
   if (!content.startsWith('---')) {
+    // 无 frontmatter，创建最小 frontmatter 并保留原始内容
     processed = `---\ntitle: "${baseName}"\ntags: []\n---\n\n${content}`;
   } else {
-    const firstDash = content.indexOf('---');
-    const secondDash = content.indexOf('---', firstDash + 3);
-
-    if (secondDash === -1) {
-      processed = `---\ntitle: "${baseName}"\ntags: []\n---\n\n${content}`;
-    } else {
-      const frontmatter = content.slice(firstDash + 3, secondDash);
-      const body = content.slice(secondDash + 3);
-
-      const hasTitle = /^title:\s/m.test(frontmatter);
-      const hasIndentationIssue = /^ +\S/m.test(frontmatter);
-
-      if (!hasTitle || hasIndentationIssue) {
-        processed = `---\ntitle: "${baseName}"\ntags: []\n---\n${body}`;
-      } else {
-        processed = content;
+    // 查找 frontmatter 闭合标记：必须是行首的 ---
+    // 跳过第一行的 ---，从第二行开始查找
+    const lines = content.split('\n');
+    let closingIndex = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === '---') {
+        closingIndex = i;
+        break;
       }
+      // 如果遇到明显不是 YAML 的内容（如 markdown 标题、引用块），
+      // 说明 frontmatter 缺少闭合标记
+      if (/^(#|>|\*|- \[|!\[|\|)/.test(lines[i].trim()) && !lines[i].trim().startsWith('- ')) {
+        break;
+      }
+      // YAML 列表项 "- value" 是合法的，但独立的 "- [x]" 是 markdown checkbox
+      if (/^- \[[ x]\]/.test(lines[i].trim())) {
+        break;
+      }
+    }
+
+    if (closingIndex === -1) {
+      // frontmatter 未闭合或无效，提取看起来像 YAML 的行
+      const yamlLines: string[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        // 空行或 YAML 键值对或列表项
+        if (line === '' || /^[\w"'\/].*:/.test(line) || /^- /.test(line)) {
+          yamlLines.push(lines[i]);
+        } else {
+          break;
+        }
+      }
+      const bodyStart = 1 + yamlLines.length;
+      let frontmatter = yamlLines.join('\n');
+
+      // 修复缩进问题
+      const hasIndentationIssue = /^ +\w/m.test(frontmatter);
+      if (hasIndentationIssue) {
+        frontmatter = frontmatter
+          .split('\n')
+          .map(line => {
+            // 保留 YAML 列表项缩进（如 tags 列表下的 - item）
+            if (/^\s+- /.test(line)) return line;
+            return line.replace(/^ +/, '');
+          })
+          .join('\n');
+      }
+
+      // 如果缺少 title 字段，添加
+      const hasTitle = /^title:\s/m.test(frontmatter);
+      if (!hasTitle) {
+        frontmatter = `title: "${baseName}"\n${frontmatter}`;
+      }
+
+      const body = lines.slice(bodyStart).join('\n');
+      processed = `---\n${frontmatter}\n---\n${body}`;
+    } else {
+      let frontmatter = lines.slice(1, closingIndex).join('\n');
+      const body = lines.slice(closingIndex + 1).join('\n');
+
+      // 修复缩进问题
+      const hasIndentationIssue = /^ +\w/m.test(frontmatter);
+      if (hasIndentationIssue) {
+        frontmatter = frontmatter
+          .split('\n')
+          .map(line => {
+            if (/^\s+- /.test(line)) return line;
+            return line.replace(/^ +/, '');
+          })
+          .join('\n');
+      }
+
+      // 如果缺少 title 字段，添加
+      const hasTitle = /^title:\s/m.test(frontmatter);
+      if (!hasTitle) {
+        frontmatter = `title: "${baseName}"\n${frontmatter}`;
+      }
+
+      processed = `---\n${frontmatter}\n---\n${body}`;
     }
   }
 
@@ -291,7 +357,7 @@ async function main(): Promise<void> {
   console.log('Syncing Obsidian notes...');
   console.log(`  vault : ${VAULT_PATH}`);
   console.log(`  assets: ${ASSETS_SRC} -> ${ASSETS_DEST}`);
-  console.log(`  dest  : ${WIKI_DEST}\n`);
+  console.log(`  dest  : ${NOTES_DEST}\n`);
 
   const stats: SyncStats = { copied: 0, cleaned: 0, skipped: 0, assetsCopied: 0, errors: [] };
 
@@ -302,10 +368,10 @@ async function main(): Promise<void> {
   const vaultFiles = collectFiles(VAULT_PATH, VAULT_PATH);
 
   // 清理 dest 中已失效的文件
-  cleanStalledFiles(WIKI_DEST, vaultFiles, stats);
+  cleanStalledFiles(NOTES_DEST, vaultFiles, stats);
 
   // 同步最新文件（含图片路径重写）
-  syncFiles(VAULT_PATH, WIKI_DEST, stats);
+  syncFiles(VAULT_PATH, NOTES_DEST, stats);
 
   console.log(
     `\nDone: ${stats.copied} notes copied, ${stats.assetsCopied} assets copied, ` +

@@ -1,8 +1,8 @@
 ---
 /**
- * Wiki 侧边栏组件
- * 自动从 wiki collection 生成目录树
- * 支持按 tag 的第一维分类（Obsidian 四维 tag: status/tech/type/...）
+ * 笔记侧边栏组件
+ * 自动从 notes collection 生成目录树
+ * 支持按 tag 的根维度分类（层级标签: status/growing, tech/dev/frontend, type/debug）
  */
 import { getCollection } from 'astro:content';
 
@@ -12,28 +12,47 @@ interface Props {
 
 const { currentSlug = '' } = Astro.props;
 
-// 获取所有 wiki 文章
-const allWiki = await getCollection('notes', ({ data }) => !data.draft && !(data as any).private);
+// 获取所有笔记
+const allNotes = await getCollection('notes', ({ data }) => !data.draft && !(data as any).private);
 
 // 从 tags 中提取分类
-// 你的 tag 格式：status/growing, tech/dev/frontend/eng, type/debug
-// 我们取第一个 "/" 前面的部分作为 category
-interface WikiEntry {
+// tag 格式：status/growing, tech/dev/frontend/eng, type/debug, life/material
+// 取根维度（第一段）作为 category，支持 category 字段覆盖
+interface NoteEntry {
   slug: string;
   title: string;
   order?: number;
 }
 
-const categories = new Map<string, WikiEntry[]>();
+const categories = new Map<string, NoteEntry[]>();
 
-allWiki.forEach((entry) => {
-  // 优先使用 category 字段，其次从 tags 第一个标签推断
+allNotes.forEach((entry) => {
+  // 优先使用 category 字段
   let category = entry.data.category;
   
   if (!category && entry.data.tags && entry.data.tags.length > 0) {
-    // 从 tags[0] 中提取第一维
-    const firstTag = entry.data.tags[0];
-    category = firstTag.split('/')[0];
+    // 从所有标签中提取根维度，优先使用 tech/ 或 type/ 等有意义的分类
+    const tags = entry.data.tags as string[];
+    // 优先选择 tech > type > status 维度的标签作为分类
+    const priorityRoots = ['tech', 'life', 'type'];
+    let bestTag: string | null = null;
+    
+    for (const root of priorityRoots) {
+      const found = tags.find(t => t.startsWith(root + '/'));
+      if (found) {
+        // 取第二段作为更具体的分类（如果有的话）
+        const parts = found.split('/');
+        bestTag = parts.length >= 2 ? parts.slice(0, 2).join('/') : parts[0];
+        break;
+      }
+    }
+    
+    if (!bestTag && tags.length > 0) {
+      // 回退：取第一个标签的根维度
+      bestTag = tags[0].split('/')[0];
+    }
+    
+    category = bestTag || undefined;
   }
   
   category = category || '未分类';
@@ -42,7 +61,6 @@ allWiki.forEach((entry) => {
     categories.set(category, []);
   }
   
-  // glob loader 的 id 已不含 .md 后缀
   const slug = entry.id;
   categories.get(category)!.push({
     slug,
@@ -65,8 +83,8 @@ const sortedCategories = Array.from(categories.entries()).sort((a, b) =>
 <nav class="text-sm">
   {sortedCategories.length === 0 ? (
     <div class="text-center p-4 text-muted-foreground text-sm">
-      <p>📂 暂无文档</p>
-      <p class="mt-2 text-xs">在 <code class="bg-card px-1.5 py-0.5 rounded text-xs">src/content/wiki/</code> 添加 Markdown 文件</p>
+      <p>暂无笔记</p>
+      <p class="mt-2 text-xs">运行 <code class="bg-card px-1.5 py-0.5 rounded text-xs">pnpm sync</code> 同步笔记</p>
     </div>
   ) : (
     sortedCategories.map(([category, entries]) => (

@@ -2,45 +2,26 @@
  * 工具函数集合
  */
 
-export interface BlogPost {
-  slug: string;
-  title: string;
-  description: string;
-  pubDate: Date;
-  tags: string[];
-  [key: string]: any;
+/**
+ * 格式化日期为相对时间（中文）
+ */
+export function formatRelativeDate(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - d.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 30) return `${diffDays}天前`;
+  if (diffDays < 365) return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' });
 }
 
 /**
- * 获取文章 URL
+ * 获取笔记页面 URL
  */
-export function getBlogPostUrl(slug: string): string {
-  return `/blog/${slug}`;
-}
-
-/**
- * 按日期排序博客文章
- */
-export function sortPostsByDate(posts: BlogPost[]): BlogPost[] {
-  return posts.sort((a, b) => {
-    return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
-  });
-}
-
-/**
- * 按标签过滤文章
- */
-export function filterPostsByTag(posts: BlogPost[], tag: string): BlogPost[] {
-  return posts.filter(post => post.tags?.includes(tag));
-}
-
-/**
- * 获取所有唯一标签
- */
-export function getAllTags(posts: BlogPost[]): string[] {
-  const tags = new Set<string>();
-  posts.forEach(post => {
-    post.tags?.forEach(tag => tags.add(tag));
-  });
-  return Array.from(tags).sort();
+export function getNoteUrl(slug: string): string {
+  return `/notes/${slug}`;
 }

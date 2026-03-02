@@ -194,7 +194,10 @@ if (notesData.length === 0) {
       a.className = 'group flex flex-col p-6 bg-card border border-border rounded-2xl transition-all duration-300 hover:border-primary/40 hover:bg-card-hover';
       
       const tagsHtml = note.tags && note.tags.length > 0 
-        ? note.tags.map(t => `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-foreground">${t}</span>`).join('')
+        ? note.tags.map(t => {
+            const display = t.includes('/') ? t.split('/').pop() : t;
+            return `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-foreground cursor-pointer hover:border-primary/40 transition-colors" data-tag="${t}" title="${t}">${display}</span>`;
+          }).join('')
         : `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-muted-foreground">未分类</span>`;
         
       a.innerHTML = `
@@ -212,6 +215,21 @@ if (notesData.length === 0) {
     });
     
     listEl.appendChild(fragment);
+    
+    // Enable clicking tags on cards to add them as filters
+    listEl.querySelectorAll('[data-tag]:not([data-tag-bound])').forEach(tagEl => {
+      tagEl.setAttribute('data-tag-bound', 'true');
+      tagEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const tag = tagEl.getAttribute('data-tag');
+        if (tag && !activeTags.includes(tag)) {
+          activeTags.push(tag);
+          renderTags();
+          filter();
+        }
+      });
+    });
   }
 
   function updateCountDisplay() {
@@ -258,11 +276,12 @@ if (notesData.length === 0) {
     if (!tagContainer) return;
     tagContainer.innerHTML = '';
     activeTags.forEach(tag => {
+      const display = tag.includes('/') ? tag.split('/').pop() : tag;
       const tagEl = document.createElement('span');
       tagEl.className = 'flex items-center gap-1 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-xs text-primary';
       tagEl.innerHTML = `
-        ${tag}
-        <button type="button" class="text-primary/70 hover:text-primary focus:outline-none" data-tag="${tag}">
+        ${display}
+        <button type="button" class="text-primary/70 hover:text-primary focus:outline-none" data-tag="${tag}" title="${tag}">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       `;

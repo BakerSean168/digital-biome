@@ -3,7 +3,7 @@ import { execSync } from 'child_process';
 import { notesConfig } from '../../notes.config';
 import type { Note, Bookmark, Category, NoteCollectionEntry } from '../types/notes';
 
-const WIKI_PATH = notesConfig.output.wiki; // e.g. 'src/content/wiki/obsidian'
+const NOTES_PATH = notesConfig.output.notes; // e.g. 'src/content/notes/obsidian'
 
 export async function getPublicNotes(): Promise<NoteCollectionEntry[]> {
   const allNotes = await getCollection('notes');
@@ -73,6 +73,11 @@ export async function getBookmarksByCategory(): Promise<Map<string, Bookmark[]>>
   return categoryMap;
 }
 
+/**
+ * 从层级标签中提取书签分类
+ * 书签笔记使用 website/ 前缀标签，例如 website/video, website/dev/tool
+ * 提取最后一段作为分类名
+ */
 function extractCategories(tags: string[]): string[] {
   return tags
     .filter(tag => tag.startsWith('website/'))
@@ -80,6 +85,57 @@ function extractCategories(tags: string[]): string[] {
       const parts = tag.replace('website/', '').split('/');
       return parts[parts.length - 1];
     });
+}
+
+/**
+ * 解析层级标签为结构化对象
+ * 例如 "tech/lang/typescript" → { root: "tech", path: ["tech", "lang", "typescript"], display: "typescript", full: "tech/lang/typescript" }
+ */
+export interface ParsedTag {
+  root: string;
+  path: string[];
+  display: string;
+  full: string;
+}
+
+export function parseHierarchicalTag(tag: string): ParsedTag {
+  const parts = tag.split('/');
+  return {
+    root: parts[0],
+    path: parts,
+    display: parts[parts.length - 1],
+    full: tag,
+  };
+}
+
+/**
+ * 从标签数组中提取顶层分类（root 维度去重）
+ * 用于侧边栏分类导航
+ */
+export function extractTagRoots(tags: string[]): string[] {
+  const roots = new Set<string>();
+  tags.forEach(tag => {
+    const root = tag.split('/')[0];
+    roots.add(root);
+  });
+  return Array.from(roots);
+}
+
+/**
+ * 获取所有笔记的标签统计（支持层级展示）
+ */
+export async function getAllNoteTags(): Promise<Map<string, number>> {
+  const notes = await getPublicNotes();
+  const tagMap = new Map<string, number>();
+
+  notes.forEach(note => {
+    const tags = note.data.tags || [];
+    tags.forEach((tag: string) => {
+      tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+    });
+  });
+
+  return tagMap;
 }
 
 export function getGitLastModified(filePath: string): Date | null {
@@ -104,7 +160,7 @@ export async function getRecentNotes(limit: number = 5): Promise<NoteCollectionE
   const notesWithModified = notes.map(note => {
     // note.id: "obsidian/foo/bar" → file: "src/content/wiki/obsidian/foo/bar.md"
     const relPath = note.id.replace(/^obsidian\//, '');
-    const filePath = `${WIKI_PATH}/${relPath}.md`;
+    const filePath = `${NOTES_PATH}/${relPath}.md`;
     return { note, lastModified: getGitLastModified(filePath) };
   });
 
@@ -115,7 +171,7 @@ export async function getRecentNotes(limit: number = 5): Promise<NoteCollectionE
     .map(({ note }) => note);
 }
 
-export function resolveWikiLink(
+export function resolveNoteLink(
   target: string,
   allNotes: NoteCollectionEntry[]
 ): { exists: boolean; slug?: string } {
