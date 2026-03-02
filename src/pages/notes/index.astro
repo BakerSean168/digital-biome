@@ -112,7 +112,7 @@ if (notesData.length === 0) {
     </div>
 
     <div class="flex items-center justify-between mb-4">
-      <div id="result-status" class="text-xs text-muted-foreground hidden">
+      <div id="result-status" class="text-xs text-muted-foreground">
         <span id="result-count">加载中...</span>
       </div>
     </div>
@@ -306,7 +306,9 @@ if (notesData.length === 0) {
     const filtered = notes.filter(note => {
       const matchesQuery = !query || 
                            note.title.toLowerCase().includes(query) || 
-                           (note.description || '').toLowerCase().includes(query);
+                           (note.description || '').toLowerCase().includes(query) ||
+                           note.id.toLowerCase().includes(query) ||
+                           (note.tags && note.tags.some(tag => tag.toLowerCase().includes(query)));
                            
       // All active tags must be present in the note's tags
       const matchesTags = activeTags.length === 0 || 

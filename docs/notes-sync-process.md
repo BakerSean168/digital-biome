@@ -28,6 +28,7 @@
 
 **配置文件 (`notes.config.ts`)**
 负责统一管理路径映射，指明了 `vault` 源路径和需要拷贝资源的输出路径，配置如下：
+
 - `vault.path`: 指向 `thought-forest/z`
 - `vault.assets`: 指向图片源目录
 - `output.wiki`: Markdown 目标的输出目录 `src/content/wiki/obsidian`
@@ -36,21 +37,23 @@
 ## 2. 同步与预处理 (`scripts/sync-obsidian.ts`)
 
 开发中可通过 `pnpm sync` 执行该脚本。脚本核心功能包括：
+
 1. **收集资产与图片复制**：将 `vault/assets/` 里的资源（如图片）拷贝到 `public/vault-assets/` 下。
 2. **重写图片路径 (`rewriteImagePaths`)**：
    - 识别 Obsidian 特有语法 (`![[image.png]]`) 并转换为标准 Markdown (`![image](/vault-assets/image.png)`)。
    - 更新标准 Markdown 的本地图片路径前缀，指向 `/vault-assets/`。
 3. **内容预处理 (`processContent`)**：
    - 读取原文件。如果文件缺乏 frontmatter（即不以 `---` 开头），则自动生成包裹文件名的 title 并在 frontmatter 中进行标准化补齐。
-   - 处理完的文件将被写入 `src/content/wiki/obsidian`。
+   - 处理完的文件将被写入 `src/content/notes/obsidian`。
 4. **清理过期文件 (`cleanStalledFiles`)**：检测 `wiki/obsidian` 内多余的或已经从 vault 删除的笔记，并进行清理，确保两端数据同步一致。
 
 ## 3. Astro 数据加载与 Schema 验证
 
-经过前置脚本同步后的 `.md` 文件此时均存放于 `src/content/wiki/obsidian`。随后 Astro 依靠 Content Collections API 加载并组织这些文件数据。
+经过前置脚本同步后的 `.md` 文件此时均存放于 `src/content/notes/obsidian`。随后 Astro 依靠 Content Collections API 加载并组织这些文件数据。
 
 **配置解析 (`src/content/config.ts`)**
-- **Glob Loader**：使用 `glob()` 指明加载范围为 `src/content/wiki/obsidian/**/*.md`，并自定义生成 `id`（例如：`obsidian/<filename>`）。
+
+- **Glob Loader**：使用 `glob()` 指明加载范围为 `src/content/note/obsidian/**/*.md`，并自定义生成 `id`（例如：`obsidian/<filename>`）。
 - **Schema Validation**：
   利用 `z.record(z.unknown()).transform(...)` 对 frontmatter 的字段提取并标准化。重要字段：
   - `title`: 标题。
@@ -63,16 +66,16 @@
 
 ## 4. 查询与筛选
 
-在业务代码（页面如 `/wiki` 等）中，可直接引入并获取所有的笔记数据：
+在业务代码（页面如 `/note` 等）中，可直接引入并获取所有的笔记数据：
 
 ```typescript
-import { getCollection } from 'astro:content';
+import { getCollection } from "astro:content";
 
 // 获取所有经过 Astro 解析处理的笔记
-const allNotes = await getCollection('notes');
+const allNotes = await getCollection("notes");
 
 // 基于 Frontmatter 内的配置筛选笔记，例如剔除草稿及私有笔记：
-const publishedNotes = allNotes.filter(note => {
+const publishedNotes = allNotes.filter((note) => {
   return !note.data.draft && !note.data.private;
 });
 ```
