@@ -174,11 +174,11 @@ export function getGitLastModified(filePath: string): Date | null {
 export async function getRecentNotes(limit: number = 5): Promise<NoteCollectionEntry[]> {
   const notes = await getPublicNotes();
 
-  // note.id = "obsidian/filename"，对应文件在 WIKI_PATH/filename.md
+  // note.id = "obsidian/filename"，对应文件在 src/data/obsidian/filename.md
   // 但 git log 要查的是 thought-forest submodule 中的原始文件（更准确）
   // 或者查同步后的文件，两者 mtime 相同，用同步后的路径即可
   const notesWithModified = notes.map(note => {
-    // note.id: "obsidian/foo/bar" → file: "src/content/wiki/obsidian/foo/bar.md"
+    // note.id: "obsidian/foo/bar" → file: "src/data/obsidian/foo/bar.md"
     const relPath = note.id.replace(/^obsidian\//, '');
     const filePath = `${NOTES_PATH}/${relPath}.md`;
     return { note, lastModified: getGitLastModified(filePath) };
