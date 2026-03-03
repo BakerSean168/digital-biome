@@ -40,7 +40,7 @@ const {
       <span class="text-xs text-muted-foreground"><kbd class="bg-card-hover px-1.5 py-0.5 rounded border border-border mr-1 font-mono">tr</kbd>翻译</span>
       <span class="text-xs text-muted-foreground"><kbd class="bg-card-hover px-1.5 py-0.5 rounded border border-border mr-1 font-mono">g</kbd>Google</span>
       <span class="text-xs text-muted-foreground"><kbd class="bg-card-hover px-1.5 py-0.5 rounded border border-border mr-1 font-mono">gh</kbd>GitHub</span>
-      <span class="text-xs text-muted-foreground"><kbd class="bg-card-hover px-1.5 py-0.5 rounded border border-border mr-1 font-mono">w</kbd>Wiki</span>
+      <span class="text-xs text-muted-foreground"><kbd class="bg-card-hover px-1.5 py-0.5 rounded border border-border mr-1 font-mono">n</kbd>笔记</span>
     </div>
   </div>
 </div>
@@ -54,7 +54,7 @@ const {
     'g': (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
     'gh': (q) => `https://github.com/search?q=${encodeURIComponent(q)}`,
     'b': (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
-    'w': (q) => `https://zh.wikipedia.org/wiki/${encodeURIComponent(q)}`,
+    'n': (q) => `/notes?q=${encodeURIComponent(q)}`,
     'yt': (q) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
   };
 

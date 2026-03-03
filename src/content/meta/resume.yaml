@@ -62,7 +62,7 @@ skills:
 projects:
   - name: Digital Biome
     tech: Astro • TypeScript • CSS
-    description: 个人知识管理与展示平台，集成 Dashboard、Wiki、简历三位一体
+    description: 个人知识管理与展示平台，集成 Dashboard、笔记、简历三位一体
     url: https://yoursite.com
 
   - name: Another Project
