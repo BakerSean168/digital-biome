@@ -33,13 +33,3 @@ export const NOTES_CONFIG = {
   tagsPerPage: 20,
 };
 
-// 资源分类配置 (用于首页导航索引)
-export const RESOURCE_TYPES = [
-  "video",
-  "ai",
-  "download",
-  "game",
-  "music",
-  "ops",
-  "design",
-];

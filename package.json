@@ -21,6 +21,7 @@
     "astro": "^5.16.9",
     "mdast": "^3.0.0",
     "tailwindcss": "^4.2.1",
+    "undici": "^7.22.0",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0"
   },

@@ -28,7 +28,9 @@ const { name, bookmarks } = Astro.props;
       } catch (e) {
         // keep fallback domain
       }
-      const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+      const localIconUrl = `/favicons/${domain}.png`;
+      const fallbackIconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
       return (
         <div class="relative group/card flex flex-col items-center gap-2 w-full">
@@ -42,10 +44,11 @@ const { name, bookmarks } = Astro.props;
               {bookmark.icon
                 ? <Fragment set:html={bookmark.icon} />
                 : <img
-                    src={iconUrl}
+                    src={localIconUrl}
                     alt={`${bookmark.title} favicon`}
                     class="w-7 h-7 object-contain transition-transform duration-300 group-hover:scale-110"
                     loading="lazy"
+                    onerror={`this.onerror=null; this.src='${fallbackIconUrl}';`}
                   />
               }
             </div>
