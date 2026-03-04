@@ -19,6 +19,7 @@
 import fs from 'fs';
 import path from 'path';
 import { notesConfig } from '../notes.config';
+import { fetch } from 'undici';
 
 const VAULT_PATH = path.join(process.cwd(), notesConfig.vault.path);
 const ASSETS_SRC = path.join(process.cwd(), notesConfig.vault.assets);
@@ -33,6 +34,7 @@ interface SyncStats {
   cleaned: number;
   skipped: number;
   assetsCopied: number;
+  faviconsCached: number;
   errors: string[];
 }
 
@@ -86,6 +88,37 @@ function rewriteImagePaths(content: string): string {
   );
 
   return content;
+}
+
+// ---------------------------------------------------------------------------
+// Favicon Caching
+// ---------------------------------------------------------------------------
+
+const FAVICONS_DEST = path.join(process.cwd(), 'public', 'favicons');
+
+async function cacheFavicon(urlStr: string, stats: SyncStats): Promise<void> {
+  if (!urlStr) return;
+  try {
+    const domain = new URL(urlStr).hostname;
+    if (!fs.existsSync(FAVICONS_DEST)) {
+      fs.mkdirSync(FAVICONS_DEST, { recursive: true });
+    }
+    const destPath = path.join(FAVICONS_DEST, `${domain}.png`);
+    if (fs.existsSync(destPath)) {
+      return; // Already cached
+    }
+    const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    const res = await fetch(iconUrl);
+    if (res.ok) {
+      const arrayBuffer = await res.arrayBuffer();
+      fs.writeFileSync(destPath, Buffer.from(arrayBuffer));
+      stats.faviconsCached++;
+    } else {
+      stats.errors.push(`Failed to fetch favicon for ${domain}: ${res.statusText}`);
+    }
+  } catch (err) {
+    stats.errors.push(`Error caching favicon for url ${urlStr}: ${err}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -262,7 +295,7 @@ function syncAssets(stats: SyncStats): void {
 /**
  * 递归复制所有 .md 文件（处理内容后写入）
  */
-function syncFiles(srcDir: string, destDir: string, stats: SyncStats): void {
+async function syncFiles(srcDir: string, destDir: string, stats: SyncStats): Promise<void> {
   if (!fs.existsSync(srcDir)) {
     console.error(`Vault 目录不存在: ${srcDir}`);
     console.log(`请在 notes.config.ts 中配置正确的 vault.path`);
@@ -283,10 +316,17 @@ function syncFiles(srcDir: string, destDir: string, stats: SyncStats): void {
     const stat = fs.statSync(srcPath);
 
     if (stat.isDirectory()) {
-      syncFiles(srcPath, destPath, stats);
+      await syncFiles(srcPath, destPath, stats);
     } else if (file.endsWith('.md')) {
       try {
         let content = fs.readFileSync(srcPath, 'utf-8');
+
+        // Extract URL for favicon caching
+        const urlMatch = content.match(/^url:\s*['"]?([^'"\n]+)['"]?/m);
+        if (urlMatch && urlMatch[1]) {
+           await cacheFavicon(urlMatch[1], stats);
+        }
+
         content = processContent(content, file);
         fs.writeFileSync(destPath, content, 'utf-8');
         stats.copied++;
@@ -359,7 +399,7 @@ async function main(): Promise<void> {
   console.log(`  assets: ${ASSETS_SRC} -> ${ASSETS_DEST}`);
   console.log(`  dest  : ${NOTES_DEST}\n`);
 
-  const stats: SyncStats = { copied: 0, cleaned: 0, skipped: 0, assetsCopied: 0, errors: [] };
+  const stats: SyncStats = { copied: 0, cleaned: 0, skipped: 0, assetsCopied: 0, faviconsCached: 0, errors: [] };
 
   // Copy images to public/vault-assets/
   syncAssets(stats);
@@ -371,11 +411,11 @@ async function main(): Promise<void> {
   cleanStalledFiles(NOTES_DEST, vaultFiles, stats);
 
   // 同步最新文件（含图片路径重写）
-  syncFiles(VAULT_PATH, NOTES_DEST, stats);
+  await syncFiles(VAULT_PATH, NOTES_DEST, stats);
 
   console.log(
     `\nDone: ${stats.copied} notes copied, ${stats.assetsCopied} assets copied, ` +
-    `${stats.cleaned} cleaned, ${stats.skipped} skipped`
+    `${stats.faviconsCached} favicons cached, ${stats.cleaned} cleaned, ${stats.skipped} skipped`
   );
 
   if (stats.errors.length > 0) {

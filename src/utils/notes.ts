@@ -1,7 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { execSync } from 'child_process';
 import { notesConfig } from '../../notes.config';
-import { RESOURCE_TYPES } from '../constants';
 import type { Note, Bookmark, Category, NoteCollectionEntry } from '../types/notes';
 
 const NOTES_PATH = notesConfig.output.notes; // e.g. 'src/content/notes/obsidian'
@@ -20,8 +19,18 @@ export async function getPublicNotes(): Promise<NoteCollectionEntry[]> {
   }) as NoteCollectionEntry[];
 }
 
+export async function getResourceTypes(): Promise<string[]> {
+  const allNotes = await getCollection('notes');
+  const configNote = allNotes.find(n => n.id === 'obsidian/config/dashboard-resource-types' || n.id === 'obsidian/config/dashboard-resource-types.md');
+  if (configNote && configNote.data && configNote.data.tags) {
+     return configNote.data.tags.map((t: string) => t.toLowerCase());
+  }
+  return [];
+}
+
 export async function getBookmarks(): Promise<Bookmark[]> {
   const notes = await getPublicNotes();
+  const resourceTypes = await getResourceTypes();
 
   return notes
     .filter(note => {
@@ -31,7 +40,7 @@ export async function getBookmarks(): Promise<Bookmark[]> {
       
       // Keep support for legacy 'type/resource' and 'website/xxx' tags as well as new logic
       const isLegacy = note.data.url && tags.some((tag: string) => tag === 'type/resource');
-      const isNew = note.data.url && hasWebsite && hasResource && extractCategories(tags).length > 0;
+      const isNew = note.data.url && hasWebsite && hasResource && extractCategories(tags, resourceTypes).length > 0;
       
       return isLegacy || isNew;
     })
@@ -39,7 +48,7 @@ export async function getBookmarks(): Promise<Bookmark[]> {
       title: note.data.title,
       url: note.data.url!,
       description: note.data.description,
-      categories: extractCategories(note.data.tags || []),
+      categories: extractCategories(note.data.tags || [], resourceTypes),
       icon: note.data.icon,
       slug: note.id,
     }));
@@ -47,10 +56,11 @@ export async function getBookmarks(): Promise<Bookmark[]> {
 
 export async function getCategories(): Promise<Category[]> {
   const notes = await getPublicNotes();
+  const resourceTypes = await getResourceTypes();
   const categoryMap = new Map<string, number>();
 
   notes.forEach(note => {
-    const cats = extractCategories(note.data.tags || []);
+    const cats = extractCategories(note.data.tags || [], resourceTypes);
     cats.forEach(cat => {
       categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
     });
@@ -84,9 +94,9 @@ export async function getBookmarksByCategory(): Promise<Map<string, Bookmark[]>>
 /**
  * 提取书签分类
  * 支持传统层级标签 (如 website/video)
- * 和基于 RESOURCE_TYPES 匹配的扁平标签
+ * 和基于资源类型匹配的扁平标签
  */
-function extractCategories(tags: string[]): string[] {
+function extractCategories(tags: string[], resourceTypes: string[]): string[] {
   const categories = new Set<string>();
 
   tags.forEach(tag => {
@@ -99,7 +109,7 @@ function extractCategories(tags: string[]): string[] {
     }
     
     // New logic: check against configured resource types
-    if (RESOURCE_TYPES.includes(lowerTag)) {
+    if (resourceTypes.includes(lowerTag)) {
       categories.add(lowerTag);
     }
   });
