@@ -7,9 +7,11 @@ import remarkWikilinks from './src/utils/remark-wikilinks.ts';
 
 import tailwindcss from '@tailwindcss/vite';
 
+import cloudflare from '@astrojs/cloudflare';
+
 // https://astro.build/config
 export default defineConfig({
-  adapter: netlify(),
+  adapter: cloudflare(),
 
   site: process.env.PUBLIC_SITE_URL || 'https://digital-biome.netlify.app/',
 
