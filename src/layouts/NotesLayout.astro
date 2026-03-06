@@ -17,7 +17,7 @@ const {
   description = '个人知识生态网站',
   headings = [],
   currentSlug = '',
-  showSidebar = true,
+  showSidebar = false,
   showToc = true,
 } = Astro.props;
 
@@ -43,8 +43,8 @@ const hasToc = showToc && headings.length > 0;
       </aside>
     )}
 
-    <main class="py-6 md:py-8 lg:py-10 min-w-0 max-w-3xl w-full mx-auto">
-      <article class="w-full text-foreground/90 leading-relaxed">
+    <main class="py-6 md:py-8 lg:py-10 min-w-0 max-w-3xl w-full mx-auto">      
+        <article class="w-full text-foreground/90 leading-relaxed">
         <div class="w-full text-base">
           <slot />
         </div>
