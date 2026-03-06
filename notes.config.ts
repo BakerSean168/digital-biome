@@ -15,6 +15,12 @@ export const notesConfig = {
     /** 笔记仓库路径，支持相对路径或绝对路径 */
     path: 'thought-forest/z',
 
+    /**
+     * Dashboard 等配置文件目录（同步到 obsidian/config/ 子目录）
+     * 这里的文件会被同步到 output.notes/config/ 以供内容集合读取
+     */
+    configPath: 'thought-forest/config',
+
     /** 图片资源目录（Obsidian vault 的 assets 文件夹） */
     assets: 'thought-forest/assets',
     

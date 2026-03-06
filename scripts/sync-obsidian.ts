@@ -26,6 +26,12 @@ const ASSETS_SRC = path.join(process.cwd(), notesConfig.vault.assets);
 const NOTES_DEST = path.join(process.cwd(), notesConfig.output.notes);
 const ASSETS_DEST = path.join(process.cwd(), notesConfig.output.assets);
 
+// 可选：dashboard 等配置文件目录（同步到 NOTES_DEST/config/ 子目录）
+const CONFIG_SRC = notesConfig.vault.configPath
+  ? path.join(process.cwd(), notesConfig.vault.configPath)
+  : null;
+const CONFIG_DEST = path.join(NOTES_DEST, 'config');
+
 // URL prefix used in rewritten markdown image paths
 const ASSETS_URL_PREFIX = '/vault-assets';
 
@@ -396,6 +402,7 @@ function removeEmptyDirs(dir: string): void {
 async function main(): Promise<void> {
   console.log('Syncing Obsidian notes...');
   console.log(`  vault : ${VAULT_PATH}`);
+  if (CONFIG_SRC) console.log(`  config: ${CONFIG_SRC} -> ${CONFIG_DEST}`);
   console.log(`  assets: ${ASSETS_SRC} -> ${ASSETS_DEST}`);
   console.log(`  dest  : ${NOTES_DEST}\n`);
 
@@ -404,14 +411,26 @@ async function main(): Promise<void> {
   // Copy images to public/vault-assets/
   syncAssets(stats);
 
-  // 收集 vault 中所有文件（用于清理对比）
+  // 收集 vault 中所有文件（用于清理对比)
+  // 同时将 config 目录文件加入期望集，防止 cleanStalledFiles 误删
   const vaultFiles = collectFiles(VAULT_PATH, VAULT_PATH);
+  if (CONFIG_SRC && fs.existsSync(CONFIG_SRC)) {
+    const configFiles = collectFiles(CONFIG_SRC, CONFIG_SRC);
+    for (const f of configFiles) {
+      vaultFiles.add(path.join('config', f));
+    }
+  }
 
   // 清理 dest 中已失效的文件
   cleanStalledFiles(NOTES_DEST, vaultFiles, stats);
 
   // 同步最新文件（含图片路径重写）
   await syncFiles(VAULT_PATH, NOTES_DEST, stats);
+
+  // 同步 config 目录（dashboard 配置笔记等）
+  if (CONFIG_SRC && fs.existsSync(CONFIG_SRC)) {
+    await syncFiles(CONFIG_SRC, CONFIG_DEST, stats);
+  }
 
   console.log(
     `\nDone: ${stats.copied} notes copied, ${stats.assetsCopied} assets copied, ` +
