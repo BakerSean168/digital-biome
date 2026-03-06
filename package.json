@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "pnpm sync && astro dev",
     "dev:pull": "git submodule update --remote --merge && pnpm sync && astro dev",
-    "build": "astro build && pagefind --site dist",
+    "build": "pnpm sync && astro build && pagefind --site dist",
     "preview": "astro preview",
     "sync": "tsx scripts/sync-obsidian.ts",
     "pull-notes": "git submodule update --remote --merge",
