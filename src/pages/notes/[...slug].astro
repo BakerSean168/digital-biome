@@ -4,10 +4,12 @@ import NotesLayout from '../../layouts/NotesLayout.astro';
 import Backlinks from '../../components/notes/Backlinks.astro';
 
 export async function getStaticPaths() {
-  const entries = await getCollection('notes', ({ data }) => !data.draft && !(data as any).private);
+  const entries = await getCollection('notes', ({ id, data }) => {
+    return !data.draft && !(data as any).private && (id.startsWith('zh/') || !id.includes('/'));
+  });
 
   return entries.map((entry) => ({
-    params: { slug: entry.id },
+    params: { slug: entry.id.replace(/^zh\//, '') },
     props: { entry },
   }));
 }

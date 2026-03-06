@@ -1,0 +1,22 @@
+---
+/**
+ * Home - Navigation Index
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SearchBox from '../../components/dashboard/SearchBox.astro';
+import BookmarkGrid from '../../components/dashboard/BookmarkGrid.astro';
+import { SITE_NAME } from '../../constants';
+---
+
+<BaseLayout title={SITE_NAME} bodyClass="bg-background min-h-screen relative overflow-x-hidden">
+  <!-- Decorative background glow -->
+  <div class="fixed top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen dark:mix-blend-lighten hidden md:block"></div>
+  <div class="fixed top-[10%] right-[-20%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] pointer-events-none -z-10 md:hidden"></div>
+
+  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-12 md:pt-20">
+    <SearchBox placeholder="Search..." />
+    <div class="mt-16">
+      <BookmarkGrid />
+    </div>
+  </main>
+</BaseLayout>
