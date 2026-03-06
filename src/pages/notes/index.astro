@@ -2,7 +2,7 @@
 import NotesLayout from '../../layouts/NotesLayout.astro';
 import { Search, ChevronDown, Clock } from '@lucide/astro';
 import { getCollection } from 'astro:content';
-import { getLangFromUrl } from '../../i18n/utils';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
 
 // @ts-ignore - content collections generated at build time
 type NoteEntry = {
@@ -19,11 +19,11 @@ type NoteEntry = {
 };
 
 const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
 const allNotes: NoteEntry[] = await (
   getCollection as unknown as (collection: string, filter?: (opts: any) => boolean) => Promise<NoteEntry[]>
-)('notes', ({ id }) => {
-  return id.startsWith(`${lang}/`) || !id.includes('/'); // Fallback to include items without language folder
-});
+)('notes', () => true); // Include all notes regardless of lang
 
 // Format date utility
 function formatDate(date: string | Date | null | undefined): string {
@@ -71,17 +71,24 @@ if (notesData.length === 0) {
     });
   }
 }
+
+// Export translations to client side
+const i18nStrings = {
+  totalCount: t('notes.totalCount'),
+  searchCount: t('notes.searchCount'),
+  uncategorized: t('notes.uncategorized'),
+};
 ---
 
-<NotesLayout title="Notes" description="我的数字花园" showSidebar={false} showToc={false}>
+<NotesLayout title="Notes" description={t('notes.description')} showSidebar={false} showToc={false}>
   <!-- Decorative background glow -->
   <div class="fixed top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen dark:mix-blend-lighten hidden md:block"></div>
 
   <section class="max-w-6xl mx-auto px-4 md:px-6 py-12">
     <div class="mb-10">
-      <h1 class="text-4xl font-bold text-foreground mb-4">Notes</h1>
-      <h2 class="text-xl font-medium text-foreground mb-2">知识森林</h2>
-      <p class="text-sm text-muted-foreground">在这里记录技术、生活与思考的碎片。</p>
+      <h1 class="text-4xl font-bold text-foreground mb-4">{t('notes.title')}</h1>
+      <h2 class="text-xl font-medium text-foreground mb-2">{t('notes.subtitle')}</h2>
+      <p class="text-sm text-muted-foreground">{t('notes.description')}</p>
     </div>
 
     <!-- Search & Filter Controls -->
@@ -94,7 +101,7 @@ if (notesData.length === 0) {
         <input
           id="title-search"
           type="search"
-          placeholder="按标题搜索"
+          placeholder={t('notes.searchPlaceholder')}
           autocomplete="off"
           class="w-full pl-4 pr-12 py-2.5 bg-card/40 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
         />
@@ -108,7 +115,7 @@ if (notesData.length === 0) {
         <input
           id="tag-search"
           type="text"
-          placeholder="输入标签按回车"
+          placeholder={t('notes.tagPlaceholder')}
           autocomplete="off"
           class="flex-1 min-w-[100px] bg-transparent border-none text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 p-0 m-0"
         />
@@ -117,7 +124,7 @@ if (notesData.length === 0) {
 
     <div class="flex items-center justify-between mb-4">
       <div id="result-status" class="text-xs text-muted-foreground">
-        <span id="result-count">加载中...</span>
+        <span id="result-count">{t('notes.loading')}</span>
       </div>
     </div>
 
@@ -133,20 +140,20 @@ if (notesData.length === 0) {
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
           <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
         </span>
-        <span class="text-sm">加载更多...</span>
+        <span class="text-sm">{t('notes.loadMore')}</span>
       </div>
     </div>
 
     <div id="empty-msg" class="hidden text-center py-20 text-muted-foreground">
-      <p class="mb-4">没有找到匹配的笔记</p>
+      <p class="mb-4">{t('notes.noMatch')}</p>
       <button id="clear-filters" class="px-4 py-2 border border-border rounded-lg hover:bg-card-hover transition-colors text-sm">
-        清除搜索
+        {t('notes.clearSearch')}
       </button>
     </div>
   </section>
 </NotesLayout>
 
-<script define:vars={{ notesData }}>
+<script define:vars={{ notesData, i18nStrings }}>
   const notes = notesData;
   const listEl = document.getElementById('notes-list');
   const emptyEl = document.getElementById('empty-msg');
@@ -202,7 +209,7 @@ if (notesData.length === 0) {
             const display = t.includes('/') ? t.split('/').pop() : t;
             return `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-foreground cursor-pointer hover:border-primary/40 transition-colors" data-tag="${t}" title="${t}">${display}</span>`;
           }).join('')
-        : `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-muted-foreground">未分类</span>`;
+        : `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-muted-foreground">${i18nStrings.uncategorized}</span>`;
         
       a.innerHTML = `
         <div class="mb-4 flex flex-wrap gap-2">
@@ -238,9 +245,11 @@ if (notesData.length === 0) {
 
   function updateCountDisplay() {
     if(countEl) {
-        countEl.textContent = currentFilteredNotes.length === notes.length 
-        ? `共 ${currentFilteredNotes.length} 篇笔记 (已显示 ${displayCount})` 
-        : `搜索结果: ${currentFilteredNotes.length} 篇 (已显示 ${displayCount})`;
+        if (currentFilteredNotes.length === notes.length) {
+            countEl.textContent = i18nStrings.totalCount.replace('{total}', currentFilteredNotes.length).replace('{count}', displayCount);
+        } else {
+            countEl.textContent = i18nStrings.searchCount.replace('{total}', currentFilteredNotes.length).replace('{count}', displayCount);
+        }
     }
   }
 

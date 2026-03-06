@@ -1,91 +1,375 @@
 ---
-// Notes Index
-import BaseLayout from '../../../layouts/BaseLayout.astro';
+import NotesLayout from '../../../layouts/NotesLayout.astro';
+import { Search, ChevronDown, Clock } from '@lucide/astro';
 import { getCollection } from 'astro:content';
-import { FileText, Calendar, Folder } from '@lucide/astro';
-import { SITE_NAME } from '../../../constants';
-import { formatDate } from '../../../utils/date';
+import { getLangFromUrl, useTranslations } from '../../../i18n/utils';
 
-// Filter notes to only include English ones if applicable.
-// If your content structure doesn't use `en/` subfolders yet, it will just show all notes.
-import { getLangFromUrl } from '../../../i18n/utils';
+// @ts-ignore - content collections generated at build time
+type NoteEntry = {
+  id: string;
+  data: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    created?: string | Date;
+    updated?: string | Date;
+    draft?: boolean;
+    private?: boolean;
+  };
+};
+
 const lang = getLangFromUrl(Astro.url);
-const allNotes = await getCollection('notes', ({ id }) => {
-  return id.startsWith(`${lang}/`) || !id.includes('/'); // fallback if no folders yet
+const t = useTranslations(lang);
+
+const allNotes: NoteEntry[] = await (
+  getCollection as unknown as (collection: string, filter?: (opts: any) => boolean) => Promise<NoteEntry[]>
+)('notes', () => true); // Include all notes regardless of lang
+
+// Format date utility
+function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '2天前'; // Fallback for mockup
+  const d = new Date(date);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - d.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 30) return `${diffDays}天前`;
+  return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+}
+
+// Serialize notes to JSON for client-side filtering
+const notesData = allNotes
+  .filter(e => !e.data.draft && !e.data.private)
+  .map(e => ({
+    id: e.id,
+    title: e.data.title || e.id.split('/').pop()?.replace(/-/g, ' ') || e.id,
+    description: e.data.description || '',
+    tags: e.data.tags || [],
+    date: formatDate(e.data.updated || e.data.created),
+    rawDate: e.data.updated || e.data.created || null,
+  }));
+
+// Sort by date (newest first)
+notesData.sort((a, b) => {
+  const aTime = a.rawDate ? new Date(a.rawDate).getTime() : 0;
+  const bTime = b.rawDate ? new Date(b.rawDate).getTime() : 0;
+  return bTime - aTime;
 });
 
-// Sort notes by date (newest first)
-const sortedNotes = allNotes
-  .filter(note => note.data.date) // Ensure note has a date
-  .sort((a, b) => new Date(b.data.date!).getTime() - new Date(a.data.date!).getTime());
+// Fallback mock data if no notes exist
+if (notesData.length === 0) {
+  for (let i = 0; i < 8; i++) {
+    notesData.push({
+      id: `mock-note-${i}`,
+      title: '示例笔记',
+      description: '这是一大段描述，用来描述笔记的内容...',
+      tags: ['示例', '标签'],
+      date: '2天前',
+      rawDate: new Date().toISOString()
+    });
+  }
+}
 
-// Group notes by year
-const groupedNotes = sortedNotes.reduce((acc, note) => {
-  const year = new Date(note.data.date!).getFullYear().toString();
-  if (!acc[year]) acc[year] = [];
-  acc[year].push(note);
-  return acc;
-}, {} as Record<string, typeof sortedNotes>);
-
-const years = Object.keys(groupedNotes).sort((a, b) => Number(b) - Number(a));
+// Export translations to client side
+const i18nStrings = {
+  totalCount: t('notes.totalCount'),
+  searchCount: t('notes.searchCount'),
+  uncategorized: t('notes.uncategorized'),
+};
 ---
 
-<BaseLayout title={`Notes | ${SITE_NAME}`} description="My Digital Garden">
-  <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <div class="mb-12">
-      <h1 class="text-4xl font-bold text-foreground mb-4">Digital Garden</h1>
-      <p class="text-lg text-muted-foreground">
-        A collection of my thoughts, learning notes, and code experiments.
-        Constantly growing and evolving.
-      </p>
+<NotesLayout title="Notes" description={t('notes.description')} showSidebar={false} showToc={false}>
+  <!-- Decorative background glow -->
+  <div class="fixed top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen dark:mix-blend-lighten hidden md:block"></div>
+
+  <section class="max-w-6xl mx-auto px-4 md:px-6 py-12">
+    <div class="mb-10">
+      <h1 class="text-4xl font-bold text-foreground mb-4">{t('notes.title')}</h1>
+      <h2 class="text-xl font-medium text-foreground mb-2">{t('notes.subtitle')}</h2>
+      <p class="text-sm text-muted-foreground">{t('notes.description')}</p>
     </div>
 
-    {years.length === 0 ? (
-      <div class="text-center py-12 text-muted-foreground bg-background-secondary rounded-lg border border-border">
-        <Folder size={48} class="mx-auto mb-4 opacity-50" />
-        <p>No notes published yet.</p>
+    <!-- Search & Filter Controls -->
+    <div class="flex flex-col md:flex-row gap-4 mb-10">
+      <!-- Search Bar -->
+      <div class="relative flex-1 max-w-2xl">
+        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+          <Search class="text-muted-foreground" size={18} />
+        </div>
+        <input
+          id="title-search"
+          type="search"
+          placeholder={t('notes.searchPlaceholder')}
+          autocomplete="off"
+          class="w-full pl-4 pr-12 py-2.5 bg-card/40 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
+        />
       </div>
-    ) : (
-      <div class="space-y-12">
-        {years.map(year => (
-          <section>
-            <h2 class="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-              <span class="text-primary">#</span> {year}
-            </h2>
-            <div class="flex flex-col gap-4">
-              {groupedNotes[year].map(note => (
-                <a
-                  href={`/en/notes/${note.slug}`}
-                  class="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-background-secondary hover:bg-card-hover border border-transparent hover:border-border transition-all"
-                >
-                  <div class="flex items-center gap-3 mb-2 sm:mb-0">
-                    <FileText size={20} class="text-primary shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <h3 class="text-foreground font-medium group-hover:text-primary transition-colors line-clamp-1">
-                      {note.data.title}
-                    </h3>
-                  </div>
 
-                  <div class="flex items-center gap-4 text-sm text-muted-foreground shrink-0 pl-8 sm:pl-0">
-                    {note.data.tags && note.data.tags.length > 0 && (
-                      <div class="hidden md:flex gap-2">
-                        {note.data.tags.slice(0, 2).map(tag => (
-                          <span class="px-2 py-0.5 rounded-md bg-background border border-border text-xs">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <span class="flex items-center gap-1.5 min-w-[100px] justify-end">
-                      <Calendar size={14} />
-                      {formatDate(note.data.date!)}
-                    </span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-        ))}
+      <!-- Tag Filter Input -->
+      <div class="relative w-full md:w-80 flex flex-wrap items-center gap-2 px-3 py-2 bg-card/40 border border-border rounded-lg focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-colors cursor-text" id="tag-input-wrapper">
+        <div id="tag-container" class="flex flex-wrap gap-2">
+          <!-- tags will be injected here -->
+        </div>
+        <input
+          id="tag-search"
+          type="text"
+          placeholder={t('notes.tagPlaceholder')}
+          autocomplete="off"
+          class="flex-1 min-w-[100px] bg-transparent border-none text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 p-0 m-0"
+        />
       </div>
-    )}
-  </main>
-</BaseLayout>
+    </div>
+
+    <div class="flex items-center justify-between mb-4">
+      <div id="result-status" class="text-xs text-muted-foreground">
+        <span id="result-count">{t('notes.loading')}</span>
+      </div>
+    </div>
+
+    <!-- Notes Grid -->
+    <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- populated by client-side JS -->
+    </div>
+
+    <!-- Load More Sentinel -->
+    <div id="load-more-sentinel" class="w-full h-20 mt-8 flex items-center justify-center hidden">
+      <div class="flex items-center gap-2 text-muted-foreground">
+        <span class="relative flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+        </span>
+        <span class="text-sm">{t('notes.loadMore')}</span>
+      </div>
+    </div>
+
+    <div id="empty-msg" class="hidden text-center py-20 text-muted-foreground">
+      <p class="mb-4">{t('notes.noMatch')}</p>
+      <button id="clear-filters" class="px-4 py-2 border border-border rounded-lg hover:bg-card-hover transition-colors text-sm">
+        {t('notes.clearSearch')}
+      </button>
+    </div>
+  </section>
+</NotesLayout>
+
+<script define:vars={{ notesData, i18nStrings }}>
+  const notes = notesData;
+  const listEl = document.getElementById('notes-list');
+  const emptyEl = document.getElementById('empty-msg');
+  const countEl = document.getElementById('result-count');
+  const titleInput = document.getElementById('title-search');
+  const clearBtn = document.getElementById('clear-filters');
+  const tagInput = document.getElementById('tag-search');
+  const tagContainer = document.getElementById('tag-container');
+  const tagInputWrapper = document.getElementById('tag-input-wrapper');
+  const sentinel = document.getElementById('load-more-sentinel');
+
+  let activeTags = [];
+  let currentFilteredNotes = [];
+  let displayCount = 0;
+  const BATCH_SIZE = 12;
+
+  // Intersection Observer for infinite scrolling
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      loadMore();
+    }
+  }, { rootMargin: '200px' });
+
+  function loadMore() {
+    if (displayCount >= currentFilteredNotes.length) {
+      sentinel?.classList.add('hidden');
+      return;
+    }
+
+    const nextBatch = currentFilteredNotes.slice(displayCount, displayCount + BATCH_SIZE);
+    appendNotes(nextBatch);
+    displayCount += nextBatch.length;
+
+    if (displayCount >= currentFilteredNotes.length) {
+      sentinel?.classList.add('hidden');
+    }
+
+    updateCountDisplay();
+  }
+
+  function appendNotes(batch) {
+    if (!listEl) return;
+
+    const fragment = document.createDocumentFragment();
+
+    batch.forEach(note => {
+      const a = document.createElement('a');
+      a.href = note.id.startsWith('mock-note') ? '#' : encodeURI(`/notes/${note.id}`);
+      a.className = 'group flex flex-col p-6 bg-card border border-border rounded-2xl transition-all duration-300 hover:border-primary/40 hover:bg-card-hover';
+
+      const tagsHtml = note.tags && note.tags.length > 0
+        ? note.tags.map(t => {
+            const display = t.includes('/') ? t.split('/').pop() : t;
+            return `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-foreground cursor-pointer hover:border-primary/40 transition-colors" data-tag="${t}" title="${t}">${display}</span>`;
+          }).join('')
+        : `<span class="inline-block px-2.5 py-1 bg-pane border border-border rounded-md text-[10px] font-medium text-muted-foreground">${i18nStrings.uncategorized}</span>`;
+
+      a.innerHTML = `
+        <div class="mb-4 flex flex-wrap gap-2">
+          ${tagsHtml}
+        </div>
+        <h3 class="text-lg font-semibold text-foreground mb-3 line-clamp-1 group-hover:text-primary transition-colors">${note.title}</h3>
+        <p class="text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed flex-grow">${note.description}</p>
+        <div class="flex items-center gap-1.5 text-xs text-muted-foreground mt-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>${note.date}</span>
+        </div>
+      `;
+      fragment.appendChild(a);
+    });
+
+    listEl.appendChild(fragment);
+
+    // Enable clicking tags on cards to add them as filters
+    listEl.querySelectorAll('[data-tag]:not([data-tag-bound])').forEach(tagEl => {
+      tagEl.setAttribute('data-tag-bound', 'true');
+      tagEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const tag = tagEl.getAttribute('data-tag');
+        if (tag && !activeTags.includes(tag)) {
+          activeTags.push(tag);
+          renderTags();
+          filter();
+        }
+      });
+    });
+  }
+
+  function updateCountDisplay() {
+    if(countEl) {
+        if (currentFilteredNotes.length === notes.length) {
+            countEl.textContent = i18nStrings.totalCount.replace('{total}', currentFilteredNotes.length).replace('{count}', displayCount);
+        } else {
+            countEl.textContent = i18nStrings.searchCount.replace('{total}', currentFilteredNotes.length).replace('{count}', displayCount);
+        }
+    }
+  }
+
+  function renderNotes(filtered) {
+    if (!listEl) return;
+
+    currentFilteredNotes = filtered;
+    displayCount = 0;
+    listEl.innerHTML = '';
+
+    if (filtered.length === 0) {
+      listEl.classList.add('hidden');
+      sentinel?.classList.add('hidden');
+      if(emptyEl) emptyEl.classList.remove('hidden');
+      if(countEl) countEl.textContent = `0 / ${notes.length}`;
+      return;
+    }
+
+    listEl.classList.remove('hidden');
+    if(emptyEl) emptyEl.classList.add('hidden');
+
+    // Initial load
+    loadMore();
+
+    // Start observing sentinel
+    if (sentinel) {
+      if (displayCount < currentFilteredNotes.length) {
+        sentinel.classList.remove('hidden');
+        observer.observe(sentinel);
+      } else {
+        sentinel.classList.add('hidden');
+      }
+    }
+  }
+
+  function renderTags() {
+    if (!tagContainer) return;
+    tagContainer.innerHTML = '';
+    activeTags.forEach(tag => {
+      const display = tag.includes('/') ? tag.split('/').pop() : tag;
+      const tagEl = document.createElement('span');
+      tagEl.className = 'flex items-center gap-1 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-xs text-primary';
+      tagEl.innerHTML = `
+        ${display}
+        <button type="button" class="text-primary/70 hover:text-primary focus:outline-none" data-tag="${tag}" title="${tag}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      `;
+      tagContainer.appendChild(tagEl);
+    });
+
+    // Add event listeners to remove buttons
+    tagContainer.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tagToRemove = btn.getAttribute('data-tag');
+        activeTags = activeTags.filter(t => t !== tagToRemove);
+        renderTags();
+        filter();
+      });
+    });
+  }
+
+  function filter() {
+    const query = titleInput ? titleInput.value.trim().toLowerCase() : '';
+
+    const filtered = notes.filter(note => {
+      const matchesQuery = !query ||
+                           note.title.toLowerCase().includes(query) ||
+                           (note.description || '').toLowerCase().includes(query) ||
+                           note.id.toLowerCase().includes(query) ||
+                           (note.tags && note.tags.some(tag => tag.toLowerCase().includes(query)));
+
+      // All active tags must be present in the note's tags
+      const matchesTags = activeTags.length === 0 ||
+                          activeTags.every(activeTag =>
+                            note.tags && note.tags.some(noteTag => noteTag.toLowerCase().includes(activeTag.toLowerCase()))
+                          );
+
+      return matchesQuery && matchesTags;
+    });
+
+    renderNotes(filtered);
+  }
+
+  function clearFilters() {
+    if(titleInput) titleInput.value = '';
+    activeTags = [];
+    if (tagInput) tagInput.value = '';
+    renderTags();
+    filter();
+  }
+
+  titleInput?.addEventListener('input', filter);
+  clearBtn?.addEventListener('click', clearFilters);
+
+  if (tagInputWrapper && tagInput) {
+    tagInputWrapper.addEventListener('click', () => {
+      tagInput.focus();
+    });
+
+    tagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const newTag = tagInput.value.trim();
+        if (newTag && !activeTags.includes(newTag)) {
+          activeTags.push(newTag);
+          tagInput.value = '';
+          renderTags();
+          filter();
+        }
+      } else if (e.key === 'Backspace' && tagInput.value === '' && activeTags.length > 0) {
+        // Optional: Remove last tag on backspace when input is empty
+        activeTags.pop();
+        renderTags();
+        filter();
+      }
+    });
+  }
+
+  // Initial render
+  renderNotes(notes);
+</script>

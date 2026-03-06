@@ -1,6 +1,7 @@
 ---
 import ThemeIcon from './ThemeIcon.astro';
 import SiteSearch from './SiteSearch.astro';
+import LanguageToggle from './LanguageToggle.astro';
 import { SITE_NAME } from '../../constants';
 import { Search } from '@lucide/astro';
 import { getLangFromUrl, useTranslations } from '../../i18n/utils';
@@ -29,6 +30,7 @@ const prefix = lang === 'zh' ? '' : `/${lang}`;
         <button class="search-trigger flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors" aria-label="Search site" aria-haspopup="dialog">
           <Search size={20} />
         </button>
+        <LanguageToggle />
         <ThemeIcon />
       </div>
     </div>
@@ -64,7 +66,8 @@ const prefix = lang === 'zh' ? '' : `/${lang}`;
         <a href={`${prefix}/about`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.about')}</a>
         <a href={`${prefix}/about/resume`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.resume')}</a>
       </nav>
-      <div class="flex items-center justify-end border-t border-border pt-4">
+      <div class="flex items-center justify-end gap-2 border-t border-border pt-4">
+        <LanguageToggle />
         <ThemeIcon />
       </div>
     </div>

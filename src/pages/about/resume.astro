@@ -11,7 +11,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
     <!-- Header -->
     <div class="text-center pb-8 border-b-2 border-primary mb-8 print:border-black">
       <h1 class="text-4xl font-bold text-foreground mb-2 print:text-black">{SITE_AUTHOR}</h1>
-      <p class="text-lg text-muted-foreground mb-4 print:text-gray-700">Web Developer | Passionate Learner</p>
+      <p class="text-lg text-muted-foreground mb-4 print:text-gray-700">Web 开发者 | 终身学习者</p>
       <div class="flex flex-wrap justify-center gap-6 text-sm text-foreground print:text-black">
         <span class="flex items-center gap-1.5"><Mail size={16} class="text-primary print:text-black"/> {AUTHOR_EMAIL}</span>
         <span class="flex items-center gap-1.5"><Phone size={16} class="text-primary print:text-black"/> {AUTHOR_PHONE}</span>
@@ -23,77 +23,77 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
       
       <!-- Summary -->
       <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-4 print:text-black print:border-black">Professional Summary</h2>
+        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-4 print:text-black print:border-black">个人总结</h2>
         <p class="text-foreground leading-relaxed print:text-black">
-          Experienced web developer with expertise in modern JavaScript frameworks and full-stack development.
-          Committed to creating elegant, scalable solutions and continuous learning.
+          经验丰富的 Web 开发者，精通现代 JavaScript 框架和全栈开发。
+          致力于构建优雅、可扩展的解决方案并持续学习。
         </p>
       </section>
 
       <!-- Experience -->
       <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Experience</h2>
+        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">工作经验</h2>
         
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
           <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
-            <h3 class="text-lg font-bold text-foreground print:text-black">Senior Developer</h3>
-            <span class="text-sm text-muted-foreground print:text-gray-600">2024 - Present</span>
+            <h3 class="text-lg font-bold text-foreground print:text-black">高级开发者</h3>
+            <span class="text-sm text-muted-foreground print:text-gray-600">2024 - 至今</span>
           </div>
-          <p class="font-semibold text-primary mb-2 print:text-black">Company Name</p>
+          <p class="font-semibold text-primary mb-2 print:text-black">公司名称</p>
           <ul class="list-disc list-inside pl-4 text-foreground print:text-black space-y-1">
-            <li>Led development of key features</li>
-            <li>Mentored junior developers</li>
-            <li>Improved performance by 40%</li>
+            <li>主导核心功能开发</li>
+            <li>指导初级开发者</li>
+            <li>提升 40% 性能</li>
           </ul>
         </article>
 
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
           <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
-            <h3 class="text-lg font-bold text-foreground print:text-black">Full Stack Developer</h3>
+            <h3 class="text-lg font-bold text-foreground print:text-black">全栈开发者</h3>
             <span class="text-sm text-muted-foreground print:text-gray-600">2022 - 2024</span>
           </div>
-          <p class="font-semibold text-primary mb-2 print:text-black">Previous Company</p>
+          <p class="font-semibold text-primary mb-2 print:text-black">前公司名称</p>
           <ul class="list-disc list-inside pl-4 text-foreground print:text-black space-y-1">
-            <li>Developed web applications using React and Node.js</li>
-            <li>Managed database design and optimization</li>
-            <li>Collaborated with design and product teams</li>
+            <li>使用 React 和 Node.js 开发 Web 应用</li>
+            <li>负责数据库设计和优化</li>
+            <li>与设计和产品团队协作</li>
           </ul>
         </article>
       </section>
 
       <!-- Education -->
       <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Education</h2>
+        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">教育背景</h2>
         
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
           <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
-            <h3 class="text-lg font-bold text-foreground print:text-black">Bachelor of Science</h3>
+            <h3 class="text-lg font-bold text-foreground print:text-black">理学学士</h3>
             <span class="text-sm text-muted-foreground print:text-gray-600">2018 - 2022</span>
           </div>
-          <p class="font-semibold text-primary mb-1 print:text-black">University Name</p>
-          <p class="text-foreground print:text-black">Major: Computer Science</p>
+          <p class="font-semibold text-primary mb-1 print:text-black">大学名称</p>
+          <p class="text-foreground print:text-black">专业：计算机科学</p>
         </article>
       </section>
 
       <!-- Skills -->
       <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Skills</h2>
+        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">专业技能</h2>
         
         <div class="flex flex-col gap-3">
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Languages:</strong>
+            <strong class="min-w-[120px] text-primary print:text-black">编程语言：</strong>
             <span>JavaScript, TypeScript, Python, SQL</span>
           </div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Frontend:</strong>
+            <strong class="min-w-[120px] text-primary print:text-black">前端：</strong>
             <span>React, Vue.js, HTML5, CSS3, Tailwind</span>
           </div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Backend:</strong>
+            <strong class="min-w-[120px] text-primary print:text-black">后端：</strong>
             <span>Node.js, Express, PostgreSQL, MongoDB</span>
           </div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Tools:</strong>
+            <strong class="min-w-[120px] text-primary print:text-black">开发工具：</strong>
             <span>Git, Docker, CI/CD, AWS, VS Code</span>
           </div>
         </div>
@@ -101,28 +101,28 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
 
       <!-- Projects -->
       <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Projects</h2>
+        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">项目经历</h2>
         
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">{SITE_NAME} (Personal Website)</h3>
+          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">{SITE_NAME} (个人网站)</h3>
           <p class="text-sm text-muted-foreground italic mb-2 print:text-gray-600">Astro • React • TypeScript</p>
-          <p class="text-foreground print:text-black">Personal portfolio and knowledge sharing platform built with Astro.</p>
+          <p class="text-foreground print:text-black">使用 Astro 构建的个人作品集和知识分享平台。</p>
         </article>
 
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">Project Name 2</h3>
-          <p class="text-sm text-muted-foreground italic mb-2 print:text-gray-600">Technology Stack</p>
-          <p class="text-foreground print:text-black">Project description and key achievements.</p>
+          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">项目名称 2</h3>
+          <p class="text-sm text-muted-foreground italic mb-2 print:text-gray-600">技术栈</p>
+          <p class="text-foreground print:text-black">项目描述和核心成就。</p>
         </article>
       </section>
 
       <!-- Certifications -->
       <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Certifications</h2>
+        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">资格认证</h2>
         
         <ul class="list-disc list-inside pl-4 text-foreground print:text-black space-y-2">
-          <li>Certification Name - Issuing Organization (Year)</li>
-          <li>Another Certification - Issuing Organization (Year)</li>
+          <li>认证名称 - 颁发机构 (年份)</li>
+          <li>另一个认证 - 颁发机构 (年份)</li>
         </ul>
       </section>
     </div>
@@ -130,10 +130,10 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
     <!-- Actions -->
     <div class="flex flex-col sm:flex-row gap-4 justify-center mt-12 pt-8 border-t border-border print:hidden">
       <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors">
-        <Printer size={18} /> Print / Save as PDF
+        <Printer size={18} /> 打印 / 保存为 PDF
       </button>
       <a href="/about" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-lg font-medium transition-colors">
-        <ArrowLeft size={18} /> Back to About
+        <ArrowLeft size={18} /> 返回关于
       </a>
     </div>
   </main>

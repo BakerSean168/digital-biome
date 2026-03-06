@@ -1,0 +1,22 @@
+---
+import { getLangFromUrl } from '../../i18n/utils';
+import { Languages } from '@lucide/astro';
+
+const lang = getLangFromUrl(Astro.url);
+const currentPath = Astro.url.pathname;
+
+let targetPath = '/';
+if (lang === 'zh') {
+  targetPath = '/en' + (currentPath === '/' ? '' : currentPath);
+} else {
+  targetPath = currentPath.replace(/^\/en/, '') || '/';
+}
+---
+
+<a
+  href={targetPath}
+  class="flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors"
+  aria-label={`Switch to ${lang === 'zh' ? 'English' : '中文'}`}
+>
+  <Languages size={20} />
+</a>
