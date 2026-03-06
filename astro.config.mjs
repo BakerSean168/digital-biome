@@ -11,6 +11,13 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
+  i18n: {
+    defaultLocale: "zh",
+    locales: ["zh", "en"],
+    routing: {
+      prefixDefaultLocale: false
+    }
+  },
   adapter: cloudflare(),
 
   site: process.env.PUBLIC_SITE_URL || 'https://digital-biome.netlify.app/',

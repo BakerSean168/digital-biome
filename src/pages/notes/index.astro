@@ -2,6 +2,7 @@
 import NotesLayout from '../../layouts/NotesLayout.astro';
 import { Search, ChevronDown, Clock } from '@lucide/astro';
 import { getCollection } from 'astro:content';
+import { getLangFromUrl } from '../../i18n/utils';
 
 // @ts-ignore - content collections generated at build time
 type NoteEntry = {
@@ -17,9 +18,12 @@ type NoteEntry = {
   };
 };
 
+const lang = getLangFromUrl(Astro.url);
 const allNotes: NoteEntry[] = await (
-  getCollection as unknown as (collection: string) => Promise<NoteEntry[]>
-)('notes');
+  getCollection as unknown as (collection: string, filter?: (opts: any) => boolean) => Promise<NoteEntry[]>
+)('notes', ({ id }) => {
+  return id.startsWith(`${lang}/`) || !id.includes('/'); // Fallback to include items without language folder
+});
 
 // Format date utility
 function formatDate(date: string | Date | null | undefined): string {

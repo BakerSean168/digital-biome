@@ -1,0 +1,91 @@
+---
+// Notes Index
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { FileText, Calendar, Folder } from '@lucide/astro';
+import { SITE_NAME } from '../../../constants';
+import { formatDate } from '../../../utils/date';
+
+// Filter notes to only include English ones if applicable.
+// If your content structure doesn't use `en/` subfolders yet, it will just show all notes.
+import { getLangFromUrl } from '../../../i18n/utils';
+const lang = getLangFromUrl(Astro.url);
+const allNotes = await getCollection('notes', ({ id }) => {
+  return id.startsWith(`${lang}/`) || !id.includes('/'); // fallback if no folders yet
+});
+
+// Sort notes by date (newest first)
+const sortedNotes = allNotes
+  .filter(note => note.data.date) // Ensure note has a date
+  .sort((a, b) => new Date(b.data.date!).getTime() - new Date(a.data.date!).getTime());
+
+// Group notes by year
+const groupedNotes = sortedNotes.reduce((acc, note) => {
+  const year = new Date(note.data.date!).getFullYear().toString();
+  if (!acc[year]) acc[year] = [];
+  acc[year].push(note);
+  return acc;
+}, {} as Record<string, typeof sortedNotes>);
+
+const years = Object.keys(groupedNotes).sort((a, b) => Number(b) - Number(a));
+---
+
+<BaseLayout title={`Notes | ${SITE_NAME}`} description="My Digital Garden">
+  <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-12">
+      <h1 class="text-4xl font-bold text-foreground mb-4">Digital Garden</h1>
+      <p class="text-lg text-muted-foreground">
+        A collection of my thoughts, learning notes, and code experiments.
+        Constantly growing and evolving.
+      </p>
+    </div>
+
+    {years.length === 0 ? (
+      <div class="text-center py-12 text-muted-foreground bg-background-secondary rounded-lg border border-border">
+        <Folder size={48} class="mx-auto mb-4 opacity-50" />
+        <p>No notes published yet.</p>
+      </div>
+    ) : (
+      <div class="space-y-12">
+        {years.map(year => (
+          <section>
+            <h2 class="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+              <span class="text-primary">#</span> {year}
+            </h2>
+            <div class="flex flex-col gap-4">
+              {groupedNotes[year].map(note => (
+                <a
+                  href={`/en/notes/${note.slug}`}
+                  class="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-background-secondary hover:bg-card-hover border border-transparent hover:border-border transition-all"
+                >
+                  <div class="flex items-center gap-3 mb-2 sm:mb-0">
+                    <FileText size={20} class="text-primary shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <h3 class="text-foreground font-medium group-hover:text-primary transition-colors line-clamp-1">
+                      {note.data.title}
+                    </h3>
+                  </div>
+
+                  <div class="flex items-center gap-4 text-sm text-muted-foreground shrink-0 pl-8 sm:pl-0">
+                    {note.data.tags && note.data.tags.length > 0 && (
+                      <div class="hidden md:flex gap-2">
+                        {note.data.tags.slice(0, 2).map(tag => (
+                          <span class="px-2 py-0.5 rounded-md bg-background border border-border text-xs">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <span class="flex items-center gap-1.5 min-w-[100px] justify-end">
+                      <Calendar size={14} />
+                      {formatDate(note.data.date!)}
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    )}
+  </main>
+</BaseLayout>

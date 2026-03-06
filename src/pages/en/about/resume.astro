@@ -1,13 +1,13 @@
 ---
-// 简历页面
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SITE_AUTHOR, SITE_NAME, AUTHOR_EMAIL, AUTHOR_PHONE, AUTHOR_LOCATION } from '../../constants';
+// Resume Page
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { SITE_AUTHOR, SITE_NAME, AUTHOR_EMAIL, AUTHOR_PHONE, AUTHOR_LOCATION } from '../../../constants';
 import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
 ---
 
-<BaseLayout title={`Resume | ${SITE_NAME}`} description="我的专业简历">
+<BaseLayout title={`Resume | ${SITE_NAME}`} description="My Professional Resume">
   <main id="resume-wrapper" class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 print:max-w-full print:p-0 print:bg-white">
-    
+
     <!-- Header -->
     <div class="text-center pb-8 border-b-2 border-primary mb-8 print:border-black">
       <h1 class="text-4xl font-bold text-foreground mb-2 print:text-black">{SITE_AUTHOR}</h1>
@@ -20,7 +20,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
     </div>
 
     <div class="flex flex-col gap-10">
-      
+
       <!-- Summary -->
       <section class="flex flex-col">
         <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-4 print:text-black print:border-black">Professional Summary</h2>
@@ -33,7 +33,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
       <!-- Experience -->
       <section class="flex flex-col">
         <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Experience</h2>
-        
+
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
           <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
             <h3 class="text-lg font-bold text-foreground print:text-black">Senior Developer</h3>
@@ -64,7 +64,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
       <!-- Education -->
       <section class="flex flex-col">
         <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Education</h2>
-        
+
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
           <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
             <h3 class="text-lg font-bold text-foreground print:text-black">Bachelor of Science</h3>
@@ -78,7 +78,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
       <!-- Skills -->
       <section class="flex flex-col">
         <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Skills</h2>
-        
+
         <div class="flex flex-col gap-3">
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
             <strong class="min-w-[120px] text-primary print:text-black">Languages:</strong>
@@ -102,7 +102,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
       <!-- Projects -->
       <section class="flex flex-col">
         <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Projects</h2>
-        
+
         <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
           <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">{SITE_NAME} (Personal Website)</h3>
           <p class="text-sm text-muted-foreground italic mb-2 print:text-gray-600">Astro • React • TypeScript</p>
@@ -119,7 +119,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
       <!-- Certifications -->
       <section class="flex flex-col">
         <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Certifications</h2>
-        
+
         <ul class="list-disc list-inside pl-4 text-foreground print:text-black space-y-2">
           <li>Certification Name - Issuing Organization (Year)</li>
           <li>Another Certification - Issuing Organization (Year)</li>
@@ -132,7 +132,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
       <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors">
         <Printer size={18} /> Print / Save as PDF
       </button>
-      <a href="/about" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-lg font-medium transition-colors">
+      <a href="/en/about" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-lg font-medium transition-colors">
         <ArrowLeft size={18} /> Back to About
       </a>
     </div>

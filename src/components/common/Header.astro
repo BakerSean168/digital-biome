@@ -3,21 +3,26 @@ import ThemeIcon from './ThemeIcon.astro';
 import SiteSearch from './SiteSearch.astro';
 import { SITE_NAME } from '../../constants';
 import { Search } from '@lucide/astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const prefix = lang === 'zh' ? '' : `/${lang}`;
 ---
 
 <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
   <div class="container mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
     <!-- Site title / home link -->
-    <a href="/" class="text-xl font-semibold tracking-tight text-foreground hover:text-primary transition-colors">
+    <a href={`${prefix}/`} class="text-xl font-semibold tracking-tight text-foreground hover:text-primary transition-colors">
       {SITE_NAME}
     </a>
 
     <!-- Desktop Navigation -->
     <div class="hidden md:flex items-center gap-6">
       <nav class="flex items-center gap-6 text-sm font-medium text-muted-foreground">
-        <a href="/about" class="hover:text-foreground transition-colors">About</a>
-        <a href="/notes" class="hover:text-foreground transition-colors">Notes</a>
-        <a href="/about/resume" class="hover:text-foreground transition-colors">Resume</a>
+        <a href={`${prefix}/about`} class="hover:text-foreground transition-colors">{t('nav.about')}</a>
+        <a href={`${prefix}/notes`} class="hover:text-foreground transition-colors">{t('nav.notes')}</a>
+        <a href={`${prefix}/about/resume`} class="hover:text-foreground transition-colors">{t('nav.resume')}</a>
       </nav>
       <div class="h-4 w-px bg-border"></div>
       <div class="flex items-center gap-2">
@@ -54,10 +59,10 @@ import { Search } from '@lucide/astro';
   >
     <div class="mx-auto max-w-7xl">
       <nav class="flex flex-col gap-1 mb-4">
-        <a href="/" class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">导航 (Index)</a>
-        <a href="/notes" class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">笔记 (Notes)</a>
-        <a href="/about" class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">个人主页 (Profile)</a>
-        <a href="/about/resume" class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">简历 (Resume)</a>
+        <a href={`${prefix}/`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.home')}</a>
+        <a href={`${prefix}/notes`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.notes')}</a>
+        <a href={`${prefix}/about`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.about')}</a>
+        <a href={`${prefix}/about/resume`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.resume')}</a>
       </nav>
       <div class="flex items-center justify-end border-t border-border pt-4">
         <ThemeIcon />
