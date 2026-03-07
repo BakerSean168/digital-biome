@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Tag } from '@lucide/astro';
+import { SITE_NAME } from '../../constants';
+import { getAllNoteTags } from '../../utils/notes';
+
+// Fetch all tags
+const allTagsMap = await getAllNoteTags();
+
+// Filter and sort tags
+const filteredTags = Array.from(allTagsMap.entries())
+  .filter(([tag]) => {
+    const lowerTag = tag.toLowerCase();
+    return !lowerTag.startsWith('status/') && !lowerTag.startsWith('type/');
+  })
+  .sort((a, b) => b[1] - a[1]); // Sort by count descending
+
+---
+
+<BaseLayout title={`标签墙 | ${SITE_NAME}`} description="所有笔记标签">
+  <main class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="mb-10 text-center">
+      <h1 class="text-4xl font-bold text-foreground mb-4">标签墙</h1>
+      <p class="text-muted-foreground">这里展示了数字花园中所有的知识维度节点。</p>
+    </div>
+
+    <div class="rounded-2xl bg-card border border-border p-6 sm:p-10 shadow-sm">
+      <div class="flex flex-wrap justify-center gap-3 md:gap-4">
+        {filteredTags.map(([tag, count]) => (
+          <a href={`/notes?tag=${encodeURIComponent(tag)}`} class="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background-secondary border border-border text-sm text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all">
+            <Tag size={14} class="text-primary opacity-80 group-hover:opacity-100 transition-opacity" />
+            <span>{tag}</span>
+            <span class="text-xs text-muted-foreground bg-background px-1.5 py-0.5 rounded-md group-hover:bg-primary/10 transition-colors">{count}</span>
+          </a>
+        ))}
+        {filteredTags.length === 0 && (
+          <p class="text-muted-foreground py-10 text-center w-full">暂无标签</p>
+        )}
+      </div>
+    </div>
+  </main>
+</BaseLayout>
