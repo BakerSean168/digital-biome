@@ -1,27 +1,18 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { BookOpen, Github, Tag, BookMarked } from '@lucide/astro';
+import { BookOpen, Github, Tag, BookMarked, ArrowRight } from '@lucide/astro';
 import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../constants';
+import { getAllNoteTags } from '../../utils/notes';
 
-const tags = [
-  'obsidian',
-  'vue',
-  'react',
-  'vite',
-  'javascript',
-  'typescript',
-  'Aastro' // Typo in the design, I'll keep it or fix it. Let's use 'astro'. Wait, design says 'Aastro' or 'javascript' and 'jjavascript'. I will use correct spellings.
-];
+const allTagsMap = await getAllNoteTags();
 
-const correctedTags = [
-  'obsidian',
-  'vue',
-  'react',
-  'vite',
-  'javascript',
-  'typescript',
-  'Astro'
-];
+const filteredTags = Array.from(allTagsMap.entries())
+  .filter(([tag]) => {
+    const lowerTag = tag.toLowerCase();
+    return !lowerTag.startsWith('status/') && !lowerTag.startsWith('type/');
+  })
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 15);
 
 const recentReads = [
   { title: 'Obsidian 知识库目录结构重构', time: '2 小时前' },
@@ -82,14 +73,22 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
         </div>
 
         <!-- Knowledge Graph Nodes -->
-        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 flex flex-col items-center shadow-sm">
-          <h3 class="text-lg font-medium text-foreground mb-6">知识图谱节点</h3>
-          <div class="flex flex-wrap justify-center gap-3">
-            {correctedTags.map(tag => (
-              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary border border-border text-sm text-foreground hover:border-primary/50 transition-colors cursor-default">
-                {tag} <Tag size={14} class="text-primary" />
-              </span>
-            ))}
+        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 flex flex-col items-center justify-between shadow-sm relative group">
+          <div class="w-full">
+            <h3 class="text-lg font-medium text-foreground mb-6 text-center">知识图谱节点</h3>
+            <div class="flex flex-wrap justify-center gap-3">
+              {filteredTags.map(([tag]) => (
+                <a href={`/notes?tag=${encodeURIComponent(tag)}`} class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary border border-border text-sm text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                  {tag} <Tag size={14} class="text-primary opacity-80" />
+                </a>
+              ))}
+            </div>
+          </div>
+          <div class="mt-8 w-full">
+            <a href="/about/tags" class="group/btn flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-transparent bg-background-secondary hover:bg-primary hover:text-primary-foreground text-sm font-medium transition-all">
+              查看所有标签
+              <ArrowRight size={16} class="group-hover/btn:translate-x-1 transition-transform" />
+            </a>
           </div>
         </div>
       </div>
