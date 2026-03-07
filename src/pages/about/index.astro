@@ -20,12 +20,6 @@ const recentReads = [
   { title: 'DDD 领域驱动设计学习笔记', time: '2 小时前' },
 ];
 
-// Mock GitHub contributions data (52 weeks, 7 days)
-const weeks = Array.from({ length: 52 }, () =>
-  Array.from({ length: 7 }, () => Math.random() > 0.7 ? Math.floor(Math.random() * 4) + 1 : 0)
-);
-
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 ---
 
 <BaseLayout title={`About | ${SITE_NAME}`} description="关于我和我的专业背景">
@@ -123,55 +117,9 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
             </div>
           </div>
 
-          <div class="flex-1 bg-background-secondary rounded-xl p-4 overflow-x-auto border border-border">
-            <div class="min-w-[700px]">
-              <!-- Months -->
-              <div class="flex justify-between text-xs text-muted-foreground ml-8 mb-2">
-                {months.map(month => <span>{month}</span>)}
-              </div>
-              
-              <!-- Graph -->
-              <div class="flex gap-1">
-                <!-- Days of week -->
-                <div class="flex flex-col gap-1 text-[10px] text-muted-foreground justify-between py-1 mr-2 shrink-0">
-                  <span>Mon</span>
-                  <span>Wed</span>
-                  <span>Fri</span>
-                </div>
-                
-                <!-- Matrix -->
-                <div class="flex gap-1 flex-1">
-                  {weeks.map(week => (
-                    <div class="flex flex-col gap-1 flex-1">
-                      {week.map(day => (
-                        <div class={`w-3 h-3 rounded-sm ${
-                          day === 0 ? 'bg-card' :
-                          day === 1 ? 'bg-primary/30' :
-                          day === 2 ? 'bg-primary/60' :
-                          day === 3 ? 'bg-primary/80' :
-                          'bg-primary'
-                        } border border-border/50`}></div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <!-- Legend -->
-              <div class="flex items-center justify-between text-xs text-muted-foreground mt-4">
-                <a href="#" class="hover:text-primary transition-colors">Learn how we count contributions</a>
-                <div class="flex items-center gap-1.5">
-                  <span>Less</span>
-                  <div class="flex gap-1">
-                    <div class="w-3 h-3 rounded-sm bg-card border border-border/50"></div>
-                    <div class="w-3 h-3 rounded-sm bg-primary/30 border border-border/50"></div>
-                    <div class="w-3 h-3 rounded-sm bg-primary/60 border border-border/50"></div>
-                    <div class="w-3 h-3 rounded-sm bg-primary/80 border border-border/50"></div>
-                    <div class="w-3 h-3 rounded-sm bg-primary border border-border/50"></div>
-                  </div>
-                  <span>More</span>
-                </div>
-              </div>
+          <div class="flex-1 bg-background-secondary rounded-xl p-4 overflow-x-auto border border-border flex items-center justify-center">
+            <div class="min-w-[700px] flex justify-center">
+              <img src="https://ghchart.rshah.org/10b981/BakerSean168" alt="GitHub Contributions" class="max-w-full" style="filter: hue-rotate(0deg);" />
             </div>
           </div>
         </div>

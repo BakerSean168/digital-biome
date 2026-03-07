@@ -3,7 +3,7 @@
  */
 
 export const SITE_NAME = import.meta.env.PUBLIC_SITE_NAME || "Digital Biome";
-export const SITE_AUTHOR = import.meta.env.PUBLIC_SITE_AUTHOR || "你的名字";
+export const SITE_AUTHOR = import.meta.env.PUBLIC_SITE_AUTHOR || "bakersean";
 export const SITE_DESCRIPTION =
   import.meta.env.PUBLIC_SITE_DESCRIPTION ||
   "个人知识生态网站 - 个人介绍、简历、学习笔记、工具箱";
@@ -22,7 +22,6 @@ export const AUTHOR_LOCATION =
 // 社交链接
 export const SOCIAL_LINKS = {
   github: import.meta.env.PUBLIC_GITHUB_URL || "https://github.com/BakerSean168",
-  twitter: import.meta.env.PUBLIC_TWITTER_URL || "https://twitter.com",
   linkedin: import.meta.env.PUBLIC_LINKEDIN_URL || "https://linkedin.com",
   email: AUTHOR_EMAIL,
 };
