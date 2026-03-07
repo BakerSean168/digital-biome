@@ -21,7 +21,7 @@ export const AUTHOR_LOCATION =
 
 // 社交链接
 export const SOCIAL_LINKS = {
-  github: import.meta.env.PUBLIC_GITHUB_URL || "https://github.com",
+  github: import.meta.env.PUBLIC_GITHUB_URL || "https://github.com/BakerSean168",
   twitter: import.meta.env.PUBLIC_TWITTER_URL || "https://twitter.com",
   linkedin: import.meta.env.PUBLIC_LINKEDIN_URL || "https://linkedin.com",
   email: AUTHOR_EMAIL,

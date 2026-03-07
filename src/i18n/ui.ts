@@ -27,7 +27,7 @@ export const ui = {
     'notes.uncategorized': '未分类',
     'footer.description': '个人知识生态网站，分享想法和工具。构建于星海之间，用代码丈量世界。',
     'footer.links': '链接',
-    'footer.social': 'Social',
+    'footer.social': '社交',
   },
   en: {
     'nav.home': 'Home',
