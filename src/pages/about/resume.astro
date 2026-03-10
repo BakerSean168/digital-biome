@@ -20,8 +20,8 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Data
           <div class="flex items-center gap-1.5"><Monitor size={14} class="text-black dark:text-primary print:text-black"/> https://bakersean.top/</div>
           <!-- <div class="flex items-center gap-1.5"><Cake size={14} class="text-black dark:text-primary print:text-black"/> 22岁</div> -->
           <div class="flex items-center gap-6">
-            <span class="flex items-center gap-1.5"><Briefcase size={14} class="text-black dark:text-primary print:text-black"/> 全栈</span>
-            <span class="flex items-center gap-1.5"><Database size={14} class="text-black dark:text-primary print:text-black"/> 20k</span>
+            <span class="flex items-center gap-1.5"><Briefcase size={14} class="text-black dark:text-primary print:text-black"/> 前端工程师</span>
+
           </div>
         </div>
       </div>
@@ -124,14 +124,13 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Data
           <p class="mb-1 text-justify">包含高精度的档案业务流转平台，以及集成白板与实时字幕的线上会议室系统。</p>
           
           <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">技术栈：</p>
-          <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3 + vue-print-next + React (BBB二次开发) + Docker</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3 + vue-print-next + pagedjs + React (BBB二次开发) + Docker</p>
 
           <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">核心职责：</p>
           <div class="space-y-0.5 text-justify">
             <p><strong>高精度报表打印模块重构：</strong>针对旧版 html2canvas 方案导致的报表打印模糊、长表格被拦腰截断、签名区无法跨页重复等痛点进行重构。</p>
-            <p><strong>纯 DOM 级跨页打印落地：</strong>引入 vue-print-next 结合 CSS Paged Media 规范实现基于纯 DOM 的浏览器原生打印。利用 CSS @page 和 break-inside 属性实现数据表的智能自动分页；通过 @media print 配合 position: fixed 及预留 padding，实现动态签批表格在每一页 A4 纸底部的完美重复渲染。</p>
-            <p><strong>BBB 视频会议系统二次开发：</strong>在测试服务器的 Docker 环境下，对基准版 BigBlueButton 的前端仓库（React / HTML5 客户端）进行定制开发。</p>
-            <p><strong>会议界面 UI 重构：</strong>将原有的 Smart Caption（实时语音转文字）从独立悬浮窗重构集成至页面左侧抽屉面板（Sidebar），通过复用公共聊天的 UI 结构规范布局，显著提升了会议模式下的用户视觉体验与操作一致性。</p>
+            <p><strong>基于 pagedjs 的跨页排版落地：</strong>引入 vue-print-next 结合 pagedjs 排版引擎实现 DOM 级高清打印。利用 pagedjs 动态解析 CSS Paged Media 规范，精准计算页面边界与数据表自动分页；配合 vue-print-next 注入克隆 DOM，完美实现动态签批表在每一页 A4 纸底部的重复渲染。</p>
+            <p><strong>BBB 视频会议系统二次开发：</strong>在测试服务器的 Docker 环境下，对基准版 BigBlueButton 的前端仓库（React / HTML5 客户端）进行定制开发。将原有的 Smart Caption（实时语音转文字）从独立悬浮窗重构集成至页面左侧抽屉面板（Sidebar），通过复用公共聊天的 UI 结构规范布局，显著提升了会议模式下的用户视觉体验与操作一致性。</p>
           </div>
         </div>
       </article>
