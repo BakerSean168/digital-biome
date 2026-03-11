@@ -1,138 +1,233 @@
 ---
-// Resume Page
+// Resume Page (English)
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { SITE_AUTHOR, SITE_NAME, AUTHOR_EMAIL, AUTHOR_PHONE, AUTHOR_LOCATION } from '../../../constants';
-import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
+import { SITE_NAME } from '../../../constants';
+import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Database } from '@lucide/astro';
 ---
 
 <BaseLayout title={`Resume | ${SITE_NAME}`} description="My Professional Resume">
-  <main id="resume-wrapper" class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 print:max-w-full print:p-0 print:bg-white">
-
-    <!-- Header -->
-    <div class="text-center pb-8 border-b-2 border-primary mb-8 print:border-black">
-      <h1 class="text-4xl font-bold text-foreground mb-2 print:text-black">{SITE_AUTHOR}</h1>
-      <p class="text-lg text-muted-foreground mb-4 print:text-gray-700">Web Developer | Passionate Learner</p>
-      <div class="flex flex-wrap justify-center gap-6 text-sm text-foreground print:text-black">
-        <span class="flex items-center gap-1.5"><Mail size={16} class="text-primary print:text-black"/> {AUTHOR_EMAIL}</span>
-        <span class="flex items-center gap-1.5"><Phone size={16} class="text-primary print:text-black"/> {AUTHOR_PHONE}</span>
-        <span class="flex items-center gap-1.5"><MapPin size={16} class="text-primary print:text-black"/> {AUTHOR_LOCATION}</span>
-      </div>
-    </div>
-
-    <div class="flex flex-col gap-10">
-
-      <!-- Summary -->
-      <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-4 print:text-black print:border-black">Professional Summary</h2>
-        <p class="text-foreground leading-relaxed print:text-black">
-          Experienced web developer with expertise in modern JavaScript frameworks and full-stack development.
-          Committed to creating elegant, scalable solutions and continuous learning.
-        </p>
-      </section>
-
-      <!-- Experience -->
-      <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Experience</h2>
-
-        <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
-            <h3 class="text-lg font-bold text-foreground print:text-black">Senior Developer</h3>
-            <span class="text-sm text-muted-foreground print:text-gray-600">2024 - Present</span>
+  <main id="resume-wrapper" class="max-w-[800px] mx-auto py-6 px-4 text-[12.5px] leading-[1.6] text-gray-900 dark:text-gray-200 print:max-w-none print:w-full print:p-0 print:text-black">
+    
+    <div class="flex justify-between items-start mb-4">
+      <div class="flex flex-col">
+        <h1 class="text-[20px] font-bold mb-3 text-black dark:text-white print:text-black tracking-widest leading-none">Louhao Lu (Sean)</h1>
+        
+        <div class="flex flex-col gap-1.5 font-medium">
+          <div class="flex items-center gap-6">
+            <span class="flex items-center gap-1.5"><Phone size={14} class="text-black dark:text-primary print:text-black"/> (+86) 152 5892 7042</span>
+            <span class="flex items-center gap-1.5"><Mail size={14} class="text-black dark:text-primary print:text-black"/> bakersean@foxmail.com</span>
           </div>
-          <p class="font-semibold text-primary mb-2 print:text-black">Company Name</p>
-          <ul class="list-disc list-inside pl-4 text-foreground print:text-black space-y-1">
-            <li>Led development of key features</li>
-            <li>Mentored junior developers</li>
-            <li>Improved performance by 40%</li>
-          </ul>
-        </article>
-
-        <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
-            <h3 class="text-lg font-bold text-foreground print:text-black">Full Stack Developer</h3>
-            <span class="text-sm text-muted-foreground print:text-gray-600">2022 - 2024</span>
-          </div>
-          <p class="font-semibold text-primary mb-2 print:text-black">Previous Company</p>
-          <ul class="list-disc list-inside pl-4 text-foreground print:text-black space-y-1">
-            <li>Developed web applications using React and Node.js</li>
-            <li>Managed database design and optimization</li>
-            <li>Collaborated with design and product teams</li>
-          </ul>
-        </article>
-      </section>
-
-      <!-- Education -->
-      <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Education</h2>
-
-        <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <div class="flex flex-wrap justify-between items-baseline gap-4 mb-2">
-            <h3 class="text-lg font-bold text-foreground print:text-black">Bachelor of Science</h3>
-            <span class="text-sm text-muted-foreground print:text-gray-600">2018 - 2022</span>
-          </div>
-          <p class="font-semibold text-primary mb-1 print:text-black">University Name</p>
-          <p class="text-foreground print:text-black">Major: Computer Science</p>
-        </article>
-      </section>
-
-      <!-- Skills -->
-      <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Skills</h2>
-
-        <div class="flex flex-col gap-3">
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Languages:</strong>
-            <span>JavaScript, TypeScript, Python, SQL</span>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Frontend:</strong>
-            <span>React, Vue.js, HTML5, CSS3, Tailwind</span>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Backend:</strong>
-            <span>Node.js, Express, PostgreSQL, MongoDB</span>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 text-foreground print:text-black">
-            <strong class="min-w-[120px] text-primary print:text-black">Tools:</strong>
-            <span>Git, Docker, CI/CD, AWS, VS Code</span>
+          <div class="flex items-center gap-1.5"><Monitor size={14} class="text-black dark:text-primary print:text-black"/> https://bakersean.top/</div>
+          <div class="flex items-center gap-6">
+            <span class="flex items-center gap-1.5"><Briefcase size={14} class="text-black dark:text-primary print:text-black"/> Frontend Developer</span>
           </div>
         </div>
-      </section>
+      </div>
 
-      <!-- Projects -->
-      <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Projects</h2>
-
-        <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">{SITE_NAME} (Personal Website)</h3>
-          <p class="text-sm text-muted-foreground italic mb-2 print:text-gray-600">Astro • React • TypeScript</p>
-          <p class="text-foreground print:text-black">Personal portfolio and knowledge sharing platform built with Astro.</p>
-        </article>
-
-        <article class="mb-6 pl-4 border-l-2 border-border print:border-gray-300">
-          <h3 class="text-lg font-bold text-foreground mb-1 print:text-black">Project Name 2</h3>
-          <p class="text-sm text-muted-foreground italic mb-2 print:text-gray-600">Technology Stack</p>
-          <p class="text-foreground print:text-black">Project description and key achievements.</p>
-        </article>
-      </section>
-
-      <!-- Certifications -->
-      <section class="flex flex-col">
-        <h2 class="text-xl font-bold text-primary border-b-2 border-border pb-2 mb-6 print:text-black print:border-black">Certifications</h2>
-
-        <ul class="list-disc list-inside pl-4 text-foreground print:text-black space-y-2">
-          <li>Certification Name - Issuing Organization (Year)</li>
-          <li>Another Certification - Issuing Organization (Year)</li>
-        </ul>
-      </section>
+      <div class="shrink-0 ml-4">
+        <img 
+          src="/resume/profile-plus.png" 
+          alt="Profile Picture" 
+          class="w-[85px] h-[115px] object-cover bg-gray-100 dark:bg-gray-800 print:bg-gray-100"
+        />
+      </div>
     </div>
+    
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">Professional Summary</h2>
+      </div>
+      <div class="text-justify">
+        <p>Highly driven Frontend/Full-stack Developer with a profound passion for the Web ecosystem. Equipped with a solid computer science foundation and an engineering mindset. Proven ability to efficiently implement complex business requirements and proactively tackle technical bottlenecks (e.g., DOM-level print refactoring, complex state synchronization). Dedicated to elegant code architecture and optimal user experiences. Actively curates technical reflections in a personal digital garden (Digital Biome). Eager to join a tech-driven team to build high-quality web products.</p>
+      </div>
+    </section>
 
-    <!-- Actions -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-center mt-12 pt-8 border-t border-border print:hidden">
-      <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors">
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">Technical Skills</h2>
+      </div>
+      <div class="space-y-1 text-justify">
+        <p><strong>CS & Core JavaScript:</strong> Solid foundation in data structures, algorithms, computer networks, and operating systems. Proficient in HTML5, CSS3, and modern JavaScript (ES6+). Deep understanding of prototype chains, closures, asynchronous programming (Promises), and the Event Loop.</p>
+        <p><strong>Frameworks & Type Systems:</strong> Proficient in TypeScript with advanced generics and interfaces for type-safe development. Highly skilled in the Vue 3 ecosystem (Pinia, Vue Router) with deep knowledge of Reactivity and Composition API. Familiar with React 18 (Hooks) and cross-platform development.</p>
+        <p><strong>UI & Data Visualization:</strong> Expert in Tailwind CSS for highly customizable and responsive designs with pixel-perfect UI implementation capabilities. Proficient in component libraries like Element Plus and Shadcn UI. Experienced in complex data visualization using ECharts.</p>
+        <p><strong>Full-Stack & Networking:</strong> Familiar with core Node.js modules (fs, path, crypto) and stream data processing. Solid understanding of RESTful API design principles, JWT authentication, and standard frontend-backend data flow.</p>
+        <p><strong>Engineering & CI/CD:</strong> Proficient in project build tools (Vite) and code quality assurance (ESLint, Prettier, Husky). Experienced with CI/CD pipelines (GitHub Actions, release-please) for automated testing and deployment. Familiar with multi-environment configurations and Vitest.</p>
+        <p><strong>DevOps & Soft Skills:</strong> Familiar with Docker containerization and Nginx configuration. Proficient in Figma for UI design with a strong product mindset. Adept at leveraging LLMs (ChatGPT/Gemini) for Vibe Coding. Self-driven learner with strict code hygiene.</p>
+      </div>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">Work Experience</h2>
+      </div>
+      
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">Kerui Jinxin Technology Co., Ltd.</h3>
+          <span>Jul 2025 - Nov 2025</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>Frontend Engineer (Intern) | International Product Application Dev Dept.</p>
+          <span>Hangzhou, China</span>
+        </div>
+        <div class="space-y-0.5">
+          <p><strong>Business Dev & Refactoring:</strong> Participated in the frontend iteration of core systems (OLP & DDCC) using Vue3 and Element Plus. Independently engineered the AI Knowledge Management module from scratch.</p>
+          <p><strong>Technical Problem Solving:</strong> Proactively optimized legacy tech debt. Refactored complex cross-page signature printing by replacing the inefficient Canvas screenshot approach with native DOM-level high-fidelity printing. Resolved complex state synchronization issues during table pagination.</p>
+          <p><strong>Cross-Platform Collaboration:</strong> Customized the open-source conferencing system (BigBlueButton). Conducted React source-code level secondary development and UI refactoring in a Docker environment, independently troubleshooting cache build errors.</p>
+          <p><strong>Engineering Standardization:</strong> Embraced enterprise agile development workflows and Git collaboration. Improved team delivery efficiency by utilizing and maintaining highly reusable components.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">Projects</h2>
+      </div>
+      
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">OLP (Enterprise Online Learning Platform)</h3>
+          <span>Jul 2025 - Nov 2025</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>Core Frontend Developer (Internship Project)</p>
+          <span>Hangzhou</span>
+        </div>
+        
+        <div>
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Description:</p>
+          <p class="mb-1 text-justify">A comprehensive internal training and career development system for multinational enterprises, featuring video courses, live streaming, exams, AI knowledge accumulation, and Employee Development Plans (EDP).</p>
+          
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Tech Stack:</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3 + TypeScript + Element Plus + Vite + ECharts</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Key Contributions:</p>
+          <div class="space-y-0.5 text-justify">
+            <p><strong>Architected AI Knowledge Management:</strong> Customized LLM Chatbot components to support streaming responses, automated summarization, and auto-tagging. Implemented rich-text rendering, online previews, and streaming downloads for generated documents.</p>
+            <p><strong>Developed EDP Module:</strong> Engineered an AI-driven Job Description (JD) generator and skill graph matching module. Built multi-dimensional search for learning content and implemented manual update/re-calculation logic for AI matching degrees.</p>
+            <p><strong>Optimized Complex State Management:</strong> Fixed cross-page selection state loss in the admin user list by abstracting global selection objects and utilizing an `isSettingSelection` lock mechanism, achieving seamless pagination and form backfilling.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">DDCC (Archive Management & Collaboration System)</h3>
+          <span>Oct 2025 - Nov 2025</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>Core Frontend Developer (Internship Project)</p>
+        </div>
+        
+        <div>
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Description:</p>
+          <p class="mb-1 text-justify">A high-precision archive workflow platform integrated with a real-time online conference system featuring whiteboards and live captions.</p>
+          
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Tech Stack:</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3 + vue-print-next + pagedjs + React + Docker</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Key Contributions:</p>
+          <div class="space-y-0.5 text-justify">
+            <p><strong>Refactored High-Fidelity Print Module:</strong> Addressed blurry outputs and truncated tables caused by the legacy `html2canvas` solution.</p>
+            <p><strong>Implemented DOM-Level Cross-Page Printing:</strong> Introduced `vue-print-next` combined with the `pagedjs` engine. Leveraged `pagedjs` to dynamically parse CSS Paged Media specs for precise page boundary calculation. Perfectly repeated dynamic signature tables at the bottom of every A4 page.</p>
+            <p><strong>BigBlueButton Secondary Development:</strong> Customized the React/HTML5 client in a Dockerized environment. Refactored the Smart Caption UI from an isolated floating window into the left sidebar, unifying the visual design with the public chat layout.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">Digital Biome (Personal Knowledge Ecosystem)</h3>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>GitHub: https://github.com/BakerSean168/digital-biome</p>
+        </div>
+        
+        <div>
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Description:</p>
+          <p class="mb-1 text-justify">A high-performance static site bound to a local Obsidian vault. Automatically transforms Markdown files and hierarchical tags into an online digital garden featuring a dashboard, immersive notes, and multiple layout scenarios.</p>
+          
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Tech Stack:</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Astro + TypeScript + Tailwind CSS + Node.js + Pagefind</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Key Contributions:</p>
+          <div class="space-y-0.5 text-justify">
+            <p><strong>Engineered Data Sync Pipeline:</strong> Developed a Node.js script (`sync-obsidian.ts`) to parse and cleanse Markdown data. Implemented Regex transformations for Obsidian Wikilinks and automated Favicon caching, bridging the local Vault to the Web directory.</p>
+            <p><strong>Designed Dynamic View Engine:</strong> Built a Hierarchical Tags system based on YAML frontmatter. Dynamically generated the Dashboard's bookmark library and Notes sidebar categories by parsing specific tags, achieving high decoupling of views and content.</p>
+            <p><strong>Frontend Architecture & Optimization:</strong> Adopted Astro's SSG strategy and Islands Architecture to drastically reduce client-side JS. Integrated Content Collections for strongly-typed queries and `Pagefind` for sub-second static full-text search.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">DailyUse (Full-Stack Efficiency System)</h3>
+          <span>Jan 2024 - Present</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>Independent Full-Stack Developer</p>
+          <span>GitHub: https://github.com/BakerSean168/DailyUse</span>
+        </div>
+        
+        <div>
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Description:</p>
+          <p class="mb-1 text-justify">A full-stack efficiency management application focused on engineering standardization and ultimate UX. Strictly follows enterprise-level standards to achieve a complete data loop from database modeling to frontend state scheduling.</p>
+          
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Tech Stack:</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3 + TypeScript + Node.js + Prisma + Axios</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">Key Contributions:</p>
+          <div class="space-y-0.5 text-justify">
+            <p><strong>Full-Stack Auth & Communication:</strong> Deeply encapsulated HTTP Client based on Axios. Applied the Result Pattern to flatten network exceptions, eliminating redundant try-catch blocks. Implemented a robust 401 silent Token concurrent refresh mechanism using Promise locks.</p>
+            <p><strong>Complex State Decoupling:</strong> Deconstructed a massive configuration form into fine-grained views. Extracted custom Hooks to centrally orchestrate distributed validation states, strictly adhering to unidirectional data flow and significantly reducing code coupling.</p>
+            <p><strong>Standardized Data Modeling:</strong> Modeled complex relational databases using Prisma, applying Cascade deletes and composite indexing. Introduced the Repository pattern to decouple database operations from core business logic.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">Education</h2>
+      </div>
+      
+      <article>
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">Sichuan Agricultural University</h3>
+          <span>Sep 2022 - Jun 2026 (Expected)</span>
+        </div>
+        <div class="flex justify-between items-baseline keep-together">
+          <p>B.Eng. in Internet of Things (IoT) | College of Information Engineering</p>
+          <span>Ya'an, China</span>
+        </div>
+        <div class="mt-1 text-gray-700 dark:text-gray-300 print:text-gray-800 text-justify">
+          <p><strong>Core Coursework:</strong> Data Structures and Algorithms, Computer Networks, Operating Systems, Database Principles, Web Frontend Development Tech.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">Certifications</h2>
+      </div>
+      
+      <div class="space-y-0.5">
+        <p>• NCRE Level 3: Network Technology</p>
+        <p>• Languages: CET-6 (Fluent in reading English technical documentation)</p>
+      </div>
+    </section>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 print:hidden">
+      <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-black dark:bg-primary text-white rounded-lg font-medium transition-opacity hover:opacity-80">
         <Printer size={18} /> Print / Save as PDF
       </button>
-      <a href="/en/about" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-lg font-medium transition-colors">
+      <a href="/en/about" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border-2 border-black dark:border-primary text-black dark:text-primary hover:bg-black dark:hover:bg-primary hover:text-white rounded-lg font-medium transition-colors">
         <ArrowLeft size={18} /> Back to About
       </a>
     </div>
@@ -140,35 +235,52 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft } from '@lucide/astro';
 </BaseLayout>
 
 <style is:global>
+  /* 极致打印配置 / Print Configuration */
   @media print {
     @page {
-      margin: 0;
       size: A4 portrait;
+      margin: 8mm 15mm; 
     }
-
-    body {
-      margin: 1.5cm;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+    html, body {
+      background: white !important;
+      color: black !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
-
-    body * {
-      visibility: hidden;
-    }
-
-    #resume-wrapper, #resume-wrapper * {
-      visibility: visible;
-    }
-
-    #resume-wrapper {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-    }
-
-    header, footer {
+    body > header, body > footer, nav, aside, .print\:hidden {
       display: none !important;
+    }
+    #resume-wrapper {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+    }
+    .print-title-bg {
+      background-color: #f4f5f7 !important;
+      border: none !important;
+    }
+    .print-title-bg h2, .print-title-bg * {
+      background-color: transparent !important;
+    }
+    .print-title-bar {
+      background-color: #000000 !important;
+    }
+    p, li, .keep-together {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    h2, h3 {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    a {
+      text-decoration: none !important;
+      color: black !important;
     }
   }
 </style>
