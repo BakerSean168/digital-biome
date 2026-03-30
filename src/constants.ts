@@ -14,8 +14,6 @@ export const SITE_URL =
 export const AUTHOR_NAME = import.meta.env.PUBLIC_AUTHOR_NAME || SITE_AUTHOR;
 export const AUTHOR_EMAIL =
   import.meta.env.PUBLIC_AUTHOR_EMAIL || "your-email@example.com";
-export const AUTHOR_PHONE =
-  import.meta.env.PUBLIC_AUTHOR_PHONE || "+86 138****8888";
 export const AUTHOR_LOCATION =
   import.meta.env.PUBLIC_AUTHOR_LOCATION || "City, Country";
 
@@ -31,4 +29,3 @@ export const NOTES_CONFIG = {
   notesPerPage: 12,
   tagsPerPage: 20,
 };
-
