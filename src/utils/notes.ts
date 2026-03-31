@@ -36,7 +36,7 @@ export async function getBookmarks(): Promise<Bookmark[]> {
     .filter(note => {
       const tags = note.data.tags || [];
       const hasWebsite = tags.some((tag: string) => tag.toLowerCase() === 'website');
-      const hasResource = tags.some((tag: string) => tag.toLowerCase() === 'resource');
+      const hasResource = tags.some((tag: string) => tag.toLowerCase() === 'resource' || tag.toLowerCase() === 'type/resource');
       
       // Keep support for legacy 'type/resource' and 'website/xxx' tags as well as new logic
       const isLegacy = note.data.url && tags.some((tag: string) => tag === 'type/resource');
