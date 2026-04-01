@@ -117,7 +117,7 @@ async function cacheFavicon(urlStr: string, stats: SyncStats): Promise<void> {
     const res = await fetch(iconUrl);
     if (res.ok) {
       const arrayBuffer = await res.arrayBuffer();
-      fs.writeFileSync(destPath, Buffer.from(arrayBuffer));
+      fs.writeFileSync(destPath, new Uint8Array(arrayBuffer));
       stats.faviconsCached++;
     } else {
       stats.errors.push(`Failed to fetch favicon for ${domain}: ${res.statusText}`);

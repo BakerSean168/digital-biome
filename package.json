@@ -2,6 +2,11 @@
   "name": "digital-biome",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": "24.x",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "dev": "pnpm sync && astro dev",
     "dev:pull": "git submodule update --remote --merge && pnpm sync && astro dev",
@@ -27,6 +32,7 @@
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "@types/mdast": "^4.0.4",
     "pagefind": "^1.4.0",
     "tsx": "^4.21.0",
