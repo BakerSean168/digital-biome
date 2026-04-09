@@ -368,7 +368,9 @@ function cleanStalledFiles(destDir: string, vaultFiles: Set<string>, stats: Sync
     const fullDestPath = path.join(destDir, relPath);
     if (!expectedDestFiles.has(fullDestPath)) {
       try {
-        fs.rmSync(fullDestPath, { force: true });
+        // Use unlinkSync for files to avoid native crash observed with rmSync on
+        // some Windows unicode filenames under Node 24.
+        fs.unlinkSync(fullDestPath);
         stats.cleaned++;
         console.log(`  cleaned: ${relPath}`);
       } catch (err) {
