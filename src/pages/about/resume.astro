@@ -2,7 +2,7 @@
 // 简历页面
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_NAME } from '../../constants';
-import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Database } from '@lucide/astro';
+import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Database, Github } from '@lucide/astro';
 ---
 
 <BaseLayout title={`Resume | ${SITE_NAME}`} description="我的专业简历">
@@ -18,6 +18,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Data
             <span class="flex items-center gap-1.5"><Mail size={14} class="text-black dark:text-primary print:text-black"/> bakersean@foxmail.com</span>
           </div>
           <div class="flex items-center gap-1.5"><Monitor size={14} class="text-black dark:text-primary print:text-black"/> https://bakersean.top/</div>
+          <div class="flex items-center gap-1.5"><Github size={14} class="text-black dark:text-primary print:text-black"/> https://github.com/BakerSean168/</div>
           <!-- <div class="flex items-center gap-1.5"><Cake size={14} class="text-black dark:text-primary print:text-black"/> 22岁</div> -->
           <div class="flex items-center gap-6">
             <span class="flex items-center gap-1.5"><Briefcase size={14} class="text-black dark:text-primary print:text-black"/> 前端/全栈工程师</span>
