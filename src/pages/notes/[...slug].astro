@@ -3,9 +3,11 @@ import { getCollection, render } from 'astro:content';
 import NotesLayout from '../../layouts/NotesLayout.astro';
 import Backlinks from '../../components/notes/Backlinks.astro';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
-  const entries = await getCollection('notes', ({ id, data }) => {
-    return !data.draft && !(data as any).private && (id.startsWith('zh/') || !id.includes('/'));
+  const entries = await getCollection('notes', ({ data }) => {
+    return !data.draft && !(data as any).private;
   });
 
   return entries.map((entry) => ({
