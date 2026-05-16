@@ -1,20 +1,22 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { formatDate } from '../../../utils/date';
 import { SITE_NAME } from '../../../constants';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
-  const noteEntries = await getCollection('notes', ({ id }) => {
-    return id.startsWith('en/') || !id.includes('/'); // fallback
+  const noteEntries = await getCollection('notes', ({ data }) => {
+    return !data.draft && !(data as any).private;
   });
   return noteEntries.map(entry => ({
-    params: { slug: entry.slug.replace(/^en\//, '') }, props: { entry },
+    params: { slug: entry.id.replace(/^en\//, '') }, props: { entry },
   }));
 }
 
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 ---
 
 <BaseLayout
@@ -41,7 +43,7 @@ const { Content } = await entry.render();
 
         {entry.data.tags && entry.data.tags.length > 0 && (
           <div class="flex flex-wrap gap-2 ml-auto">
-            {entry.data.tags.map(tag => (
+            {entry.data.tags.map((tag: string) => (
               <span class="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-medium">
                 #{tag}
               </span>
