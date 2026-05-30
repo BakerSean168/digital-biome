@@ -1,5 +1,5 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { notesConfig } from '../../notes.config';
 import type { Note, Bookmark, Category, NoteCollectionEntry } from '../types/notes';
 
@@ -170,8 +170,9 @@ export async function getAllNoteTags(): Promise<Map<string, number>> {
 
 export function getGitLastModified(filePath: string): Date | null {
   try {
-    const result = execSync(
-      `git log -1 --format="%ct" -- "${filePath}"`,
+    const result = execFileSync(
+      'git',
+      ['log', '-1', '--format=%ct', '--', filePath],
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
     ).toString().trim();
 
