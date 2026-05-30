@@ -5,27 +5,43 @@ import type { Note, Bookmark, Category, NoteCollectionEntry } from '../types/not
 
 const NOTES_PATH = notesConfig.output.notes; // e.g. 'src/content/notes/obsidian'
 
+let publicNotesPromise: Promise<NoteCollectionEntry[]> | null = null;
+let resourceTypesPromise: Promise<string[]> | null = null;
+let categoriesPromise: Promise<Category[]> | null = null;
+
 export async function getPublicNotes(): Promise<NoteCollectionEntry[]> {
-  const allNotes = await getCollection('notes');
-  return allNotes.filter(note =>
-    !note.data.draft &&
-    !(note.data as any).private
-  ).map(note => {
-    if (!note.data.title) {
-      // id 格式: "obsidian/filename"，取最后一段作为回退标题
-      note.data.title = note.id.split('/').pop()?.replace(/-/g, ' ') ?? note.id;
-    }
-    return note;
-  }) as NoteCollectionEntry[];
+  if (publicNotesPromise) return publicNotesPromise;
+
+  publicNotesPromise = (async () => {
+    const allNotes = await getCollection('notes');
+    return allNotes.filter(note =>
+      !note.data.draft &&
+      !(note.data as any).private
+    ).map(note => {
+      if (!note.data.title) {
+        // id 格式: "obsidian/filename"，取最后一段作为回退标题
+        note.data.title = note.id.split('/').pop()?.replace(/-/g, ' ') ?? note.id;
+      }
+      return note;
+    }) as NoteCollectionEntry[];
+  })();
+
+  return publicNotesPromise;
 }
 
 export async function getResourceTypes(): Promise<string[]> {
-  const allNotes = await getCollection('notes');
-  const configNote = allNotes.find(n => n.id === 'obsidian/config/dashboard-resource-types' || n.id === 'obsidian/config/dashboard-resource-types.md');
-  if (configNote && configNote.data && configNote.data.tags) {
-     return configNote.data.tags.map((t: string) => t.toLowerCase());
-  }
-  return [];
+  if (resourceTypesPromise) return resourceTypesPromise;
+
+  resourceTypesPromise = (async () => {
+    const allNotes = await getCollection('notes');
+    const configNote = allNotes.find(n => n.id === 'obsidian/config/dashboard-resource-types' || n.id === 'obsidian/config/dashboard-resource-types.md');
+    if (configNote && configNote.data && configNote.data.tags) {
+       return configNote.data.tags.map((t: string) => t.toLowerCase());
+    }
+    return [];
+  })();
+
+  return resourceTypesPromise;
 }
 
 export async function getBookmarks(): Promise<Bookmark[]> {
@@ -55,24 +71,30 @@ export async function getBookmarks(): Promise<Bookmark[]> {
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const notes = await getPublicNotes();
-  const resourceTypes = await getResourceTypes();
-  const categoryMap = new Map<string, number>();
+  if (categoriesPromise) return categoriesPromise;
 
-  notes.forEach(note => {
-    const cats = extractCategories(note.data.tags || [], resourceTypes);
-    cats.forEach(cat => {
-      categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+  categoriesPromise = (async () => {
+    const notes = await getPublicNotes();
+    const resourceTypes = await getResourceTypes();
+    const categoryMap = new Map<string, number>();
+
+    notes.forEach(note => {
+      const cats = extractCategories(note.data.tags || [], resourceTypes);
+      cats.forEach(cat => {
+        categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+      });
     });
-  });
 
-  return Array.from(categoryMap.entries())
-    .map(([name, count]) => ({
-      name,
-      slug: name.toLowerCase().replace(/\s+/g, '-'),
-      count,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(categoryMap.entries())
+      .map(([name, count]) => ({
+        name,
+        slug: name.toLowerCase().replace(/\s+/g, '-'),
+        count,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  })();
+
+  return categoriesPromise;
 }
 
 export async function getBookmarksByCategory(): Promise<Map<string, Bookmark[]>> {
