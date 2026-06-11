@@ -37,6 +37,13 @@ src/
 
 pnpm dev; pnpm build; pnpm sync
 
+## Context Workflow
+
+- Use Repomix for resume writing, project summaries, architecture snapshots, and portfolio copy.
+- Do not pack the full Obsidian vault by default; it is mostly content and can drown out the Astro application structure.
+- Use CodeGraph only when changing Astro/TypeScript implementation code and symbol or dependency lookup is useful.
+- For day-to-day content work, inspect the relevant Markdown note directly instead of indexing the whole vault.
+
 ## Code Style & Conventions
 
 ### 通用

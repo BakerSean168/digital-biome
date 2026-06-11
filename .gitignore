@@ -38,6 +38,9 @@ coverage/
 
 # Temporary files
 *.log
+tmp/
+.codegraph/
+repomix-output.*
 
 # Build cache
 .turbo/

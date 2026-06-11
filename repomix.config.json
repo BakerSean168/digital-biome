@@ -1,0 +1,74 @@
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "input": {
+    "maxFileSize": 1500000
+  },
+  "output": {
+    "filePath": "tmp/repomix/digital-biome-context.xml",
+    "style": "xml",
+    "parsableStyle": false,
+    "compress": false,
+    "instructionFilePath": "repomix-instruction.md",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "files": true,
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "topFilesLength": 15,
+    "showLineNumbers": false,
+    "truncateBase64": true,
+    "tokenCountTree": 5000,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": false,
+      "includeLogs": false,
+      "includeLogsCount": 20
+    }
+  },
+  "include": [
+    "README.md",
+    "ROADMAP.md",
+    "AGENTS.md",
+    "package.json",
+    "astro.config.mjs",
+    "notes.config.ts",
+    "netlify.toml",
+    "wrangler.jsonc",
+    "docs/**",
+    "specs/**",
+    "src/**",
+    "scripts/**"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      ".git/**",
+      ".astro/**",
+      ".netlify/**",
+      ".wrangler/**",
+      "node_modules/**",
+      "dist/**",
+      "tmp/**",
+      "thought-forest/**",
+      "src/content/notes/**",
+      "src/data/obsidian/**",
+      "public/vault-assets/**",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.jpeg",
+      "**/*.gif",
+      "**/*.webp",
+      "**/*.svg",
+      ".env*",
+      "!/.env.example"
+    ]
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+}
