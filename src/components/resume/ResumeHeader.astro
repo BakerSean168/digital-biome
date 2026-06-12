@@ -1,0 +1,62 @@
+---
+import { Briefcase, Github, Mail, Monitor, Phone } from '@lucide/astro';
+
+type ResumeIcon = 'briefcase' | 'github' | 'mail' | 'monitor' | 'phone';
+
+interface ContactItem {
+  icon: ResumeIcon;
+  text: string;
+}
+
+interface Props {
+  contactRows: ContactItem[][];
+  name: string;
+  photoAlt?: string;
+  photoSrc?: string;
+}
+
+const {
+  contactRows,
+  name,
+  photoAlt = 'Profile Picture',
+  photoSrc = '/resume/profile-plus.png',
+} = Astro.props;
+
+const iconMap = {
+  briefcase: Briefcase,
+  github: Github,
+  mail: Mail,
+  monitor: Monitor,
+  phone: Phone,
+} as const;
+---
+
+<div class="flex justify-between items-start mb-4">
+  <div class="flex flex-col">
+    <h1 class="text-[20px] font-bold mb-3 text-foreground print:text-black tracking-widest leading-none">{name}</h1>
+
+    <div class="flex flex-col gap-1.5 font-medium">
+      {contactRows.map((row) => (
+        <div class="flex items-center gap-6 flex-wrap">
+          {row.map(({ icon, text }) => {
+            const Icon = iconMap[icon];
+
+            return (
+              <span class="flex items-center gap-1.5">
+                <Icon size={14} class="text-primary print:text-black" /> {text}
+              </span>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="shrink-0 ml-4">
+    <img
+      src={photoSrc}
+      alt={photoAlt}
+      class="w-[85px] h-[115px] object-cover bg-background-secondary print:bg-gray-100"
+    />
+  </div>
+</div>
