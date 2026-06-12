@@ -118,11 +118,6 @@ html.dark {
     text-shadow: none !important;
   }
 
-  @page {
-    size: A4;
-    margin: 2cm;
-  }
-
   body {
     font-size: 11pt;
     line-height: 1.4;
@@ -130,7 +125,8 @@ html.dark {
 
   .no-print,
   .site-header,
-  .footer,
+  header,
+  footer,
   .print-hide,
   .notes-sidebar {
     display: none !important;

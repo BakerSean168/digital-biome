@@ -31,13 +31,16 @@ const prefix = lang === 'zh' ? '' : `/${lang}`;
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-180"><path d="m6 9 6 6 6-6"/></svg>
           </button>
 
-          <div class="absolute left-1/2 -translate-x-1/2 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-40 z-50">
+          <div class="absolute left-1/2 -translate-x-1/2 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-48 z-50">
             <div class="bg-background border border-border rounded-md shadow-lg overflow-hidden py-1">
               <a href={`${prefix}/about/resume`} class="block px-4 py-2 text-sm text-foreground hover:bg-card-hover hover:text-primary transition-colors">
-                {t('nav.resume1')}
+                通用简历
               </a>
               <a href={`${prefix}/about/resume-ai`} class="block px-4 py-2 text-sm text-foreground hover:bg-card-hover hover:text-primary transition-colors">
-                {t('nav.resume2')}
+                AI 前端简历
+              </a>
+              <a href={`${prefix}/about/resume-ai-fullstack`} class="block px-4 py-2 text-sm text-foreground hover:bg-card-hover hover:text-primary transition-colors">
+                AI 全栈简历
               </a>
             </div>
           </div>
@@ -86,8 +89,9 @@ const prefix = lang === 'zh' ? '' : `/${lang}`;
         <!-- Mobile Resume Dropdown (Always Expanded/Visible options) -->
         <div class="flex flex-col pl-4 mt-1 border-l-2 border-border ml-2 space-y-1">
           <span class="text-sm font-semibold text-muted-foreground px-2 py-1">{t('nav.resume')}</span>
-          <a href={`${prefix}/about/resume`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.resume1')}</a>
-          <a href={`${prefix}/about/resume-ai`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.resume2')}</a>
+          <a href={`${prefix}/about/resume`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">通用简历</a>
+          <a href={`${prefix}/about/resume-ai`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">AI 前端简历</a>
+          <a href={`${prefix}/about/resume-ai-fullstack`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">AI 全栈简历</a>
         </div>
       </nav>
       <div class="flex items-center justify-end gap-2 border-t border-border pt-4">

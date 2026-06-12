@@ -250,7 +250,7 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Data
       print-color-adjust: exact !important;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
-    body > header, body > footer, nav, aside, .print\:hidden {
+    .print\:hidden {
       display: none !important;
     }
     #resume-wrapper {
@@ -270,13 +270,16 @@ import { Mail, Phone, MapPin, Printer, ArrowLeft, Monitor, Cake, Briefcase, Data
     .print-title-bar {
       background-color: #000000 !important;
     }
-    p, li, .keep-together {
+    .keep-together {
       page-break-inside: avoid;
       break-inside: avoid;
     }
     h2, h3 {
       page-break-after: avoid;
       break-after: avoid;
+    }
+    section {
+      margin-bottom: 12px !important;
     }
     a {
       text-decoration: none !important;

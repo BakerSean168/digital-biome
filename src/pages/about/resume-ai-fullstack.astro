@@ -1,0 +1,276 @@
+---
+// AI 全栈工程师简历
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE_NAME } from '../../constants';
+import { Mail, Phone, Printer, ArrowLeft, Monitor, Briefcase, Github } from '@lucide/astro';
+---
+
+<BaseLayout title={`AI Full-Stack Resume | ${SITE_NAME}`} description="AI 全栈工程师简历">
+  <main id="resume-wrapper" class="max-w-[800px] mx-auto py-6 px-4 text-[12.5px] leading-[1.6] text-gray-900 dark:text-gray-200 print:max-w-none print:w-full print:p-0 print:text-black">
+
+    <div class="flex justify-between items-start mb-4">
+      <div class="flex flex-col">
+        <h1 class="text-[20px] font-bold mb-3 text-black dark:text-white print:text-black tracking-widest leading-none">卢楼豪</h1>
+
+        <div class="flex flex-col gap-1.5 font-medium">
+          <div class="flex items-center gap-6">
+            <span class="flex items-center gap-1.5"><Phone size={14} class="text-black dark:text-primary print:text-black"/> 15258927042</span>
+            <span class="flex items-center gap-1.5"><Mail size={14} class="text-black dark:text-primary print:text-black"/> bakersean@foxmail.com</span>
+          </div>
+          <div class="flex items-center gap-1.5"><Monitor size={14} class="text-black dark:text-primary print:text-black"/> https://bakersean.top/</div>
+          <div class="flex items-center gap-1.5"><Github size={14} class="text-black dark:text-primary print:text-black"/> https://github.com/BakerSean168/</div>
+          <div class="flex items-center gap-6">
+            <span class="flex items-center gap-1.5"><Briefcase size={14} class="text-black dark:text-primary print:text-black"/> AI 全栈工程师 / AI 前端工程师</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="shrink-0 ml-4">
+        <img
+          src="/resume/profile-plus.png"
+          alt="Profile Picture"
+          class="w-[85px] h-[115px] object-cover bg-gray-100 dark:bg-gray-800 print:bg-gray-100"
+        />
+      </div>
+    </div>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">教育背景</h2>
+      </div>
+
+      <article>
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">四川农业大学 <strong>（211）</strong></h3>
+          <span>2022年09月 - 2026年06月</span>
+        </div>
+        <div class="flex justify-between items-baseline keep-together">
+          <p>物联网工程 本科 信息工程学院 全日制</p>
+          <span>雅安</span>
+        </div>
+        <div class="mt-1 text-gray-700 dark:text-gray-300 print:text-gray-800 text-justify">
+          <p><strong>主修课程：</strong>数据结构与算法、计算机网络、操作系统、数据库原理、Web前端开发技术等</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">专业技能</h2>
+      </div>
+      <div class="space-y-1 text-justify">
+        <p><strong>AI 应用开发：</strong>熟悉大语言模型（LLM）应用开发，能够设计 AI 对话流程、知识检索系统与工作流编排。了解 Prompt Engineering、RAG（检索增强生成）等技术，熟悉主流 AI 模型 API（OpenAI、Claude、Gemini）的接入与使用。了解 LangChain 生态，具备 LangGraph Agent runtime 实践，熟悉 checkpoint、interrupt/resume、人审确认等 Agent 工作流机制。熟悉 Dify Workflow，能够设计结构化 AI 输出（JSON Schema）并处理 AI 不稳定性问题（验证器、兜底方案）。能够实现 AI 对话界面、流式响应、知识推荐等前端交互功能。</p>
+        <p><strong>全栈技术能力：</strong>前端熟练掌握 Vue3（Pinia、Composition API）与 TypeScript，了解 React 18；熟练使用 Element Plus、Shadcn UI 等组件库，运用 ECharts 进行数据可视化。后端熟悉 Node.js 与 FastAPI（Python），掌握 RESTful API 设计、JWT 鉴权、Prisma ORM 数据建模。能够完成从前端交互到后端 API、数据库建模的全栈开发闭环。</p>
+        <p><strong>工程化与协作：</strong>熟练使用 Vite、ESLint、Prettier、Husky 保障代码质量；了解 Docker、Nginx、Nx Monorepo 架构。熟悉企业级敏捷开发流程、Git 团队协作（分支管理、Code Review、PR 流程），能够与产品、后端、测试高效协作。善于利用大模型辅助开发，拥有极强的学习自驱力。</p>
+      </div>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">工作经历</h2>
+      </div>
+
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">北京科睿金信技术有限公司</h3>
+          <span>2025年07月 - 2025年11月</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>前端工程师（实习） 国际产品应用开发部</p>
+          <span>杭州</span>
+        </div>
+        <div class="space-y-0.5">
+          <p><strong>前端业务开发：</strong>参与公司核心系统 OLP（在线学习平台）的前端迭代，基于 Vue3 + Element Plus + TypeScript 技术栈，负责 AI 知识管理模块前端部分从 0 到 1 的开发，实现知识库 CRUD、AI 对话界面、知识检索与推荐等功能的前端交互与数据渲染。</p>
+          <p><strong>技术攻坚与实现：</strong>在 DDCC（档案管理系统）项目中，根据项目经理指导的技术方案，自主学习并实现"复杂签名表跨页打印"功能重构，从 Canvas 截图方案迁移至 pagedjs + vue-print-next 方案，实现原生 DOM 级高清打印；独立解决分页表格跨页时选中状态丢失问题（设计全局选中状态池，配合分页逻辑保持状态一致性）。</p>
+          <p><strong>团队协作与工程化：</strong>熟悉企业级敏捷开发流程与 Git 团队协作（分支管理、Code Review、PR 流程），与产品经理、后端工程师、测试协作完成需求拆解、接口联调、Bug 修复与功能上线。利用已有的高复用性通用组件（如超级搜索、动态表单等），提升开发效率。</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">项目经历</h2>
+      </div>
+
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">OLP（在线学习平台）</h3>
+          <span>2025年07月 - 2025年11月</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>前端开发工程师（实习） 国际产品应用开发部</p>
+          <span>杭州</span>
+        </div>
+
+        <div>
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">项目描述：</p>
+          <p class="mb-1 text-justify">面向 Majnoon 油田等跨国企业的综合性内部培训与职业发展系统，涵盖线上音视频课程、直播、考试、AI 知识沉淀与岗位能力匹配等全流程体系。</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">技术栈：</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3 + TypeScript + Element Plus + Vite + ECharts</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">核心职责：</p>
+          <div class="space-y-0.5 text-justify">
+            <p><strong>AI 知识管理模块前端开发：</strong>负责 AI 知识管理模块前端部分的开发与实现，包括知识库 CRUD（创建、编辑、删除、搜索）、AI 对话界面、知识内容检索与推荐等功能。设计知识库与 AI 对话的数据联动机制，支持基于知识库内容的上下文对话；实现流式响应展示，优化 AI 对话的用户体验。</p>
+            <p><strong>前端架构设计与状态管理：</strong>基于 Vue3 Composition API 设计可复用的组合式函数（useKnowledge、useAIChat），实现知识库与 AI 对话的状态解耦。运用 Pinia 进行全局状态管理，解决分页表格跨页勾选状态丢失问题（设计全局选中状态池，配合分页逻辑保持状态一致性）。</p>
+            <p><strong>数据可视化与用户体验优化：</strong>运用 ECharts 实现知识活跃度、AI 对话统计等数据看板。优化大列表渲染性能（虚拟滚动），提升知识库加载速度；设计加载骨架屏与错误边界，提升用户体验。</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">知行 Memoflow（AI 驱动的个人效能管理系统）</h3>
+          <span>2024年01月 - 至今 (持续维护)</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>全栈独立开发（个人项目）</p>
+          <span>Github: https://github.com/BakerSean168/DailyUse</span>
+        </div>
+
+        <div>
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">项目简介：</p>
+          <p class="mb-1 text-justify">基于 Nx/pnpm Monorepo 构建的多端全栈 AI 效能管理应用，覆盖 Web、Desktop、后端 API 与 AI Service，支持目标管理、任务调度、知识管理、AI 对话和 AI 目标生成等场景。</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">技术栈：</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3、TypeScript、Electron、Node.js/Express、Prisma、FastAPI、Pydantic、LangGraph、Nx/pnpm Monorepo</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">项目亮点：</p>
+          <div class="space-y-0.5 text-justify">
+            <p><strong>多端工程架构：</strong>构建多应用 Monorepo 架构，拆分 Web、Desktop、API、AI Service 与共享领域包，统一构建、类型检查、测试和接口契约，支撑多端应用长期迭代。</p>
+            <p><strong>AI Agent 工作流：</strong>基于 FastAPI + Pydantic + LangGraph 构建 AI Agent 工作流，支持 AI 目标生成、知识问答、知识生成，并通过 checkpoint、interrupt/resume 和审批机制控制执行流程。</p>
+            <p><strong>受控业务写入边界：</strong>设计 AI Service 与 TypeScript Executor 的职责边界，使 AI 负责流程编排、模型调用和行动计划生成，业务写入统一由后端执行层完成，提升 Agent 行为的安全性与可控性。</p>
+            <p><strong>AI 工作台与基础设施：</strong>实现 Agent 状态、事件时间线、知识问答、草稿审批等前端交互，并完成 Prisma Repository、统一异常处理和 Token 并发刷新机制。</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="mb-3">
+        <div class="flex justify-between items-baseline mb-0.5 keep-together">
+          <h3 class="font-bold text-[13.5px] text-black dark:text-white print:text-black">VideoCraft Agent（AI 营销短视频生成系统）</h3>
+          <span>2025年03月 - 2025年06月</span>
+        </div>
+        <div class="flex justify-between items-baseline mb-1 keep-together">
+          <p>全栈独立开发（个人项目）</p>
+          <span>Github: https://github.com/BakerSean168/video-craft-agent</span>
+        </div>
+
+        <div>
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">项目简介：</p>
+          <p class="mb-1 text-justify">面向营销短视频生成场景，构建从产品需求输入、素材上传与分析、Dify 生成结构化剪辑方案，到 FastAPI 校验编排、FFmpeg 渲染导出和 React 预览下载的 AI 视频生成 Demo。</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">技术栈：</p>
+          <p class="mb-1 text-justify text-primary print:text-black font-medium">Dify Workflow、FastAPI、Pydantic、FFmpeg、React、TypeScript、Vite、SQLite、pytest</p>
+
+          <p class="font-bold text-black dark:text-white print:text-black mt-1.5 mb-0.5 keep-together">项目亮点：</p>
+          <div class="space-y-0.5 text-justify">
+            <p><strong>AI 视频生成闭环：</strong>构建 Dify + FastAPI + FFmpeg + React 的 AI 视频生成链路，将产品需求和素材画像转化为结构化 EditPlan，再由后端编排渲染、前端预览下载，形成可演示的视频生产闭环。</p>
+            <p><strong>AI 输出可靠性处理：</strong>设计 EditPlan 结构化协议与 Dify Workflow 输出链路，处理输出键提取、Markdown 代码块清洗、JSON 尾逗号修复、Pydantic 校验和本地 fallback，降低 AI 输出不稳定对生成流程的影响。</p>
+            <p><strong>FFmpeg 确定性渲染：</strong>封装 FFmpeg 视频处理工具链，实现素材元数据/音频探测、关键帧提取、竖屏裁剪、字幕渲染、分镜拼接、BGM 混音和多格式转换，将 AI 剪辑计划落地为确定性渲染任务。</p>
+            <p><strong>全栈产品化交互：</strong>实现任务与素材库 API 及 React 工作台，支持素材上传/删除、任务创建/查询、进度轮询、EditPlan 时间轴、视频预览下载和格式转换，并用 SQLite 持久化任务与素材状态。</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">技能证书</h2>
+      </div>
+
+      <div class="space-y-0.5">
+        <p>• 计算机三级：网络技术</p>
+        <p>• 语言：CET-6</p>
+      </div>
+    </section>
+
+    <section class="mb-4">
+      <div class="flex items-center bg-[#f4f5f7] dark:bg-gray-800 h-[24px] mb-2 print-title-bg">
+        <div class="w-[4px] h-[14px] bg-black dark:bg-primary mr-2 print-title-bar"></div>
+        <h2 class="text-[13.5px] font-bold text-black dark:text-white print:text-black tracking-widest leading-none !bg-transparent print:!bg-transparent">个人总结</h2>
+      </div>
+      <div class="space-y-0.5">
+        <p>• <strong>学习与钻研能力：</strong>大学英语六级，能够阅读英文技术文档与 API 文档。长期使用 Obsidian 沉淀技术笔记与知识体系,有构思自己的笔记体系，已经累计1000多篇笔记。并且钻研过家庭服务器、软路由、个人网站等多种技术，具备较强的动手实践与问题探索能力。</p>
+        <p>• <strong>积极拥抱 AI 技术：</strong>持续学习并实践 AI 应用开发，熟悉 Cursor、Copilot、Claude Code 等 AI 辅助开发工具，善于挑选并配置 MCP 工具、Skills，为任务搭建高效的 AI 工作流环境。</p>
+        <p>• <strong>问题沟通与文档化：</strong>善于使用 Markdown 文档记录、拆解问题，将信息结构化以便于团队交流与知识沉淀。注重需求理解与方案设计，能够通过清晰的文档与沟通推动问题解决与功能落地。</p>
+      </div>
+    </section>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mt-10 pt-6 border-t border-gray-200 dark:border-gray-800 print:hidden">
+      <button onclick="window.print()" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-black dark:bg-primary text-white rounded-lg font-medium transition-opacity hover:opacity-80">
+        <Printer size={18} /> 打印 / 保存为 PDF
+      </button>
+      <a href="/about" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border-2 border-black dark:border-primary text-black dark:text-primary hover:bg-black dark:hover:bg-primary hover:text-white rounded-lg font-medium transition-colors">
+        <ArrowLeft size={18} /> 返回关于
+      </a>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 8mm 15mm;
+    }
+
+    body {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    #resume-wrapper {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    #resume-wrapper > div:first-child {
+      margin-bottom: 10px !important;
+    }
+
+    section {
+      margin-bottom: 9px !important;
+      page-break-inside: auto;
+      break-inside: auto;
+    }
+
+    article {
+      margin-bottom: 8px !important;
+      page-break-inside: auto;
+      break-inside: auto;
+    }
+
+    p, li {
+      orphans: 2;
+      widows: 2;
+    }
+
+    p, li, .keep-together {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .print-title-bg {
+      background-color: #f4f5f7 !important;
+      height: 22px !important;
+      margin-bottom: 5px !important;
+      page-break-after: avoid;
+      break-after: avoid;
+      break-inside: avoid;
+    }
+
+    .print-title-bar {
+      background-color: #000 !important;
+    }
+
+    h2, h3 {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+  }
+</style>
