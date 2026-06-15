@@ -37,8 +37,8 @@ const contactRows = [
   <ResumeSection title="专业技能">
     <div class="space-y-1 text-justify">
       <p><strong>AI 大模型集成与应用开发：</strong>深刻理解 LLM 交互范式，熟练掌握 Prompt Engineering。熟悉大模型流式输出（SSE/Stream）在前端的接入与渲染，具备独立设计与落地 Chatbot、AI 知识管理、智能文档生成等全链路 AI Agent 应用的实战经验。</p>
-      <p><strong>大前端与工程化：</strong>熟练掌握 TypeScript 与现代 JavaScript (ES6+)。深度掌握 Vue3 及其生态，熟悉 React 18 及其 Hooks 机制。熟练使用 Vite、ESLint、Husky 等工程化工具，具备自动化发布（GitHub Actions）及单元测试配置能力。</p>
-      <p><strong>全栈开发闭环能力：</strong>熟悉 Node.js 核心模块，熟练掌握 RESTful API 规范、JWT 鉴权及前后端标准数据流转。具备运用 Prisma 进行数据库建模及分布式复杂状态调度的能力，能够独立完成从数据库设计到前端呈现的完整业务闭环。</p>
+      <p><strong>前端与工程化：</strong>熟练掌握 TypeScript 与现代 JavaScript (ES6+)。深度掌握 Vue3 及其生态，熟悉 React 18 及其 Hooks 机制。熟练使用 Vite、ESLint、Husky 等工程化工具，具备自动化发布（GitHub Actions）及单元测试配置能力。</p>
+      <p><strong>全栈开发闭环能力：</strong>熟悉 Node.js 核心模块，了解 python， 熟悉 RESTful API 规范、JWT 鉴权及前后端标准数据流转。具备运用 Prisma 进行数据库建模及分布式复杂状态调度的能力，能够独立完成从数据库设计到前端呈现的完整业务闭环。</p>
       <p><strong>高性能 Web 开发与调优：</strong>熟练使用 Tailwind CSS 与各类现代组件库（Element Plus、Shadcn UI）。具备复杂数据可视化（ECharts）、纯 DOM 高清打印流重构、跨端跨页状态同步等核心痛点攻坚能力。</p>
       <p><strong>敏捷开发与创新效能：</strong>熟练使用 Figma 进行 UI 设计，具备良好的产品思维与交互嗅觉；高度善用 AI 工具（ChatGPT/Gemini/Cursor）辅助 Vibe Coding 及架构设计，持续探索 AI 赋能研发效能的最佳实践，拥有极强的技术自驱力与代码洁癖。</p>
     </div>
@@ -131,18 +131,18 @@ const contactRows = [
         <p class="font-bold text-foreground print:text-black mt-1.5 mb-0.5 keep-together">技术栈：</p>
         <p class="mb-1 text-justify text-primary print:text-black font-medium">Astro + TypeScript + Tailwind CSS + Node.js + Pagefind</p>
 
-        <p class="font-bold text-foreground print:text-black mt-1.5 mb-0.5 keep-together">核心职责：</p>
+        <p class="font-bold text-foreground print:text-black mt-1.5 mb-0.5 keep-together">项目亮点：</p>
         <div class="space-y-0.5 text-justify">
-          <p><strong>工程化数据同步流构建：</strong>独立编写 Node.js 同步脚本（sync-obsidian.ts），深度解析并清洗 Markdown 数据。实现对 Obsidian 特有 Wikilinks 语法的正则转换与图片路径重写，并自动提取 frontmatter 网址以缓存 Favicon 图标，打通本地 Vault 到 Web 目录的自动化同步链路。</p>
-          <p><strong>数据驱动的动态视图引擎：</strong>设计并实现基于 YAML frontmatter 的层级标签（Hierarchical Tags）系统。通过解析 notes 数据提取 tech、website 等标签，动态生成仪表盘（Dashboard）的网址书签资源库、笔记侧边栏分类树以及反向链接（Backlinks），实现视图与内容的高度解耦。</p>
-          <p><strong>前端架构设计与性能优化：</strong>采用 Astro 的静态优先策略（SSG）与 Islands 架构，大幅降低客户端 JS 体积。整合 Content Collections 进行强类型内容查询，并接入 Pagefind 实现纯静态的秒级全文搜索；抽象出多套独立 Layout，优雅实现了同一数据源的跨场景渲染与极佳的打印排版支持。</p>
+          <p><strong>工程化数据同步流构建：</strong>利用工程化的结构规范以及脚本文件，实现优雅的基于笔记内容的网页数据获取。</p>
+          <p><strong>页面原型快速设计开发：</strong>通过 figma 进行元素、组件和页面地原型设计，再利用 ai 快速实现项目开发</p>
+          <p><strong>前端架构设计与性能优化：</strong>采用 Astro 的静态优先策略（SSG）与 Islands 架构，大幅降低客户端 JS 体积。抽象出多套独立 Layout，优雅实现了同一数据源的跨场景渲染与极佳的打印排版支持。</p>
         </div>
       </div>
     </article>
 
     <article class="mb-3">
       <div class="flex justify-between items-baseline mb-0.5 keep-together">
-        <h3 class="font-bold text-[13.5px] text-foreground print:text-black">DailyUse（效能管理系统）</h3>
+        <h3 class="font-bold text-[13.5px] text-foreground print:text-black">知行 Memoflow（AI 驱动的个人效能管理系统）</h3>
         <span>2024年01月 - 至今 (持续维护)</span>
       </div>
       <div class="flex justify-between items-baseline mb-1 keep-together">
@@ -152,16 +152,17 @@ const contactRows = [
 
       <div>
         <p class="font-bold text-foreground print:text-black mt-1.5 mb-0.5 keep-together">项目描述：</p>
-        <p class="mb-1 text-justify">一款注重工程化规范与极致用户体验的全栈效能管理应用，严格遵循企业级开发标准，实现了从数据库建模、领域层解耦到前端复杂状态调度的完整数据闭环。</p>
+        <p class="mb-1 text-justify">基于 Nx/pnpm Monorepo 构建的多端全栈 AI 效能管理应用，覆盖 Web、Desktop 与 AI Service，支持目标管理、任务调度、知识管理与 AI 对话等场景，重点打磨前端工程架构与 AI 交互体验。</p>
 
         <p class="font-bold text-foreground print:text-black mt-1.5 mb-0.5 keep-together">技术栈：</p>
-        <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3 + TypeScript + Node.js + Prisma + Axios</p>
+        <p class="mb-1 text-justify text-primary print:text-black font-medium">Vue3、TypeScript、Electron、Node.js/Express、Prisma、FastAPI、LangGraph、Nx/pnpm Monorepo</p>
 
-        <p class="font-bold text-foreground print:text-black mt-1.5 mb-0.5 keep-together">核心职责：</p>
+        <p class="font-bold text-foreground print:text-black mt-1.5 mb-0.5 keep-together">项目亮点：</p>
         <div class="space-y-0.5 text-justify">
-          <p><strong>标准全栈通信与鉴权闭环：</strong>基于 Axios 深度封装 HTTP Client，运用 Result Pattern 抹平底层网络与业务异常，免除业务层冗余 try-catch 代码。在拦截器中利用 Promise 锁机制与任务队列，实现了严谨的 401 无感 Token 并发刷新机制。</p>
-          <p><strong>前端复杂状态解耦与聚合：</strong>针对配置项繁多的巨型表单，运用组件化思维将其拆解为多个细粒度视图（如基础信息、时间规则等）。提取自定义 Hook 集中调度分布式校验状态，严格遵循单向数据流原则，大幅降低代码耦合度。</p>
-          <p><strong>规范化数据建模与服务隔离：</strong>采用 Prisma 进行复杂关系型数据库建模，熟练应用树状级联（Cascade）与联合索引优化查询。在后端架构中引入仓储模式（Repository），实现底层数据库操作与核心业务逻辑的彻底解耦。</p>
+          <p><strong>多端工程架构与自动化：</strong>构建 Nx Monorepo 多应用架构，拆分 Web、Desktop、API 与共享领域包，统一构建流程、类型检查与接口契约。配置 GitHub Actions 实现 Electron 桌面应用自动打包发布（跨平台构建与版本管理），支撑多端长期迭代。</p>
+          <p><strong>AI Agent 工作台与交互设计：</strong>设计并实现 AI 工作台前端，涵盖 Agent 状态流转、事件时间线、流式对话与知识问答等交互组件。基于 Vue3 Composition API 封装 AI 对话组合式函数，实现流式响应渲染与草稿审批（interrupt/resume）前端控制流。</p>
+          <p><strong>前端复杂状态解耦与聚合：</strong>针对配置项繁多的巨型表单，运用组件化思维拆解为多个细粒度视图（如基础信息、时间规则等）。提取自定义 Hook 集中调度分布式校验状态，严格遵循单向数据流原则，大幅降低代码耦合度。</p>
+          <p><strong>全栈通信与鉴权基础设施：</strong>基于 Axios 封装 HTTP Client，运用 Result Pattern 抹平底层网络与业务异常。在拦截器中利用 Promise 锁机制与任务队列，实现严谨的 401 无感 Token 并发刷新机制。</p>
         </div>
       </div>
     </article>
@@ -174,11 +175,11 @@ const contactRows = [
     </div>
   </ResumeSection>
 
-  <ResumeSection title="个人总结">
+ <ResumeSection title="个人总结">
     <div class="space-y-0.5">
-      <p>• <strong>AI 应用开发实践：</strong>积极拥抱 AI 技术，具备 LLM 应用开发实战经验，能够独立设计并落地 Chatbot、知识管理等 AI 应用场景。持续学习并实践 AI 辅助开发工具（Cursor、Claude Code 等），善于搭建高效的 AI 工作流环境。</p>
-      <p>• <strong>全栈工程化思维：</strong>具备良好的工程化思维与产品理解力，不仅能高效落地业务需求，更具备主动识别并攻坚技术痛点的能力。注重系统设计、代码质量与长期可维护性，习惯从业务目标、技术约束和用户体验之间寻找平衡。</p>
-      <p>• <strong>持续学习与沉淀：</strong>长期使用 Obsidian 沉淀技术笔记与知识体系，已累计 1000+ 篇笔记。构建个人知识生态 Digital Biome，将技术洞察、项目经验与学习成果转化为可复用的知识资产。拥有极强的学习自驱力与技术热情。</p>
+      <p>• <strong>学习与钻研能力：</strong>大学英语六级，能够阅读英文技术文档与 API 文档。长期使用 Obsidian 沉淀技术笔记与知识体系,有构思自己的笔记体系，已经累计1000多篇笔记。并且钻研过家庭服务器、软路由、个人网站等多种技术，具备较强的动手实践与问题探索能力。</p>
+      <p>• <strong>积极拥抱 AI 技术：</strong>持续学习并实践 AI 应用开发，熟悉 Cursor、Copilot、Claude Code 等 AI 辅助开发工具，善于挑选并配置 MCP 工具、Skills，为任务搭建高效的 AI 工作流环境。</p>
+      <p>• <strong>问题沟通与文档化：</strong>善于使用 Markdown 文档记录、拆解问题，将信息结构化以便于团队交流与知识沉淀。注重需求理解与方案设计，能够通过清晰的文档与沟通推动问题解决与功能落地。</p>
     </div>
   </ResumeSection>
 </ResumePage>
