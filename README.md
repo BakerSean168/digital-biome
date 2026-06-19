@@ -72,3 +72,4 @@ specs/               # 功能规格
 
 - [功能路线图](ROADMAP.md)
 - [架构设计](docs/architecture.md)
+- [资产架构设计](docs/asset-architecture.md)

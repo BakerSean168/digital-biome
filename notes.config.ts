@@ -12,17 +12,25 @@
 
 export const notesConfig = {
   vault: {
-    /** 笔记仓库路径，支持相对路径或绝对路径 */
-    path: 'thought-forest/z',
+    /** 常规知识笔记目录 */
+    notesPath: ['D:/home/thought-forest/z', 'thought-forest/z'],
+
+    /**
+     * 资产笔记目录。
+     * 当前与图片资源共用 thought-forest/assets 根目录：
+     * - 顶层文件主要是图片/附件
+     * - services/ tools/ hosts/ network/ 等子目录用于资产笔记
+     */
+    assetNotesPath: ['D:/home/thought-forest/assets', 'thought-forest/assets'],
 
     /**
      * Dashboard 等配置文件目录（同步到 obsidian/config/ 子目录）
      * 这里的文件会被同步到 output.notes/config/ 以供内容集合读取
      */
-    configPath: 'thought-forest/config',
+    configPath: ['D:/home/thought-forest/config', 'thought-forest/config'],
 
-    /** 图片资源目录（Obsidian vault 的 assets 文件夹） */
-    assets: 'thought-forest/assets',
+    /** 图片/附件资源目录（Obsidian vault 的 assets 文件夹） */
+    mediaPath: ['D:/home/thought-forest/assets', 'thought-forest/assets'],
     
     /** 要包含的文件模式 */
     include: ['**/*.md'],

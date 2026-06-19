@@ -1,29 +1,228 @@
-import { getCollection, type CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { execSync } from 'child_process';
 import { notesConfig } from '../../notes.config';
-import type { Note, Bookmark, Category, NoteCollectionEntry } from '../types/notes';
+import type {
+  AssetCard,
+  AssetRole,
+  AssetType,
+  Bookmark,
+  Category,
+  HomepageSection,
+  HomepageConfig,
+  NoteCollectionEntry,
+} from '../types/notes';
 
-const NOTES_PATH = notesConfig.output.notes; // e.g. 'src/content/notes/obsidian'
+const NOTES_PATH = notesConfig.output.notes;
+const HOMEPAGE_FEATURED_BOOKMARK_SLUGS = [
+  'chatgpt',
+  'bilibili',
+  'youtube',
+  'pinterest',
+  'github',
+  'linux-do',
+  'reddit',
+] as const;
+
+function fallbackTitle(note: NoteCollectionEntry): string {
+  return note.id.split('/').pop()?.replace(/-/g, ' ') ?? note.id;
+}
+
+function normalizeTitle(note: NoteCollectionEntry): NoteCollectionEntry {
+  if (!note.data.title) {
+    note.data.title = fallbackTitle(note);
+  }
+  return note;
+}
+
+export function isAssetEntry(note: NoteCollectionEntry): boolean {
+  return Boolean(note.data.asset_id && note.data.asset_type) || note.id.startsWith('obsidian/assets/');
+}
+
+function isPublicNoteEntry(note: NoteCollectionEntry): boolean {
+  return !note.data.draft && !note.data.private && !isAssetEntry(note);
+}
+
+function isPublicAssetEntry(note: NoteCollectionEntry): boolean {
+  return (
+    !note.data.draft &&
+    !note.data.private &&
+    isAssetEntry(note) &&
+    note.data.visibility === 'public' &&
+    Boolean(note.data.asset_id) &&
+    Boolean(note.data.asset_type)
+  );
+}
+
+export function getAssetHref(asset: Pick<NoteCollectionEntry['data'], 'asset_id' | 'asset_type'>): string {
+  if (!asset.asset_id || !asset.asset_type) {
+    return '/';
+  }
+
+  if (asset.asset_type === 'service') {
+    return `/services/${asset.asset_id}`;
+  }
+
+  if (asset.asset_type === 'tool') {
+    return `/tools/${asset.asset_id}`;
+  }
+
+  return `/infrastructure/${asset.asset_id}`;
+}
+
+export function toAssetCard(note: NoteCollectionEntry): AssetCard {
+  return {
+    assetId: note.data.asset_id!,
+    assetType: note.data.asset_type!,
+    assetRole: inferAssetRole(note.data),
+    title: note.data.title,
+    description: note.data.description,
+    href: getAssetHref(note.data),
+    tags: note.data.tags || [],
+    icon: note.data.icon,
+    status: note.data.status,
+    homepage: note.data.homepage,
+    monitor: note.data.monitor,
+    links: note.data.links || [],
+  };
+}
+
+export function inferAssetRole(
+  note: Pick<NoteCollectionEntry['data'], 'asset_role' | 'asset_type' | 'homepage' | 'tags'>
+): AssetRole | undefined {
+  if (note.asset_role) {
+    return note.asset_role;
+  }
+
+  const tags = new Set(note.tags || []);
+
+  if (tags.has('tech/personal-site')) {
+    return 'showcase';
+  }
+
+  if (tags.has('tech/product')) {
+    return 'product';
+  }
+
+  if (tags.has('tech/dashboard')) {
+    return 'portal';
+  }
+
+  if (note.homepage?.section === 'projects') {
+    return 'showcase';
+  }
+
+  if (note.asset_type === 'service') {
+    return 'ops';
+  }
+
+  return undefined;
+}
+
+function sortByOrderThenTitle<T extends { title: string; homepage?: HomepageConfig }>(items: T[]): T[] {
+  return items.sort((a, b) => {
+    const aOrder = a.homepage?.order ?? 100;
+    const bOrder = b.homepage?.order ?? 100;
+    if (aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
+    return a.title.localeCompare(b.title, 'zh-CN');
+  });
+}
+
+export async function getAllNotes(): Promise<NoteCollectionEntry[]> {
+  const allNotes = await getCollection('notes');
+  return allNotes.map(note => normalizeTitle(note as NoteCollectionEntry));
+}
 
 export async function getPublicNotes(): Promise<NoteCollectionEntry[]> {
-  const allNotes = await getCollection('notes');
-  return allNotes.filter(note =>
-    !note.data.draft &&
-    !(note.data as any).private
-  ).map(note => {
-    if (!note.data.title) {
-      // id 格式: "obsidian/filename"，取最后一段作为回退标题
-      note.data.title = note.id.split('/').pop()?.replace(/-/g, ' ') ?? note.id;
-    }
-    return note;
-  }) as NoteCollectionEntry[];
+  const allNotes = await getAllNotes();
+  return allNotes.filter(isPublicNoteEntry);
+}
+
+export async function getPublicAssets(): Promise<NoteCollectionEntry[]> {
+  const allNotes = await getAllNotes();
+  return allNotes.filter(isPublicAssetEntry);
+}
+
+export async function getAssetByAssetId(assetId: string): Promise<NoteCollectionEntry | undefined> {
+  const assets = await getPublicAssets();
+  return assets.find(asset => asset.data.asset_id === assetId);
+}
+
+export async function getAssetsByAssetIds(assetIds: string[]): Promise<NoteCollectionEntry[]> {
+  const wanted = new Set(assetIds);
+  const assets = await getPublicAssets();
+  return assets.filter(asset => asset.data.asset_id && wanted.has(asset.data.asset_id));
+}
+
+export async function getAssetsByType(assetType: AssetType): Promise<NoteCollectionEntry[]> {
+  const assets = await getPublicAssets();
+  return assets
+    .filter(asset => asset.data.asset_type === assetType)
+    .sort((a, b) => a.data.title.localeCompare(b.data.title, 'zh-CN'));
+}
+
+export async function getHomepageAssets(section: HomepageSection): Promise<AssetCard[]> {
+  const assets = await getPublicAssets();
+  const featured = assets
+    .filter(asset => asset.data.homepage?.featured && asset.data.homepage?.section === section)
+    .map(toAssetCard);
+
+  return sortByOrderThenTitle(featured);
+}
+
+export async function getAssetsByHomepageSection(section: HomepageSection): Promise<NoteCollectionEntry[]> {
+  const assets = await getPublicAssets();
+  return assets
+    .filter(asset => asset.data.homepage?.featured && asset.data.homepage?.section === section)
+    .sort((a, b) => {
+      const orderDiff = (a.data.homepage?.order ?? 100) - (b.data.homepage?.order ?? 100);
+      if (orderDiff !== 0) {
+        return orderDiff;
+      }
+      return a.data.title.localeCompare(b.data.title, 'zh-CN');
+    });
+}
+
+export async function getServiceDisplayGroups(): Promise<{
+  operations: AssetCard[];
+  projects: AssetCard[];
+}> {
+  const assets = await getPublicAssets();
+  const services = assets
+    .filter(asset => asset.data.asset_type === 'service')
+    .map(toAssetCard);
+
+  return {
+    operations: sortByOrderThenTitle(
+      services.filter(asset => !asset.assetRole || asset.assetRole === 'ops' || asset.assetRole === 'portal')
+    ),
+    projects: sortByOrderThenTitle(
+      services.filter(asset => asset.assetRole === 'product' || asset.assetRole === 'showcase')
+    ),
+  };
+}
+
+export async function getInfrastructureAssets(): Promise<AssetCard[]> {
+  const assets = await getPublicAssets();
+  return assets
+    .filter(asset => asset.data.asset_type === 'host' || asset.data.asset_type === 'network')
+    .map(toAssetCard)
+    .sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'));
+}
+
+export async function getRelatedAssetsByParent(assetId: string): Promise<NoteCollectionEntry[]> {
+  const assets = await getPublicAssets();
+  return assets
+    .filter(asset => asset.data.parent_asset_id === assetId || asset.data.host_asset_id === assetId)
+    .sort((a, b) => a.data.title.localeCompare(b.data.title, 'zh-CN'));
 }
 
 export async function getResourceTypes(): Promise<string[]> {
-  const allNotes = await getCollection('notes');
+  const allNotes = await getAllNotes();
   const configNote = allNotes.find(n => n.id === 'obsidian/config/dashboard-resource-types' || n.id === 'obsidian/config/dashboard-resource-types.md');
-  if (configNote && configNote.data && configNote.data.tags) {
-     return configNote.data.tags.map((t: string) => t.toLowerCase());
+  if (configNote?.data?.tags) {
+    return configNote.data.tags.map((t: string) => t.toLowerCase());
   }
   return [];
 }
@@ -37,11 +236,10 @@ export async function getBookmarks(): Promise<Bookmark[]> {
       const tags = note.data.tags || [];
       const hasWebsite = tags.some((tag: string) => tag.toLowerCase() === 'website');
       const hasResource = tags.some((tag: string) => tag.toLowerCase() === 'resource');
-      
-      // Keep support for legacy 'type/resource' and 'website/xxx' tags as well as new logic
+
       const isLegacy = note.data.url && tags.some((tag: string) => tag === 'type/resource');
       const isNew = note.data.url && hasWebsite && hasResource && extractCategories(tags, resourceTypes).length > 0;
-      
+
       return isLegacy || isNew;
     })
     .map(note => ({
@@ -91,24 +289,28 @@ export async function getBookmarksByCategory(): Promise<Map<string, Bookmark[]>>
   return categoryMap;
 }
 
-/**
- * 提取书签分类
- * 支持传统层级标签 (如 website/video)
- * 和基于资源类型匹配的扁平标签
- */
+export async function getHomepageFeaturedBookmarks(): Promise<Bookmark[]> {
+  const bookmarks = await getBookmarks();
+  const bookmarkMap = new Map(
+    bookmarks.map(bookmark => [bookmark.slug.split('/').pop()?.toLowerCase(), bookmark] as const)
+  );
+
+  return HOMEPAGE_FEATURED_BOOKMARK_SLUGS
+    .map(slug => bookmarkMap.get(slug))
+    .filter((bookmark): bookmark is Bookmark => Boolean(bookmark));
+}
+
 function extractCategories(tags: string[], resourceTypes: string[]): string[] {
   const categories = new Set<string>();
 
   tags.forEach(tag => {
     const lowerTag = tag.toLowerCase();
-    
-    // Legacy support: extract from website/* hierarchy
+
     if (lowerTag.startsWith('website/')) {
       const parts = tag.replace(/^website\//i, '').split('/');
       categories.add(parts[parts.length - 1]);
     }
-    
-    // New logic: check against configured resource types
+
     if (resourceTypes.includes(lowerTag)) {
       categories.add(lowerTag);
     }
@@ -117,10 +319,6 @@ function extractCategories(tags: string[], resourceTypes: string[]): string[] {
   return Array.from(categories);
 }
 
-/**
- * 解析层级标签为结构化对象
- * 例如 "tech/lang/typescript" → { root: "tech", path: ["tech", "lang", "typescript"], display: "typescript", full: "tech/lang/typescript" }
- */
 export interface ParsedTag {
   root: string;
   path: string[];
@@ -138,10 +336,6 @@ export function parseHierarchicalTag(tag: string): ParsedTag {
   };
 }
 
-/**
- * 从标签数组中提取顶层分类（root 维度去重）
- * 用于侧边栏分类导航
- */
 export function extractTagRoots(tags: string[]): string[] {
   const roots = new Set<string>();
   tags.forEach(tag => {
@@ -151,9 +345,6 @@ export function extractTagRoots(tags: string[]): string[] {
   return Array.from(roots);
 }
 
-/**
- * 获取所有笔记的标签统计（支持层级展示）
- */
 export async function getAllNoteTags(): Promise<Map<string, number>> {
   const notes = await getPublicNotes();
   const tagMap = new Map<string, number>();
@@ -175,7 +366,7 @@ export function getGitLastModified(filePath: string): Date | null {
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
     ).toString().trim();
 
-    return result ? new Date(parseInt(result) * 1000) : null;
+    return result ? new Date(parseInt(result, 10) * 1000) : null;
   } catch {
     return null;
   }
@@ -184,11 +375,7 @@ export function getGitLastModified(filePath: string): Date | null {
 export async function getRecentNotes(limit: number = 5): Promise<NoteCollectionEntry[]> {
   const notes = await getPublicNotes();
 
-  // note.id = "obsidian/filename"，对应文件在 src/data/obsidian/filename.md
-  // 但 git log 要查的是 thought-forest submodule 中的原始文件（更准确）
-  // 或者查同步后的文件，两者 mtime 相同，用同步后的路径即可
   const notesWithModified = notes.map(note => {
-    // note.id: "obsidian/foo/bar" → file: "src/data/obsidian/foo/bar.md"
     const relPath = note.id.replace(/^obsidian\//, '');
     const filePath = `${NOTES_PATH}/${relPath}.md`;
     return { note, lastModified: getGitLastModified(filePath) };

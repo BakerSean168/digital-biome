@@ -21,14 +21,26 @@ import path from 'path';
 import { notesConfig } from '../notes.config';
 import { fetch } from 'undici';
 
-const VAULT_PATH = path.join(process.cwd(), notesConfig.vault.path);
-const ASSETS_SRC = path.join(process.cwd(), notesConfig.vault.assets);
+function resolveCandidatePath(input: string | string[]): string {
+  const candidates = Array.isArray(input) ? input : [input];
+  const resolved = candidates.map(candidate => (
+    path.isAbsolute(candidate) ? candidate : path.join(process.cwd(), candidate)
+  ));
+
+  const existing = resolved.find(candidate => fs.existsSync(candidate));
+  return existing ?? resolved[0];
+}
+
+const NOTES_SRC = resolveCandidatePath(notesConfig.vault.notesPath);
+const ASSET_NOTES_SRC = resolveCandidatePath(notesConfig.vault.assetNotesPath);
+const MEDIA_SRC = resolveCandidatePath(notesConfig.vault.mediaPath);
 const NOTES_DEST = path.join(process.cwd(), notesConfig.output.notes);
+const ASSET_NOTES_DEST = path.join(NOTES_DEST, 'assets');
 const ASSETS_DEST = path.join(process.cwd(), notesConfig.output.assets);
 
 // 可选：dashboard 等配置文件目录（同步到 NOTES_DEST/config/ 子目录）
 const CONFIG_SRC = notesConfig.vault.configPath
-  ? path.join(process.cwd(), notesConfig.vault.configPath)
+  ? resolveCandidatePath(notesConfig.vault.configPath)
   : null;
 const CONFIG_DEST = path.join(NOTES_DEST, 'config');
 
@@ -181,18 +193,7 @@ function processContent(content: string, filename: string): string {
       const bodyStart = 1 + yamlLines.length;
       let frontmatter = yamlLines.join('\n');
 
-      // 修复缩进问题
-      const hasIndentationIssue = /^ +\w/m.test(frontmatter);
-      if (hasIndentationIssue) {
-        frontmatter = frontmatter
-          .split('\n')
-          .map(line => {
-            // 保留 YAML 列表项缩进（如 tags 列表下的 - item）
-            if (/^\s+- /.test(line)) return line;
-            return line.replace(/^ +/, '');
-          })
-          .join('\n');
-      }
+      frontmatter = normalizeFrontmatterIndentation(frontmatter);
 
       // 如果缺少 title 字段，添加
       const hasTitle = /^title:\s/m.test(frontmatter);
@@ -206,17 +207,7 @@ function processContent(content: string, filename: string): string {
       let frontmatter = lines.slice(1, closingIndex).join('\n');
       const body = lines.slice(closingIndex + 1).join('\n');
 
-      // 修复缩进问题
-      const hasIndentationIssue = /^ +\w/m.test(frontmatter);
-      if (hasIndentationIssue) {
-        frontmatter = frontmatter
-          .split('\n')
-          .map(line => {
-            if (/^\s+- /.test(line)) return line;
-            return line.replace(/^ +/, '');
-          })
-          .join('\n');
-      }
+      frontmatter = normalizeFrontmatterIndentation(frontmatter);
 
       // 如果缺少 title 字段，添加
       const hasTitle = /^title:\s/m.test(frontmatter);
@@ -258,6 +249,47 @@ function collectFiles(dir: string, baseDir: string): Set<string> {
   return result;
 }
 
+function normalizeFrontmatterIndentation(frontmatter: string): string {
+  const lines = frontmatter.split('\n');
+  const indents = lines
+    .filter(line => line.trim() !== '')
+    .map(line => line.match(/^ */)?.[0].length ?? 0);
+
+  const minIndent = indents.length > 0 ? Math.min(...indents) : 0;
+  if (minIndent === 0) {
+    return frontmatter;
+  }
+
+  return lines
+    .map(line => {
+      if (line.trim() === '') return line;
+      return line.slice(minIndent);
+    })
+    .join('\n');
+}
+
+function collectMediaFiles(dir: string): string[] {
+  const result: string[] = [];
+  if (!fs.existsSync(dir)) return result;
+
+  const entries = fs.readdirSync(dir);
+  for (const entry of entries) {
+    if (entry.startsWith('.')) continue;
+    const fullPath = path.join(dir, entry);
+    const stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      result.push(...collectMediaFiles(fullPath));
+      continue;
+    }
+
+    if (!entry.toLowerCase().endsWith('.md')) {
+      result.push(fullPath);
+    }
+  }
+
+  return result;
+}
+
 // ---------------------------------------------------------------------------
 // Asset sync
 // ---------------------------------------------------------------------------
@@ -267,8 +299,8 @@ function collectFiles(dir: string, baseDir: string): Set<string> {
  * (flat copy — no subdirectories expected in assets/)
  */
 function syncAssets(stats: SyncStats): void {
-  if (!fs.existsSync(ASSETS_SRC)) {
-    console.log(`  assets dir not found, skipping: ${ASSETS_SRC}`);
+  if (!fs.existsSync(MEDIA_SRC)) {
+    console.log(`  assets dir not found, skipping: ${MEDIA_SRC}`);
     return;
   }
 
@@ -276,14 +308,10 @@ function syncAssets(stats: SyncStats): void {
     fs.mkdirSync(ASSETS_DEST, { recursive: true });
   }
 
-  const files = fs.readdirSync(ASSETS_SRC);
-  for (const file of files) {
-    if (file.startsWith('.')) continue;
-    const srcPath = path.join(ASSETS_SRC, file);
+  const files = collectMediaFiles(MEDIA_SRC);
+  for (const srcPath of files) {
+    const file = path.basename(srcPath);
     const destPath = path.join(ASSETS_DEST, file);
-
-    const stat = fs.statSync(srcPath);
-    if (stat.isDirectory()) continue; // skip nested dirs
 
     try {
       fs.copyFileSync(srcPath, destPath);
@@ -303,8 +331,8 @@ function syncAssets(stats: SyncStats): void {
  */
 async function syncFiles(srcDir: string, destDir: string, stats: SyncStats): Promise<void> {
   if (!fs.existsSync(srcDir)) {
-    console.error(`Vault 目录不存在: ${srcDir}`);
-    console.log(`请在 notes.config.ts 中配置正确的 vault.path`);
+    console.error(`源目录不存在: ${srcDir}`);
+    console.log('请在 notes.config.ts 中配置正确的同步路径');
     process.exit(1);
   }
 
@@ -352,21 +380,18 @@ async function syncFiles(srcDir: string, destDir: string, stats: SyncStats): Pro
 /**
  * 清理目标目录中已不存在于 vault 的文件和空目录
  */
-function cleanStalledFiles(destDir: string, vaultFiles: Set<string>, stats: SyncStats): void {
+function cleanStalledFiles(destDir: string, expectedFiles: Set<string>, stats: SyncStats): void {
   if (!fs.existsSync(destDir)) return;
-
-  // 将 vault 中存在的 .md 文件路径映射到 dest 中的对应路径
-  const expectedDestFiles = new Set(
-    Array.from(vaultFiles)
-      .filter(f => f.endsWith('.md'))
-      .map(f => path.join(destDir, f))
-  );
 
   const destFiles = collectFiles(destDir, destDir);
 
   for (const relPath of destFiles) {
+    if (!relPath.endsWith('.md')) {
+      continue;
+    }
+
     const fullDestPath = path.join(destDir, relPath);
-    if (!expectedDestFiles.has(fullDestPath)) {
+    if (!expectedFiles.has(relPath)) {
       try {
         // Use unlinkSync for files to avoid native crash observed with rmSync on
         // some Windows unicode filenames under Node 24.
@@ -388,8 +413,17 @@ function removeEmptyDirs(dir: string): void {
   const entries = fs.readdirSync(dir);
   for (const entry of entries) {
     const fullPath = path.join(dir, entry);
+    if (!fs.existsSync(fullPath)) {
+      continue;
+    }
+
     if (fs.statSync(fullPath).isDirectory()) {
       removeEmptyDirs(fullPath);
+
+      if (!fs.existsSync(fullPath)) {
+        continue;
+      }
+
       if (fs.readdirSync(fullPath).length === 0) {
         fs.rmdirSync(fullPath);
       }
@@ -403,31 +437,48 @@ function removeEmptyDirs(dir: string): void {
 
 async function main(): Promise<void> {
   console.log('Syncing Obsidian notes...');
-  console.log(`  vault : ${VAULT_PATH}`);
+  console.log(`  notes : ${NOTES_SRC} -> ${NOTES_DEST}`);
+  console.log(`  assets: ${ASSET_NOTES_SRC} -> ${ASSET_NOTES_DEST}`);
   if (CONFIG_SRC) console.log(`  config: ${CONFIG_SRC} -> ${CONFIG_DEST}`);
-  console.log(`  assets: ${ASSETS_SRC} -> ${ASSETS_DEST}`);
-  console.log(`  dest  : ${NOTES_DEST}\n`);
+  console.log(`  media : ${MEDIA_SRC} -> ${ASSETS_DEST}\n`);
 
   const stats: SyncStats = { copied: 0, cleaned: 0, skipped: 0, assetsCopied: 0, faviconsCached: 0, errors: [] };
 
   // Copy images to public/vault-assets/
   syncAssets(stats);
 
-  // 收集 vault 中所有文件（用于清理对比)
-  // 同时将 config 目录文件加入期望集，防止 cleanStalledFiles 误删
-  const vaultFiles = collectFiles(VAULT_PATH, VAULT_PATH);
+  // 收集所有 markdown 文件（用于清理对比）
+  const expectedFiles = new Set(
+    Array.from(collectFiles(NOTES_SRC, NOTES_SRC))
+      .filter(f => f.endsWith('.md'))
+  );
+
+  if (fs.existsSync(ASSET_NOTES_SRC)) {
+    const assetNoteFiles = collectFiles(ASSET_NOTES_SRC, ASSET_NOTES_SRC);
+    for (const f of assetNoteFiles) {
+      if (f.endsWith('.md')) {
+        expectedFiles.add(path.join('assets', f));
+      }
+    }
+  }
+
   if (CONFIG_SRC && fs.existsSync(CONFIG_SRC)) {
     const configFiles = collectFiles(CONFIG_SRC, CONFIG_SRC);
     for (const f of configFiles) {
-      vaultFiles.add(path.join('config', f));
+      if (f.endsWith('.md')) {
+        expectedFiles.add(path.join('config', f));
+      }
     }
   }
 
   // 清理 dest 中已失效的文件
-  cleanStalledFiles(NOTES_DEST, vaultFiles, stats);
+  cleanStalledFiles(NOTES_DEST, expectedFiles, stats);
 
   // 同步最新文件（含图片路径重写）
-  await syncFiles(VAULT_PATH, NOTES_DEST, stats);
+  await syncFiles(NOTES_SRC, NOTES_DEST, stats);
+  if (fs.existsSync(ASSET_NOTES_SRC)) {
+    await syncFiles(ASSET_NOTES_SRC, ASSET_NOTES_DEST, stats);
+  }
 
   // 同步 config 目录（dashboard 配置笔记等）
   if (CONFIG_SRC && fs.existsSync(CONFIG_SRC)) {
