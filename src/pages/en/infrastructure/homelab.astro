@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import HomelabLayerView from '../../../components/assets/HomelabLayerView.astro';
+import {
+  getAssetCardsForFlows,
+  getInfrastructureDataset,
+  getTopologyFlows,
+  homelabLayers,
+  homelabFlowIds,
+} from '../../../utils/infrastructure';
+
+const homelabFlows = getTopologyFlows(homelabFlowIds);
+const { assetCards, resolvedNodes } = await getInfrastructureDataset('/en');
+const homelabAssets = getAssetCardsForFlows(homelabFlows, assetCards);
+---
+
+<BaseLayout title="Homelab" description="Home network, PVE, NAS, and household service stack">
+  <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
+    <div class="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-[0.24em] text-primary/75">Infrastructure Detail</p>
+        <h1 class="mt-2 text-3xl font-semibold text-foreground md:text-4xl">Homelab View</h1>
+        <p class="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
+          This page breaks down the home infrastructure into power, network, host, VM, NAS, and service layers so the homelab reads like a real system instead of a pile of devices.
+        </p>
+      </div>
+      <a href="/en/infrastructure" class="text-sm text-primary transition-colors hover:text-foreground">
+        Back to infrastructure overview
+      </a>
+    </div>
+
+    <HomelabLayerView
+      title="Home Network and Homelab Layers"
+      description="This page turns the home stack into a real layered homelab cross-section, from power resilience and network ingress through N100 + PVE, virtual workloads, and the household service surface."
+      layers={homelabLayers}
+      assets={homelabAssets}
+      resolvedNodes={resolvedNodes}
+      locale="en"
+    />
+  </main>
+</BaseLayout>

@@ -1,0 +1,118 @@
+---
+import type { TopologyNodeKind } from '../../data/infrastructure/family-topology';
+import type { ResolvedTopologyNode } from '../../utils/infrastructure';
+
+interface Props {
+  node: ResolvedTopologyNode;
+  locale?: 'zh' | 'en';
+  compact?: boolean;
+}
+
+const {
+  node,
+  locale = 'zh',
+  compact = false,
+} = Astro.props;
+
+const labels = locale === 'en'
+  ? {
+      detail: 'Asset Detail',
+      open: 'Open',
+      monitor: 'Monitor',
+    }
+  : {
+      detail: '资产详情',
+      open: '打开入口',
+      monitor: '监控页',
+    };
+
+const kindTheme: Record<TopologyNodeKind, { ring: string; badge: string; glow: string }> = {
+  external: {
+    ring: 'border-sky-400/30 bg-sky-500/7',
+    badge: 'border-sky-400/25 bg-sky-500/12 text-sky-700 dark:text-sky-300',
+    glow: 'from-sky-400/20',
+  },
+  network: {
+    ring: 'border-cyan-400/30 bg-cyan-500/7',
+    badge: 'border-cyan-400/25 bg-cyan-500/12 text-cyan-700 dark:text-cyan-300',
+    glow: 'from-cyan-400/20',
+  },
+  host: {
+    ring: 'border-emerald-400/30 bg-emerald-500/7',
+    badge: 'border-emerald-400/25 bg-emerald-500/12 text-emerald-700 dark:text-emerald-300',
+    glow: 'from-emerald-400/20',
+  },
+  hypervisor: {
+    ring: 'border-violet-400/30 bg-violet-500/7',
+    badge: 'border-violet-400/25 bg-violet-500/12 text-violet-700 dark:text-violet-300',
+    glow: 'from-violet-400/20',
+  },
+  vm: {
+    ring: 'border-amber-400/30 bg-amber-500/7',
+    badge: 'border-amber-400/25 bg-amber-500/12 text-amber-700 dark:text-amber-300',
+    glow: 'from-amber-400/20',
+  },
+  service: {
+    ring: 'border-lime-400/30 bg-lime-500/7',
+    badge: 'border-lime-400/25 bg-lime-500/12 text-lime-700 dark:text-lime-300',
+    glow: 'from-lime-400/20',
+  },
+  tool: {
+    ring: 'border-fuchsia-400/30 bg-fuchsia-500/7',
+    badge: 'border-fuchsia-400/25 bg-fuchsia-500/12 text-fuchsia-700 dark:text-fuchsia-300',
+    glow: 'from-fuchsia-400/20',
+  },
+};
+
+const theme = kindTheme[node.kind];
+---
+
+<article class={`relative overflow-hidden rounded-[28px] border ${theme.ring} ${compact ? 'p-3.5' : 'p-4'} shadow-[0_16px_50px_rgba(0,0,0,0.05)] transition-transform duration-300 hover:-translate-y-1`}>
+  <div class={`absolute inset-x-6 top-0 h-px bg-gradient-to-r ${theme.glow} via-transparent to-transparent`}></div>
+
+  <div class="relative">
+    <div class="mb-3 flex flex-wrap items-center gap-2">
+      <span class={`rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] ${theme.badge}`}>
+        {node.kind}
+      </span>
+      {node.status && (
+        <span class="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground">
+          {node.status}
+        </span>
+      )}
+    </div>
+
+    <h3 class={`${compact ? 'text-base' : 'text-lg'} font-semibold text-foreground`}>{node.title}</h3>
+    <p class={`mt-2 ${compact ? 'text-xs leading-5' : 'text-sm leading-6'} text-muted-foreground`}>{node.description}</p>
+
+    {node.chips && node.chips.length > 0 && (
+      <div class="mt-4 flex flex-wrap gap-2">
+        {node.chips.map(chip => (
+          <span class="rounded-full bg-pane px-2.5 py-1 text-xs text-muted-foreground">
+            {chip}
+          </span>
+        ))}
+      </div>
+    )}
+
+    {(node.href || node.primaryUrl || node.monitorUrl) && (
+      <div class="mt-4 flex flex-wrap gap-2">
+        {node.href && (
+          <a href={node.href} class={`inline-flex rounded-full bg-foreground ${compact ? 'px-3 py-1.5 text-xs' : 'px-3.5 py-2 text-sm'} font-medium text-background transition-colors hover:bg-primary`}>
+            {labels.detail}
+          </a>
+        )}
+        {node.primaryUrl && (
+          <a href={node.primaryUrl} target="_blank" rel="noopener noreferrer" class={`inline-flex rounded-full border border-border ${compact ? 'px-3 py-1.5 text-xs' : 'px-3.5 py-2 text-sm'} text-foreground transition-colors hover:border-primary/40 hover:text-primary`}>
+            {labels.open}
+          </a>
+        )}
+        {node.monitorUrl && (
+          <a href={node.monitorUrl} target="_blank" rel="noopener noreferrer" class={`inline-flex rounded-full border border-border ${compact ? 'px-3 py-1.5 text-xs' : 'px-3.5 py-2 text-sm'} text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary`}>
+            {labels.monitor}
+          </a>
+        )}
+      </div>
+    )}
+  </div>
+</article>

@@ -1,0 +1,229 @@
+---
+import AssetSection from './AssetSection.astro';
+import InfrastructureNodePanel from './InfrastructureNodePanel.astro';
+import type { AssetCard } from '../../types/notes';
+import type { FleetRegionCard, ResolvedTopologyNode } from '../../utils/infrastructure';
+
+interface Props {
+  title: string;
+  description: string;
+  regions: FleetRegionCard[];
+  resolvedNodes: Record<string, ResolvedTopologyNode>;
+  assets: AssetCard[];
+  locale?: 'zh' | 'en';
+}
+
+const {
+  title,
+  description,
+  regions,
+  resolvedNodes,
+  assets,
+  locale = 'zh',
+} = Astro.props;
+
+const labels = locale === 'en'
+  ? {
+      eyebrow: 'Regional Fleet Matrix',
+      matrixTitle: 'Region / Provider / Role Matrix',
+      matrixDescription: 'Every card is a node position in your public fleet. Region says where it lands, provider says whose metal it lives on, and role says what job it performs.',
+      planesTitle: 'Fleet Planes',
+      planesDescription: 'These are the four main planes that give the public fleet its MJJ flavor: edge, control, workload, proxy, and showcase.',
+      linkedAssets: 'Fleet Assets',
+      linkedDescription: 'These infrastructure notes back the matrix with stable facts, while the page turns them into a public-facing fleet narrative.',
+      linkedHrefLabel: 'Open infrastructure search',
+      empty: 'No public fleet assets are linked yet.',
+      regionLabel: 'region',
+      hostTitle: 'Host Nodes',
+      serviceTitle: 'Carried Services',
+      facts: [
+        `${regions.length} regional cards`,
+        `${new Set(regions.map(region => region.providerEn)).size} providers in play`,
+        `${regions.filter(region => region.roleEn === 'Proxy Node').length} proxy positions`,
+        `${assets.length} asset-backed fleet entries`,
+      ],
+      planes: [
+        { title: 'Edge', description: 'Domain, DNS, and proxy boundary', className: 'border-cyan-400/25 bg-cyan-500/10 text-cyan-300' },
+        { title: 'Control', description: 'Panels and management entrypoints', className: 'border-sky-400/25 bg-sky-500/10 text-sky-300' },
+        { title: 'Workload', description: 'Business traffic and production apps', className: 'border-emerald-400/25 bg-emerald-500/10 text-emerald-300' },
+        { title: 'Proxy', description: 'Regional egress and routing nodes', className: 'border-fuchsia-400/25 bg-fuchsia-500/10 text-fuchsia-300' },
+        { title: 'Showcase', description: 'Public identity and knowledge surface', className: 'border-amber-400/25 bg-amber-500/10 text-amber-300' },
+      ],
+    }
+  : {
+      eyebrow: 'Regional Fleet Matrix',
+      matrixTitle: '区域 / 厂商 / 角色矩阵',
+      matrixDescription: '每张卡都是你公网舰队里的一个节点位。Region 表示它落在哪，Provider 表示它挂在哪家，Role 表示它到底负责什么。',
+      planesTitle: 'Fleet Planes',
+      planesDescription: '这几种平面共同塑造了这支公网舰队的 MJJ 气质：边缘层、控制面、业务面、代理面和展示面。',
+      linkedAssets: 'Fleet 关联资产',
+      linkedDescription: '这些基础设施笔记负责提供稳定事实，而这张页面把它们提升成一套可阅读的公网舰队叙事。',
+      linkedHrefLabel: '进入基础设施搜索',
+      empty: '还没有接入公网舰队资产。',
+      regionLabel: '区域',
+      hostTitle: '宿主节点',
+      serviceTitle: '承载服务',
+      facts: [
+        `${regions.length} 张区域节点卡`,
+        `${new Set(regions.map(region => region.provider)).size} 个主要提供商`,
+        `${regions.filter(region => region.role === 'Proxy Node').length} 个代理节点位`,
+        `${assets.length} 个已资产化公网入口`,
+      ],
+      planes: [
+        { title: 'Edge', description: '域名、DNS 与代理边界', className: 'border-cyan-400/25 bg-cyan-500/10 text-cyan-300' },
+        { title: 'Control', description: '面板与统一运维入口', className: 'border-sky-400/25 bg-sky-500/10 text-sky-300' },
+        { title: 'Workload', description: '业务负载与生产服务', className: 'border-emerald-400/25 bg-emerald-500/10 text-emerald-300' },
+        { title: 'Proxy', description: '区域出口与代理节点', className: 'border-fuchsia-400/25 bg-fuchsia-500/10 text-fuchsia-300' },
+        { title: 'Showcase', description: '公开身份与知识展示面', className: 'border-amber-400/25 bg-amber-500/10 text-amber-300' },
+      ],
+    };
+
+const regionViews = regions.map(region => ({
+  ...region,
+  hostNodes: region.hostNodeIds
+    .map(nodeId => resolvedNodes[nodeId])
+    .filter((node): node is ResolvedTopologyNode => Boolean(node)),
+  serviceNodes: region.serviceNodeIds
+    .map(nodeId => resolvedNodes[nodeId])
+    .filter((node): node is ResolvedTopologyNode => Boolean(node)),
+}));
+---
+
+<div class="space-y-10">
+  <section class="relative overflow-hidden rounded-[36px] border border-border bg-card/70 px-6 py-8 md:px-9 md:py-10">
+    <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:24px_24px] opacity-35"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.14),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(236,72,153,0.12),transparent_24%)]"></div>
+    <div class="relative">
+      <p class="text-sm uppercase tracking-[0.28em] text-primary/80">{labels.eyebrow}</p>
+      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{title}</h1>
+      <p class="mt-4 max-w-4xl text-base leading-7 text-muted-foreground md:text-lg">{description}</p>
+
+      <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {labels.facts.map(fact => (
+          <div class="rounded-2xl border border-border bg-background/65 px-4 py-3 text-sm text-muted-foreground shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
+            {fact}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="space-y-6">
+    <div>
+      <p class="text-xs uppercase tracking-[0.24em] text-primary/75">{labels.planesTitle}</p>
+      <h2 class="mt-2 text-2xl font-semibold text-foreground md:text-3xl">{labels.planesTitle}</h2>
+      <p class="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">{labels.planesDescription}</p>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {labels.planes.map(plane => (
+        <article class="rounded-[28px] border border-border bg-card/68 p-5">
+          <span class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] ${plane.className}`}>
+            {plane.title}
+          </span>
+          <p class="mt-3 text-sm leading-6 text-muted-foreground">{plane.description}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="space-y-6">
+    <div>
+      <p class="text-xs uppercase tracking-[0.24em] text-primary/75">{labels.matrixTitle}</p>
+      <h2 class="mt-2 text-2xl font-semibold text-foreground md:text-3xl">{labels.matrixTitle}</h2>
+      <p class="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">{labels.matrixDescription}</p>
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-2 2xl:grid-cols-3">
+      {regionViews.map(region => (
+        <article class="relative overflow-hidden rounded-[34px] border border-border bg-card/72 p-5 md:p-6">
+          <div class={`absolute inset-x-0 top-0 h-28 bg-gradient-to-r ${region.accentClass}`}></div>
+
+          <div class="relative space-y-5">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-xs uppercase tracking-[0.24em] text-primary/75">{locale === 'en' ? 'Regional Position' : '区域节点位'}</p>
+                <h3 class="mt-2 text-2xl font-semibold text-foreground">
+                  {locale === 'en' ? region.regionEn : region.region}
+                </h3>
+              </div>
+
+              <div class="rounded-2xl border border-border bg-background/70 px-3 py-2 text-right shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {locale === 'en' ? 'card id' : '节点编号'}
+                </p>
+                <p class="mt-1 text-sm font-medium text-foreground">{region.id}</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <span class={`rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] ${region.providerClass}`}>
+                {locale === 'en' ? region.providerEn : region.provider}
+              </span>
+              <span class={`rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] ${region.roleClass}`}>
+                {locale === 'en' ? region.roleEn : region.role}
+              </span>
+              <span class="rounded-full border border-border bg-background/60 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                {labels.regionLabel}: {locale === 'en' ? region.regionEn : region.region}
+              </span>
+            </div>
+
+            <p class="text-sm leading-6 text-muted-foreground">
+              {locale === 'en' ? region.descriptionEn : region.description}
+            </p>
+
+            <div class="grid gap-3 sm:grid-cols-3">
+              <div class="rounded-2xl border border-border bg-background/65 px-4 py-3">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{locale === 'en' ? 'provider' : '提供商'}</p>
+                <p class="mt-1 text-sm font-medium text-foreground">{locale === 'en' ? region.providerEn : region.provider}</p>
+              </div>
+              <div class="rounded-2xl border border-border bg-background/65 px-4 py-3">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{locale === 'en' ? 'role' : '角色'}</p>
+                <p class="mt-1 text-sm font-medium text-foreground">{locale === 'en' ? region.roleEn : region.role}</p>
+              </div>
+              <div class="rounded-2xl border border-border bg-background/65 px-4 py-3">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{locale === 'en' ? 'entries' : '入口数'}</p>
+                <p class="mt-1 text-sm font-medium text-foreground">{region.hostNodes.length + region.serviceNodes.length}</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <h4 class="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">{labels.hostTitle}</h4>
+                <span class="text-xs text-muted-foreground">{region.hostNodes.length}</span>
+              </div>
+              <div class="grid gap-3">
+                {region.hostNodes.map(node => (
+                  <InfrastructureNodePanel node={node} locale={locale} compact />
+                ))}
+              </div>
+            </div>
+
+            {region.serviceNodes.length > 0 && (
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-3">
+                  <h4 class="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">{labels.serviceTitle}</h4>
+                  <span class="text-xs text-muted-foreground">{region.serviceNodes.length}</span>
+                </div>
+                <div class="grid gap-3">
+                  {region.serviceNodes.map(node => (
+                    <InfrastructureNodePanel node={node} locale={locale} compact />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <AssetSection
+    title={labels.linkedAssets}
+    description={labels.linkedDescription}
+    assets={assets}
+    href={locale === 'en' ? '/en/discover' : '/discover'}
+    hrefLabel={labels.linkedHrefLabel}
+    emptyText={labels.empty}
+  />
+</div>

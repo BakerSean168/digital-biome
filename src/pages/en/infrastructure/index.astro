@@ -1,40 +1,38 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import InfrastructureAtlas from '../../../components/assets/InfrastructureAtlas.astro';
-import { familyTopology, familyTopologyLinkedAssetIds } from '../../../data/infrastructure/family-topology';
-import { getAssetsByAssetIds, toAssetCard } from '../../../utils/notes';
+import InfrastructureShowcase from '../../../components/assets/InfrastructureShowcase.astro';
+import {
+  featuredInfrastructureAssetIds,
+  getInfrastructureDataset,
+  getTopologyFactCounts,
+  getTopologyFlows,
+  homelabFlowIds,
+  pickAssetCardsByIds,
+  publicFleetFlowIds,
+} from '../../../utils/infrastructure';
 
-const assetEntries = await getAssetsByAssetIds(familyTopologyLinkedAssetIds);
-const assetCards = assetEntries.map(toAssetCard).map(asset => ({ ...asset, href: `/en${asset.href}` }));
-const assetMap = new Map(assetEntries.map(entry => [entry.data.asset_id, entry]));
+const { assetCards, resolvedNodes } = await getInfrastructureDataset('/en');
+const fleetFlows = getTopologyFlows(publicFleetFlowIds);
+const homelabFlows = getTopologyFlows(homelabFlowIds);
+const fleetFacts = getTopologyFactCounts(fleetFlows);
+const homelabFacts = getTopologyFactCounts(homelabFlows);
+const featuredAssets = pickAssetCardsByIds(assetCards, featuredInfrastructureAssetIds);
 
-const resolvedNodes = Object.fromEntries(
-  familyTopology.flatMap(flow => flow.steps.map(step => {
-    const asset = step.assetId ? assetMap.get(step.assetId) : undefined;
-    const primaryUrl = asset?.data.links?.find(link => link.kind === 'app' || link.kind === 'admin')?.url;
-    const monitorUrl = asset?.data.links?.find(link => link.kind === 'monitor')?.url ?? asset?.data.monitor?.url;
-
-    return [step.id, {
-      ...step,
-      href: asset
-        ? `/en${toAssetCard(asset).href}`
-        : step.href
-          ? `/en${step.href}`
-          : undefined,
-      primaryUrl: primaryUrl ?? step.primaryUrl,
-      monitorUrl: monitorUrl ?? step.monitorUrl,
-    }];
-  }))
-);
+const heroFacts = [
+  '4 public regions: Chengdu, Hong Kong, Japan, Korea',
+  `${fleetFacts.flowCount} public lanes across control, workload, proxy, and showcase planes`,
+  `${homelabFacts.flowCount} homelab lanes across power, network, compute, virtualization, and service layers`,
+  `${assetCards.length} asset-backed nodes with detail, entry, and monitor jumps`,
+];
 ---
 
 <BaseLayout title="Infrastructure" description="Public and home infrastructure assets">
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
-    <InfrastructureAtlas
+    <InfrastructureShowcase
       title="Digital Infrastructure Atlas"
-      description="This atlas connects your public control plane, regional VPS nodes, public sites, home LAN, UPS resilience layer, TP-Link / AP access layer, N100 + PVE stack, NAS service chain, and core services into one navigable asset map."
-      flows={familyTopology}
-      assets={assetCards}
+      description="This page treats your public control plane, regional VPS fleet, public sites, home network, and homelab services as one coherent personal infrastructure showcase instead of scattered cards."
+      heroFacts={heroFacts}
+      featuredAssets={featuredAssets}
       resolvedNodes={resolvedNodes}
       locale="en"
     />

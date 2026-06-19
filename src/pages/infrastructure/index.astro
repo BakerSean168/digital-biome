@@ -1,36 +1,38 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import InfrastructureAtlas from '../../components/assets/InfrastructureAtlas.astro';
-import { familyTopology, familyTopologyLinkedAssetIds } from '../../data/infrastructure/family-topology';
-import { getAssetsByAssetIds, toAssetCard } from '../../utils/notes';
+import InfrastructureShowcase from '../../components/assets/InfrastructureShowcase.astro';
+import {
+  featuredInfrastructureAssetIds,
+  getInfrastructureDataset,
+  getTopologyFactCounts,
+  getTopologyFlows,
+  homelabFlowIds,
+  pickAssetCardsByIds,
+  publicFleetFlowIds,
+} from '../../utils/infrastructure';
 
-const assetEntries = await getAssetsByAssetIds(familyTopologyLinkedAssetIds);
-const assetCards = assetEntries.map(toAssetCard);
-const assetMap = new Map(assetEntries.map(entry => [entry.data.asset_id, entry]));
+const { assetCards, resolvedNodes } = await getInfrastructureDataset();
+const fleetFlows = getTopologyFlows(publicFleetFlowIds);
+const homelabFlows = getTopologyFlows(homelabFlowIds);
+const fleetFacts = getTopologyFactCounts(fleetFlows);
+const homelabFacts = getTopologyFactCounts(homelabFlows);
+const featuredAssets = pickAssetCardsByIds(assetCards, featuredInfrastructureAssetIds);
 
-const resolvedNodes = Object.fromEntries(
-  familyTopology.flatMap(flow => flow.steps.map(step => {
-    const asset = step.assetId ? assetMap.get(step.assetId) : undefined;
-    const primaryUrl = asset?.data.links?.find(link => link.kind === 'app' || link.kind === 'admin')?.url;
-    const monitorUrl = asset?.data.links?.find(link => link.kind === 'monitor')?.url ?? asset?.data.monitor?.url;
-
-    return [step.id, {
-      ...step,
-      href: asset ? toAssetCard(asset).href : step.href,
-      primaryUrl: primaryUrl ?? step.primaryUrl,
-      monitorUrl: monitorUrl ?? step.monitorUrl,
-    }];
-  }))
-);
+const heroFacts = [
+  '4 个公网区域：成都、香港、日本、韩国',
+  `${fleetFacts.flowCount} 条公网链路，覆盖控制面、业务面、代理面与展示面`,
+  `${homelabFacts.flowCount} 条家庭实验室链路，包含供电、网络、计算、虚拟化与服务层`,
+  `${assetCards.length} 个资产化节点，已接入详情页、入口和监控跳板`,
+];
 ---
 
 <BaseLayout title="Infrastructure" description="家庭网络与公网资产">
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
-    <InfrastructureAtlas
+    <InfrastructureShowcase
       title="数字基础设施拓扑"
-      description="这里把公网控制平面、区域 VPS、公开站点、家庭局域网、UPS 供电韧性层、TP-Link / AP 无线接入层、N100 + PVE、NAS 服务链和核心服务串成一张统一的资产地图，方便你从结构、知识和入口三层同时查看。"
-      flows={familyTopology}
-      assets={assetCards}
+      description="这里不再把服务器、路由器和服务拆散成零碎卡片，而是把公网控制平面、区域 VPS 舰队、公开站点、家庭网络和 Homelab 服务栈编织成一个完整的个人基础设施展示站。"
+      heroFacts={heroFacts}
+      featuredAssets={featuredAssets}
       resolvedNodes={resolvedNodes}
       locale="zh"
     />

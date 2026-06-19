@@ -1,0 +1,41 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FleetRegionMatrix from '../../components/assets/FleetRegionMatrix.astro';
+import {
+  fleetRegionCards,
+  getAssetCardsForFlows,
+  getInfrastructureDataset,
+  getTopologyFlows,
+  publicFleetFlowIds,
+} from '../../utils/infrastructure';
+
+const fleetFlows = getTopologyFlows(publicFleetFlowIds);
+const { assetCards, resolvedNodes } = await getInfrastructureDataset();
+const fleetAssets = getAssetCardsForFlows(fleetFlows, assetCards);
+---
+
+<BaseLayout title="Fleet" description="公网控制平面、区域 VPS 与公开站点">
+  <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
+    <div class="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-[0.24em] text-primary/75">Infrastructure Detail</p>
+        <h1 class="mt-2 text-3xl font-semibold text-foreground md:text-4xl">Fleet View</h1>
+        <p class="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground md:text-base">
+          这里专门展开公网舰队，把域名边缘层、香港控制平面、成都业务节点、区域代理节点和公开站点视为一支有分工的个人 Fleet。
+        </p>
+      </div>
+      <a href="/infrastructure" class="text-sm text-primary transition-colors hover:text-foreground">
+        返回基础设施总览
+      </a>
+    </div>
+
+    <FleetRegionMatrix
+      title="公网舰队与服务入口图"
+      description="这里把你的公网资产改造成真正的区域矩阵：每个节点位都有 region、provider、role 编码，控制面、业务面、代理面和展示面不再混成一团。"
+      regions={fleetRegionCards}
+      assets={fleetAssets}
+      resolvedNodes={resolvedNodes}
+      locale="zh"
+    />
+  </main>
+</BaseLayout>
