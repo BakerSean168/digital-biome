@@ -1,0 +1,26 @@
+---
+import { render } from 'astro:content';
+import AssetDetailView from '../../components/assets/AssetDetailView.astro';
+import { getAssetsByAssetIds, getAssetsByType, getRelatedAssetsByParent, toAssetCard } from '../../utils/notes';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const entries = await getAssetsByType('service');
+  return entries.map(entry => ({
+    params: { assetId: entry.data.asset_id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const relatedEntries = entry.data.host_asset_id
+  ? await getAssetsByAssetIds([entry.data.host_asset_id])
+  : await getRelatedAssetsByParent(entry.data.asset_id);
+
+const relatedAssets = relatedEntries.map(toAssetCard);
+---
+
+<AssetDetailView entry={entry} Content={Content} relatedAssets={relatedAssets} />

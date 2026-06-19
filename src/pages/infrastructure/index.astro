@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import InfrastructureAtlas from '../../components/assets/InfrastructureAtlas.astro';
+import { familyTopology, familyTopologyLinkedAssetIds } from '../../data/infrastructure/family-topology';
+import { getAssetsByAssetIds, toAssetCard } from '../../utils/notes';
+
+const assetEntries = await getAssetsByAssetIds(familyTopologyLinkedAssetIds);
+const assetCards = assetEntries.map(toAssetCard);
+const assetMap = new Map(assetEntries.map(entry => [entry.data.asset_id, entry]));
+
+const resolvedNodes = Object.fromEntries(
+  familyTopology.flatMap(flow => flow.steps.map(step => {
+    const asset = step.assetId ? assetMap.get(step.assetId) : undefined;
+    const primaryUrl = asset?.data.links?.find(link => link.kind === 'app' || link.kind === 'admin')?.url;
+    const monitorUrl = asset?.data.links?.find(link => link.kind === 'monitor')?.url ?? asset?.data.monitor?.url;
+
+    return [step.id, {
+      ...step,
+      href: asset ? toAssetCard(asset).href : step.href,
+      primaryUrl: primaryUrl ?? step.primaryUrl,
+      monitorUrl: monitorUrl ?? step.monitorUrl,
+    }];
+  }))
+);
+---
+
+<BaseLayout title="Infrastructure" description="家庭网络与公网资产">
+  <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
+    <InfrastructureAtlas
+      title="数字基础设施拓扑"
+      description="这里把公网控制平面、区域 VPS、公开站点、家庭局域网、UPS 供电韧性层、TP-Link / AP 无线接入层、N100 + PVE、NAS 服务链和核心服务串成一张统一的资产地图，方便你从结构、知识和入口三层同时查看。"
+      flows={familyTopology}
+      assets={assetCards}
+      resolvedNodes={resolvedNodes}
+      locale="zh"
+    />
+  </main>
+</BaseLayout>

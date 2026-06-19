@@ -1,0 +1,125 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { AssetCard, NoteCollectionEntry } from '../../types/notes';
+
+interface Props {
+  entry: NoteCollectionEntry;
+  Content: any;
+  relatedAssets?: AssetCard[];
+}
+
+const { entry, Content, relatedAssets = [] } = Astro.props;
+const { title, description, asset_type, asset_id, tags = [], links = [], monitor } = entry.data;
+const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'monitor' || link.kind === 'panel')?.url;
+---
+
+<BaseLayout title={title} description={description || ''} type="article">
+  <main class="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
+    <div class="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <section class="rounded-[32px] border border-border bg-card/80 p-7 md:p-9">
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          <span class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary">
+            {asset_type}
+          </span>
+          {entry.data.status && (
+            <span class="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+              {entry.data.status}
+            </span>
+          )}
+          <span class="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+            {asset_id}
+          </span>
+        </div>
+
+        <h1 class="text-4xl font-semibold tracking-tight text-foreground">{title}</h1>
+        {description && (
+          <p class="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">{description}</p>
+        )}
+
+        {tags.length > 0 && (
+          <div class="mt-5 flex flex-wrap gap-2">
+            {tags.map((tag: string) => (
+              <span class="rounded-full bg-pane px-3 py-1 text-xs text-muted-foreground">
+                #{tag.includes('/') ? tag.split('/').pop() : tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <aside class="space-y-4">
+        <section class="rounded-[28px] border border-border bg-card/70 p-5">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Quick Links</h2>
+          <div class="mt-4 flex flex-col gap-3">
+            {links.length > 0 ? links.map((link: any) => (
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center justify-between rounded-2xl border border-border px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <span>{link.label}</span>
+                <span class="text-xs uppercase tracking-[0.16em] text-muted-foreground">{link.kind || 'link'}</span>
+              </a>
+            )) : (
+              <p class="text-sm text-muted-foreground">还没有配置可跳转链接。</p>
+            )}
+          </div>
+        </section>
+
+        <section class="rounded-[28px] border border-border bg-card/70 p-5">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Monitoring</h2>
+          <div class="mt-4 text-sm text-muted-foreground">
+            {(monitor?.provider || monitorHref) ? (
+              <div class="space-y-3">
+                {monitor?.provider && <p>来源：{monitor.provider}</p>}
+                {monitor?.target_id && <p>Target: {monitor.target_id}</p>}
+                {monitorHref && (
+                  <a
+                    href={monitorHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex rounded-full border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    {monitor?.label || '打开监控页'}
+                  </a>
+                )}
+              </div>
+            ) : (
+              <p>这个资产还没有接入监控映射。</p>
+            )}
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <article class="rounded-[32px] border border-border bg-card/70 p-7 md:p-9">
+        <div class="prose prose-neutral max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:border prose-pre:border-border prose-pre:bg-card prose-blockquote:border-l-primary prose-img:rounded-xl prose-img:border prose-img:border-border">
+          <Content />
+        </div>
+      </article>
+
+      <aside class="space-y-4">
+        <section class="rounded-[28px] border border-border bg-card/70 p-5">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Relationships</h2>
+          <div class="mt-4 space-y-3">
+            {entry.data.host_asset_id && (
+              <p class="text-sm text-muted-foreground">Host: {entry.data.host_asset_id}</p>
+            )}
+            {entry.data.parent_asset_id && (
+              <p class="text-sm text-muted-foreground">Parent: {entry.data.parent_asset_id}</p>
+            )}
+            {relatedAssets.length > 0 ? relatedAssets.map(asset => (
+              <a href={asset.href} class="block rounded-2xl border border-border px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary">
+                {asset.title}
+              </a>
+            )) : (
+              <p class="text-sm text-muted-foreground">暂时没有关联资产。</p>
+            )}
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</BaseLayout>

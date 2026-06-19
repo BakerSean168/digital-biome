@@ -1,0 +1,203 @@
+---
+import AssetSection from './AssetSection.astro';
+import type { AssetCard } from '../../types/notes';
+import type { TopologyFlow, TopologyNode, TopologyNodeKind } from '../../data/infrastructure/family-topology';
+
+interface ResolvedTopologyNode extends TopologyNode {
+  href?: string;
+  primaryUrl?: string;
+  monitorUrl?: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  flows: TopologyFlow[];
+  assets: AssetCard[];
+  resolvedNodes: Record<string, ResolvedTopologyNode>;
+  locale?: 'zh' | 'en';
+}
+
+const {
+  title,
+  description,
+  flows,
+  assets,
+  resolvedNodes,
+  locale = 'zh',
+} = Astro.props;
+
+const labels = locale === 'en'
+  ? {
+      detail: 'Asset Detail',
+      open: 'Open',
+      monitor: 'Monitor',
+      linkedAssets: 'Linked Assets',
+      linkedDescription: 'Nodes backed by asset notes stay searchable, citable, and independently maintainable.',
+      facts: [
+        `${flows.length} topology lanes`,
+        `${assets.length} linked assets`,
+        'manual-first, asset-backed',
+      ],
+      empty: 'No linked infrastructure assets yet.',
+    }
+  : {
+      detail: '资产详情',
+      open: '打开入口',
+      monitor: '监控页',
+      linkedAssets: '关联资产',
+      linkedDescription: '下面这些节点已经有独立资产笔记，可以继续扩展、搜索和跳转。',
+      facts: [
+        `${flows.length} 条拓扑链路`,
+        `${assets.length} 个已接入资产`,
+        '手工维护，逐步资产化',
+      ],
+      empty: '还没有关联基础设施资产。',
+    };
+
+const kindTheme: Record<TopologyNodeKind, { ring: string; badge: string; glow: string }> = {
+  external: {
+    ring: 'border-sky-400/30 bg-sky-500/7',
+    badge: 'border-sky-400/25 bg-sky-500/12 text-sky-700 dark:text-sky-300',
+    glow: 'from-sky-400/20',
+  },
+  network: {
+    ring: 'border-cyan-400/30 bg-cyan-500/7',
+    badge: 'border-cyan-400/25 bg-cyan-500/12 text-cyan-700 dark:text-cyan-300',
+    glow: 'from-cyan-400/20',
+  },
+  host: {
+    ring: 'border-emerald-400/30 bg-emerald-500/7',
+    badge: 'border-emerald-400/25 bg-emerald-500/12 text-emerald-700 dark:text-emerald-300',
+    glow: 'from-emerald-400/20',
+  },
+  hypervisor: {
+    ring: 'border-violet-400/30 bg-violet-500/7',
+    badge: 'border-violet-400/25 bg-violet-500/12 text-violet-700 dark:text-violet-300',
+    glow: 'from-violet-400/20',
+  },
+  vm: {
+    ring: 'border-amber-400/30 bg-amber-500/7',
+    badge: 'border-amber-400/25 bg-amber-500/12 text-amber-700 dark:text-amber-300',
+    glow: 'from-amber-400/20',
+  },
+  service: {
+    ring: 'border-lime-400/30 bg-lime-500/7',
+    badge: 'border-lime-400/25 bg-lime-500/12 text-lime-700 dark:text-lime-300',
+    glow: 'from-lime-400/20',
+  },
+  tool: {
+    ring: 'border-fuchsia-400/30 bg-fuchsia-500/7',
+    badge: 'border-fuchsia-400/25 bg-fuchsia-500/12 text-fuchsia-700 dark:text-fuchsia-300',
+    glow: 'from-fuchsia-400/20',
+  },
+};
+---
+
+<div class="space-y-10">
+  <section class="relative overflow-hidden rounded-[36px] border border-border bg-card/70 px-6 py-8 md:px-9 md:py-10">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.14),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.08),transparent_26%)]"></div>
+    <div class="relative">
+      <p class="text-sm uppercase tracking-[0.28em] text-primary/80">Infrastructure Atlas</p>
+      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{title}</h1>
+      <p class="mt-4 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">{description}</p>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        {labels.facts.map(fact => (
+          <span class="rounded-full border border-border bg-background/70 px-3 py-1.5 text-sm text-muted-foreground">
+            {fact}
+          </span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="space-y-6">
+    {flows.map((flow) => (
+      <article class="rounded-[32px] border border-border bg-card/70 p-5 md:p-7">
+        <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-[0.24em] text-primary/75">{flow.eyebrow}</p>
+            <h2 class="mt-2 text-2xl font-semibold text-foreground">{flow.title}</h2>
+            <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{flow.description}</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-stretch gap-3 md:flex-row md:items-center md:overflow-x-auto md:pb-2">
+          {flow.steps.map((step, index) => {
+            const node = resolvedNodes[step.id];
+            const theme = kindTheme[node.kind];
+            return (
+              <Fragment>
+                <div class="relative min-w-0 md:w-[240px] md:flex-none">
+                  <div class={`absolute inset-x-6 -top-px h-px bg-gradient-to-r ${theme.glow} via-transparent to-transparent`}></div>
+                  <article class={`h-full rounded-[28px] border ${theme.ring} p-4 shadow-[0_16px_50px_rgba(0,0,0,0.05)] transition-transform duration-300 hover:-translate-y-1`}>
+                    <div class="mb-3 flex flex-wrap items-center gap-2">
+                      <span class={`rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.18em] ${theme.badge}`}>
+                        {node.kind}
+                      </span>
+                      {node.status && (
+                        <span class="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground">
+                          {node.status}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 class="text-lg font-semibold text-foreground">{node.title}</h3>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">{node.description}</p>
+
+                    {node.chips && node.chips.length > 0 && (
+                      <div class="mt-4 flex flex-wrap gap-2">
+                        {node.chips.map(chip => (
+                          <span class="rounded-full bg-pane px-2.5 py-1 text-xs text-muted-foreground">
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {(node.href || node.primaryUrl || node.monitorUrl) && (
+                      <div class="mt-5 flex flex-wrap gap-2">
+                        {node.href && (
+                          <a href={node.href} class="inline-flex rounded-full bg-foreground px-3.5 py-2 text-sm font-medium text-background transition-colors hover:bg-primary">
+                            {labels.detail}
+                          </a>
+                        )}
+                        {node.primaryUrl && (
+                          <a href={node.primaryUrl} target="_blank" rel="noopener noreferrer" class="inline-flex rounded-full border border-border px-3.5 py-2 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary">
+                            {labels.open}
+                          </a>
+                        )}
+                        {node.monitorUrl && (
+                          <a href={node.monitorUrl} target="_blank" rel="noopener noreferrer" class="inline-flex rounded-full border border-border px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
+                            {labels.monitor}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                </div>
+
+                {index < flow.steps.length - 1 && (
+                  <div class="flex items-center justify-center px-2 md:w-14 md:flex-none">
+                    <div class="h-8 w-px bg-gradient-to-b from-primary/10 via-primary/40 to-primary/10 md:hidden"></div>
+                    <div class="relative hidden h-px w-full bg-gradient-to-r from-primary/15 via-primary/40 to-primary/15 md:block">
+                      <span class="absolute right-0 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-r border-t border-primary/45 bg-background"></span>
+                    </div>
+                  </div>
+                )}
+              </Fragment>
+            );
+          })}
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <AssetSection
+    title={labels.linkedAssets}
+    description={labels.linkedDescription}
+    assets={assets}
+    emptyText={labels.empty}
+  />
+</div>

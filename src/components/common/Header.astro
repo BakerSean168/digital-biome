@@ -23,6 +23,9 @@ const prefix = lang === 'zh' ? '' : `/${lang}`;
       <nav class="flex items-center gap-6 text-sm font-medium text-muted-foreground">
         <a href={`${prefix}/about`} class="hover:text-foreground transition-colors">{t('nav.about')}</a>
         <a href={`${prefix}/notes`} class="hover:text-foreground transition-colors">{t('nav.notes')}</a>
+        <a href={`${prefix}/services`} class="hover:text-foreground transition-colors">{t('nav.services')}</a>
+        <a href={`${prefix}/tools`} class="hover:text-foreground transition-colors">{t('nav.tools')}</a>
+        <a href={`${prefix}/infrastructure`} class="hover:text-foreground transition-colors">{t('nav.infrastructure')}</a>
 
         <!-- Desktop Resume Dropdown -->
         <div class="relative group">
@@ -84,6 +87,9 @@ const prefix = lang === 'zh' ? '' : `/${lang}`;
       <nav class="flex flex-col gap-1 mb-4">
         <a href={`${prefix}/`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.home')}</a>
         <a href={`${prefix}/notes`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.notes')}</a>
+        <a href={`${prefix}/services`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.services')}</a>
+        <a href={`${prefix}/tools`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.tools')}</a>
+        <a href={`${prefix}/infrastructure`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.infrastructure')}</a>
         <a href={`${prefix}/about`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.about')}</a>
 
         <!-- Mobile Resume Dropdown (Always Expanded/Visible options) -->

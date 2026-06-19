@@ -1,0 +1,53 @@
+---
+import AssetCard from './AssetCard.astro';
+import ProjectCard from './ProjectCard.astro';
+import type { AssetCard as AssetCardType } from '../../types/notes';
+
+interface Props {
+  title: string;
+  description?: string;
+  href?: string;
+  hrefLabel?: string;
+  assets: AssetCardType[];
+  emptyText?: string;
+  variant?: 'default' | 'project';
+}
+
+const {
+  title,
+  description,
+  href,
+  hrefLabel = '查看全部',
+  assets,
+  emptyText = '这里还没有内容',
+  variant = 'default',
+} = Astro.props;
+---
+
+<section class="space-y-6">
+  <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h2 class="text-2xl font-semibold text-foreground">{title}</h2>
+      {description && <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>}
+    </div>
+    {href && (
+      <a href={href} class="text-sm text-primary transition-colors hover:text-foreground">
+        {hrefLabel}
+      </a>
+    )}
+  </div>
+
+  {assets.length > 0 ? (
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {assets.map(asset => (
+        variant === 'project'
+          ? <ProjectCard asset={asset} />
+          : <AssetCard asset={asset} />
+      ))}
+    </div>
+  ) : (
+    <div class="rounded-3xl border border-dashed border-border bg-card/40 px-6 py-10 text-sm text-muted-foreground">
+      {emptyText}
+    </div>
+  )}
+</section>

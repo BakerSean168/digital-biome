@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import InfrastructureAtlas from '../../../components/assets/InfrastructureAtlas.astro';
+import { familyTopology, familyTopologyLinkedAssetIds } from '../../../data/infrastructure/family-topology';
+import { getAssetsByAssetIds, toAssetCard } from '../../../utils/notes';
+
+const assetEntries = await getAssetsByAssetIds(familyTopologyLinkedAssetIds);
+const assetCards = assetEntries.map(toAssetCard).map(asset => ({ ...asset, href: `/en${asset.href}` }));
+const assetMap = new Map(assetEntries.map(entry => [entry.data.asset_id, entry]));
+
+const resolvedNodes = Object.fromEntries(
+  familyTopology.flatMap(flow => flow.steps.map(step => {
+    const asset = step.assetId ? assetMap.get(step.assetId) : undefined;
+    const primaryUrl = asset?.data.links?.find(link => link.kind === 'app' || link.kind === 'admin')?.url;
+    const monitorUrl = asset?.data.links?.find(link => link.kind === 'monitor')?.url ?? asset?.data.monitor?.url;
+
+    return [step.id, {
+      ...step,
+      href: asset
+        ? `/en${toAssetCard(asset).href}`
+        : step.href
+          ? `/en${step.href}`
+          : undefined,
+      primaryUrl: primaryUrl ?? step.primaryUrl,
+      monitorUrl: monitorUrl ?? step.monitorUrl,
+    }];
+  }))
+);
+---
+
+<BaseLayout title="Infrastructure" description="Public and home infrastructure assets">
+  <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
+    <InfrastructureAtlas
+      title="Digital Infrastructure Atlas"
+      description="This atlas connects your public control plane, regional VPS nodes, public sites, home LAN, UPS resilience layer, TP-Link / AP access layer, N100 + PVE stack, NAS service chain, and core services into one navigable asset map."
+      flows={familyTopology}
+      assets={assetCards}
+      resolvedNodes={resolvedNodes}
+      locale="en"
+    />
+  </main>
+</BaseLayout>

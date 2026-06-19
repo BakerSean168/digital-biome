@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BookmarkGrid from '../../../components/dashboard/BookmarkGrid.astro';
+---
+
+<BaseLayout title="Tools" description="Public tool assets">
+  <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
+    <section class="space-y-6">
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight text-foreground">Tools</h1>
+          <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+            This page returns to the older launcher pattern: external websites gathered from notes, not self-hosted services, monitoring panels, or infrastructure assets.
+          </p>
+        </div>
+      </div>
+
+      <BookmarkGrid />
+    </section>
+  </main>
+</BaseLayout>

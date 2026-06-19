@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AssetSection from '../../../components/assets/AssetSection.astro';
+import { getServiceDisplayGroups } from '../../../utils/notes';
+
+const withEnPrefix = (asset: any) => ({ ...asset, href: `/en${asset.href}` });
+const { operations, projects } = await getServiceDisplayGroups();
+---
+
+<BaseLayout title="Services" description="Public service assets">
+  <main class="mx-auto max-w-7xl space-y-14 px-4 py-10 md:px-6 md:py-14">
+    <AssetSection
+      title="Runtime Services"
+      description="Operations, control surfaces, and day-to-day running services live here. Detail pages keep the context, while live state stays in external monitoring."
+      assets={operations.map(withEnPrefix)}
+      emptyText="No public runtime services yet."
+    />
+
+    <AssetSection
+      title="Projects & Sites"
+      description="These are still services technically, but they behave more like products, portfolio pieces, and public-facing sites."
+      assets={projects.map(withEnPrefix)}
+      emptyText="No public project-style services yet."
+      variant="project"
+    />
+  </main>
+</BaseLayout>
