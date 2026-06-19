@@ -2,11 +2,16 @@
 import { getBookmarksByCategory } from '../../utils/notes';
 import BookmarkCategory from './BookmarkCategory.astro';
 
+interface Props {
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
 const bookmarksByCategory = await getBookmarksByCategory();
 const hasBookmarks = bookmarksByCategory.size > 0;
 ---
 
-<div class="w-full max-w-5xl mx-auto pb-20 relative z-10 px-4 md:px-0">
+<div class:list={['relative z-10 w-full', compact ? 'pb-0' : 'pb-20']}>
   {hasBookmarks
     ? Array.from(bookmarksByCategory.entries()).map(([category, bookmarks]) => (
         <BookmarkCategory name={category} bookmarks={bookmarks} />

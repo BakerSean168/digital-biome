@@ -4,19 +4,77 @@
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SearchBox from '../components/dashboard/SearchBox.astro';
-import BookmarkGrid from '../components/dashboard/BookmarkGrid.astro';
+import AssetSection from '../components/assets/AssetSection.astro';
+import FeaturedBookmarkGrid from '../components/dashboard/FeaturedBookmarkGrid.astro';
+import { getHomepageAssets, getInfrastructureAssets } from '../utils/notes';
 import { SITE_NAME } from '../constants';
+
+const services = await getHomepageAssets('services');
+const projects = await getHomepageAssets('projects');
+const infrastructure = await getInfrastructureAssets();
 ---
 
 <BaseLayout title={SITE_NAME} bodyClass="bg-background min-h-screen relative overflow-x-hidden">
-  <!-- Decorative background glow (the green blur orb from Figma) -->
-  <div class="fixed top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen dark:mix-blend-lighten hidden md:block"></div>
-  <div class="fixed top-[10%] right-[-20%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] pointer-events-none -z-10 md:hidden"></div>
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.16),transparent_26%),radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.10),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_40%)]"></div>
 
-  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-12 md:pt-20">
-    <SearchBox placeholder="Search..." />
-    <div class="mt-16">
-      <BookmarkGrid />
+  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-12 md:pt-18 pb-20">
+    <section class="mx-auto max-w-4xl text-center">
+      <p class="text-sm uppercase tracking-[0.3em] text-primary/80">Digital Biome</p>
+      <h1 class="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
+        我的服务、工具、主机和知识笔记，汇在一个入口里。
+      </h1>
+      <p class="mx-auto mt-5 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
+        先搜索，再进入服务；需要状态时跳到监控页，需要上下文时回到知识笔记。
+      </p>
+      <SearchBox
+        placeholder="搜索资产 / 笔记，或用 g / gh / tr 走外部命令…"
+        discoverPath="/discover"
+      />
+    </section>
+
+    <div class="mt-16 space-y-14">
+      <section class="space-y-6">
+        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold text-foreground">Tools</h2>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              首页这里只放少量高频入口。完整分类导航仍然保留在工具页里。
+            </p>
+          </div>
+          <a href="/tools" class="text-sm text-primary transition-colors hover:text-foreground">
+            打开工具导航
+          </a>
+        </div>
+
+        <FeaturedBookmarkGrid />
+      </section>
+
+      <AssetSection
+        title="My Services"
+        description="首页只放精选服务。点击详情页可以看到部署说明、关联主机，以及监控入口。"
+        href="/services"
+        assets={services}
+        emptyText="还没有被标记到首页的服务资产。给资产笔记加上 homepage.featured: true 和 section: services 就会出现在这里。"
+      />
+
+      <AssetSection
+        title="Projects & Sites"
+        description="这里放你自己的项目、产品和公开站点。它们本质上也是服务，但展示方式应该更像作品集，而不是运维卡片。"
+        href="/services"
+        hrefLabel="查看项目型服务"
+        assets={projects}
+        emptyText="还没有被标记到 Projects 分区的项目资产。"
+        variant="project"
+      />
+
+      <AssetSection
+        title="Infrastructure"
+        description="主机、网络和整体拓扑从这里进入，逐步过渡到更图形化的家庭网络展示。"
+        href="/infrastructure"
+        hrefLabel="进入基础设施"
+        assets={infrastructure.slice(0, 3)}
+        emptyText="还没有公开的主机或网络资产。"
+      />
     </div>
   </main>
 </BaseLayout>

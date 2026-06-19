@@ -1,29 +1,13 @@
 ---
 import NotesLayout from '../../../layouts/NotesLayout.astro';
-import { Search, ChevronDown, Clock } from '@lucide/astro';
-import { getCollection } from 'astro:content';
+import { Search } from '@lucide/astro';
 import { getLangFromUrl, useTranslations } from '../../../i18n/utils';
-
-// @ts-ignore - content collections generated at build time
-type NoteEntry = {
-  id: string;
-  data: {
-    title?: string;
-    description?: string;
-    tags?: string[];
-    created?: string | Date;
-    updated?: string | Date;
-    draft?: boolean;
-    private?: boolean;
-  };
-};
+import { getPublicNotes } from '../../../utils/notes';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
-
-const allNotes: NoteEntry[] = await (
-  getCollection as unknown as (collection: string, filter?: (opts: any) => boolean) => Promise<NoteEntry[]>
-)('notes', () => true); // Include all notes regardless of lang
+const allNotes = await getPublicNotes();
+const initialQuery = Astro.url.searchParams.get('q') || '';
 
 // Format date utility
 function formatDate(date: string | Date | null | undefined): string {
@@ -41,7 +25,6 @@ function formatDate(date: string | Date | null | undefined): string {
 
 // Serialize notes to JSON for client-side filtering
 const notesData = allNotes
-  .filter(e => !e.data.draft && !e.data.private)
   .map(e => ({
     id: e.id,
     title: e.data.title || e.id.split('/').pop()?.replace(/-/g, ' ') || e.id,
@@ -101,6 +84,7 @@ const i18nStrings = {
         <input
           id="title-search"
           type="search"
+          value={initialQuery}
           placeholder={t('notes.searchPlaceholder')}
           autocomplete="off"
           class="w-full pl-4 pr-12 py-2.5 bg-card/40 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
@@ -153,7 +137,7 @@ const i18nStrings = {
   </section>
 </NotesLayout>
 
-<script define:vars={{ notesData, i18nStrings }}>
+<script define:vars={{ notesData, i18nStrings, initialQuery }}>
   const notes = notesData;
   const listEl = document.getElementById('notes-list');
   const emptyEl = document.getElementById('empty-msg');
@@ -201,7 +185,7 @@ const i18nStrings = {
 
     batch.forEach(note => {
       const a = document.createElement('a');
-      a.href = note.id.startsWith('mock-note') ? '#' : encodeURI(`/notes/${note.id}`);
+      a.href = note.id.startsWith('mock-note') ? '#' : encodeURI(`/en/notes/${note.id}`);
       a.className = 'group flex flex-col p-6 bg-card border border-border rounded-2xl transition-all duration-300 hover:border-primary/40 hover:bg-card-hover';
 
       const tagsHtml = note.tags && note.tags.length > 0
@@ -371,5 +355,11 @@ const i18nStrings = {
   }
 
   // Initial render
+  if (titleInput && initialQuery) {
+    titleInput.value = initialQuery;
+  }
   renderNotes(notes);
+  if (initialQuery) {
+    filter();
+  }
 </script>

@@ -1,0 +1,148 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getPublicAssets, getPublicNotes, getAssetHref } from '../../../utils/notes';
+
+const noteEntries = await getPublicNotes();
+const assetEntries = await getPublicAssets();
+
+const results = [
+  ...assetEntries.map(entry => ({
+    id: entry.data.asset_id!,
+    scope: 'assets',
+    kind: entry.data.asset_type!,
+    label: entry.data.asset_type!,
+    title: entry.data.title,
+    description: entry.data.description || '',
+    tags: entry.data.tags || [],
+    href: `/en${getAssetHref(entry.data)}`,
+  })),
+  ...noteEntries.map(entry => ({
+    id: entry.id,
+    scope: 'notes',
+    kind: 'note',
+    label: 'note',
+    title: entry.data.title,
+    description: entry.data.description || '',
+    tags: entry.data.tags || [],
+    href: `/en/notes/${entry.id}`,
+  })),
+];
+
+const initialQuery = Astro.url.searchParams.get('q') || '';
+const initialScope = Astro.url.searchParams.get('scope') || 'all';
+---
+
+<BaseLayout title="Discover" description="Search assets and notes">
+  <main class="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
+    <section class="rounded-[32px] border border-border bg-card/70 p-6 md:p-8">
+      <p class="text-sm uppercase tracking-[0.24em] text-primary/80">Discover</p>
+      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-foreground">Search assets and notes</h1>
+      <p class="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
+        Services, tools, hosts, network nodes, and regular notes all show up here with explicit type labels.
+      </p>
+
+      <div class="mt-6 flex flex-col gap-4 md:flex-row md:items-center">
+        <input
+          id="discover-query"
+          type="search"
+          value={initialQuery}
+          placeholder="Try vaultwarden / PVE / nezha..."
+          class="w-full rounded-2xl border border-border bg-background/60 px-4 py-3 text-foreground outline-none transition-colors focus:border-primary/50"
+        />
+        <select
+          id="discover-scope"
+          class="rounded-2xl border border-border bg-background/60 px-4 py-3 text-foreground outline-none transition-colors focus:border-primary/50"
+        >
+          <option value="all" selected={initialScope === 'all'}>All</option>
+          <option value="assets" selected={initialScope === 'assets'}>Assets</option>
+          <option value="notes" selected={initialScope === 'notes'}>Notes</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="mt-8">
+      <div class="mb-4 text-sm text-muted-foreground" id="discover-count"></div>
+      <div id="discover-results" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+      <div id="discover-empty" class="hidden rounded-3xl border border-dashed border-border bg-card/40 px-6 py-10 text-sm text-muted-foreground">
+        No matches yet. Try a shorter query or switch back to All.
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<script define:vars={{ results, initialQuery, initialScope }}>
+  const queryInput = document.getElementById('discover-query');
+  const scopeInput = document.getElementById('discover-scope');
+  const resultsEl = document.getElementById('discover-results');
+  const countEl = document.getElementById('discover-count');
+  const emptyEl = document.getElementById('discover-empty');
+
+  function render(items) {
+    if (!resultsEl || !countEl || !emptyEl) return;
+
+    countEl.textContent = `${items.length} results`;
+    resultsEl.innerHTML = '';
+
+    if (items.length === 0) {
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+
+    emptyEl.classList.add('hidden');
+    const fragment = document.createDocumentFragment();
+
+    items.forEach(item => {
+      const card = document.createElement('a');
+      card.href = item.href;
+      card.className = 'group rounded-[28px] border border-border bg-card/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40';
+      card.innerHTML = `
+        <div class="mb-3 flex items-center gap-2">
+          <span class="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-primary">${item.label}</span>
+          <span class="text-xs text-muted-foreground">${item.scope}</span>
+        </div>
+        <h2 class="text-xl font-semibold text-foreground">${item.title}</h2>
+        <p class="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">${item.description || 'No description yet'}</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          ${(item.tags || []).slice(0, 4).map(tag => `<span class="rounded-full bg-pane px-2.5 py-1 text-xs text-muted-foreground">#${tag.includes('/') ? tag.split('/').pop() : tag}</span>`).join('')}
+        </div>
+      `;
+      fragment.appendChild(card);
+    });
+
+    resultsEl.appendChild(fragment);
+  }
+
+  function filterResults() {
+    const query = (queryInput?.value || '').trim().toLowerCase();
+    const scope = scopeInput?.value || 'all';
+
+    const filtered = results.filter(item => {
+      const matchesScope = scope === 'all' || item.scope === scope;
+      const haystack = [item.title, item.description, item.id, ...(item.tags || [])]
+        .join(' ')
+        .toLowerCase();
+      const matchesQuery = !query || haystack.includes(query);
+      return matchesScope && matchesQuery;
+    });
+
+    const url = new URL(window.location.href);
+    if (query) {
+      url.searchParams.set('q', query);
+    } else {
+      url.searchParams.delete('q');
+    }
+    if (scope !== 'all') {
+      url.searchParams.set('scope', scope);
+    } else {
+      url.searchParams.delete('scope');
+    }
+    window.history.replaceState({}, '', url);
+
+    render(filtered);
+  }
+
+  queryInput?.addEventListener('input', filterResults);
+  scopeInput?.addEventListener('change', filterResults);
+  render(results);
+  filterResults();
+</script>

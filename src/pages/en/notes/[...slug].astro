@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { formatDate } from '../../../utils/date';
 import { SITE_NAME } from '../../../constants';
+import { isAssetEntry } from '../../../utils/notes';
 
 export const prerender = true;
 
@@ -10,7 +11,9 @@ export async function getStaticPaths() {
   const noteEntries = await getCollection('notes', ({ data }) => {
     return !data.draft && !(data as any).private;
   });
-  return noteEntries.map(entry => ({
+  return noteEntries
+    .filter(entry => !isAssetEntry(entry as any))
+    .map(entry => ({
     params: { slug: entry.id.replace(/^en\//, '') }, props: { entry },
   }));
 }

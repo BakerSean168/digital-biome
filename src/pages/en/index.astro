@@ -4,19 +4,78 @@
  */
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SearchBox from '../../components/dashboard/SearchBox.astro';
-import BookmarkGrid from '../../components/dashboard/BookmarkGrid.astro';
+import AssetSection from '../../components/assets/AssetSection.astro';
+import FeaturedBookmarkGrid from '../../components/dashboard/FeaturedBookmarkGrid.astro';
+import { getHomepageAssets, getInfrastructureAssets } from '../../utils/notes';
 import { SITE_NAME } from '../../constants';
+
+const withEnPrefix = (asset: any) => ({ ...asset, href: `/en${asset.href}` });
+const services = (await getHomepageAssets('services')).map(withEnPrefix);
+const projects = (await getHomepageAssets('projects')).map(withEnPrefix);
+const infrastructure = (await getInfrastructureAssets()).map(withEnPrefix);
 ---
 
 <BaseLayout title={SITE_NAME} bodyClass="bg-background min-h-screen relative overflow-x-hidden">
-  <!-- Decorative background glow -->
-  <div class="fixed top-[20%] right-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen dark:mix-blend-lighten hidden md:block"></div>
-  <div class="fixed top-[10%] right-[-20%] w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] pointer-events-none -z-10 md:hidden"></div>
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.16),transparent_26%),radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.10),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_40%)]"></div>
 
-  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-12 md:pt-20">
-    <SearchBox placeholder="Search..." />
-    <div class="mt-16">
-      <BookmarkGrid />
+  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-12 md:pt-18 pb-20">
+    <section class="mx-auto max-w-4xl text-center">
+      <p class="text-sm uppercase tracking-[0.3em] text-primary/80">Digital Biome</p>
+      <h1 class="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
+        A single launch layer for services, tools, infrastructure, and notes.
+      </h1>
+      <p class="mx-auto mt-5 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
+        Search first, jump into the service second, and open monitoring only when you need live state.
+      </p>
+      <SearchBox
+        placeholder="Search assets / notes, or use g / gh / tr for external commands..."
+        discoverPath="/en/discover"
+      />
+    </section>
+
+    <div class="mt-16 space-y-14">
+      <section class="space-y-6">
+        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold text-foreground">Tools</h2>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              The home page only shows a few high-frequency entries. The full categorized launcher remains on the tools page.
+            </p>
+          </div>
+          <a href="/en/tools" class="text-sm text-primary transition-colors hover:text-foreground">
+            Open tools directory
+          </a>
+        </div>
+
+        <FeaturedBookmarkGrid />
+      </section>
+
+      <AssetSection
+        title="My Services"
+        description="Only curated services belong on the home page. Detail pages carry links, host relationships, and monitoring handoff."
+        href="/en/services"
+        assets={services}
+        emptyText="No featured service assets yet."
+      />
+
+      <AssetSection
+        title="Projects & Sites"
+        description="Your own products, public sites, and showcase pages belong here. They are still services under the hood, but should read like a portfolio instead of an operations board."
+        href="/en/services"
+        hrefLabel="Open project services"
+        assets={projects}
+        emptyText="No project-style assets have been featured yet."
+        variant="project"
+      />
+
+      <AssetSection
+        title="Infrastructure"
+        description="Hosts and network assets are the bridge toward a more visual home network atlas."
+        href="/en/infrastructure"
+        hrefLabel="Open infrastructure"
+        assets={infrastructure.slice(0, 3)}
+        emptyText="No public infrastructure assets yet."
+      />
     </div>
   </main>
 </BaseLayout>

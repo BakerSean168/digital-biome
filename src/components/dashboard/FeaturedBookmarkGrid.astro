@@ -1,0 +1,54 @@
+---
+import { getHomepageFeaturedBookmarks } from '../../utils/notes';
+
+const bookmarks = await getHomepageFeaturedBookmarks();
+---
+
+{bookmarks.length > 0 ? (
+  <div class="flex w-full flex-wrap items-start gap-x-8 gap-y-7 md:gap-x-10">
+    {bookmarks.map((bookmark) => {
+      let domain = 'example.com';
+      try {
+        domain = new URL(bookmark.url).hostname;
+      } catch {
+        // keep fallback domain
+      }
+
+      const localIconUrl = `/favicons/${domain}.png`;
+      const fallbackIconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+      return (
+        <div class="relative flex w-[84px] flex-col items-center gap-2 sm:w-[92px]">
+          <a
+            href={bookmark.url}
+            class="group flex w-full flex-col items-center gap-3 transition-all duration-300"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-card text-foreground shadow-sm transition-all duration-300 group-hover:border-primary/50 group-hover:bg-primary/5 group-hover:shadow-md">
+              {bookmark.icon
+                ? <Fragment set:html={bookmark.icon} />
+                : <img
+                    src={localIconUrl}
+                    alt={`${bookmark.title} favicon`}
+                    class="h-7 w-7 object-contain transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                    onerror={`this.onerror=null; this.src='${fallbackIconUrl}';`}
+                  />
+              }
+            </div>
+            <div class="flex w-full flex-col items-center">
+              <span class="w-full truncate text-center text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                {bookmark.title}
+              </span>
+            </div>
+          </a>
+        </div>
+      );
+    })}
+  </div>
+) : (
+  <div class="rounded-3xl border border-dashed border-border bg-card/40 px-6 py-10 text-sm text-muted-foreground">
+    还没有配置首页精选工具。
+  </div>
+)}

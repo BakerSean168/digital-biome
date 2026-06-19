@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import NotesLayout from '../../layouts/NotesLayout.astro';
 import Backlinks from '../../components/notes/Backlinks.astro';
+import { isAssetEntry } from '../../utils/notes';
 
 export const prerender = true;
 
@@ -10,7 +11,9 @@ export async function getStaticPaths() {
     return !data.draft && !(data as any).private;
   });
 
-  return entries.map((entry) => ({
+  return entries
+    .filter(entry => !isAssetEntry(entry as any))
+    .map((entry) => ({
     params: { slug: entry.id.replace(/^zh\//, '') },
     props: { entry },
   }));
