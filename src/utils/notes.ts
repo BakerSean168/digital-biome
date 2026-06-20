@@ -1,6 +1,5 @@
 import { getCollection } from 'astro:content';
 import { execSync } from 'child_process';
-import { notesConfig } from '../../notes.config';
 import type {
   AssetCard,
   AssetRole,
@@ -12,7 +11,7 @@ import type {
   NoteCollectionEntry,
 } from '../types/notes';
 
-const NOTES_PATH = notesConfig.output.notes;
+const NOTES_PATH = 'src/data/obsidian';
 const HOMEPAGE_FEATURED_BOOKMARK_SLUGS = [
   'chatgpt',
   'bilibili',

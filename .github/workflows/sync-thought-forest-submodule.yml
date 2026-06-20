@@ -1,0 +1,91 @@
+name: Sync Thought Forest Submodule
+
+on:
+  repository_dispatch:
+    types:
+      - thought-forest-updated
+  workflow_dispatch:
+    inputs:
+      thought_forest_sha:
+        description: Specific thought-forest commit to pin in the submodule
+        required: false
+        type: string
+
+concurrency:
+  group: sync-thought-forest-submodule
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync-submodule:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout digital-biome
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          submodules: recursive
+
+      - name: Resolve target thought-forest SHA
+        id: target
+        shell: bash
+        env:
+          DISPATCH_SHA: ${{ github.event.client_payload.sha }}
+          INPUT_SHA: ${{ github.event.inputs.thought_forest_sha }}
+        run: |
+          set -euo pipefail
+
+          TARGET_SHA="${INPUT_SHA:-}"
+          if [ -z "${TARGET_SHA}" ]; then
+            TARGET_SHA="${DISPATCH_SHA:-}"
+          fi
+
+          echo "sha=${TARGET_SHA}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update thought-forest submodule
+        id: update
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          set -euo pipefail
+
+          git -C thought-forest fetch origin main --depth=1
+
+          if [ -n "${TARGET_SHA}" ]; then
+            git -C thought-forest fetch origin "${TARGET_SHA}" --depth=1
+            git -C thought-forest checkout --detach "${TARGET_SHA}"
+          else
+            git -C thought-forest checkout --detach origin/main
+            TARGET_SHA="$(git -C thought-forest rev-parse HEAD)"
+          fi
+
+          git add thought-forest
+
+          echo "sha=${TARGET_SHA}" >> "${GITHUB_OUTPUT}"
+
+          if git diff --cached --quiet -- thought-forest; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Commit updated submodule pointer
+        if: steps.update.outputs.changed == 'true'
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.update.outputs.sha }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: bump thought-forest submodule to ${TARGET_SHA}"
+          git push origin HEAD:main
+
+      - name: Report no-op
+        if: steps.update.outputs.changed != 'true'
+        run: echo "thought-forest submodule already points to the requested commit."

@@ -18,6 +18,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 import { notesConfig } from '../notes.config';
 import { fetch } from 'undici';
 
@@ -34,6 +35,7 @@ function resolveCandidatePath(input: string | string[]): string {
 const NOTES_SRC = resolveCandidatePath(notesConfig.vault.notesPath);
 const ASSET_NOTES_SRC = resolveCandidatePath(notesConfig.vault.assetNotesPath);
 const MEDIA_SRC = resolveCandidatePath(notesConfig.vault.mediaPath);
+const VAULT_ROOT = path.dirname(NOTES_SRC);
 const NOTES_DEST = path.join(process.cwd(), notesConfig.output.notes);
 const ASSET_NOTES_DEST = path.join(NOTES_DEST, 'assets');
 const ASSETS_DEST = path.join(process.cwd(), notesConfig.output.assets);
@@ -54,6 +56,37 @@ interface SyncStats {
   assetsCopied: number;
   faviconsCached: number;
   errors: string[];
+}
+
+function warnIfVaultSubmoduleOutOfSync(stats: SyncStats): void {
+  const relativeVaultRoot = path.relative(process.cwd(), VAULT_ROOT);
+  if (!relativeVaultRoot || relativeVaultRoot.startsWith('..')) {
+    return;
+  }
+
+  try {
+    const status = execSync(
+      `git submodule status -- "${relativeVaultRoot}"`,
+      { cwd: process.cwd(), encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }
+    ).trim();
+
+    const prefix = status[0];
+    if (prefix === '+') {
+      stats.errors.push(
+        `Submodule ${relativeVaultRoot} is ahead of the commit recorded in the main repo. Commit the submodule pointer before deploying, or CI may build stale notes data.`
+      );
+    } else if (prefix === '-') {
+      stats.errors.push(
+        `Submodule ${relativeVaultRoot} is not initialized. Run "git submodule update --init --recursive" before syncing notes.`
+      );
+    } else if (prefix === 'U') {
+      stats.errors.push(
+        `Submodule ${relativeVaultRoot} has merge conflicts. Resolve them before syncing notes.`
+      );
+    }
+  } catch {
+    // Ignore when the selected vault root is not a git submodule.
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +139,23 @@ function rewriteImagePaths(content: string): string {
   );
 
   return content;
+}
+
+function rewriteVaultNoteLinks(content: string): string {
+  return content.replace(
+    /\[([^\]]+)\]\((?!https?:\/\/)([^)]+\.md)\)/g,
+    (match, text: string, notePath: string) => {
+      const normalizedPath = notePath.replace(/\\/g, '/');
+      const vaultNoteMatch = normalizedPath.match(/(?:^|\/)thought-forest\/z\/(.+)\.md$/i);
+
+      if (!vaultNoteMatch) {
+        return match;
+      }
+
+      const slug = vaultNoteMatch[1];
+      return `[${text}](${encodeURI(`/notes/obsidian/${slug}`)})`;
+    }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -219,7 +269,7 @@ function processContent(content: string, filename: string): string {
     }
   }
 
-  return rewriteImagePaths(processed);
+  return rewriteVaultNoteLinks(rewriteImagePaths(processed));
 }
 
 // ---------------------------------------------------------------------------
@@ -443,6 +493,8 @@ async function main(): Promise<void> {
   console.log(`  media : ${MEDIA_SRC} -> ${ASSETS_DEST}\n`);
 
   const stats: SyncStats = { copied: 0, cleaned: 0, skipped: 0, assetsCopied: 0, faviconsCached: 0, errors: [] };
+
+  warnIfVaultSubmoduleOutOfSync(stats);
 
   // Copy images to public/vault-assets/
   syncAssets(stats);
