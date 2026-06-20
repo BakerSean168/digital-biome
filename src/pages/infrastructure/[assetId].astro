@@ -14,6 +14,12 @@ export async function getStaticPaths() {
   }));
 }
 
+import type { AssetNoteEntry } from '../../types/notes';
+
+interface Props {
+  entry: AssetNoteEntry;
+}
+
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const relatedAssets = (await getRelatedAssetsByParent(entry.data.asset_id)).map(toAssetCard);

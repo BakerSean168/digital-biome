@@ -4,7 +4,9 @@ import ResumeHeader from '../../../components/resume/ResumeHeader.astro';
 import ResumePage from '../../../components/resume/ResumePage.astro';
 import ResumeSection from '../../../components/resume/ResumeSection.astro';
 
-const contactRows = [
+import type { ContactItem } from '../../../types/resume';
+
+const contactRows: ContactItem[][] = [
   [
     { icon: 'phone', text: '(+86) 152 5892 7042' },
     { icon: 'mail', text: 'bakersean@foxmail.com' },

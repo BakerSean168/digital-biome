@@ -1,0 +1,100 @@
+---
+import { ArrowRight, Search } from '@lucide/astro';
+
+interface Props {
+  placeholder?: string;
+  discoverPath?: string;
+  inputId?: string;
+}
+
+const {
+  placeholder = '搜索笔记、项目、电影、游戏、音乐、生活片段……',
+  discoverPath = '/discover',
+  inputId = 'biome-search',
+} = Astro.props;
+---
+
+<div class="relative mx-auto w-full max-w-5xl">
+  <div class="biome-search-shell relative overflow-hidden rounded-full px-5 py-4 sm:px-6 sm:py-5">
+    <div class="relative flex items-center gap-4">
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/6 text-white/72 shadow-[0_0_24px_rgba(56,189,248,0.18)]">
+        <Search size={20} />
+      </span>
+
+      <div class="min-w-0 flex-1">
+        <label class="sr-only" for={inputId}>Search site</label>
+        <input
+          id={inputId}
+          type="text"
+          autocomplete="off"
+          placeholder={placeholder}
+          data-discover-path={discoverPath}
+          class="w-full bg-transparent text-lg text-white/92 placeholder:text-white/36 focus:outline-none sm:text-[1.35rem]"
+        />
+        <div class="mt-2 flex flex-wrap gap-2 text-xs text-white/40">
+          <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">`n` notes</span>
+          <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">`a` assets</span>
+          <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">`g` google</span>
+          <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">`gh` github</span>
+          <span class="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">`tr` translate</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        data-search-submit={inputId}
+        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-cyan-300/18 bg-cyan-300/10 text-cyan-100 transition duration-300 hover:scale-105 hover:bg-cyan-300/16 hover:text-white"
+        aria-label="Run search"
+      >
+        <ArrowRight size={20} />
+      </button>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ inputId }}>
+  const searchInput = document.getElementById(inputId);
+  const submitButton = document.querySelector(`[data-search-submit="${inputId}"]`);
+
+  const COMMANDS = {
+    tr: (q) => `https://translate.google.com/?sl=auto&tl=zh-CN&text=${encodeURIComponent(q)}`,
+    g: (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    gh: (q) => `https://github.com/search?q=${encodeURIComponent(q)}`,
+    b: (q) => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+    n: (q) => `${searchInput?.dataset.discoverPath || '/discover'}?scope=notes&q=${encodeURIComponent(q)}`,
+    a: (q) => `${searchInput?.dataset.discoverPath || '/discover'}?scope=assets&q=${encodeURIComponent(q)}`,
+    yt: (q) => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+  };
+
+  function submitSearch() {
+    if (!searchInput) return;
+    const value = searchInput.value.trim();
+    if (!value) return;
+
+    const parts = value.split(' ');
+    const cmd = parts[0].toLowerCase();
+    const query = parts.slice(1).join(' ');
+
+    let url;
+    if (COMMANDS[cmd] && query) {
+      url = COMMANDS[cmd](query);
+    } else {
+      const internalPath = searchInput.dataset.discoverPath || '/discover';
+      url = `${internalPath}?q=${encodeURIComponent(value)}`;
+    }
+
+    if (url.startsWith('/')) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  searchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      submitSearch();
+    }
+  });
+
+  submitButton?.addEventListener('click', submitSearch);
+</script>

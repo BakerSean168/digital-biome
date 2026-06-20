@@ -32,15 +32,15 @@ const { Content } = await render(entry);
       <h1 class="text-4xl font-bold mb-4">{entry.data.title}</h1>
 
       <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8 pb-4 border-b border-border">
-        {entry.data.date && (
-          <time datetime={entry.data.date.toISOString()}>
-            Published: {formatDate(entry.data.date)}
+        {entry.data.created && (
+          <time datetime={new Date(entry.data.created).toISOString()}>
+            Published: {formatDate(entry.data.created, 'en-US')}
           </time>
         )}
 
         {entry.data.updated && (
-          <time datetime={entry.data.updated.toISOString()} class="flex items-center gap-1 before:content-['•'] before:mr-3">
-            Updated: {formatDate(entry.data.updated)}
+          <time datetime={new Date(entry.data.updated).toISOString()} class="flex items-center gap-1 before:content-['•'] before:mr-3">
+            Updated: {formatDate(entry.data.updated, 'en-US')}
           </time>
         )}
 

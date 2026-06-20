@@ -87,15 +87,28 @@ const notes = defineCollection({
     host_asset_id: data.host_asset_id ?? undefined,
     parent_asset_id: data.parent_asset_id ?? undefined,
     homepage: data.homepage ? {
-      ...data.homepage,
       enabled: data.homepage.enabled === undefined || data.homepage.enabled === null
         ? true
         : data.homepage.enabled === true || data.homepage.enabled === 'true',
+      section: data.homepage.section ?? undefined,
       featured: data.homepage.featured === true || data.homepage.featured === 'true',
       order: data.homepage.order ?? 100,
+      label: data.homepage.label ?? undefined,
+      description: data.homepage.description ?? undefined,
     } : undefined,
-    monitor: data.monitor ?? undefined,
-    links: data.links ?? [],
+    monitor: data.monitor ? {
+      provider: data.monitor.provider ?? undefined,
+      url: data.monitor.url ?? undefined,
+      target_id: data.monitor.target_id ?? undefined,
+      label: data.monitor.label ?? undefined,
+    } : undefined,
+    links: data.links ? data.links.map(link => ({
+      label: link.label,
+      url: link.url,
+      kind: link.kind,
+      description: link.description ?? undefined,
+      visibility: link.visibility ?? undefined,
+    })) : [],
   })),
 });
 

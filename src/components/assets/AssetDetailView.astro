@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import type { AssetCard, NoteCollectionEntry } from '../../types/notes';
+import type { AssetCard, AssetNoteEntry } from '../../types/notes';
 
 interface Props {
-  entry: NoteCollectionEntry;
+  entry: AssetNoteEntry;
   Content: any;
   relatedAssets?: AssetCard[];
 }

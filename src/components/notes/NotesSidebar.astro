@@ -4,7 +4,7 @@
  * 自动从 notes collection 生成目录树
  * 支持按 tag 的根维度分类（层级标签: status/growing, tech/dev/frontend, type/debug）
  */
-import { getCollection } from 'astro:content';
+import { getPublicNotes } from '../../utils/notes';
 
 interface Props {
   currentSlug?: string;
@@ -13,7 +13,7 @@ interface Props {
 const { currentSlug = '' } = Astro.props;
 
 // 获取所有笔记
-const allNotes = await getCollection('notes', ({ data }) => !data.draft && !(data as any).private);
+const allNotes = await getPublicNotes();
 
 // 从 tags 中提取分类
 // tag 格式：status/growing, tech/dev/frontend/eng, type/debug, life/material

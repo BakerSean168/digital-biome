@@ -1,0 +1,75 @@
+---
+interface Props {
+  title: string;
+  subtitle: string;
+  description: string;
+  href: string;
+  accent: string;
+  glow: string;
+  icon: any;
+  chips?: string[];
+  eyebrow?: string;
+  positionClass?: string;
+  compact?: boolean;
+}
+
+const {
+  title,
+  subtitle,
+  description,
+  href,
+  accent,
+  glow,
+  icon: Icon,
+  chips = [],
+  eyebrow,
+  positionClass = '',
+  compact = false,
+} = Astro.props;
+---
+
+<a
+  href={href}
+  class={`biome-node group relative block overflow-hidden rounded-[28px] p-4 text-left transition duration-500 hover:-translate-y-1 hover:scale-[1.01] lg:absolute ${compact ? 'lg:w-[18.5rem]' : 'lg:w-[22rem]'} ${positionClass}`}
+  style={`--branch-accent: ${accent}; --branch-glow: ${glow};`}
+>
+  <div class="relative z-10 flex items-start gap-4">
+    <span class="biome-node-icon shrink-0">
+      <Icon size={20} stroke-width={2} />
+    </span>
+
+    <div class="min-w-0 flex-1">
+      {eyebrow && (
+        <p class="text-[0.68rem] uppercase tracking-[0.32em] text-white/45">
+          {eyebrow}
+        </p>
+      )}
+
+      <div class="mt-1 flex items-baseline justify-between gap-3">
+        <h3 class="text-xl font-medium tracking-tight text-white/92">
+          {title}
+        </h3>
+        <span class="text-[0.7rem] uppercase tracking-[0.28em] text-white/45">
+          Node
+        </span>
+      </div>
+
+      <p class="mt-2 text-sm font-medium text-white/72">
+        {subtitle}
+      </p>
+      <p class="mt-2 text-sm leading-6 text-white/58">
+        {description}
+      </p>
+
+      {chips.length > 0 && (
+        <div class="mt-4 flex flex-wrap gap-2">
+          {chips.slice(0, compact ? 2 : 3).map((chip) => (
+            <span class="biome-node-chip">
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</a>

@@ -1,5 +1,6 @@
 import { getCollection } from 'astro:content';
 import { execSync } from 'child_process';
+import { statSync } from 'fs';
 import type {
   AssetCard,
   AssetRole,
@@ -9,6 +10,7 @@ import type {
   HomepageSection,
   HomepageConfig,
   NoteCollectionEntry,
+  AssetNoteEntry,
 } from '../types/notes';
 
 const NOTES_PATH = 'src/data/obsidian';
@@ -41,7 +43,7 @@ function isPublicNoteEntry(note: NoteCollectionEntry): boolean {
   return !note.data.draft && !note.data.private && !isAssetEntry(note);
 }
 
-function isPublicAssetEntry(note: NoteCollectionEntry): boolean {
+function isPublicAssetEntry(note: NoteCollectionEntry): note is AssetNoteEntry {
   return (
     !note.data.draft &&
     !note.data.private &&
@@ -138,23 +140,23 @@ export async function getPublicNotes(): Promise<NoteCollectionEntry[]> {
   return allNotes.filter(isPublicNoteEntry);
 }
 
-export async function getPublicAssets(): Promise<NoteCollectionEntry[]> {
+export async function getPublicAssets(): Promise<AssetNoteEntry[]> {
   const allNotes = await getAllNotes();
   return allNotes.filter(isPublicAssetEntry);
 }
 
-export async function getAssetByAssetId(assetId: string): Promise<NoteCollectionEntry | undefined> {
+export async function getAssetByAssetId(assetId: string): Promise<AssetNoteEntry | undefined> {
   const assets = await getPublicAssets();
   return assets.find(asset => asset.data.asset_id === assetId);
 }
 
-export async function getAssetsByAssetIds(assetIds: string[]): Promise<NoteCollectionEntry[]> {
+export async function getAssetsByAssetIds(assetIds: string[]): Promise<AssetNoteEntry[]> {
   const wanted = new Set(assetIds);
   const assets = await getPublicAssets();
-  return assets.filter(asset => asset.data.asset_id && wanted.has(asset.data.asset_id));
+  return assets.filter(asset => wanted.has(asset.data.asset_id));
 }
 
-export async function getAssetsByType(assetType: AssetType): Promise<NoteCollectionEntry[]> {
+export async function getAssetsByType(assetType: AssetType): Promise<AssetNoteEntry[]> {
   const assets = await getPublicAssets();
   return assets
     .filter(asset => asset.data.asset_type === assetType)
@@ -170,7 +172,7 @@ export async function getHomepageAssets(section: HomepageSection): Promise<Asset
   return sortByOrderThenTitle(featured);
 }
 
-export async function getAssetsByHomepageSection(section: HomepageSection): Promise<NoteCollectionEntry[]> {
+export async function getAssetsByHomepageSection(section: HomepageSection): Promise<AssetNoteEntry[]> {
   const assets = await getPublicAssets();
   return assets
     .filter(asset => asset.data.homepage?.featured && asset.data.homepage?.section === section)
@@ -210,7 +212,7 @@ export async function getInfrastructureAssets(): Promise<AssetCard[]> {
     .sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'));
 }
 
-export async function getRelatedAssetsByParent(assetId: string): Promise<NoteCollectionEntry[]> {
+export async function getRelatedAssetsByParent(assetId: string): Promise<AssetNoteEntry[]> {
   const assets = await getPublicAssets();
   return assets
     .filter(asset => asset.data.parent_asset_id === assetId || asset.data.host_asset_id === assetId)
@@ -371,13 +373,63 @@ export function getGitLastModified(filePath: string): Date | null {
   }
 }
 
+function getGitLastModifiedMap(basePath: string): Map<string, Date> {
+  try {
+    const output = execSync(
+      `git log --format="__TS__%ct" --name-only -- "${basePath}"`,
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
+    ).toString();
+
+    const fileToDate = new Map<string, Date>();
+    let currentTimestamp: Date | null = null;
+
+    for (const rawLine of output.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) {
+        continue;
+      }
+
+      if (line.startsWith('__TS__')) {
+        const unixSeconds = Number.parseInt(line.slice('__TS__'.length), 10);
+        currentTimestamp = Number.isNaN(unixSeconds) ? null : new Date(unixSeconds * 1000);
+        continue;
+      }
+
+      if (!currentTimestamp) {
+        continue;
+      }
+
+      const normalizedPath = line.replace(/\\/g, '/');
+      if (!fileToDate.has(normalizedPath)) {
+        fileToDate.set(normalizedPath, currentTimestamp);
+      }
+    }
+
+    return fileToDate;
+  } catch {
+    return new Map();
+  }
+}
+
+function getFileLastModified(filePath: string): Date | null {
+  try {
+    return statSync(filePath).mtime;
+  } catch {
+    return null;
+  }
+}
+
 export async function getRecentNotes(limit: number = 5): Promise<NoteCollectionEntry[]> {
   const notes = await getPublicNotes();
+  const modifiedMap = getGitLastModifiedMap(NOTES_PATH);
 
   const notesWithModified = notes.map(note => {
     const relPath = note.id.replace(/^obsidian\//, '');
     const filePath = `${NOTES_PATH}/${relPath}.md`;
-    return { note, lastModified: getGitLastModified(filePath) };
+    return {
+      note,
+      lastModified: modifiedMap.get(filePath) ?? getFileLastModified(filePath) ?? getGitLastModified(filePath),
+    };
   });
 
   return notesWithModified

@@ -1,12 +1,7 @@
 ---
 import { Briefcase, Github, Mail, Monitor, Phone } from '@lucide/astro';
 
-type ResumeIcon = 'briefcase' | 'github' | 'mail' | 'monitor' | 'phone';
-
-interface ContactItem {
-  icon: ResumeIcon;
-  text: string;
-}
+import type { ContactItem } from '../../types/resume';
 
 interface Props {
   contactRows: ContactItem[][];

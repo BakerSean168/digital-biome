@@ -1,3 +1,5 @@
+import type { CollectionEntry } from 'astro:content';
+
 export type Visibility = 'public' | 'private' | 'internal';
 export type AssetType = 'service' | 'tool' | 'host' | 'network';
 export type AssetRole = 'ops' | 'product' | 'showcase' | 'portal';
@@ -97,36 +99,15 @@ export interface NoteLink {
   exists: boolean;
 }
 
-export interface NoteCollectionEntry {
-  id: string;
-  slug: string;
-  body: string;
-  collection: string;
-  data: {
+export type NoteCollectionEntry = Omit<CollectionEntry<'notes'>, 'data'> & {
+  data: Omit<CollectionEntry<'notes'>['data'], 'title'> & {
     title: string;
-    description?: string;
-    tags?: string[];
-    url?: string;
-    draft?: boolean;
-    private?: boolean;
-    visibility?: Visibility;
-    category?: string;
-    aliases?: string[];
-    type?: 'note' | 'resource' | 'tool' | 'article';
-    created?: Date;
-    updated?: Date;
-    icon?: string;
-    rating?: number;
-    platform?: string;
-    pricing?: 'free' | 'freemium' | 'paid' | 'subscription';
-    status?: 'active' | 'planned' | 'archived' | 'deprecated';
-    asset_id?: string;
-    asset_type?: AssetType;
-    asset_role?: AssetRole;
-    host_asset_id?: string;
-    parent_asset_id?: string;
-    homepage?: HomepageConfig;
-    monitor?: AssetMonitor;
-    links?: AssetLink[];
   };
-}
+};
+
+export type AssetNoteEntry = Omit<NoteCollectionEntry, 'data'> & {
+  data: NoteCollectionEntry['data'] & {
+    asset_id: string;
+    asset_type: AssetType;
+  };
+};

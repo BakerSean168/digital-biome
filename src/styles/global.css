@@ -133,3 +133,303 @@ html.dark {
     display: none !important;
   }
 }
+
+/* ===== Biome prototype ===== */
+@keyframes biomeFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes biomePulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes biomeDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, 12px, 0);
+  }
+}
+
+.biome-page {
+  background:
+    radial-gradient(circle at top, rgba(16, 185, 129, 0.08), transparent 24%),
+    radial-gradient(circle at 18% 22%, rgba(34, 211, 238, 0.1), transparent 20%),
+    radial-gradient(circle at 80% 16%, rgba(96, 165, 250, 0.08), transparent 24%),
+    linear-gradient(180deg, #030712 0%, #07111c 26%, #07161d 55%, #020617 100%);
+}
+
+.biome-hero-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.62), rgba(3, 10, 22, 0.84)),
+    radial-gradient(circle at top, rgba(20, 184, 166, 0.08), transparent 36%);
+  box-shadow:
+    0 30px 90px rgba(2, 6, 23, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.biome-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+  padding: 0.7rem 1rem;
+  color: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(16px);
+  transition: all 220ms ease;
+}
+
+.biome-nav-pill:hover {
+  transform: translateY(-1px);
+  border-color: rgba(103, 232, 249, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.biome-hero-visual {
+  min-height: 82rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    radial-gradient(circle at var(--pointer-x, 50%) var(--pointer-y, 38%), rgba(110, 231, 255, 0.14), transparent 20%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.16), rgba(2, 6, 23, 0.36));
+}
+
+.biome-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+  background-position: center;
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at center, black 24%, transparent 90%);
+  opacity: 0.18;
+}
+
+.biome-node {
+  border: 1px solid color-mix(in srgb, var(--branch-accent) 34%, rgba(255, 255, 255, 0.1));
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.76), rgba(15, 23, 42, 0.48)),
+    radial-gradient(circle at top left, color-mix(in srgb, var(--branch-accent) 18%, transparent), transparent 55%);
+  box-shadow:
+    0 24px 80px -36px var(--branch-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(20px);
+}
+
+.biome-node::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--branch-accent) 34%, transparent), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 30%);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.biome-node::after {
+  content: '';
+  position: absolute;
+  inset: auto 8% 8% auto;
+  width: 38%;
+  height: 38%;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--branch-glow), transparent 72%);
+  filter: blur(30px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.biome-node-icon {
+  display: inline-flex;
+  height: 3.3rem;
+  width: 3.3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--branch-accent) 42%, rgba(255, 255, 255, 0.08));
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--branch-accent) 20%, rgba(255, 255, 255, 0.04)), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.03);
+  color: var(--branch-accent);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 34px color-mix(in srgb, var(--branch-accent) 28%, transparent);
+}
+
+.biome-node-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.42rem 0.72rem;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.biome-canopy {
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(52, 211, 153, 0.32), transparent 34%),
+    radial-gradient(circle at 40% 35%, rgba(45, 212, 191, 0.2), transparent 48%),
+    radial-gradient(circle at center, rgba(6, 95, 70, 0.22), transparent 72%);
+  filter: blur(6px);
+  opacity: 0.72;
+  animation: biomePulse 10s ease-in-out infinite;
+}
+
+.biome-trunk {
+  background:
+    linear-gradient(180deg, rgba(226, 232, 240, 0.16), rgba(100, 116, 139, 0.28) 18%, rgba(15, 23, 42, 0.95) 76%),
+    radial-gradient(circle at 50% 10%, rgba(45, 212, 191, 0.26), transparent 38%);
+  box-shadow:
+    inset 0 0 40px rgba(16, 185, 129, 0.18),
+    inset 0 0 120px rgba(15, 23, 42, 0.88),
+    0 0 30px rgba(45, 212, 191, 0.14);
+}
+
+.biome-trunk::before {
+  content: '';
+  position: absolute;
+  inset: 8% 38%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(94, 234, 212, 0.8), rgba(45, 212, 191, 0.1));
+  filter: blur(1px);
+  opacity: 0.88;
+}
+
+.biome-trunk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  mix-blend-mode: screen;
+  opacity: 0.35;
+}
+
+.biome-branch-line,
+.biome-root-line {
+  position: absolute;
+  height: 2px;
+  transform-origin: left center;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0.9), rgba(45, 212, 191, 0.34), transparent);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+  opacity: 0.9;
+}
+
+.biome-root-line {
+  height: 3px;
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.9), rgba(103, 232, 249, 0.34), transparent);
+  box-shadow: 0 0 28px rgba(45, 212, 191, 0.36);
+}
+
+.biome-core-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biome-core-ring {
+  display: inline-flex;
+  height: 5.7rem;
+  width: 5.7rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(45, 212, 191, 0.42);
+  background:
+    radial-gradient(circle, rgba(16, 185, 129, 0.26), rgba(5, 46, 22, 0.86)),
+    rgba(255, 255, 255, 0.04);
+  color: #86efac;
+  box-shadow:
+    0 0 0 8px rgba(16, 185, 129, 0.05),
+    0 0 60px rgba(45, 212, 191, 0.28);
+  animation: biomeFloat 8s ease-in-out infinite;
+}
+
+.biome-search-shell {
+  border: 1px solid rgba(103, 232, 249, 0.18);
+  background:
+    linear-gradient(180deg, rgba(2, 6, 23, 0.86), rgba(2, 6, 23, 0.7)),
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.12), transparent 40%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 55px rgba(34, 211, 238, 0.2),
+    inset 0 0 22px rgba(6, 182, 212, 0.12);
+  backdrop-filter: blur(20px);
+}
+
+.biome-search-shell::before {
+  content: '';
+  position: absolute;
+  inset: -18% 12% auto;
+  height: 64%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(103, 232, 249, 0.18), transparent 62%);
+  filter: blur(36px);
+  pointer-events: none;
+}
+
+.biome-growth-card {
+  border: 1px solid color-mix(in srgb, var(--branch-accent) 24%, rgba(255, 255, 255, 0.08));
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(2, 6, 23, 0.72));
+  box-shadow:
+    0 24px 80px -40px var(--branch-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.biome-growth-card:hover {
+  border-color: color-mix(in srgb, var(--branch-accent) 42%, rgba(255, 255, 255, 0.12));
+}
+
+.biome-icon-link {
+  display: inline-flex;
+  height: 2.9rem;
+  width: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.72);
+  transition: all 220ms ease;
+}
+
+.biome-icon-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(167, 243, 208, 0.24);
+  background: rgba(16, 185, 129, 0.1);
+  color: rgba(255, 255, 255, 0.96);
+}
+
+@media (max-width: 1023px) {
+  .biome-hero-visual {
+    min-height: auto;
+  }
+}
