@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AssetSection from '../../components/assets/AssetSection.astro';
+import { getServiceDisplayGroups } from '../../utils/notes';
+
+const { projects } = await getServiceDisplayGroups();
+---
+
+<BaseLayout title="DEV" description="Projects & Development">
+  <main class="mx-auto max-w-7xl space-y-14 px-4 py-10 md:px-6 md:py-14">
+    <div class="mb-8 border-b border-border/50 pb-6">
+      <div class="font-mono text-[10px] text-primary/70 tracking-widest uppercase mb-2 animate-pulse-soft">
+        SYS.PROJECTS_INDEX_LOADED
+      </div>
+      <h1 class="text-3xl font-mono tracking-tight text-foreground flex items-center gap-3">
+        <span class="text-primary/60">&gt;</span> ./dev --list-projects
+        <span class="inline-block w-3 h-6 bg-primary/70 animate-[pulse_1s_step-end_infinite]"></span>
+      </h1>
+      <p class="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground font-mono">
+        // INDEX OF ALL ACTIVE AND ARCHIVED DEVELOPMENT PROJECTS.
+      </p>
+    </div>
+
+    <AssetSection
+      title="[ PROJECTS & SITES ]"
+      assets={projects}
+      emptyText="SYS.WARN: NO_PROJECTS_FOUND"
+      variant="project"
+    />
+  </main>
+</BaseLayout>

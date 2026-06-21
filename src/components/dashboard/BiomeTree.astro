@@ -6,17 +6,72 @@
  */
 import { getCollection } from 'astro:content';
 import { Book, Code, Gamepad2, User, Sparkles } from '@lucide/astro';
+import { getNewCreatedNotes, getRecentNotesWithDate } from '../../utils/notes';
 
 // 动态获取真实 Obsidian 笔记总数
 let notesCount = 1042;
+let newLeaves: any[] = [];
+let oldLeaves: any[] = [];
+
 try {
   const allNotes = await getCollection('notes');
   const publicNotes = allNotes.filter(note => !note.id.startsWith('.'));
   if (publicNotes.length > 0) {
     notesCount = publicNotes.length;
   }
+
+  // 获取最新创建的 4 篇笔记 (新叶)
+  const newCreated = await getNewCreatedNotes(4);
+  const newCreatedIds = new Set(newCreated.map(n => n.id));
+
+  // 获取最近更新的 2 篇笔记 (老叶) - 排除已在最新创建中的笔记以避免重复
+  const allRecentWithDate = await getRecentNotesWithDate(10);
+  const recentUpdatedWithDate = allRecentWithDate
+    .filter(item => !newCreatedIds.has(item.note.id))
+    .slice(0, 2);
+
+  // Helper to calculate characters / word count
+  const getWordCount = (body: string = ''): number => {
+    const cleaned = body.replace(/[#*`~_\-[\]()|]/g, '').trim();
+    const cnChar = (cleaned.match(/[\u4e00-\u9fa5]/g) || []).length;
+    const enWords = cleaned.replace(/[\u4e00-\u9fa5]/g, ' ').split(/\s+/).filter(Boolean).length;
+    return cnChar + enWords;
+  };
+
+  // Helper to format date as "M月D日"
+  const formatMonthDay = (dateInput: any): string => {
+    if (!dateInput) return '';
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) return '';
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+  };
+
+  // Helper to get first tag display name
+  const getFirstTag = (tags?: string[] | null): string => {
+    if (!tags || tags.length === 0) return 'Note';
+    const first = tags[0];
+    return first.includes('/') ? first.split('/').pop() || 'Note' : first;
+  };
+
+  newLeaves = newCreated.map(note => ({
+    title: note.data.title || note.id.split('/').pop() || '',
+    description: note.data.description || '暂无描述 // NO_DESCRIPTION',
+    tag: getFirstTag(note.data.tags),
+    dateText: `${formatMonthDay(note.data.created)} 创建`,
+    words: `${getWordCount(note.body)} 字`,
+    href: `/notes/${note.id}`
+  }));
+
+  oldLeaves = recentUpdatedWithDate.map(item => ({
+    title: item.note.data.title || item.note.id.split('/').pop() || '',
+    description: item.note.data.description || '暂无描述 // NO_DESCRIPTION',
+    tag: getFirstTag(item.note.data.tags),
+    dateText: `${formatMonthDay(item.date)} 更新`,
+    words: `${getWordCount(item.note.body)} 字`,
+    href: `/notes/${item.note.id}`
+  }));
 } catch (e) {
-  console.warn("Failed to load notes count: ", e);
+  console.warn("Failed to load notes count or dynamic leaves: ", e);
 }
 ---
 
@@ -61,6 +116,22 @@ try {
 
       <!-- ABOUT connector line -->
       <path id="line-about-card" d="M598,475 L720,475" stroke="var(--color-branch-about)" stroke-width="1.5" class="hud-connector-line opacity-0 transition-opacity duration-300" filter="url(#neon-glow)" />
+    </g>
+
+    <!-- Biome note leaf connection lines -->
+    <g class="hud-lines hidden xl:block">
+      <!-- Line 1: Left Top -->
+      <path class="hud-line-1" d="M330,210 L140,112 L-24,112" stroke="rgba(139, 154, 70, 0.22)" stroke-width="1.2" filter="url(#neon-glow)" style="transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;" />
+      <!-- Line 2: Left Middle -->
+      <path class="hud-line-2" d="M240,310 L120,368 L-24,368" stroke="rgba(139, 154, 70, 0.22)" stroke-width="1.2" filter="url(#neon-glow)" style="transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;" />
+      <!-- Line 3: Left Bottom -->
+      <path class="hud-line-3" d="M320,560 L180,624 L-24,624" stroke="rgba(245, 158, 11, 0.22)" stroke-width="1.2" filter="url(#neon-glow)" style="transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;" />
+      <!-- Line 4: Right Top -->
+      <path class="hud-line-4" d="M470,210 L660,112 L824,112" stroke="rgba(139, 154, 70, 0.22)" stroke-width="1.2" filter="url(#neon-glow)" style="transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;" />
+      <!-- Line 5: Right Middle -->
+      <path class="hud-line-5" d="M560,310 L680,368 L824,368" stroke="rgba(139, 154, 70, 0.22)" stroke-width="1.2" filter="url(#neon-glow)" style="transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;" />
+      <!-- Line 6: Right Bottom -->
+      <path class="hud-line-6" d="M490,550 L620,624 L824,624" stroke="rgba(245, 158, 11, 0.22)" stroke-width="1.2" filter="url(#neon-glow)" style="transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s;" />
     </g>
 
     <!-- 图层 C: 交互果实节点 (Fruit Nodes - 发光呼吸徽章，嵌套结构防止 CSS transform 冲掉位移) -->
@@ -156,7 +227,7 @@ try {
     </div>
     <div class="pt-3 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
       <span class="text-muted-foreground">开发状态：Vibe Coding</span>
-      <a href="/services" class="text-branch-dev hover:underline flex items-center gap-0.5">代表项目 →</a>
+      <a href="/dev" class="text-branch-dev hover:underline flex items-center gap-0.5">代表项目 →</a>
     </div>
   </div>
 
@@ -212,6 +283,103 @@ try {
       <a href="/about" class="text-foreground hover:underline flex items-center gap-0.5">关于我 →</a>
     </div>
   </div>
+
+  <!-- HUD Floating Note Cards (New & Old Leaves) -->
+  {newLeaves[0] && (
+    <a href={newLeaves[0].href} class="hud-card-1 absolute hidden xl:flex flex-col justify-between top-[4%] left-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
+      <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[0].tag}</span>
+        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[0].dateText}</span>
+      </div>
+      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[0].title}</h5>
+      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[0].description}</p>
+      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+        <span>{newLeaves[0].words}</span>
+        <span class="group-hover:text-primary transition-colors">&gt; READ</span>
+      </div>
+    </a>
+  )}
+
+  {newLeaves[1] && (
+    <a href={newLeaves[1].href} class="hud-card-2 absolute hidden xl:flex flex-col justify-between top-[36%] left-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
+      <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[1].tag}</span>
+        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[1].dateText}</span>
+      </div>
+      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[1].title}</h5>
+      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[1].description}</p>
+      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+        <span>{newLeaves[1].words}</span>
+        <span class="group-hover:text-primary transition-colors">&gt; READ</span>
+      </div>
+    </a>
+  )}
+
+  {oldLeaves[0] && (
+    <a href={oldLeaves[0].href} class="hud-card-3 absolute hidden xl:flex flex-col justify-between top-[68%] left-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
+      <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 uppercase font-bold tracking-wider">🍂 {oldLeaves[0].tag}</span>
+        <span class="text-[8px] font-mono text-muted-foreground">{oldLeaves[0].dateText}</span>
+      </div>
+      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{oldLeaves[0].title}</h5>
+      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{oldLeaves[0].description}</p>
+      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+        <span>{oldLeaves[0].words}</span>
+        <span class="group-hover:text-primary transition-colors">&gt; READ</span>
+      </div>
+    </a>
+  )}
+
+  {newLeaves[2] && (
+    <a href={newLeaves[2].href} class="hud-card-4 absolute hidden xl:flex flex-col justify-between top-[4%] right-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
+      <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[2].tag}</span>
+        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[2].dateText}</span>
+      </div>
+      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[2].title}</h5>
+      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[2].description}</p>
+      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+        <span>{newLeaves[2].words}</span>
+        <span class="group-hover:text-primary transition-colors">&gt; READ</span>
+      </div>
+    </a>
+  )}
+
+  {newLeaves[3] && (
+    <a href={newLeaves[3].href} class="hud-card-5 absolute hidden xl:flex flex-col justify-between top-[36%] right-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
+      <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[3].tag}</span>
+        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[3].dateText}</span>
+      </div>
+      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[3].title}</h5>
+      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[3].description}</p>
+      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+        <span>{newLeaves[3].words}</span>
+        <span class="group-hover:text-primary transition-colors">&gt; READ</span>
+      </div>
+    </a>
+  )}
+
+  {oldLeaves[1] && (
+    <a href={oldLeaves[1].href} class="hud-card-6 absolute hidden xl:flex flex-col justify-between top-[68%] right-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
+      <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 uppercase font-bold tracking-wider">🍂 {oldLeaves[1].tag}</span>
+        <span class="text-[8px] font-mono text-muted-foreground">{oldLeaves[1].dateText}</span>
+      </div>
+      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{oldLeaves[1].title}</h5>
+      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{oldLeaves[1].description}</p>
+      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+        <span>{oldLeaves[1].words}</span>
+        <span class="group-hover:text-primary transition-colors">&gt; READ</span>
+      </div>
+    </a>
+  )}
 
   <!-- Mobile Bottom Sheet / Drawer -->
   <div id="mobile-drawer" class="fixed inset-x-0 bottom-0 z-50 translate-y-full md:hidden transition-transform duration-300 ease-out pb-safe">
@@ -386,3 +554,37 @@ try {
   backdrop?.addEventListener('click', closeMobileDrawer);
   closeHandle?.addEventListener('click', closeMobileDrawer);
 </script>
+
+<style>
+  /* Hover connector lines interactions */
+  div:has(.hud-card-1:hover) .hud-line-1 {
+    stroke: var(--primary) !important;
+    stroke-width: 1.8px !important;
+    opacity: 0.9 !important;
+  }
+  div:has(.hud-card-2:hover) .hud-line-2 {
+    stroke: var(--primary) !important;
+    stroke-width: 1.8px !important;
+    opacity: 0.9 !important;
+  }
+  div:has(.hud-card-3:hover) .hud-line-3 {
+    stroke: #f59e0b !important;
+    stroke-width: 1.8px !important;
+    opacity: 0.9 !important;
+  }
+  div:has(.hud-card-4:hover) .hud-line-4 {
+    stroke: var(--primary) !important;
+    stroke-width: 1.8px !important;
+    opacity: 0.9 !important;
+  }
+  div:has(.hud-card-5:hover) .hud-line-5 {
+    stroke: var(--primary) !important;
+    stroke-width: 1.8px !important;
+    opacity: 0.9 !important;
+  }
+  div:has(.hud-card-6:hover) .hud-line-6 {
+    stroke: #f59e0b !important;
+    stroke-width: 1.8px !important;
+    opacity: 0.9 !important;
+  }
+</style>

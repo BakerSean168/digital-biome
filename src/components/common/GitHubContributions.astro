@@ -1,0 +1,218 @@
+---
+import fs from 'fs';
+import path from 'path';
+
+interface Props {
+  username?: string;
+  lang?: 'zh' | 'en';
+}
+
+const { username = 'BakerSean168', lang = 'zh' } = Astro.props;
+
+interface ContributionDay {
+  date: string;
+  level: number;
+  tooltip: string;
+}
+
+let contributions: ContributionDay[] = [];
+let source = 'cache';
+
+// First, read from local cache as the fallback
+try {
+  const cachePath = path.resolve('./src/data/github-contributions.json');
+  if (fs.existsSync(cachePath)) {
+    const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    if (cacheData.username === username) {
+      contributions = cacheData.contributions;
+    }
+  }
+} catch (e) {
+  console.warn('Failed to read local GitHub contribution cache:', e);
+}
+
+// In production, we fetch fresh data to keep it updated at build-time.
+// If it fails, we fall back to the cache we read above.
+if (import.meta.env.PROD || contributions.length === 0) {
+  try {
+    const url = `https://github.com/users/${username}/contributions`;
+    const res = await fetch(url, { 
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      signal: AbortSignal.timeout(5000) 
+    });
+    
+    if (res.ok) {
+      const data = await res.text();
+      const tdRegex = /<td([^>]*class="[^"]*ContributionCalendar-day[^"]*"[^>]*)>/g;
+      let match;
+      const daysMap: Record<string, ContributionDay> = {};
+      const freshList: ContributionDay[] = [];
+      
+      while ((match = tdRegex.exec(data)) !== null) {
+        const attrs = match[1];
+        const dateMatch = attrs.match(/data-date="([^"]+)"/);
+        const levelMatch = attrs.match(/data-level="([^"]+)"/);
+        const idMatch = attrs.match(/id="([^"]+)"/);
+        
+        if (dateMatch && levelMatch && idMatch) {
+          const id = idMatch[1];
+          const day = {
+            date: dateMatch[1],
+            level: parseInt(levelMatch[1], 10),
+            tooltip: ''
+          };
+          daysMap[id] = day;
+          freshList.push(day);
+        }
+      }
+      
+      const tooltipRegex = /<tool-tip[^>]*for="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/g;
+      let ttMatch;
+      while ((ttMatch = tooltipRegex.exec(data)) !== null) {
+        const forId = ttMatch[1];
+        const text = ttMatch[2].trim();
+        if (daysMap[forId]) {
+          daysMap[forId].tooltip = text;
+        }
+      }
+      
+      if (freshList.length > 0) {
+        freshList.sort((a, b) => a.date.localeCompare(b.date));
+        contributions = freshList;
+        source = 'network';
+        
+        // Update cache file so next builds are updated
+        try {
+          const cachePath = path.resolve('./src/data/github-contributions.json');
+          const cacheDir = path.dirname(cachePath);
+          if (!fs.existsSync(cacheDir)) {
+            fs.mkdirSync(cacheDir, { recursive: true });
+          }
+          fs.writeFileSync(cachePath, JSON.stringify({
+            username,
+            updatedAt: new Date().toISOString(),
+            contributions: freshList
+          }, null, 2));
+        } catch (e) {
+          // ignore cache write failures in read-only environments
+        }
+      }
+    }
+  } catch (e) {
+    console.warn(`Failed to fetch fresh contributions for ${username}, falling back to cache:`, e);
+  }
+}
+
+// Generate Month Labels
+const monthLabels: { name: string; colIndex: number }[] = [];
+let lastMonth = -1;
+
+contributions.forEach((day, index) => {
+  const d = new Date(day.date);
+  const colIndex = Math.floor(index / 7);
+  const dayOfWeek = d.getDay();
+  
+  if (dayOfWeek === 0) {
+    const month = d.getMonth();
+    if (month !== lastMonth) {
+      monthLabels.push({
+        name: d.toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', { month: 'short' }),
+        colIndex
+      });
+      lastMonth = month;
+    }
+  }
+});
+
+// Map level to styling classes (Basalt & Moss style palette)
+const levelClasses = [
+  'bg-card/40 border border-border/20 hover:border-border/60', // level 0
+  'bg-primary/20 border border-primary/20 hover:border-primary/50', // level 1
+  'bg-primary/45 border border-primary/30 hover:border-primary/60', // level 2
+  'bg-primary/70 border border-primary/50 hover:border-primary/80', // level 3
+  'bg-primary border border-primary/80 hover:bg-primary-hover'  // level 4
+];
+
+const daysOfWeekLabels = lang === 'zh' ? ['', '周一', '', '周三', '', '周五', ''] : ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+---
+
+<div class="w-full flex flex-col">
+  <div class="flex items-start gap-3 w-full">
+    <!-- Day Labels (Left Column) -->
+    <div class="grid grid-rows-7 gap-[4px] h-[98px] text-[9px] text-muted-foreground font-mono select-none pt-4">
+      {daysOfWeekLabels.map(label => (
+        <div class="flex items-center justify-end pr-1 h-[10px] leading-[10px] w-6 uppercase tracking-wider">{label}</div>
+      ))}
+    </div>
+    
+    <!-- Heatmap Grid Wrapper -->
+    <div class="flex-1 overflow-x-auto scrollbar-thin pt-4 pb-2">
+      <div class="min-w-[690px] flex flex-col select-none">
+        
+        <!-- Month Headers -->
+        <div class="grid grid-cols-[repeat(53,minmax(0,1fr))] gap-[4px] text-[9px] text-muted-foreground font-mono mb-1.5 h-3 relative">
+          {monthLabels.map(m => (
+            <span 
+              style={`grid-column-start: ${m.colIndex + 1};`} 
+              class="absolute left-0 top-0 whitespace-nowrap uppercase tracking-wider"
+            >
+              {m.name}
+            </span>
+          ))}
+        </div>
+        
+        <!-- Contribution Cells -->
+        <div class="grid grid-flow-col grid-rows-7 gap-[4px] h-[98px]">
+          {contributions.map(day => (
+            <div class="relative group">
+              <div 
+                class={`w-[10px] h-[10px] rounded-[1px] transition-all duration-150 cursor-pointer ${levelClasses[day.level]}`}
+                data-date={day.date}
+              />
+              <!-- Pure CSS Tooltip -->
+              <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50 bg-[#1A1B19] border border-border py-1 px-2.5 text-[10px] font-mono text-foreground whitespace-nowrap shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                <span class="text-primary font-bold">{day.tooltip.split(' on ')[0]}</span>
+                <span class="text-muted-foreground"> on {day.tooltip.split(' on ')[1] || day.date}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="flex items-center justify-between mt-3 text-[10px] font-mono text-muted-foreground select-none border-t border-border/20 pt-2.5">
+    <div class="text-[9px] uppercase tracking-wider opacity-60">
+      SOURCE: {source.toUpperCase()} // UPDATED: {new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US')}
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="text-[9px] uppercase tracking-wider pr-1">Less</span>
+      <div class="w-2.5 h-2.5 rounded-[1px] bg-card/40 border border-border/20"></div>
+      <div class="w-2.5 h-2.5 rounded-[1px] bg-primary/20 border border-primary/20"></div>
+      <div class="w-2.5 h-2.5 rounded-[1px] bg-primary/45 border border-primary/30"></div>
+      <div class="w-2.5 h-2.5 rounded-[1px] bg-primary/70 border border-primary/50"></div>
+      <div class="w-2.5 h-2.5 rounded-[1px] bg-primary border border-primary/80"></div>
+      <span class="text-[9px] uppercase tracking-wider pl-1">More</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Custom scrollbar styling for the heatmap scroll container */
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 99px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+    opacity: 0.5;
+  }
+</style>

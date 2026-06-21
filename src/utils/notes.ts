@@ -439,6 +439,46 @@ export async function getRecentNotes(limit: number = 5): Promise<NoteCollectionE
     .map(({ note }) => note);
 }
 
+export interface NoteWithDate {
+  note: NoteCollectionEntry;
+  date: Date;
+}
+
+export async function getRecentNotesWithDate(limit: number = 5): Promise<NoteWithDate[]> {
+  const notes = await getPublicNotes();
+  const modifiedMap = getGitLastModifiedMap(NOTES_PATH);
+
+  const notesWithModified = notes.map(note => {
+    const relPath = note.id.replace(/^obsidian\//, '');
+    const filePath = `${NOTES_PATH}/${relPath}.md`;
+    return {
+      note,
+      lastModified: modifiedMap.get(filePath) ?? getFileLastModified(filePath) ?? getGitLastModified(filePath),
+    };
+  });
+
+  return notesWithModified
+    .filter((item): item is { note: NoteCollectionEntry; lastModified: Date } => item.lastModified !== null)
+    .sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
+    .slice(0, limit)
+    .map(({ note, lastModified }) => ({
+      note,
+      date: lastModified,
+    }));
+}
+
+export async function getNewCreatedNotes(limit: number = 5): Promise<NoteCollectionEntry[]> {
+  const notes = await getPublicNotes();
+  return notes
+    .filter(note => note.data.created !== null && note.data.created !== undefined)
+    .sort((a, b) => {
+      const aDate = new Date(a.data.created!);
+      const bDate = new Date(b.data.created!);
+      return bDate.getTime() - aDate.getTime();
+    })
+    .slice(0, limit);
+}
+
 export function resolveNoteLink(
   target: string,
   allNotes: NoteCollectionEntry[]

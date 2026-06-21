@@ -1,8 +1,12 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { BookOpen, Github, Tag, BookMarked, ArrowRight } from '@lucide/astro';
+import SignalTitle from '../../../components/common/SignalTitle.astro';
+import { Github, BookMarked, ArrowRight, Terminal } from '@lucide/astro';
 import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../../constants';
-import { getAllNoteTags } from '../../../utils/notes';
+import { getAllNoteTags, getRecentNotesWithDate } from '../../../utils/notes';
+import { formatTimeAgo } from '../../../utils/date';
+import ScrollingTagWall from '../../../components/resume/ScrollingTagWall.astro';
+import GitHubContributions from '../../../components/common/GitHubContributions.astro';
 
 const allTagsMap = await getAllNoteTags();
 
@@ -11,118 +15,139 @@ const filteredTags = Array.from(allTagsMap.entries())
     const lowerTag = tag.toLowerCase();
     return !lowerTag.startsWith('status/') && !lowerTag.startsWith('type/');
   })
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 15);
+  .sort((a, b) => b[1] - a[1]);
 
-const recentReads = [
-  { title: 'Obsidian Knowledge Base Directory Restructuring', time: '2 hours ago' },
-  { title: 'Docker Network Config for Local Deployment', time: '2 hours ago' },
-  { title: 'DDD Domain Driven Design Notes', time: '2 hours ago' },
-];
+const recentNotes = await getRecentNotesWithDate(3);
+const recentReads = recentNotes.map(item => ({
+  title: item.note.data.title || item.note.id.split('/').pop() || '',
+  time: formatTimeAgo(item.date, 'en'),
+  href: `/en/notes/${item.note.id}`
+}));
 
 ---
 
-<BaseLayout title={`About | ${SITE_NAME}`} description="About me and my professional background">
-  <main class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-
-    <div class="flex flex-col gap-6">
-
-      <!-- Row 1 -->
-      <div class="flex flex-col md:flex-row gap-6">
-
-        <!-- Hero Card -->
-        <div class="flex-[2] relative rounded-2xl bg-card border border-border p-8 sm:p-10 overflow-hidden shadow-sm group">
-          <div class="absolute inset-0 rounded-2xl border-2 border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-          <div class="absolute -inset-0.5 rounded-2xl bg-primary/5 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-          <div class="absolute inset-0 rounded-2xl ring-1 ring-primary/30 shadow-[0_0_20px_rgba(16,185,129,0.15)] pointer-events-none"></div>
-
-          <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 h-full">
-            <div class="flex flex-col gap-4">
-              <h1 class="text-4xl sm:text-5xl font-bold text-foreground">
-                Hi, I'm {AUTHOR_NAME} <span class="inline-block origin-[70%_70%] animate-wave">👋</span>
-              </h1>
-              <h2 class="text-xl sm:text-2xl font-semibold text-foreground mt-2">
-                Full-stack Developer / Digital Gardener / Lifelong Learner
-              </h2>
-              <p class="text-muted-foreground leading-relaxed max-w-xl mt-2">
-                Welcome to my digital biome. Here lies my code experiments, full-stack dev notes, and daily learnings.
-              </p>
-
-              <div class="flex flex-wrap gap-4 mt-6">
-                <a href="/en/notes" class="btn-outline">
-                  Browse Notes <BookOpen size={18} />
-                </a>
-                <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline">
-                  GitHub <Github size={18} />
-                </a>
-              </div>
-            </div>
-
-            <div class="hidden sm:block shrink-0">
-              <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-primary shadow-[0_0_40px_rgba(16,185,129,0.3)]"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Knowledge Graph Nodes -->
-        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 flex flex-col items-center justify-between shadow-sm relative group">
-          <div class="w-full">
-            <h3 class="text-lg font-medium text-foreground mb-6 text-center">Knowledge Graph Nodes</h3>
-            <div class="flex flex-wrap justify-center gap-3">
-              {filteredTags.map(([tag]) => (
-                <a href={`/en/notes?tag=${encodeURIComponent(tag)}`} class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background-secondary border border-border text-sm text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors">
-                  {tag} <Tag size={14} class="text-primary opacity-80" />
-                </a>
-              ))}
-            </div>
-          </div>
-          <div class="mt-8 w-full">
-            <a href="/en/about/tags" class="group/btn flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-transparent bg-background-secondary hover:bg-primary hover:text-primary-foreground text-sm font-medium transition-all">
-              View All Tags
-              <ArrowRight size={16} class="group-hover/btn:translate-x-1 transition-transform" />
-            </a>
-          </div>
-        </div>
+<BaseLayout title={`About | ${SITE_NAME}`} description="SYS.ENTITY_LOADED: Agent profile and engineering dossier">
+  
+  <!-- Row 1: Full-Viewport Hero with Background Scrolling Tag Wall -->
+  <section class="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent group/hero-section">
+    <!-- Background Scrolling Tag Wall -->
+    <ScrollingTagWall tags={filteredTags} lang="en" />
+    
+    <!-- Foreground Centered Hero Content -->
+    <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center gap-6 px-6">
+      <SignalTitle as="h1" class="text-5xl sm:text-6xl font-bold font-mono tracking-tight text-foreground" title={`Hi, I'm ${AUTHOR_NAME}`} />
+      <h2 class="text-2xl sm:text-3xl font-mono text-primary uppercase tracking-widest mt-2">
+        [ Full-stack Developer / Digital Gardener ]
+      </h2>
+      <p class="text-muted-foreground leading-relaxed max-w-2xl font-mono text-base sm:text-lg mt-3">
+        SYS.ENTITY_LOADED: Welcome. Here lies my code experiments, architecture blueprints, and personal knowledge graphs.
+      </p>
+      
+      <div class="flex flex-wrap justify-center gap-10 mt-8">
+        <a href="/en/notes" class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none">
+          <span>[</span>
+          <span class="uppercase">Browse Notes // BROWSE_NOTES</span>
+          <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
+          <span>]</span>
+        </a>
+        <a href="/en/about/tags" class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none">
+          <span>[</span>
+          <span class="uppercase">All Tags // TOPOLOGY_TAGS</span>
+          <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
+          <span>]</span>
+        </a>
       </div>
+    </div>
+  </section>
 
+  <!-- Main Body (Rest of the Page) -->
+  <main class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col gap-12">
+      
       <!-- Row 2 -->
       <div class="flex flex-col md:flex-row gap-6">
-
+        
         <!-- Recently Learning -->
-        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-sm">
-          <h3 class="text-lg font-medium text-foreground mb-6">Recently Learning</h3>
+        <div class="flex-[1] bg-transparent border border-border p-6 sm:p-8">
+          <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">[ RECENT_SYNC ] / RECENT DATA SYNC</h3>
           <div class="flex flex-col gap-4">
             {recentReads.map(item => (
-              <a href="/en/notes" class="group flex items-center justify-between p-4 rounded-xl bg-background-secondary hover:bg-card-hover border border-transparent hover:border-border transition-all">
+              <a href={item.href} class="group flex items-center justify-between p-4 bg-background border border-border hover:border-primary/50 transition-all">
                 <div class="flex flex-col gap-1">
-                  <h4 class="text-foreground font-medium group-hover:text-primary transition-colors">{item.title}</h4>
-                  <span class="text-xs text-muted-foreground">Updated {item.time}</span>
+                  <h4 class="text-sm font-mono text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
+                  <span class="text-[10px] font-mono text-muted-foreground uppercase">UPDATED: {item.time}</span>
                 </div>
-                <BookMarked size={20} class="text-primary shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
+                <BookMarked size={16} class="text-muted-foreground group-hover:text-primary transition-colors" />
               </a>
             ))}
           </div>
         </div>
 
         <!-- GitHub Contributions -->
-        <div class="flex-[2] rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-sm overflow-hidden flex flex-col">
+        <div class="flex-[2] bg-card/40 border border-border p-6 sm:p-8 overflow-hidden flex flex-col">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-medium text-foreground hidden sm:block">GitHub Contributions</h3>
+            <h3 class="text-sm font-mono tracking-widest text-muted-foreground hidden sm:block">GITHUB_ACTIVITY</h3>
             <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
-              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline-sm">
-                GitHub <Github size={16} />
+              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline-sm !font-mono !text-[11px] !rounded-none">
+                [ GITHUB ] <Github size={14} />
               </a>
             </div>
           </div>
 
-          <div class="flex-1 bg-background-secondary rounded-xl p-4 overflow-x-auto border border-border flex items-center justify-center">
-            <div class="min-w-[700px] flex justify-center">
-              <img src="https://ghchart.rshah.org/10b981/BakerSean168" alt="GitHub Contributions" class="max-w-full" style="filter: hue-rotate(0deg);" />
-            </div>
+          <div class="flex-1 bg-background border border-border p-4 overflow-x-auto flex items-center justify-center">
+            <GitHubContributions lang="en" />
           </div>
         </div>
 
       </div>
+
+      <!-- Row 3 -->
+      <div class="border border-border p-6 sm:p-8 bg-transparent">
+        <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">[ SITE_COORDINATES ] / MULTI-SITE GATEWAY GRID</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
+          
+          <div class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+            <div>
+              <div class="text-[10px] text-primary font-bold mb-2">// 01 . CORE_BIOME (CURRENT)</div>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3">[ DIGITAL_BIOME ]</h4>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                Personal digital garden and knowledge vault. Houses synchronized Obsidian notes, professional experience, and node networks. Deployed via Cloudflare Edge.
+              </p>
+            </div>
+            <div class="mt-6 text-[10px] text-primary font-bold">
+              STATUS: ACTIVE_PRIMARY
+            </div>
+          </div>
+
+          <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+            <div>
+              <div class="text-[10px] text-muted-foreground mb-2">// 02 . REPO_PORTAL</div>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">[ GITHUB_PROFILE ]</h4>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                Developer dashboard and code repository index. Hosts open-source codebases, developer configuration files, and commit timelines.
+              </p>
+            </div>
+            <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
+              ACCESS_PORTAL <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
+            </div>
+          </a>
+
+          <a href="https://BakerSean168.github.io" target="_blank" rel="noopener noreferrer" class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+            <div>
+              <div class="text-[10px] text-muted-foreground mb-2">// 03 . LAB_SANDBOX</div>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">[ SANDBOX_LAB ]</h4>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                Client-side component sandbox and lab index. Houses standalone web experiments, micro-applications, CSS animations, and instant web tools.
+              </p>
+            </div>
+            <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
+              ACCESS_SANDBOX <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
+            </div>
+          </a>
+
+        </div>
+      </div>
+
     </div>
   </main>
 </BaseLayout>
@@ -140,5 +165,11 @@ const recentReads = [
   }
   .animate-wave {
     animation: wave 2.5s infinite;
+  }
+  @keyframes terminal-blink {
+    50% { opacity: 0; }
+  }
+  .animate-terminal-blink {
+    animation: terminal-blink 0.8s step-start infinite;
   }
 </style>

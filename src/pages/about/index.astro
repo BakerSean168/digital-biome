@@ -1,11 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SignalTitle from '../../components/common/SignalTitle.astro';
-import { BookOpen, Github, Tag, BookMarked, ArrowRight, Terminal } from '@lucide/astro';
+import { Github, BookMarked, ArrowRight, Terminal } from '@lucide/astro';
 import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../constants';
-import { getAllNoteTags } from '../../utils/notes';
-import TagNetworkGraph from '../../components/resume/TagNetworkGraph.astro';
-
+import { getAllNoteTags, getRecentNotesWithDate } from '../../utils/notes';
+import { formatTimeAgo } from '../../utils/date';
+import ScrollingTagWall from '../../components/resume/ScrollingTagWall.astro';
+import GitHubContributions from '../../components/common/GitHubContributions.astro';
 
 const allTagsMap = await getAllNoteTags();
 
@@ -14,71 +15,55 @@ const filteredTags = Array.from(allTagsMap.entries())
     const lowerTag = tag.toLowerCase();
     return !lowerTag.startsWith('status/') && !lowerTag.startsWith('type/');
   })
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 15);
+  .sort((a, b) => b[1] - a[1]);
 
-const recentReads = [
-  { title: 'Obsidian 知识库目录结构重构', time: '2 小时前' },
-  { title: 'Docker 部署本地服务的网络配置', time: '2 小时前' },
-  { title: 'DDD 领域驱动设计学习笔记', time: '2 小时前' },
-];
+const recentNotes = await getRecentNotesWithDate(3);
+const recentReads = recentNotes.map(item => ({
+  title: item.note.data.title || item.note.id.split('/').pop() || '',
+  time: formatTimeAgo(item.date, 'zh'),
+  href: `/notes/${item.note.id}`
+}));
 
 ---
 
 <BaseLayout title={`About | ${SITE_NAME}`} description="SYS.ENTITY_LOADED: 实体档案与工程履历">
-  <main class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+  
+  <!-- Row 1: Full-Viewport Hero with Background Scrolling Tag Wall -->
+  <section class="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent group/hero-section">
+    <!-- Background Scrolling Tag Wall -->
+    <ScrollingTagWall tags={filteredTags} lang="zh" />
     
-    <div class="flex flex-col gap-6">
+    <!-- Foreground Centered Hero Content -->
+    <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center gap-6 px-6">
+      <SignalTitle as="h1" class="text-5xl sm:text-6xl font-bold font-mono tracking-tight text-foreground" title={`Hi, I'm ${AUTHOR_NAME}`} />
+      <h2 class="text-2xl sm:text-3xl font-mono text-primary uppercase tracking-widest mt-2">
+        [ 全栈开发者 / 数字园丁 ]
+      </h2>
+      <p class="text-muted-foreground leading-relaxed max-w-2xl font-mono text-base sm:text-lg mt-3">
+        SYS.ENTITY_LOADED: 欢迎接入。这里存储着我的工程切片、架构推演与个人知识脉络。
+      </p>
       
-      <!-- Row 1 -->
-      <div class="flex flex-col md:flex-row gap-6">
-        
-        <!-- Hero Card -->
-        <div class="flex-[2] relative rounded-none bg-transparent border border-border p-8 sm:p-10 shadow-none group">
-          <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 h-full">
-            <div class="flex flex-col gap-4">
-              <SignalTitle as="h1" class="text-4xl sm:text-5xl font-bold font-mono tracking-tight text-foreground" title={`Hi, I'm ${AUTHOR_NAME}`} />
-              <h2 class="text-xl sm:text-xl font-mono text-foreground mt-2 opacity-80 uppercase tracking-widest">
-                全栈开发者 / 数字园丁
-              </h2>
-              <p class="text-muted-foreground leading-relaxed max-w-xl mt-2 font-mono text-sm">
-                SYS.ENTITY_LOADED: 欢迎接入。这里存储着我的工程切片、架构推演与个人知识脉络。
-              </p>
-              
-              <div class="flex flex-wrap gap-4 mt-6">
-                <a href="/notes" class="btn-outline">
-                  浏览笔记 <BookOpen size={18} />
-                </a>
-                <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline">
-                  GitHub <Github size={18} />
-                </a>
-              </div>
-            </div>
-
-            <!-- Avatar Box -->
-            <div class="hidden sm:block shrink-0">
-              <div class="w-32 h-32 md:w-40 md:h-40 bg-background border border-border flex items-center justify-center group-hover:border-primary/50 transition-colors">
-                <Terminal size={48} class="text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Knowledge Graph Nodes -->
-        <div class="flex-[1] bg-card/40 border border-border p-6 sm:p-8 flex flex-col items-center justify-between relative group">
-          <div class="w-full flex flex-col h-full justify-between">
-            <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-4 text-center uppercase">[ TOPOLOGY_TAGS ] / 知识脉络提取</h3>
-            <TagNetworkGraph tags={filteredTags} />
-          </div>
-          <div class="mt-4 w-full">
-            <a href="/about/tags" class="group/btn flex items-center justify-center gap-2 w-full py-2.5 border border-border bg-background hover:bg-card hover:border-primary/50 text-xs font-mono tracking-widest transition-all">
-              [ ALL_TAGS ]
-              <ArrowRight size={14} class="group-hover/btn:translate-x-1 transition-transform" />
-            </a>
-          </div>
-        </div>
+      <div class="flex flex-wrap justify-center gap-10 mt-8">
+        <a href="/notes" class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none">
+          <span>[</span>
+          <span class="uppercase">浏览笔记 // BROWSE_NOTES</span>
+          <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
+          <span>]</span>
+        </a>
+        <a href="/about/tags" class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none">
+          <span>[</span>
+          <span class="uppercase">所有标签 // TOPOLOGY_TAGS</span>
+          <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
+          <span>]</span>
+        </a>
       </div>
+    </div>
+  </section>
 
+  <!-- Main Body (Rest of the Page) -->
+  <main class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col gap-12">
+      
       <!-- Row 2 -->
       <div class="flex flex-col md:flex-row gap-6">
         
@@ -87,7 +72,7 @@ const recentReads = [
           <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">[ RECENT_SYNC ] / 近期数据同步</h3>
           <div class="flex flex-col gap-4">
             {recentReads.map(item => (
-              <a href="/notes" class="group flex items-center justify-between p-4 bg-background border border-border hover:border-primary/50 transition-all">
+              <a href={item.href} class="group flex items-center justify-between p-4 bg-background border border-border hover:border-primary/50 transition-all">
                 <div class="flex flex-col gap-1">
                   <h4 class="text-sm font-mono text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
                   <span class="text-[10px] font-mono text-muted-foreground uppercase">UPDATED: {item.time}</span>
@@ -110,13 +95,59 @@ const recentReads = [
           </div>
 
           <div class="flex-1 bg-background border border-border p-4 overflow-x-auto flex items-center justify-center">
-            <div class="min-w-[700px] flex justify-center">
-              <img src="https://ghchart.rshah.org/10b981/BakerSean168" alt="GitHub Contributions" class="max-w-full" style="filter: hue-rotate(0deg);" />
-            </div>
+            <GitHubContributions lang="zh" />
           </div>
         </div>
 
       </div>
+
+      <!-- Row 3 -->
+      <div class="border border-border p-6 sm:p-8 bg-transparent">
+        <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">[ SITE_COORDINATES ] / 多站点协同导航网格</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
+          
+          <div class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+            <div>
+              <div class="text-[10px] text-primary font-bold mb-2">// 01 . CORE_BIOME (CURRENT)</div>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3">[ DIGITAL_BIOME ]</h4>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                个人数字花园与思想森林。承载 Obsidian 笔记库、核心工程履历、系统拓扑图。基于 Cloudflare Edge 部署，拥有极速的全球访问体验。
+              </p>
+            </div>
+            <div class="mt-6 text-[10px] text-primary font-bold">
+              STATUS: ACTIVE_PRIMARY
+            </div>
+          </div>
+
+          <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+            <div>
+              <div class="text-[10px] text-muted-foreground mb-2">// 02 . REPO_PORTAL</div>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">[ GITHUB_PROFILE ]</h4>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                开发控制台与开源项目索引。存放所有开源工程源代码、技术切片、提交历史。是开发协作与代码评审的统一界面。
+              </p>
+            </div>
+            <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
+              ACCESS_PORTAL <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
+            </div>
+          </a>
+
+          <a href="https://BakerSean168.github.io" target="_blank" rel="noopener noreferrer" class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+            <div>
+              <div class="text-[10px] text-muted-foreground mb-2">// 03 . LAB_SANDBOX</div>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">[ SANDBOX_LAB ]</h4>
+              <p class="text-[11px] text-muted-foreground leading-relaxed">
+                前端概念实验室与微应用演示区。用于托管独立的 Client-side 网页小玩具、交互动效演示及实验性 Web 组件，支持即开即用。
+              </p>
+            </div>
+            <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
+              ACCESS_SANDBOX <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
+            </div>
+          </a>
+
+        </div>
+      </div>
+
     </div>
   </main>
 </BaseLayout>
@@ -134,5 +165,11 @@ const recentReads = [
   }
   .animate-wave {
     animation: wave 2.5s infinite;
+  }
+  @keyframes terminal-blink {
+    50% { opacity: 0; }
+  }
+  .animate-terminal-blink {
+    animation: terminal-blink 0.8s step-start infinite;
   }
 </style>

@@ -1,0 +1,295 @@
+---
+// ScrollingTagWall.astro
+// Full-bleed background scrolling marquee tag wall in Basalt & Moss style
+interface Props {
+  tags: [string, number][];
+  lang?: 'zh' | 'en';
+}
+
+const { tags, lang = 'zh' } = Astro.props;
+
+// Process and format tags
+const formattedTags = tags.map(([name, count]) => {
+  const leafName = name.includes('/') ? name.split('/').pop() : name;
+  return {
+    name,
+    leafName,
+    count,
+    href: lang === 'zh' ? `/notes?tag=${encodeURIComponent(name)}` : `/en/notes?tag=${encodeURIComponent(name)}`
+  };
+});
+
+// Distribute tags across 8 lanes for high vertical coverage of the entire screen
+const lane1 = formattedTags.filter((_, idx) => idx % 8 === 0);
+const lane2 = formattedTags.filter((_, idx) => idx % 8 === 1);
+const lane3 = formattedTags.filter((_, idx) => idx % 8 === 2);
+const lane4 = formattedTags.filter((_, idx) => idx % 8 === 3);
+const lane5 = formattedTags.filter((_, idx) => idx % 8 === 4);
+const lane6 = formattedTags.filter((_, idx) => idx % 8 === 5);
+const lane7 = formattedTags.filter((_, idx) => idx % 8 === 6);
+const lane8 = formattedTags.filter((_, idx) => idx % 8 === 7);
+---
+
+<div class="absolute inset-0 w-full h-full overflow-hidden flex flex-col justify-between py-12 select-none z-0 pointer-events-none">
+  
+  <!-- Boundary Vignette Gradients (Fade-out effect at boundaries) -->
+  <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent pointer-events-none z-10"></div>
+  <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent pointer-events-none z-10"></div>
+  
+  <!-- Lane 1: Right to Left -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-left shrink-0 min-w-full" style="--speed: 140s;">
+      <div class="flex gap-8 shrink-0">
+        {lane1.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane1.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Lane 2: Left to Right -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-right shrink-0 min-w-full" style="--speed: 160s;">
+      <div class="flex gap-8 shrink-0">
+        {lane2.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane2.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Lane 3: Right to Left -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-left shrink-0 min-w-full" style="--speed: 150s;">
+      <div class="flex gap-8 shrink-0">
+        {lane3.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane3.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Lane 4: Left to Right -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-right shrink-0 min-w-full" style="--speed: 170s;">
+      <div class="flex gap-8 shrink-0">
+        {lane4.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane4.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Lane 5: Right to Left -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-left shrink-0 min-w-full" style="--speed: 145s;">
+      <div class="flex gap-8 shrink-0">
+        {lane5.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane5.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Lane 6: Left to Right -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-right shrink-0 min-w-full" style="--speed: 165s;">
+      <div class="flex gap-8 shrink-0">
+        {lane6.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane6.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Lane 7: Right to Left -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-left shrink-0 min-w-full" style="--speed: 155s;">
+      <div class="flex gap-8 shrink-0">
+        {lane7.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane7.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Lane 8: Left to Right -->
+  <div class="marquee-lane relative flex overflow-hidden w-full pointer-events-none">
+    <div class="flex gap-8 animate-marquee-right shrink-0 min-w-full" style="--speed: 175s;">
+      <div class="flex gap-8 shrink-0">
+        {lane8.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+      <div class="flex gap-8 shrink-0">
+        {lane8.map(tag => (
+          <a href={tag.href} class="tag-node group/tag pointer-events-auto">
+            <span class="text-primary/50 group-hover/tag:text-primary transition-colors">#</span>
+            <span>{tag.leafName}</span>
+            <span class="tag-badge">[{tag.count}]</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  /* Faint Watermark Tag Node Styling */
+  .tag-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 12px; /* Increased tag font size */
+    border: 1px solid rgba(255, 255, 255, 0.12); /* Slightly brighter borders */
+    background-color: rgba(255, 255, 255, 0.02); /* Subtle background tint */
+    color: var(--text-muted);
+    opacity: 0.45; /* Increased opacity for much better visibility */
+    transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none;
+  }
+  
+  .tag-node:hover {
+    border-color: var(--primary);
+    background-color: var(--card);
+    color: var(--text-main);
+    opacity: 1; /* Full opacity on hover */
+    transform: scale(1.06);
+    z-index: 30;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+  
+  .tag-badge {
+    font-size: 10px;
+    opacity: 0.5;
+    transition: color 250ms ease;
+  }
+  
+  .tag-node:hover .tag-badge {
+    color: var(--primary);
+    opacity: 0.9;
+  }
+
+  /* Seamless Marquee Animations */
+  @keyframes marquee-left {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+  
+  @keyframes marquee-right {
+    0% { transform: translate3d(-50%, 0, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+  
+  .animate-marquee-left {
+    animation: marquee-left var(--speed, 30s) linear infinite;
+  }
+  
+  .animate-marquee-right {
+    animation: marquee-right var(--speed, 30s) linear infinite;
+  }
+
+  /* Hover pause using CSS :has() */
+  .marquee-lane:has(.tag-node:hover) .animate-marquee-left,
+  .marquee-lane:has(.tag-node:hover) .animate-marquee-right {
+    animation-play-state: paused;
+  }
+</style>
