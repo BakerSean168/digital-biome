@@ -9,18 +9,289 @@ interface Props {
 const { compact = false } = Astro.props;
 const bookmarksByCategory = await getBookmarksByCategory();
 const hasBookmarks = bookmarksByCategory.size > 0;
+
+// Gather all unique categories with shortcuts
+const allCategories = Array.from(bookmarksByCategory.keys()).sort().map((category, idx) => {
+  const shortcutNum = idx + 2;
+  const label = shortcutNum <= 9 ? `${shortcutNum}: ${category}` : category;
+  return {
+    name: category,
+    slug: category.toLowerCase(),
+    label,
+  };
+});
+
+// Calculate total bookmarks count
+let totalCount = 0;
+bookmarksByCategory.forEach((list) => {
+  totalCount += list.length;
+});
 ---
 
-<div class:list={['relative z-10 w-full', compact ? 'pb-0' : 'pb-20']}>
-  {hasBookmarks
-    ? Array.from(bookmarksByCategory.entries()).map(([category, bookmarks]) => (
-        <BookmarkCategory name={category} bookmarks={bookmarks} />
-      ))
-    : (
-      <div class="text-center py-12 text-muted-foreground">
-        <p class="mb-2">还没有书签</p>
-        <p class="text-sm">在笔记中添加 <code class="bg-card-hover px-1.5 py-0.5 rounded text-xs">url</code> 字段以及 <code class="bg-card-hover px-1.5 py-0.5 rounded text-xs">website</code>、<code class="bg-card-hover px-1.5 py-0.5 rounded text-xs">resource</code> 和资源类型标签即可在此显示</p>
+<div class:list={['relative z-10 w-full', compact ? 'pb-0' : 'pb-20']} id="bookmark-grid-container">
+  {hasBookmarks ? (
+    <>
+      <!-- Stats Diagnostic Panel -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 border border-border bg-card/50 font-mono mb-8 text-xs tracking-wider select-none">
+        <div class="flex flex-col gap-1 border-r border-border/50 pr-4">
+          <span class="text-muted-foreground">// SYSTEM_STATUS</span>
+          <span class="text-primary font-bold animate-pulse">● OPERATIONAL</span>
+        </div>
+        <div class="flex flex-col gap-1 border-r border-border/50 pr-4 pl-0 md:pl-4">
+          <span class="text-muted-foreground">// INDEXED_ASSETS</span>
+          <span class="text-foreground font-bold" id="stats-total-count">{totalCount} UNITS</span>
+        </div>
+        <div class="flex flex-col gap-1 border-r border-border/50 pr-4 pl-0 md:pl-4">
+          <span class="text-muted-foreground">// ACTIVE_BRANCHES</span>
+          <span class="text-foreground font-bold">{allCategories.length} CATEGORIES</span>
+        </div>
+        <div class="flex flex-col gap-1 pl-0 md:pl-4">
+          <span class="text-muted-foreground">// CURRENT_FILTER</span>
+          <span class="text-primary font-bold uppercase id-current-filter">ALL</span>
+        </div>
       </div>
-    )
-  }
+
+      <!-- Controls Panel: Search & Category Buttons -->
+      <div class="flex flex-col md:flex-row gap-4 mb-8">
+        <!-- Search Input with terminal layout -->
+        <div class="flex-1 flex items-center gap-2 px-3 py-2 border border-border bg-card font-mono text-sm focus-within:border-primary/50 transition-colors">
+          <span class="text-primary shrink-0 select-none">[ SEARCH &gt; ]</span>
+          <input
+            type="text"
+            id="bookmark-search-input"
+            class="bg-transparent border-none text-foreground placeholder-muted-foreground/30 focus:outline-none w-full font-mono text-xs"
+            placeholder="FILTER_RESOURCES..."
+          />
+        </div>
+
+        <!-- Categories tags -->
+        <div class="flex flex-wrap items-center gap-2 shrink-0 max-w-full font-mono text-[10px] tracking-widest uppercase">
+          <button
+            class="bookmark-filter-btn px-3 py-2 border border-primary bg-primary text-background transition-all duration-200 select-none cursor-pointer"
+            data-category="all"
+          >
+            [ 1: ALL ]
+          </button>
+          {allCategories.map((cat) => (
+            <button
+              class="bookmark-filter-btn px-3 py-2 border border-border text-muted-foreground hover:text-foreground transition-all duration-200 select-none cursor-pointer"
+              data-category={cat.slug}
+            >
+              [ {cat.label} ]
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <!-- Bookmarks Lists -->
+      <div class="space-y-10" id="bookmarks-categories-container">
+        {Array.from(bookmarksByCategory.entries()).map(([category, bookmarks]) => (
+          <div 
+            class="bookmark-category-section w-full border-t border-border/40 pt-6"
+            data-category-section-name={category.toLowerCase()}
+          >
+            <BookmarkCategory name={category} bookmarks={bookmarks} />
+          </div>
+        ))}
+      </div>
+
+      <!-- Empty State for filters -->
+      <div 
+        id="bookmark-empty-state" 
+        class="hidden text-center py-16 border border-dashed border-border bg-card/25 font-mono text-xs text-muted-foreground rounded-none"
+      >
+        <span class="text-red-500 font-bold block mb-2">[ SYS.ERR: NO_MATCHING_RESOURCES ]</span>
+        <p>Your filter settings returned 0 results. Try resetting the query.</p>
+        <button 
+          id="bookmark-reset-btn" 
+          class="mt-4 px-4 py-2 border border-border text-foreground hover:bg-card-hover tracking-widest uppercase cursor-pointer"
+        >
+          [ RESET_FILTERS ]
+        </button>
+      </div>
+    </>
+  ) : (
+    <div class="text-center py-16 border border-dashed border-border bg-card/25 font-mono text-xs text-muted-foreground rounded-none">
+      <p class="mb-2">[ SYSTEM.EMPTY ] 没有检测到书签资产</p>
+      <p class="text-[11px] opacity-70">
+        在 Obsidian 笔记中添加 <code class="bg-card-hover px-1 py-0.5 rounded-none text-primary">url</code> 字段，并包含 <code class="bg-card-hover px-1 py-0.5 rounded-none">website</code> 及相关资源标签即可在此处同步显示。
+      </p>
+    </div>
+  )}
 </div>
+
+<script>
+  // Client-side interactivity script for filtering and search
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('bookmark-search-input') as HTMLInputElement;
+    const filterButtons = document.querySelectorAll('.bookmark-filter-btn');
+    const categorySections = document.querySelectorAll('.bookmark-category-section');
+    const categoriesContainer = document.getElementById('bookmarks-categories-container');
+    const emptyState = document.getElementById('bookmark-empty-state');
+    const resetBtn = document.getElementById('bookmark-reset-btn');
+    const currentFilterLabel = document.querySelector('.id-current-filter');
+    const statsTotalCount = document.getElementById('stats-total-count');
+
+    if (!searchInput || filterButtons.length === 0) return;
+
+    // Load initial states from URLSearchParams if available
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('q') || '';
+    const initialCategory = (urlParams.get('c') || 'all').toLowerCase();
+
+    searchInput.value = initialQuery;
+
+    // Apply initial filter button state
+    let activeCategoryBtn = document.querySelector(`.bookmark-filter-btn[data-category="all"]`);
+    filterButtons.forEach(btn => {
+      const cat = btn.getAttribute('data-category');
+      if (cat === initialCategory) {
+        activeCategoryBtn = btn;
+      }
+    });
+
+    if (activeCategoryBtn) {
+      setActiveButton(activeCategoryBtn);
+    }
+
+    // Set active button UI styles
+    function setActiveButton(activeBtn: Element) {
+      filterButtons.forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-background', 'border-primary');
+        btn.classList.add('text-muted-foreground', 'border-border');
+      });
+      activeBtn.classList.remove('text-muted-foreground', 'border-border');
+      activeBtn.classList.add('bg-primary', 'text-background', 'border-primary');
+    }
+
+    // Update visibility logic
+    function updateFilters() {
+      const query = searchInput.value.toLowerCase().trim();
+      const activeBtn = document.querySelector('.bookmark-filter-btn.bg-primary');
+      const category = activeBtn ? activeBtn.getAttribute('data-category') || 'all' : 'all';
+
+      // Update current filter in stats
+      if (currentFilterLabel) {
+        currentFilterLabel.textContent = category.toUpperCase();
+      }
+
+      // Sync URL parameters without refreshing
+      const newUrl = new URL(window.location.href);
+      if (query) {
+        newUrl.searchParams.set('q', query);
+      } else {
+        newUrl.searchParams.delete('q');
+      }
+      if (category !== 'all') {
+        newUrl.searchParams.set('c', category);
+      } else {
+        newUrl.searchParams.delete('c');
+      }
+      window.history.replaceState({}, '', newUrl.toString());
+
+      let totalVisible = 0;
+
+      categorySections.forEach(section => {
+        const cards = section.querySelectorAll('.bookmark-card-item');
+        const countBadge = section.querySelector('.category-visible-count');
+        
+        let visibleInSection = 0;
+
+        cards.forEach(card => {
+          const title = card.getAttribute('data-title')?.toLowerCase() || '';
+          const description = card.getAttribute('data-description')?.toLowerCase() || '';
+          const cardCategoriesRaw = card.getAttribute('data-categories') || '[]';
+          let cardCategories: string[] = [];
+          try {
+            cardCategories = JSON.parse(cardCategoriesRaw);
+          } catch(e) {}
+
+          const matchesQuery = title.includes(query) || description.includes(query);
+          const matchesCategory = category === 'all' || cardCategories.some(c => c.toLowerCase() === category);
+
+          if (matchesQuery && matchesCategory) {
+            (card as HTMLElement).style.display = 'block';
+            visibleInSection++;
+            totalVisible++;
+          } else {
+            (card as HTMLElement).style.display = 'none';
+          }
+        });
+
+        // Update badge count
+        if (countBadge) {
+          countBadge.textContent = visibleInSection.toString();
+        }
+
+        // Hide section if no visible cards inside it
+        if (visibleInSection > 0) {
+          (section as HTMLElement).style.display = 'block';
+        } else {
+          (section as HTMLElement).style.display = 'none';
+        }
+      });
+
+      // Update total visible count in stats
+      if (statsTotalCount) {
+        statsTotalCount.textContent = `${totalVisible} UNITS`;
+      }
+
+      // Display empty state if total visible is zero
+      if (totalVisible === 0) {
+        if (categoriesContainer) categoriesContainer.style.display = 'none';
+        if (emptyState) emptyState.classList.remove('hidden');
+      } else {
+        if (categoriesContainer) categoriesContainer.style.display = 'block';
+        if (emptyState) emptyState.classList.add('hidden');
+      }
+    }
+
+    // Set event listeners
+    searchInput.addEventListener('input', updateFilters);
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        setActiveButton(e.currentTarget as Element);
+        updateFilters();
+      });
+    });
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        const allBtn = document.querySelector('.bookmark-filter-btn[data-category="all"]');
+        if (allBtn) {
+          setActiveButton(allBtn);
+        }
+        updateFilters();
+      });
+    }
+
+    // Bind hotkeys
+    document.addEventListener('keydown', (e) => {
+      // Focus search input on "/" key if not already focused on input/textarea
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (e.key === '/' && activeTag !== 'input' && activeTag !== 'textarea') {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
+
+      // Hotkeys for switching categories: '1' -> '9'
+      if (activeTag !== 'input' && activeTag !== 'textarea' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const num = parseInt(e.key);
+        if (num >= 1 && num <= 9) {
+          const btn = filterButtons[num - 1];
+          if (btn) {
+            e.preventDefault();
+            setActiveButton(btn);
+            updateFilters();
+          }
+        }
+      }
+    });
+
+    // Run initial filter application
+    updateFilters();
+  });
+</script>

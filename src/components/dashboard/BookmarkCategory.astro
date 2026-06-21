@@ -1,5 +1,6 @@
 ---
 import type { Bookmark } from '../../types/notes';
+import { ExternalLink } from '@lucide/astro';
 
 interface Props {
   name: string;
@@ -9,17 +10,17 @@ interface Props {
 const { name, bookmarks } = Astro.props;
 ---
 
-<div class="mb-10 w-full">
-  <div class="flex items-center justify-between mb-6">
-    <h3 class="text-xl font-semibold text-foreground tracking-wide flex items-center gap-2">
-      {name}
+<div class="bookmark-category-container mb-6 w-full">
+  <div class="flex items-center justify-between mb-6 font-mono">
+    <h3 class="text-base font-bold text-foreground tracking-widest uppercase flex items-center gap-2">
+      [ {name} ]
     </h3>
-    <div class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full font-medium">
-      {bookmarks.length} 个资源
+    <div class="px-3 py-1 bg-primary/10 text-primary text-[10px] border border-primary/20 rounded-none font-medium category-count-badge select-none">
+      <span class="category-visible-count font-bold">{bookmarks.length}</span> / {bookmarks.length} UNITS
     </div>
   </div>
   
-  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-x-4 gap-y-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {bookmarks.map((bookmark) => {
       let domain = "example.com";
       try {
@@ -32,38 +33,49 @@ const { name, bookmarks } = Astro.props;
       const fallbackIconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
       return (
-        <div class="relative group/card flex flex-col items-center gap-2 w-full">
+        <div 
+          class="bookmark-card-item relative group/card flex flex-col w-full"
+          data-title={bookmark.title}
+          data-description={bookmark.description || ''}
+          data-categories={JSON.stringify(bookmark.categories)}
+        >
           <a
             href={bookmark.url}
-            class="group flex flex-col items-center gap-3 transition-all duration-300 w-full"
+            class="group flex items-center gap-3 p-3 border border-border bg-card hover:border-primary/50 hover:bg-primary/[0.02] transition-all duration-200 rounded-none w-full relative"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <div class="w-16 h-16 rounded-2xl bg-card border border-border flex items-center justify-center text-foreground group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-300 shadow-sm group-hover:shadow-md">
+            <!-- Favicon Box -->
+            <div class="w-10 h-10 border border-border flex items-center justify-center bg-background text-foreground shrink-0 rounded-none overflow-hidden relative group-hover:border-primary/30 transition-colors">
               {bookmark.icon
                 ? <Fragment set:html={bookmark.icon} />
                 : <img
                     src={localIconUrl}
                     alt={`${bookmark.title} favicon`}
-                    class="w-7 h-7 object-contain transition-transform duration-300 group-hover:scale-110"
+                    class="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-110"
                     loading="lazy"
-                    onerror={`this.onerror=null; if(!this.getAttribute('data-second-fallback')){ this.setAttribute('data-second-fallback','true'); this.src='${fallbackIconUrl}'; } else { const p = this.parentNode; p.innerHTML = '<div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">${bookmark.title.charAt(0).toUpperCase()}</div>'; }`}
+                    onerror={`this.onerror=null; if(!this.getAttribute('data-second-fallback')){ this.setAttribute('data-second-fallback','true'); this.src='${fallbackIconUrl}'; } else { const p = this.parentNode; p.innerHTML = '<div class="w-full h-full text-primary bg-primary/10 flex items-center justify-center font-mono font-bold text-xs select-none">[${bookmark.title.charAt(0).toUpperCase()}]</div>'; }`}
                   />
               }
             </div>
-            <div class="flex flex-col items-center w-full px-1">
-              <span class="text-sm font-medium text-foreground text-center truncate w-full group-hover:text-primary transition-colors">{bookmark.title}</span>
+
+            <!-- Text Details -->
+            <div class="flex flex-col min-w-0 flex-1">
+              <span class="text-sm font-mono font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                {bookmark.title}
+              </span>
+              <span class="text-[10px] font-mono text-muted-foreground tracking-tight truncate mt-0.5 flex items-center gap-1 select-none">
+                <ExternalLink size={10} class="opacity-60 shrink-0" />
+                {domain}
+              </span>
             </div>
           </a>
+
+          <!-- Retro Tooltip readout -->
           {bookmark.description && (
-            <div class="w-full px-1 flex justify-center -mt-1 cursor-default">
-              <span class="text-xs text-muted-foreground text-center truncate w-full">{bookmark.description}</span>
-            </div>
-          )}
-          {bookmark.description && (
-            <div class="absolute bottom-[calc(100%-8px)] mb-2 left-1/2 -translate-x-1/2 w-max max-w-[250px] px-3 py-2 bg-gray-800/95 dark:bg-[#2A2A2A]/95 backdrop-blur-md text-gray-50 text-xs leading-relaxed rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-white/10 opacity-0 invisible group-hover/card:opacity-100 group-hover/card:visible translate-y-2 group-hover/card:translate-y-0 transition-all duration-200 z-50 whitespace-normal text-left pointer-events-none">
+            <div class="absolute bottom-[calc(100%-8px)] mb-2 left-1/2 -translate-x-1/2 w-max max-w-[240px] px-3 py-2 bg-card border border-primary/40 text-foreground text-[10px] leading-relaxed rounded-none opacity-0 invisible group-hover/card:opacity-100 group-hover/card:visible translate-y-2 group-hover/card:translate-y-0 transition-all duration-200 z-50 whitespace-normal text-left pointer-events-none font-mono shadow-none">
+              <div class="text-[9px] text-primary mb-1 border-b border-primary/20 pb-0.5 select-none font-bold tracking-widest">[ DIAGNOSTIC_INFO ]</div>
               {bookmark.description}
-              <div class="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-gray-800/95 dark:border-t-[#2A2A2A]/95"></div>
             </div>
           )}
         </div>
@@ -71,3 +83,4 @@ const { name, bookmarks } = Astro.props;
     })}
   </div>
 </div>
+

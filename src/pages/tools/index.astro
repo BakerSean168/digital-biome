@@ -1,16 +1,17 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookmarkGrid from '../../components/dashboard/BookmarkGrid.astro';
+import SignalTitle from '../../components/common/SignalTitle.astro';
 ---
 
 <BaseLayout title="Tools" description="公开工具资产列表">
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
-    <section class="space-y-6">
-      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <section class="space-y-8">
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between border-b border-border pb-6">
         <div>
-          <h1 class="text-3xl font-semibold tracking-tight text-foreground">Tools</h1>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            这里回到旧版导航页的语义，专门放你在笔记里沉淀下来的外部工具网站，而不是自建服务、监控面板或基础设施资产。
+          <SignalTitle as="h1" class="text-3xl font-bold font-mono tracking-wider text-foreground uppercase" title="[ EXTERNAL_TOOLS ]" />
+          <p class="mt-3 max-w-3xl text-xs leading-relaxed text-muted-foreground font-mono">
+            // 本模块索引在笔记知识网络中沉淀与引用的外部工具、资源网站及设计资产。
           </p>
         </div>
       </div>
@@ -19,3 +20,4 @@ import BookmarkGrid from '../../components/dashboard/BookmarkGrid.astro';
     </section>
   </main>
 </BaseLayout>
+
