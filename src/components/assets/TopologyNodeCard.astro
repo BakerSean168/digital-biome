@@ -1,0 +1,102 @@
+---
+import { Server, Cloud, HardDrive, Router, Shield, Zap, Globe, Cpu } from '@lucide/astro';
+import type { ResolvedTopologyNode } from '../../utils/infrastructure';
+
+interface Props {
+  node: ResolvedTopologyNode;
+  services?: ResolvedTopologyNode[];
+}
+
+const { node, services = [] } = Astro.props;
+
+// Determine icon based on kind
+let Icon = Server;
+if (node.kind === 'external' || node.kind === 'network') Icon = Globe;
+if (node.id.includes('cloudflare') || node.id.includes('bakersean')) Icon = Shield;
+if (node.kind === 'host' && node.id.includes('azure')) Icon = Cloud;
+if (node.kind === 'host' && node.id.includes('aliyun')) Icon = Cloud;
+if (node.id.includes('n100') || node.kind === 'hypervisor') Icon = Cpu;
+if (node.id.includes('nas')) Icon = HardDrive;
+if (node.id.includes('router') || node.id.includes('modem') || node.id.includes('switch')) Icon = Router;
+if (node.id.includes('power') || node.id.includes('ups')) Icon = Zap;
+
+const hasDetails = node.assetId || node.href;
+const detailHref = node.href || (node.assetId ? `/infrastructure/${node.assetId}` : '#');
+
+// Translate kinds
+const kindMap: Record<string, string> = {
+  external: '外部',
+  network: '网络',
+  host: '主机',
+  hypervisor: '底座',
+  vm: '虚拟机',
+  service: '服务',
+  tool: '工具'
+};
+const translatedKind = kindMap[node.kind] || node.kind;
+---
+
+<div class="group relative flex flex-col items-center">
+  <!-- Node Icon & Label -->
+  <div class="relative flex flex-col items-center gap-2 cursor-pointer transition-transform duration-300 hover:-translate-y-1">
+    <div class="w-14 h-14 border border-border bg-background flex items-center justify-center transition-colors group-hover:border-primary/50 group-hover:bg-card">
+      <Icon size={24} class="text-muted-foreground group-hover:text-primary transition-colors" />
+    </div>
+    <span class="text-[10px] font-mono text-muted-foreground text-center max-w-[80px] leading-tight group-hover:text-foreground">
+      {node.title}
+    </span>
+  </div>
+
+  <!-- Hover Popover (Terminal Card) -->
+  <div class="absolute bottom-full left-1/2 -translate-x-1/2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 pointer-events-none group-hover:pointer-events-auto">
+    <!-- Invisible bridge to prevent hover loss -->
+    <div class="absolute inset-x-0 -bottom-6 h-8 bg-transparent"></div>
+    
+    <div class="border border-border bg-card p-4 shadow-xl shadow-black/50 flex flex-col gap-3 mb-4 relative">
+      <!-- Header -->
+      <div class="flex items-start justify-between gap-2 border-b border-border/50 pb-2">
+        <div class="flex flex-col">
+          <span class="text-[10px] font-mono text-primary tracking-widest">{translatedKind}</span>
+          <span class="text-sm font-bold text-foreground mt-0.5">{node.title}</span>
+        </div>
+        <Icon size={16} class="text-muted-foreground shrink-0 mt-1" />
+      </div>
+
+      <!-- Description -->
+      <p class="text-[11px] font-mono text-muted-foreground leading-relaxed line-clamp-3">
+        {node.description}
+      </p>
+
+      <!-- Services -->
+      {services.length > 0 && (
+        <div class="flex flex-col gap-1 mt-1">
+          <span class="text-[9px] font-mono text-muted-foreground/70 tracking-widest">承载服务</span>
+          <div class="flex flex-wrap gap-1">
+            {services.slice(0, 3).map(svc => (
+              <span class="border border-border/50 bg-background px-1.5 py-0.5 text-[10px] font-mono text-foreground/80">
+                {svc.title}
+              </span>
+            ))}
+            {services.length > 3 && (
+              <span class="border border-border/50 bg-background px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                +{services.length - 3}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      <!-- Action -->
+      {hasDetails && (
+        <div class="mt-2 pt-2 border-t border-border/50">
+          <a href={detailHref} class="block w-full py-1.5 text-center bg-background border border-border hover:border-primary/50 text-[10px] font-mono tracking-widest text-foreground transition-colors">
+            [ 查看详情 ]
+          </a>
+        </div>
+      )}
+
+      <!-- Connector Arrow -->
+      <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-card border-b border-r border-border rotate-45"></div>
+    </div>
+  </div>
+</div>

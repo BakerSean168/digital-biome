@@ -2,157 +2,50 @@
 import ThemeIcon from './ThemeIcon.astro';
 import SiteSearch from './SiteSearch.astro';
 import LanguageToggle from './LanguageToggle.astro';
-import { SITE_NAME } from '../../constants';
 import { Search } from '@lucide/astro';
-import { getLangFromUrl, useTranslations } from '../../i18n/utils';
-
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const prefix = lang === 'zh' ? '' : `/${lang}`;
 ---
 
-<header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-  <div class="container mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-    <!-- Site title / home link -->
-    <a href={`${prefix}/`} class="text-xl font-semibold tracking-tight text-foreground hover:text-primary transition-colors">
-      {SITE_NAME}
-    </a>
-
-    <!-- Desktop Navigation -->
-    <div class="hidden md:flex items-center gap-6">
-      <nav class="flex items-center gap-6 text-sm font-medium text-muted-foreground">
-        <a href={`${prefix}/about`} class="hover:text-foreground transition-colors">{t('nav.about')}</a>
-        <a href={`${prefix}/notes`} class="hover:text-foreground transition-colors">{t('nav.notes')}</a>
-        <a href={`${prefix}/services`} class="hover:text-foreground transition-colors">{t('nav.services')}</a>
-        <a href={`${prefix}/tools`} class="hover:text-foreground transition-colors">{t('nav.tools')}</a>
-        <a href={`${prefix}/infrastructure`} class="hover:text-foreground transition-colors">{t('nav.infrastructure')}</a>
-
-        <!-- Desktop Resume Dropdown -->
-        <div class="relative group">
-          <button class="flex items-center gap-1 hover:text-foreground transition-colors" aria-haspopup="true" aria-expanded="false">
-            {t('nav.resume')}
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:rotate-180"><path d="m6 9 6 6 6-6"/></svg>
-          </button>
-
-          <div class="absolute left-1/2 -translate-x-1/2 top-full pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-48 z-50">
-            <div class="bg-background border border-border rounded-md shadow-lg overflow-hidden py-1">
-              <a href={`${prefix}/about/resume`} class="block px-4 py-2 text-sm text-foreground hover:bg-card-hover hover:text-primary transition-colors">
-                通用简历
-              </a>
-              <a href={`${prefix}/about/resume-ai`} class="block px-4 py-2 text-sm text-foreground hover:bg-card-hover hover:text-primary transition-colors">
-                AI 前端简历
-              </a>
-              <a href={`${prefix}/about/resume-ai-fullstack`} class="block px-4 py-2 text-sm text-foreground hover:bg-card-hover hover:text-primary transition-colors">
-                AI 全栈简历
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
-      <div class="h-4 w-px bg-border"></div>
-      <div class="flex items-center gap-2">
-        <button class="search-trigger flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors" aria-label="Search site" aria-haspopup="dialog">
-          <Search size={20} />
-        </button>
-        <LanguageToggle />
-        <ThemeIcon />
-      </div>
-    </div>
-
-    <!-- Mobile Navigation -->
-    <div class="flex items-center gap-2 md:hidden">
-      <button class="search-trigger flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:bg-card-hover hover:text-foreground transition-colors" aria-label="Search site" aria-haspopup="dialog">
-        <Search size={20} />
-      </button>
-      <button
-        id="hamburger-btn"
-        class="group relative flex h-9 w-9 flex-col items-center justify-center gap-[5px] rounded-md transition-colors hover:bg-card-hover"
-        aria-label="Toggle menu"
-        aria-expanded="false"
-        aria-controls="hamburger-menu"
-      >
-        <span class="h-[2px] w-5 rounded-full bg-foreground transition-all duration-200 group-aria-[expanded=true]:translate-y-[7px] group-aria-[expanded=true]:rotate-45"></span>
-        <span class="h-[2px] w-5 rounded-full bg-foreground transition-all duration-200 group-aria-[expanded=true]:opacity-0"></span>
-        <span class="h-[2px] w-5 rounded-full bg-foreground transition-all duration-200 group-aria-[expanded=true]:-translate-y-[7px] group-aria-[expanded=true]:-rotate-45"></span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Slide-down menu panel (Mobile) -->
-  <div 
-    id="hamburger-menu" 
-    class="absolute left-0 right-0 top-full hidden origin-top border-b border-border bg-background px-6 pb-6 pt-4 shadow-lg transition-all duration-200 data-[state=open]:block data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 md:hidden"
+<!-- Floating Magnetic Command Pill -->
+<div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 group">
+  <button 
+    id="magnetic-pill"
+    class="search-trigger flex items-center gap-3 px-6 py-2.5 rounded-full border border-border bg-background/40 backdrop-blur-md text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-background/60 hover:border-primary/50 transition-all shadow-lg"
+    aria-label="Initialize Search"
+    aria-haspopup="dialog"
   >
-    <div class="mx-auto max-w-7xl">
-      <nav class="flex flex-col gap-1 mb-4">
-        <a href={`${prefix}/`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.home')}</a>
-        <a href={`${prefix}/notes`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.notes')}</a>
-        <a href={`${prefix}/services`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.services')}</a>
-        <a href={`${prefix}/tools`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.tools')}</a>
-        <a href={`${prefix}/infrastructure`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.infrastructure')}</a>
-        <a href={`${prefix}/about`} class="block rounded-md px-4 py-3 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">{t('nav.about')}</a>
-
-        <!-- Mobile Resume Dropdown (Always Expanded/Visible options) -->
-        <div class="flex flex-col pl-4 mt-1 border-l-2 border-border ml-2 space-y-1">
-          <span class="text-sm font-semibold text-muted-foreground px-2 py-1">{t('nav.resume')}</span>
-          <a href={`${prefix}/about/resume`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">通用简历</a>
-          <a href={`${prefix}/about/resume-ai`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">AI 前端简历</a>
-          <a href={`${prefix}/about/resume-ai-fullstack`} class="block rounded-md px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-card-hover hover:text-primary">AI 全栈简历</a>
-        </div>
-      </nav>
-      <div class="flex items-center justify-end gap-2 border-t border-border pt-4">
-        <LanguageToggle />
-        <ThemeIcon />
-      </div>
-    </div>
+    <Search size={16} class="text-primary" />
+    <span>[ ⌘K / Ctrl+K ] 唤醒搜索</span>
+  </button>
+  
+  <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <LanguageToggle />
+    <ThemeIcon />
   </div>
-</header>
-
-<script>
-  const btn = document.getElementById('hamburger-btn');
-  const menu = document.getElementById('hamburger-menu');
-
-  if (btn && menu) {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
-      btn.setAttribute('aria-expanded', String(!isExpanded));
-      
-      if (!isExpanded) {
-        menu.classList.remove('hidden');
-        requestAnimationFrame(() => {
-          menu.setAttribute('data-state', 'open');
-        });
-      } else {
-        menu.setAttribute('data-state', 'closed');
-        setTimeout(() => {
-          menu.classList.add('hidden');
-        }, 200);
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      const target = e.target as Node;
-      if (!menu.classList.contains('hidden') && !menu.contains(target) && !btn.contains(target)) {
-        btn.setAttribute('aria-expanded', 'false');
-        menu.setAttribute('data-state', 'closed');
-        setTimeout(() => {
-          menu.classList.add('hidden');
-        }, 200);
-      }
-    });
-
-    menu.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        btn.setAttribute('aria-expanded', 'false');
-        menu.setAttribute('data-state', 'closed');
-        setTimeout(() => {
-          menu.classList.add('hidden');
-        }, 200);
-      });
-    });
-  }
-</script>
+</div>
 
 <!-- Global Site Search Modal -->
 <SiteSearch />
+
+<script>
+  // Magnetic Effect
+  const pill = document.getElementById('magnetic-pill');
+  if (pill) {
+    document.addEventListener('mousemove', (e) => {
+      const rect = pill.getBoundingClientRect();
+      // Original position is implicitly centered because of parent, but the pill itself is static in the flex container
+      // For accurate magnetic effect without layout jitter, we translate the pill itself.
+      // Wait, we need to be careful with offset calculation.
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const distance = Math.sqrt(Math.pow(e.clientX - x, 2) + Math.pow(e.clientY - y, 2));
+      
+      if (distance < 120) { 
+        const pullX = (e.clientX - x) * 0.15;
+        const pullY = (e.clientY - y) * 0.15;
+        pill.style.transform = `translate(${pullX}px, ${pullY}px)`;
+      } else {
+        pill.style.transform = `translate(0px, 0px)`;
+      }
+    });
+  }
+</script>

@@ -32,7 +32,7 @@ const lang = getLangFromUrl(Astro.url);
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang={lang} class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,7 +44,7 @@ const lang = getLangFromUrl(Astro.url);
     <link rel="canonical" href={fullUrl} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <meta name="theme-color" content="#0066cc" />
+    <meta name="theme-color" content="#151614" />
     <meta name="robots" content="index, follow" />
 
     <meta property="og:type" content={type} />
@@ -60,7 +60,7 @@ const lang = getLangFromUrl(Astro.url);
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={siteUrl + image} />
   </head>
-  <body class={bodyClass}>
+  <body class={`font-sans ${bodyClass || ''}`}>
     {showHeader && <Header />}
     <slot />
     {showFooter && <Footer />}

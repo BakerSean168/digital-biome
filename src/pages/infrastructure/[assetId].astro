@@ -15,6 +15,8 @@ export async function getStaticPaths() {
 }
 
 import type { AssetNoteEntry } from '../../types/notes';
+import type { TopologyTier } from '../../components/assets/InfrastructureTopologyMap.astro';
+import { getInfrastructureDataset } from '../../utils/infrastructure';
 
 interface Props {
   entry: AssetNoteEntry;
@@ -23,6 +25,39 @@ interface Props {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const relatedAssets = (await getRelatedAssetsByParent(entry.data.asset_id)).map(toAssetCard);
+const { resolvedNodes } = await getInfrastructureDataset();
+
+// Build sub-topology from related assets
+let subTopology: TopologyTier[] = [];
+if (relatedAssets.length > 0) {
+  const childNodes = relatedAssets
+    .map(asset => Object.values(resolvedNodes).find(n => n.assetId === asset.assetId))
+    .filter(Boolean) as any[];
+
+  if (childNodes.length > 0) {
+    const items: any[] = [];
+    let currentItem: any = null;
+    
+    for (const n of childNodes) {
+      if (n.kind === 'service' || n.kind === 'tool' || n.kind === 'vm') {
+        if (currentItem) {
+          currentItem.services.push(n);
+        } else {
+          items.push({ node: n, services: [] });
+        }
+      } else {
+        currentItem = { node: n, services: [] };
+        items.push(currentItem);
+      }
+    }
+
+    subTopology = [{
+      id: 'sub-topology',
+      title: 'Deployed Assets',
+      items: items.length > 0 ? items : childNodes.map(n => ({ node: n, services: [] }))
+    }];
+  }
+}
 ---
 
-<AssetDetailView entry={entry} Content={Content} relatedAssets={relatedAssets} />
+<AssetDetailView entry={entry} Content={Content} relatedAssets={relatedAssets} subTopology={subTopology} />

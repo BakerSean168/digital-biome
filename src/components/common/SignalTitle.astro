@@ -1,0 +1,42 @@
+---
+interface Props {
+  title: string;
+  class?: string;
+  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span';
+}
+
+const { title, class: className = '', as: Tag = 'h1' } = Astro.props;
+---
+
+<Tag class={`signal-decode relative inline-block ${className}`} data-text={title}>
+  <span class="opacity-0 pointer-events-none">{title}</span>
+  <span class="absolute inset-0 whitespace-nowrap font-mono tracking-widest text-muted-foreground signal-text" aria-hidden="true">{title}</span>
+</Tag>
+
+<script>
+  // Lightweight scramble decode effect
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+  
+  document.querySelectorAll('.signal-text').forEach((el) => {
+    const target = el.textContent || '';
+    let iterations = 0;
+    
+    const interval = setInterval(() => {
+      el.textContent = target.split('').map((letter, index) => {
+        if (index < iterations) {
+          return target[index];
+        }
+        return chars[Math.floor(Math.random() * chars.length)];
+      }).join('');
+      
+      if (iterations >= target.length) {
+        clearInterval(interval);
+        el.textContent = target;
+        // Optionally fade out the scrambled layer so only the ::after is visible
+        (el as HTMLElement).style.opacity = '0';
+        (el as HTMLElement).style.transition = 'opacity 0.2s ease-out';
+      }
+      iterations += 1/4;
+    }, 30);
+  });
+</script>

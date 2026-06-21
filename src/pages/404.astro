@@ -1,102 +1,64 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SignalTitle from '../components/common/SignalTitle.astro';
+import { Terminal, Unplug } from '@lucide/astro';
 ---
 
-<BaseLayout title="404 - 页面未找到">
-  <main class="error-page">
-    <div class="error-content">
-      <h1 class="error-code">404</h1>
-      <h2 class="error-title">页面未找到</h2>
-      <p class="error-message">抱歉，您访问的页面不存在或已被移动。</p>
-      
-      <div class="error-actions">
-        <a href="/" class="action-btn primary">返回首页</a>
-        <a href="/notes" class="action-btn">浏览笔记</a>
-        <a href="/about" class="action-btn">个人主页</a>
+<BaseLayout 
+  title="404 - Connection Lost" 
+  description="SYS.404: 神经元连接丢失 (Connection Lost)"
+  showHeader={false}
+  showFooter={false}
+>
+  <main class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
+    <!-- 背景网格与微弱的光晕 -->
+    <div class="absolute inset-0 biome-grid pointer-events-none opacity-20"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <!-- 弹窗容器 -->
+    <div class="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden">
+      <!-- 终端顶栏 -->
+      <div class="h-10 bg-background/50 border-b border-border flex items-center px-4 justify-between">
+        <div class="flex items-center gap-2 text-[10px] font-mono text-muted-foreground tracking-widest">
+          <span class="w-2 h-2 bg-red-500/80 animate-pulse"></span>
+          <span>[ TERMINAL_OVERRIDE ]</span>
+        </div>
+        <div class="flex items-center gap-2 text-[10px] font-mono text-muted-foreground tracking-widest">
+          <Terminal size={12} />
+          <span>SYS.ERR.404</span>
+        </div>
+      </div>
+
+      <!-- 内容区 -->
+      <div class="p-8 md:p-12 flex flex-col items-center text-center">
+        <div class="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6 text-red-500 animate-pulse">
+          <Unplug size={28} />
+        </div>
+        
+        <h1 class="font-mono text-6xl font-bold tracking-tighter text-foreground sm:text-8xl">
+          404
+        </h1>
+        <div class="font-mono text-sm uppercase tracking-widest text-muted-foreground mb-10">
+          SYS.404: CONNECTION_LOST
+        </div>
+        
+        <div class="mb-10">
+          <p class="font-mono text-sm leading-relaxed text-muted-foreground">
+            未找到目标神经元。<br/>
+            可能已被裁剪，或尚未从数字土壤中生长出来。
+          </p>
+        </div>
+
+        <a 
+          href="/" 
+          class="group relative inline-flex items-center justify-center gap-2 px-8 py-3 bg-background border border-border rounded-full overflow-hidden transition-all hover:border-primary/50 hover:shadow-[0_0_20px_rgba(139,154,70,0.2)]"
+        >
+          <div class="absolute inset-0 bg-primary/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+          <span class="relative z-10 font-mono text-sm tracking-widest text-foreground group-hover:text-primary transition-colors">
+            [ REBOOT_SYSTEM ]
+          </span>
+        </a>
       </div>
     </div>
   </main>
 </BaseLayout>
-
-<style>
-  .error-page {
-    min-height: 80vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-  }
-
-  .error-content {
-    text-align: center;
-    max-width: 500px;
-  }
-
-  .error-code {
-    font-size: 8rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--accent-color, #0066cc);
-    line-height: 1;
-  }
-
-  .error-title {
-    font-size: 1.5rem;
-    margin: 1rem 0;
-    color: var(--text-primary, #333);
-  }
-
-  .error-message {
-    font-size: 1rem;
-    color: var(--text-secondary, #666);
-    margin-bottom: 2rem;
-  }
-
-  .error-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .action-btn {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    font-size: 0.95rem;
-    text-decoration: none;
-    border-radius: 8px;
-    transition: all 0.2s;
-    background: var(--card-bg, #f5f5f5);
-    color: var(--text-primary, #333);
-    border: 1px solid var(--border-color, #e5e5e5);
-  }
-
-  .action-btn:hover {
-    border-color: var(--accent-color, #0066cc);
-  }
-
-  .action-btn.primary {
-    background: var(--accent-color, #0066cc);
-    color: #fff;
-    border-color: var(--accent-color, #0066cc);
-  }
-
-  .action-btn.primary:hover {
-    opacity: 0.9;
-  }
-
-  :global(html.dark) .action-btn {
-    --card-bg: #1e1e3f;
-    --border-color: #2d2d4a;
-  }
-
-  @media (max-width: 480px) {
-    .error-code {
-      font-size: 5rem;
-    }
-
-    .error-title {
-      font-size: 1.25rem;
-    }
-  }
-</style>

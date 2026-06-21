@@ -1,7 +1,8 @@
 ---
-import AssetSection from './AssetSection.astro';
 import type { AssetCard } from '../../types/notes';
 import type { ResolvedTopologyNode } from '../../utils/infrastructure';
+import InfrastructureTopologyMap, { type TopologyTier } from './InfrastructureTopologyMap.astro';
+import { ArrowRight } from '@lucide/astro';
 
 interface Props {
   title: string;
@@ -10,16 +11,6 @@ interface Props {
   featuredAssets: AssetCard[];
   heroFacts: string[];
   locale?: 'zh' | 'en';
-}
-
-interface NodeCollectionCard {
-  eyebrow: string;
-  title: string;
-  description: string;
-  nodeIds: string[];
-  href?: string;
-  hrefLabel?: string;
-  accentClass: string;
 }
 
 const {
@@ -35,486 +26,145 @@ const localePrefix = locale === 'en' ? '/en' : '';
 
 const labels = locale === 'en'
   ? {
-      atlasEyebrow: 'Infrastructure Overview',
       atlasTitle: 'Global Atlas',
-      atlasDescription: 'An editorial overview of entry, public fleet, and homelab layers so visitors can understand the whole system before drilling into nodes.',
+      atlasDescription: 'An editorial overview of entry, public fleet, and homelab layers.',
       homelabTitle: 'Homelab View',
-      homelabDescription: 'Read the home network as layered infrastructure: power, network, compute, virtualization, and service entry.',
+      homelabDescription: 'Read the home network as layered infrastructure.',
       fleetTitle: 'Fleet View',
-      fleetDescription: 'See the public fleet as role-based regional cards instead of a long list of servers.',
-      keyAssetsTitle: 'Key Assets',
-      keyAssetsDescription: 'These are the core notes that anchor the whole infrastructure story.',
-      keyAssetsEmpty: 'Core infrastructure notes have not been selected yet.',
-      detail: 'Asset Detail',
-      open: 'Open',
-      monitor: 'Monitor',
-      homelabLink: 'Open homelab view',
-      fleetLink: 'Open fleet view',
-      keyAssetsLink: 'Open discover',
+      fleetDescription: 'See the public fleet as role-based regional nodes.',
     }
   : {
-      atlasEyebrow: 'Infrastructure Overview',
       atlasTitle: 'Global Atlas',
       atlasDescription: '先用一张总览图交代入口、控制平面、公网舰队和家庭实验室，再继续下钻到具体节点。',
       homelabTitle: 'Homelab View',
       homelabDescription: '把家庭网络拆成供电、网络、计算、虚拟化和服务五层，让它更像一套真正的 Homelab。',
       fleetTitle: 'Fleet View',
       fleetDescription: '把公网节点按角色和区域展开成舰队视图，而不是继续堆一串服务器列表。',
-      keyAssetsTitle: '核心资产',
-      keyAssetsDescription: '这些是当前基础设施叙事里的锚点资产笔记，可以继续追进去看事实、入口和上下游。',
-      keyAssetsEmpty: '还没有选出核心基础设施资产。',
-      detail: '资产详情',
-      open: '打开入口',
-      monitor: '监控页',
-      homelabLink: '进入家庭网络视图',
-      fleetLink: '进入公网舰队视图',
-      keyAssetsLink: '进入搜索页',
     };
 
-function getNodes(nodeIds: string[]): ResolvedTopologyNode[] {
-  return nodeIds
-    .map(nodeId => resolvedNodes[nodeId])
-    .filter((node): node is ResolvedTopologyNode => Boolean(node));
+function buildTiers(cards: any[]): TopologyTier[] {
+  return cards.map(card => {
+    const rawNodes = card.nodeIds
+      .map((id: string) => resolvedNodes[id])
+      .filter(Boolean) as ResolvedTopologyNode[];
+    
+    const items: {node: ResolvedTopologyNode, services: ResolvedTopologyNode[]}[] = [];
+    let currentItem: {node: ResolvedTopologyNode, services: ResolvedTopologyNode[]} | null = null;
+    
+    for (const n of rawNodes) {
+      if (n.kind === 'service' || n.kind === 'tool' || n.kind === 'vm') {
+        if (currentItem) {
+          currentItem.services.push(n);
+        } else {
+          items.push({ node: n, services: [] });
+        }
+      } else {
+        currentItem = { node: n, services: [] };
+        items.push(currentItem);
+      }
+    }
+
+    return {
+      id: card.eyebrow,
+      title: card.title,
+      description: card.description,
+      items: items.length > 0 ? items : rawNodes.map(n => ({node: n, services: []}))
+    };
+  });
 }
 
-const atlasCards: NodeCollectionCard[] = locale === 'en'
-  ? [
-      {
-        eyebrow: 'Entry Layer',
-        title: 'Domain, Edge, and Control',
-        description: 'Traffic and management first converge on the domain edge, Cloudflare, and the Hong Kong control plane.',
-        nodeIds: ['internet', 'bakersean-top-domain', 'cloudflare-edge', 'azure-hk-vps', 'sub-store', 'nezha-panel'],
-        href: `${localePrefix}/infrastructure/fleet`,
-        hrefLabel: labels.fleetLink,
-        accentClass: 'from-sky-500/24 via-cyan-500/10 to-transparent',
-      },
-      {
-        eyebrow: 'Public Fleet',
-        title: 'Workloads, Proxies, and Public Sites',
-        description: 'Business traffic, proxy nodes, and public showcase sites form the external-facing fleet.',
-        nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse', 'azure-japan-singbox-vps', 'azure-korea-singbox-vps', 'azure-hk-singbox-vps', 'digital-biome-site', 'github-profile-site'],
-        href: `${localePrefix}/infrastructure/fleet`,
-        hrefLabel: labels.fleetLink,
-        accentClass: 'from-emerald-500/24 via-lime-500/10 to-transparent',
-      },
-      {
-        eyebrow: 'Home Lab',
-        title: 'Power, LAN, and Service Stack',
-        description: 'The home lab combines a layered home network, a compact PVE stack, and a growing NAS service plane.',
-        nodeIds: ['home-ups', 'home-optical-modem', 'home-switch', 'n100-host', 'pve-hypervisor', 'services-vm', 'fnos-vm', 'vaultwarden'],
-        href: `${localePrefix}/infrastructure/homelab`,
-        hrefLabel: labels.homelabLink,
-        accentClass: 'from-violet-500/24 via-amber-500/10 to-transparent',
-      },
-    ]
-  : [
-      {
-        eyebrow: '入口与控制面',
-        title: '域名、边缘层与统一控制',
-        description: '外部访问先汇入域名层、Cloudflare 边缘层和香港控制平面，再分发到业务、代理和站点入口。',
-        nodeIds: ['internet', 'bakersean-top-domain', 'cloudflare-edge', 'azure-hk-vps', 'sub-store', 'nezha-panel'],
-        href: `${localePrefix}/infrastructure/fleet`,
-        hrefLabel: labels.fleetLink,
-        accentClass: 'from-sky-500/24 via-cyan-500/10 to-transparent',
-      },
-      {
-        eyebrow: '公网舰队',
-        title: '业务负载、代理节点与展示站点',
-        description: '业务主机、区域代理节点和公开站点共同构成对外可见的 Public Fleet。',
-        nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse', 'azure-japan-singbox-vps', 'azure-korea-singbox-vps', 'azure-hk-singbox-vps', 'digital-biome-site', 'github-profile-site'],
-        href: `${localePrefix}/infrastructure/fleet`,
-        hrefLabel: labels.fleetLink,
-        accentClass: 'from-emerald-500/24 via-lime-500/10 to-transparent',
-      },
-      {
-        eyebrow: '家庭实验室',
-        title: '供电、局域网与服务栈',
-        description: '家庭网络通过 UPS、主路由、交换层、PVE 虚拟化和 NAS 服务层形成一套真正可读的 Homelab 结构。',
-        nodeIds: ['home-ups', 'home-optical-modem', 'home-switch', 'n100-host', 'pve-hypervisor', 'services-vm', 'fnos-vm', 'vaultwarden'],
-        href: `${localePrefix}/infrastructure/homelab`,
-        hrefLabel: labels.homelabLink,
-        accentClass: 'from-violet-500/24 via-amber-500/10 to-transparent',
-      },
-    ];
+const atlasTiers = buildTiers(locale === 'en' ? [
+  { eyebrow: 'Entry Layer', title: 'Domain, Edge, and Control', description: 'Traffic and management first converge on the domain edge, Cloudflare, and the Hong Kong control plane.', nodeIds: ['internet', 'bakersean-top-domain', 'cloudflare-edge', 'azure-hk-vps', 'sub-store', 'nezha-panel'] },
+  { eyebrow: 'Public Fleet', title: 'Workloads, Proxies, and Public Sites', description: 'Business traffic, proxy nodes, and public showcase sites.', nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse', 'azure-japan-singbox-vps', 'azure-korea-singbox-vps', 'azure-hk-singbox-vps', 'digital-biome-site', 'github-profile-site'] },
+  { eyebrow: 'Home Lab', title: 'Power, LAN, and Service Stack', description: 'The home lab combines a layered home network, a compact PVE stack, and a growing NAS service plane.', nodeIds: ['home-ups', 'home-optical-modem', 'home-switch', 'n100-host', 'pve-hypervisor', 'services-vm', 'fnos-vm', 'vaultwarden'] }
+] : [
+  { eyebrow: 'Entry', title: '入口与控制面', description: '外部访问先汇入域名层、Cloudflare 边缘层和香港控制平面。', nodeIds: ['internet', 'bakersean-top-domain', 'cloudflare-edge', 'azure-hk-vps', 'sub-store', 'nezha-panel'] },
+  { eyebrow: 'Fleet', title: '公网舰队', description: '业务主机、区域代理节点和公开站点共同构成对外可见的 Public Fleet。', nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse', 'azure-japan-singbox-vps', 'azure-korea-singbox-vps', 'azure-hk-singbox-vps', 'digital-biome-site', 'github-profile-site'] },
+  { eyebrow: 'Homelab', title: '家庭实验室', description: '家庭网络通过 UPS、主路由、交换层、PVE 虚拟化和 NAS 服务层形成一套 Homelab。', nodeIds: ['home-ups', 'home-optical-modem', 'home-switch', 'n100-host', 'pve-hypervisor', 'services-vm', 'fnos-vm', 'vaultwarden'] }
+]);
 
-const homelabCards: NodeCollectionCard[] = locale === 'en'
-  ? [
-      {
-        eyebrow: 'Layer 01',
-        title: 'Power Layer',
-        description: 'Power continuity defines whether the homelab can survive a short outage gracefully.',
-        nodeIds: ['utility-power', 'home-ups'],
-        accentClass: 'from-amber-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 02',
-        title: 'Network Layer',
-        description: 'Optical modem, main router, switch fabric, TP-Link, and AP build the home access surface.',
-        nodeIds: ['home-optical-modem', 'router-vm', 'home-lan', 'home-switch', 'tplink-router', 'home-ap'],
-        accentClass: 'from-cyan-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 03',
-        title: 'Compute Layer',
-        description: 'The N100 host and PVE hypervisor are the physical and orchestration backbone.',
-        nodeIds: ['n100-host', 'pve-hypervisor'],
-        accentClass: 'from-emerald-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 04',
-        title: 'Virtualization Layer',
-        description: 'RouterOS, iStoreOS, Debian services, and fnOS are the main virtualized workloads.',
-        nodeIds: ['router-vm', 'istoreos-vm', 'services-vm', 'fnos-vm'],
-        accentClass: 'from-violet-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 05',
-        title: 'Service Layer',
-        description: 'The service plane turns the stack into something navigable and actually useful every day.',
-        nodeIds: ['homepage-dashboard', 'vaultwarden', 'jellyfin-media-center', 'alist-media-gateway', 'qbittorrent-downloader'],
-        accentClass: 'from-lime-500/24 via-transparent to-transparent',
-      },
-    ]
-  : [
-      {
-        eyebrow: 'Layer 01',
-        title: '供电层',
-        description: '供电连续性决定了这套家庭实验室在闪断或停电时能不能优雅地活下来。',
-        nodeIds: ['utility-power', 'home-ups'],
-        accentClass: 'from-amber-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 02',
-        title: '网络层',
-        description: '光猫、主路由、交换层、TP-Link 与无线 AP 共同形成家庭网络的接入面。',
-        nodeIds: ['home-optical-modem', 'router-vm', 'home-lan', 'home-switch', 'tplink-router', 'home-ap'],
-        accentClass: 'from-cyan-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 03',
-        title: '计算层',
-        description: 'N100 宿主机和 PVE 是家庭实验室真正的物理底座与调度中枢。',
-        nodeIds: ['n100-host', 'pve-hypervisor'],
-        accentClass: 'from-emerald-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 04',
-        title: '虚拟化层',
-        description: 'RouterOS、iStoreOS、Debian 服务 VM 和 fnOS 共同构成主要虚拟机编排层。',
-        nodeIds: ['router-vm', 'istoreos-vm', 'services-vm', 'fnos-vm'],
-        accentClass: 'from-violet-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Layer 05',
-        title: '服务层',
-        description: '服务层把整套 Homelab 变成真正可用的入口，而不只是设备堆叠。',
-        nodeIds: ['homepage-dashboard', 'vaultwarden', 'jellyfin-media-center', 'alist-media-gateway', 'qbittorrent-downloader'],
-        accentClass: 'from-lime-500/24 via-transparent to-transparent',
-      },
-    ];
+const homelabTiers = buildTiers(locale === 'en' ? [
+  { eyebrow: '01', title: 'Power Layer', nodeIds: ['utility-power', 'home-ups'] },
+  { eyebrow: '02', title: 'Network Layer', nodeIds: ['home-optical-modem', 'router-vm', 'home-switch', 'home-ap'] },
+  { eyebrow: '03', title: 'Compute Layer', nodeIds: ['n100-host', 'pve-hypervisor'] },
+  { eyebrow: '04', title: 'Virtualization Layer', nodeIds: ['istoreos-vm', 'services-vm', 'fnos-vm'] },
+  { eyebrow: '05', title: 'Service Layer', nodeIds: ['homepage-dashboard', 'vaultwarden', 'jellyfin-media-center', 'alist-media-gateway'] }
+] : [
+  { eyebrow: '01', title: '供电层', nodeIds: ['utility-power', 'home-ups'] },
+  { eyebrow: '02', title: '网络层', nodeIds: ['home-optical-modem', 'router-vm', 'home-switch', 'home-ap'] },
+  { eyebrow: '03', title: '计算层', nodeIds: ['n100-host', 'pve-hypervisor'] },
+  { eyebrow: '04', title: '虚拟化层', nodeIds: ['istoreos-vm', 'services-vm', 'fnos-vm'] },
+  { eyebrow: '05', title: '服务层', nodeIds: ['homepage-dashboard', 'vaultwarden', 'jellyfin-media-center', 'alist-media-gateway'] }
+]);
 
-const fleetCards: NodeCollectionCard[] = locale === 'en'
-  ? [
-      {
-        eyebrow: 'Control Plane',
-        title: 'Hong Kong Control',
-        description: 'The control-plane node hosts the panel, subscription management, and operational entrypoints.',
-        nodeIds: ['azure-hk-vps', 'sub-store', 'nezha-panel'],
-        accentClass: 'from-sky-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Workload Plane',
-        title: 'Chengdu Business Node',
-        description: 'The Aliyun Chengdu node carries the real product workload for DailyUse / Memoflow.',
-        nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse'],
-        accentClass: 'from-emerald-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Proxy Fleet',
-        title: 'Japan Node',
-        description: 'Regional proxy point for East Asia routing and failover.',
-        nodeIds: ['azure-japan-singbox-vps', 'sing-box-japan'],
-        accentClass: 'from-fuchsia-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Proxy Fleet',
-        title: 'Korea Node',
-        description: 'Additional regional proxy capacity and monitoring target.',
-        nodeIds: ['azure-korea-singbox-vps', 'sing-box-korea'],
-        accentClass: 'from-fuchsia-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Proxy Fleet',
-        title: 'Hong Kong Proxy',
-        description: 'Independent Hong Kong proxy role, separated from the control-plane host.',
-        nodeIds: ['azure-hk-singbox-vps', 'sing-box-hk'],
-        accentClass: 'from-fuchsia-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Showcase Plane',
-        title: 'Public Sites',
-        description: 'Public-facing sites act as the knowledge and identity surface of the infrastructure.',
-        nodeIds: ['cloudflare-pages-host', 'digital-biome-site', 'github-pages-host', 'github-profile-site'],
-        accentClass: 'from-amber-500/24 via-transparent to-transparent',
-      },
-    ]
-  : [
-      {
-        eyebrow: 'Control Plane',
-        title: '香港控制平面',
-        description: '这一节点承接运维面板、订阅管理与公共控制入口，是公网基础设施的控制中枢。',
-        nodeIds: ['azure-hk-vps', 'sub-store', 'nezha-panel'],
-        accentClass: 'from-sky-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Workload Plane',
-        title: '成都业务节点',
-        description: '阿里云成都节点承接 DailyUse / Memoflow 的真实业务负载。',
-        nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse'],
-        accentClass: 'from-emerald-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Proxy Fleet',
-        title: '日本节点',
-        description: '东亚区域代理落点之一，承担 sing-box 运行与区域分流。',
-        nodeIds: ['azure-japan-singbox-vps', 'sing-box-japan'],
-        accentClass: 'from-fuchsia-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Proxy Fleet',
-        title: '韩国节点',
-        description: '备用区域节点，同时也是运行状态和连通性监控目标之一。',
-        nodeIds: ['azure-korea-singbox-vps', 'sing-box-korea'],
-        accentClass: 'from-fuchsia-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Proxy Fleet',
-        title: '香港代理节点',
-        description: '与香港控制平面分工独立的代理落点，避免角色混杂。',
-        nodeIds: ['azure-hk-singbox-vps', 'sing-box-hk'],
-        accentClass: 'from-fuchsia-500/24 via-transparent to-transparent',
-      },
-      {
-        eyebrow: 'Showcase Plane',
-        title: '公开站点',
-        description: '公开站点承担你知识、身份和基础设施展示的外部界面。',
-        nodeIds: ['cloudflare-pages-host', 'digital-biome-site', 'github-pages-host', 'github-profile-site'],
-        accentClass: 'from-amber-500/24 via-transparent to-transparent',
-      },
-    ];
-
-const keyAssetsHref = `${localePrefix}/discover`;
+const fleetTiers = buildTiers(locale === 'en' ? [
+  { eyebrow: 'Control', title: 'Control Plane', nodeIds: ['azure-hk-vps', 'sub-store', 'nezha-panel'] },
+  { eyebrow: 'Workload', title: 'Workload Plane', nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse'] },
+  { eyebrow: 'Proxy', title: 'Proxy Fleet', nodeIds: ['azure-japan-singbox-vps', 'sing-box-japan', 'azure-korea-singbox-vps', 'sing-box-korea', 'azure-hk-singbox-vps', 'sing-box-hk'] },
+  { eyebrow: 'Showcase', title: 'Public Sites', nodeIds: ['cloudflare-pages-host', 'digital-biome-site', 'github-profile-site'] }
+] : [
+  { eyebrow: 'Control', title: '香港控制平面', nodeIds: ['azure-hk-vps', 'sub-store', 'nezha-panel'] },
+  { eyebrow: 'Workload', title: '成都业务节点', nodeIds: ['aliyun-chengdu-dailyuse-vps', 'memoflow-dailyuse'] },
+  { eyebrow: 'Proxy', title: '区域代理集群', nodeIds: ['azure-japan-singbox-vps', 'sing-box-japan', 'azure-korea-singbox-vps', 'sing-box-korea', 'azure-hk-singbox-vps', 'sing-box-hk'] },
+  { eyebrow: 'Showcase', title: '公开站点', nodeIds: ['cloudflare-pages-host', 'digital-biome-site', 'github-profile-site'] }
+]);
 ---
 
-<div class="space-y-10">
-  <section class="relative overflow-hidden rounded-[36px] border border-border bg-card/70 px-6 py-8 md:px-9 md:py-10">
-    <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:24px_24px] opacity-35"></div>
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.12),transparent_24%)]"></div>
-    <div class="relative">
-      <p class="text-sm uppercase tracking-[0.28em] text-primary/80">{labels.atlasEyebrow}</p>
-      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{title}</h1>
-      <p class="mt-4 max-w-4xl text-base leading-7 text-muted-foreground md:text-lg">{description}</p>
+<div class="flex flex-col gap-16 pb-16">
+  <!-- Hero Section -->
+  <section class="border-b border-border pb-10">
+    <div class="mb-4">
+      <span class="inline-block border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-mono tracking-widest text-primary uppercase">
+        {locale === 'en' ? 'INFRASTRUCTURE' : '数字基础设施'}
+      </span>
+    </div>
+    
+    <div class="flex flex-col md:flex-row gap-8 justify-between">
+      <div class="flex-1">
+        <h1 class="text-3xl md:text-5xl font-mono tracking-tight text-foreground">{title}</h1>
+        <p class="mt-4 text-sm font-mono text-muted-foreground leading-relaxed max-w-2xl">
+          {description}
+        </p>
+      </div>
 
-      <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {heroFacts.map(fact => (
-          <div class="rounded-2xl border border-border bg-background/65 px-4 py-3 text-sm text-muted-foreground shadow-[0_12px_40px_rgba(0,0,0,0.08)]">
-            {fact}
-          </div>
-        ))}
+      <div class="flex-1 max-w-sm">
+        <div class="border border-border bg-background p-4 flex flex-col gap-3">
+          <span class="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">SYSTEM_FACTS</span>
+          <ul class="flex flex-col gap-2">
+            {heroFacts.map(fact => (
+              <li class="flex items-start gap-2 text-[11px] font-mono text-foreground/80">
+                <ArrowRight size={12} class="mt-0.5 text-primary shrink-0" />
+                <span>{fact}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="space-y-6">
-    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div>
-        <p class="text-xs uppercase tracking-[0.24em] text-primary/75">{labels.atlasEyebrow}</p>
-        <h2 class="mt-2 text-2xl font-semibold text-foreground md:text-3xl">{labels.atlasTitle}</h2>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{labels.atlasDescription}</p>
-      </div>
-    </div>
+  <!-- Global Atlas Map -->
+  <InfrastructureTopologyMap
+    title={labels.atlasTitle}
+    description={labels.atlasDescription}
+    tiers={atlasTiers}
+  />
 
-    <div class="grid gap-5 xl:grid-cols-3">
-      {atlasCards.map(card => (
-        <article class="relative overflow-hidden rounded-[32px] border border-border bg-card/70 p-5 md:p-6">
-          <div class={`absolute inset-x-0 top-0 h-24 bg-gradient-to-r ${card.accentClass}`}></div>
-          <div class="relative">
-            <p class="text-xs uppercase tracking-[0.24em] text-primary/75">{card.eyebrow}</p>
-            <h3 class="mt-2 text-2xl font-semibold text-foreground">{card.title}</h3>
-            <p class="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
+  <div class="h-px bg-border/50 w-full my-8"></div>
 
-            <div class="mt-5 space-y-3">
-              {getNodes(card.nodeIds).map(node => (
-                <article class="rounded-2xl border border-border bg-background/70 p-3 shadow-[0_10px_32px_rgba(0,0,0,0.06)]">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded-full border border-primary/20 bg-primary/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-primary">
-                      {node.kind}
-                    </span>
-                    {node.status && (
-                      <span class="rounded-full border border-border px-2.5 py-1 text-[10px] text-muted-foreground">
-                        {node.status}
-                      </span>
-                    )}
-                  </div>
+  <!-- Homelab Map -->
+  <InfrastructureTopologyMap
+    title={labels.homelabTitle}
+    description={labels.homelabDescription}
+    tiers={homelabTiers}
+  />
 
-                  <h4 class="mt-3 text-base font-semibold text-foreground">{node.title}</h4>
-                  <p class="mt-1 text-sm leading-6 text-muted-foreground">{node.description}</p>
+  <div class="h-px bg-border/50 w-full my-8"></div>
 
-                  {(node.href || node.primaryUrl || node.monitorUrl) && (
-                    <div class="mt-3 flex flex-wrap gap-2">
-                      {node.href && (
-                        <a href={node.href} class="inline-flex rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-colors hover:bg-primary">
-                          {labels.detail}
-                        </a>
-                      )}
-                      {node.primaryUrl && (
-                        <a href={node.primaryUrl} target="_blank" rel="noopener noreferrer" class="inline-flex rounded-full border border-border px-3 py-1.5 text-xs text-foreground transition-colors hover:border-primary/40 hover:text-primary">
-                          {labels.open}
-                        </a>
-                      )}
-                      {node.monitorUrl && (
-                        <a href={node.monitorUrl} target="_blank" rel="noopener noreferrer" class="inline-flex rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
-                          {labels.monitor}
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-
-            {card.href && card.hrefLabel && (
-              <div class="mt-5">
-                <a href={card.href} class="text-sm text-primary transition-colors hover:text-foreground">
-                  {card.hrefLabel}
-                </a>
-              </div>
-            )}
-          </div>
-        </article>
-      ))}
-    </div>
-  </section>
-
-  <section class="space-y-6">
-    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h2 class="text-2xl font-semibold text-foreground md:text-3xl">{labels.homelabTitle}</h2>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{labels.homelabDescription}</p>
-      </div>
-      <a href={`${localePrefix}/infrastructure/homelab`} class="text-sm text-primary transition-colors hover:text-foreground">
-        {labels.homelabLink}
-      </a>
-    </div>
-
-    <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
-      {homelabCards.map(card => (
-        <article class="relative overflow-hidden rounded-[28px] border border-border bg-card/70 p-5">
-          <div class={`absolute inset-x-0 top-0 h-20 bg-gradient-to-r ${card.accentClass}`}></div>
-          <div class="relative">
-            <p class="text-xs uppercase tracking-[0.22em] text-primary/75">{card.eyebrow}</p>
-            <h3 class="mt-2 text-xl font-semibold text-foreground">{card.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">{card.description}</p>
-
-            <div class="mt-4 space-y-2.5">
-              {getNodes(card.nodeIds).map(node => {
-                const nodeHref = node.href ?? node.primaryUrl ?? node.monitorUrl;
-
-                return nodeHref ? (
-                  <a href={nodeHref} class="block rounded-2xl border border-border bg-background/65 px-3 py-3 transition-colors hover:border-primary/35 hover:text-primary">
-                    <div class="flex items-center justify-between gap-3">
-                      <div class="min-w-0">
-                        <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{node.kind}</p>
-                        <p class="truncate text-sm font-medium text-foreground">{node.title}</p>
-                      </div>
-                      <span class="text-xs text-muted-foreground">↗</span>
-                    </div>
-                  </a>
-                ) : (
-                  <div class="rounded-2xl border border-border bg-background/65 px-3 py-3">
-                    <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{node.kind}</p>
-                    <p class="mt-1 truncate text-sm font-medium text-foreground">{node.title}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </article>
-      ))}
-    </div>
-  </section>
-
-  <section class="space-y-6">
-    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h2 class="text-2xl font-semibold text-foreground md:text-3xl">{labels.fleetTitle}</h2>
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{labels.fleetDescription}</p>
-      </div>
-      <a href={`${localePrefix}/infrastructure/fleet`} class="text-sm text-primary transition-colors hover:text-foreground">
-        {labels.fleetLink}
-      </a>
-    </div>
-
-    <div class="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-      {fleetCards.map(card => (
-        <article class="relative overflow-hidden rounded-[28px] border border-border bg-card/70 p-5">
-          <div class={`absolute inset-x-0 top-0 h-20 bg-gradient-to-r ${card.accentClass}`}></div>
-          <div class="relative">
-            <p class="text-xs uppercase tracking-[0.22em] text-primary/75">{card.eyebrow}</p>
-            <h3 class="mt-2 text-xl font-semibold text-foreground">{card.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">{card.description}</p>
-
-            <div class="mt-4 grid gap-3">
-              {getNodes(card.nodeIds).map(node => (
-                <article class="rounded-2xl border border-border bg-background/65 px-3 py-3">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded-full border border-primary/20 bg-primary/8 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-primary">
-                      {node.kind}
-                    </span>
-                    {node.status && (
-                      <span class="rounded-full border border-border px-2.5 py-1 text-[10px] text-muted-foreground">
-                        {node.status}
-                      </span>
-                    )}
-                  </div>
-
-                  <h4 class="mt-3 text-base font-semibold text-foreground">{node.title}</h4>
-                  <p class="mt-1 text-sm leading-6 text-muted-foreground">{node.description}</p>
-
-                  {(node.href || node.primaryUrl || node.monitorUrl) && (
-                    <div class="mt-3 flex flex-wrap gap-2">
-                      {node.href && (
-                        <a href={node.href} class="inline-flex rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background transition-colors hover:bg-primary">
-                          {labels.detail}
-                        </a>
-                      )}
-                      {node.primaryUrl && (
-                        <a href={node.primaryUrl} target="_blank" rel="noopener noreferrer" class="inline-flex rounded-full border border-border px-3 py-1.5 text-xs text-foreground transition-colors hover:border-primary/40 hover:text-primary">
-                          {labels.open}
-                        </a>
-                      )}
-                      {node.monitorUrl && (
-                        <a href={node.monitorUrl} target="_blank" rel="noopener noreferrer" class="inline-flex rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">
-                          {labels.monitor}
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-          </div>
-        </article>
-      ))}
-    </div>
-  </section>
-
-  <AssetSection
-    title={labels.keyAssetsTitle}
-    description={labels.keyAssetsDescription}
-    assets={featuredAssets}
-    href={keyAssetsHref}
-    hrefLabel={labels.keyAssetsLink}
-    emptyText={labels.keyAssetsEmpty}
+  <!-- Fleet Map -->
+  <InfrastructureTopologyMap
+    title={labels.fleetTitle}
+    description={labels.fleetDescription}
+    tiers={fleetTiers}
   />
 </div>

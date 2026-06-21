@@ -5,7 +5,7 @@
  * 以 5 列高对比度的毛玻璃图片卡片网格形式，展现最新内容动态。
  */
 import { getCollection } from 'astro:content';
-import { Calendar, Eye, ArrowUpRight } from '@lucide/astro';
+import { ArrowUpRight } from '@lucide/astro';
 
 // 定义萌芽数据结构
 interface SproutItem {
@@ -86,8 +86,8 @@ try {
   const publicNotes = allNotes
     .filter(note => !note.id.startsWith('.'))
     .sort((a, b) => {
-      const dateA = new Date(a.data.updated || a.data.date || 0);
-      const dateB = new Date(b.data.updated || b.data.date || 0);
+      const dateA = new Date(a.data.created || 0);
+      const dateB = new Date(b.data.created || 0);
       return dateB.getTime() - dateA.getTime();
     });
 
@@ -121,7 +121,7 @@ try {
       }
 
       // 获取更新时间
-      const date = note.data.updated || note.data.date;
+      const date = note.data.created;
       const timeStr = date ? new Date(date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) : '近期';
 
       return {
@@ -132,7 +132,7 @@ try {
         desc: note.data.description || '点击阅读这篇关于 ' + (note.data.title || note.id) + ' 的深度内容笔记沉淀。',
         time: timeStr,
         stat: `${note.body ? Math.round(note.body.length / 2) : 500} 字`,
-        slug: `/notes/${note.slug}`,
+        slug: `/notes/${note.id}`,
         bg
       };
     });
@@ -154,13 +154,13 @@ try {
   <!-- 标题区 -->
   <div class="flex items-center justify-between mb-8">
     <div class="flex flex-col gap-1.5">
-      <h3 class="text-lg font-bold font-mono text-text-main flex items-center gap-2">
+      <h3 class="text-lg font-bold font-mono text-foreground flex items-center gap-2">
         <span class="w-2.5 h-2.5 rounded-full bg-primary/20 border border-primary flex items-center justify-center">
           <span class="w-1 h-1 rounded-full bg-primary animate-ping"></span>
         </span>
         🌱 近期萌芽
       </h3>
-      <p class="text-xs text-text-muted">我生命不同维度的成长脉搏：最新的随笔、体验与实验构建</p>
+      <p class="text-xs text-muted-foreground">我生命不同维度的成长脉搏：最新的随笔、体验与实验构建</p>
     </div>
     
     <a href="/notes" class="text-xs font-mono text-primary hover:text-primary-hover flex items-center gap-1 transition-colors group">
@@ -174,7 +174,7 @@ try {
     {displaySprouts.map(item => (
       <a 
         href={item.slug} 
-        class="group relative bg-bg-panel border border-border-soft rounded-2xl overflow-hidden hover:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all duration-300 flex flex-col justify-between h-84 shadow-lg"
+        class="group relative bg-card border border-border-soft rounded-2xl overflow-hidden hover:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all duration-300 flex flex-col justify-between h-84 shadow-lg"
       >
         <!-- 图片背景 (Hover 时模糊和尺度渐变) -->
         <div 
@@ -196,18 +196,18 @@ try {
             </span>
             
             <!-- 标题 -->
-            <h4 class="text-sm font-bold text-text-main group-hover:text-primary leading-snug transition-colors line-clamp-2 mt-4">
+            <h4 class="text-sm font-bold text-foreground group-hover:text-primary leading-snug transition-colors line-clamp-2 mt-4">
               {item.title}
             </h4>
             
             <!-- 简介 -->
-            <p class="text-[11px] text-text-muted mt-2 line-clamp-3 leading-relaxed opacity-85 group-hover:opacity-100 transition-opacity">
+            <p class="text-[11px] text-muted-foreground mt-2 line-clamp-3 leading-relaxed opacity-85 group-hover:opacity-100 transition-opacity">
               {item.desc}
             </p>
           </div>
           
           <!-- 卡片底部元数据 -->
-          <div class="flex justify-between items-center text-[10px] font-mono text-text-muted mt-4 border-t border-border-soft/40 pt-3">
+          <div class="flex justify-between items-center text-[10px] font-mono text-muted-foreground mt-4 border-t border-border-soft/40 pt-3">
             <span>{item.time} · {item.stat}</span>
             <span class="w-6 h-6 rounded-full bg-border-soft/60 group-hover:bg-primary/20 group-hover:text-primary flex items-center justify-center transition-all duration-300">
               →

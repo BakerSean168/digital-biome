@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { BookOpen, Github, Tag, BookMarked, ArrowRight } from '@lucide/astro';
+import SignalTitle from '../../components/common/SignalTitle.astro';
+import { BookOpen, Github, Tag, BookMarked, ArrowRight, Terminal } from '@lucide/astro';
 import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../constants';
 import { getAllNoteTags } from '../../utils/notes';
 import TagNetworkGraph from '../../components/resume/TagNetworkGraph.astro';
@@ -24,7 +25,7 @@ const recentReads = [
 
 ---
 
-<BaseLayout title={`About | ${SITE_NAME}`} description="关于我和我的专业背景">
+<BaseLayout title={`About | ${SITE_NAME}`} description="SYS.ENTITY_LOADED: 实体档案与工程履历">
   <main class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     
     <div class="flex flex-col gap-6">
@@ -33,22 +34,15 @@ const recentReads = [
       <div class="flex flex-col md:flex-row gap-6">
         
         <!-- Hero Card -->
-        <div class="flex-[2] relative rounded-2xl bg-card border border-border p-8 sm:p-10 overflow-hidden shadow-sm group">
-          <!-- Subtle green glow effect -->
-          <div class="absolute inset-0 rounded-2xl border-2 border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-          <div class="absolute -inset-0.5 rounded-2xl bg-primary/5 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-          <div class="absolute inset-0 rounded-2xl ring-1 ring-primary/30 shadow-[0_0_20px_rgba(16,185,129,0.15)] pointer-events-none"></div>
-
+        <div class="flex-[2] relative rounded-none bg-transparent border border-border p-8 sm:p-10 shadow-none group">
           <div class="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 h-full">
             <div class="flex flex-col gap-4">
-              <h1 class="text-4xl sm:text-5xl font-bold text-foreground">
-                Hi, I'm {AUTHOR_NAME} <span class="inline-block origin-[70%_70%] animate-wave">👋</span>
-              </h1>
-              <h2 class="text-xl sm:text-2xl font-semibold text-foreground mt-2">
-                全栈开发者 / 数字园丁 / 终身学习者
+              <SignalTitle as="h1" class="text-4xl sm:text-5xl font-bold font-mono tracking-tight text-foreground" title={`Hi, I'm ${AUTHOR_NAME}`} />
+              <h2 class="text-xl sm:text-xl font-mono text-foreground mt-2 opacity-80 uppercase tracking-widest">
+                全栈开发者 / 数字园丁
               </h2>
-              <p class="text-muted-foreground leading-relaxed max-w-xl mt-2">
-                欢迎来到我的数字生物群落。这里记录了我的代码实验、全栈开发笔记以及学习日常。
+              <p class="text-muted-foreground leading-relaxed max-w-xl mt-2 font-mono text-sm">
+                SYS.ENTITY_LOADED: 欢迎接入。这里存储着我的工程切片、架构推演与个人知识脉络。
               </p>
               
               <div class="flex flex-wrap gap-4 mt-6">
@@ -61,23 +55,25 @@ const recentReads = [
               </div>
             </div>
 
-            <!-- Avatar Circle -->
+            <!-- Avatar Box -->
             <div class="hidden sm:block shrink-0">
-              <div class="w-32 h-32 md:w-40 md:h-40 rounded-full bg-primary shadow-[0_0_40px_rgba(16,185,129,0.3)]"></div>
+              <div class="w-32 h-32 md:w-40 md:h-40 bg-background border border-border flex items-center justify-center group-hover:border-primary/50 transition-colors">
+                <Terminal size={48} class="text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Knowledge Graph Nodes -->
-        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 flex flex-col items-center justify-between shadow-sm relative group">
+        <div class="flex-[1] bg-card/40 border border-border p-6 sm:p-8 flex flex-col items-center justify-between relative group">
           <div class="w-full flex flex-col h-full justify-between">
-            <h3 class="text-lg font-medium text-foreground mb-4 text-center">知识图谱节点</h3>
+            <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-4 text-center uppercase">[ TOPOLOGY_TAGS ] / 知识脉络提取</h3>
             <TagNetworkGraph tags={filteredTags} />
           </div>
           <div class="mt-4 w-full">
-            <a href="/about/tags" class="group/btn flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-transparent bg-background-secondary hover:bg-primary hover:text-primary-foreground text-sm font-medium transition-all">
-              查看所有标签
-              <ArrowRight size={16} class="group-hover/btn:translate-x-1 transition-transform" />
+            <a href="/about/tags" class="group/btn flex items-center justify-center gap-2 w-full py-2.5 border border-border bg-background hover:bg-card hover:border-primary/50 text-xs font-mono tracking-widest transition-all">
+              [ ALL_TAGS ]
+              <ArrowRight size={14} class="group-hover/btn:translate-x-1 transition-transform" />
             </a>
           </div>
         </div>
@@ -87,33 +83,33 @@ const recentReads = [
       <div class="flex flex-col md:flex-row gap-6">
         
         <!-- Recently Learning -->
-        <div class="flex-[1] rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-sm">
-          <h3 class="text-lg font-medium text-foreground mb-6">最近在了解</h3>
+        <div class="flex-[1] bg-transparent border border-border p-6 sm:p-8">
+          <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">[ RECENT_SYNC ] / 近期数据同步</h3>
           <div class="flex flex-col gap-4">
             {recentReads.map(item => (
-              <a href="/notes" class="group flex items-center justify-between p-4 rounded-xl bg-background-secondary hover:bg-card-hover border border-transparent hover:border-border transition-all">
+              <a href="/notes" class="group flex items-center justify-between p-4 bg-background border border-border hover:border-primary/50 transition-all">
                 <div class="flex flex-col gap-1">
-                  <h4 class="text-foreground font-medium group-hover:text-primary transition-colors">{item.title}</h4>
-                  <span class="text-xs text-muted-foreground">更新于 {item.time}</span>
+                  <h4 class="text-sm font-mono text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
+                  <span class="text-[10px] font-mono text-muted-foreground uppercase">UPDATED: {item.time}</span>
                 </div>
-                <BookMarked size={20} class="text-primary shrink-0 opacity-80 group-hover:opacity-100 transition-opacity" />
+                <BookMarked size={16} class="text-muted-foreground group-hover:text-primary transition-colors" />
               </a>
             ))}
           </div>
         </div>
 
         <!-- GitHub Contributions -->
-        <div class="flex-[2] rounded-2xl bg-card border border-border p-6 sm:p-8 shadow-sm overflow-hidden flex flex-col">
+        <div class="flex-[2] bg-card/40 border border-border p-6 sm:p-8 overflow-hidden flex flex-col">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-medium text-foreground hidden sm:block">GitHub Contributions</h3>
+            <h3 class="text-sm font-mono tracking-widest text-muted-foreground hidden sm:block">GITHUB_ACTIVITY</h3>
             <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
-              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline-sm">
-                GitHub <Github size={16} />
+              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline-sm !font-mono !text-[11px] !rounded-none">
+                [ GITHUB ] <Github size={14} />
               </a>
             </div>
           </div>
 
-          <div class="flex-1 bg-background-secondary rounded-xl p-4 overflow-x-auto border border-border flex items-center justify-center">
+          <div class="flex-1 bg-background border border-border p-4 overflow-x-auto flex items-center justify-center">
             <div class="min-w-[700px] flex justify-center">
               <img src="https://ghchart.rshah.org/10b981/BakerSean168" alt="GitHub Contributions" class="max-w-full" style="filter: hue-rotate(0deg);" />
             </div>

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SignalTitle from '../../components/common/SignalTitle.astro';
 import { getPublicAssets, getAssetHref } from '../../utils/notes';
 
 const assetEntries = await getPublicAssets();
@@ -19,12 +20,12 @@ const initialQuery = Astro.url.searchParams.get('q') || '';
 const initialScope = Astro.url.searchParams.get('scope') || 'all';
 ---
 
-<BaseLayout title="Discover" description="搜索资产与笔记">
+<BaseLayout title="Discover" description="[ GLOBAL_INDEX ] 全域高亮索引">
   <main class="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
-    <section class="rounded-[32px] border border-border bg-card/70 p-6 md:p-8">
-      <p class="text-sm uppercase tracking-[0.24em] text-primary/80">Discover</p>
-      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-foreground">搜索资产与知识笔记</h1>
-      <p class="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
+    <section class="border-b border-border bg-transparent pb-8">
+      <p class="text-xs font-mono uppercase tracking-widest text-primary/80">Discover</p>
+      <SignalTitle as="h1" class="mt-3 text-4xl font-bold font-mono tracking-tight text-foreground" title="搜索资产与知识笔记" />
+      <p class="mt-3 max-w-3xl text-sm font-mono leading-7 text-muted-foreground">
         这里统一检索服务、工具、主机、网络和普通笔记。搜索结果会明确标注类型。
       </p>
 
@@ -33,12 +34,12 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
           id="discover-query"
           type="search"
           value={initialQuery}
-          placeholder="输入关键词，例如 vaultwarden / PVE / nezha..."
-          class="w-full rounded-2xl border border-border bg-background/60 px-4 py-3 text-foreground outline-none transition-colors focus:border-primary/50"
+          placeholder="Query the biome... (e.g. Astro, PVE, 领域驱动)"
+          class="w-full border border-border bg-background px-4 py-3 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary/50"
         />
         <select
           id="discover-scope"
-          class="rounded-2xl border border-border bg-background/60 px-4 py-3 text-foreground outline-none transition-colors focus:border-primary/50"
+          class="border border-border bg-background px-4 py-3 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary/50"
         >
           <option value="all" selected={initialScope === 'all'}>全部</option>
           <option value="assets" selected={initialScope === 'assets'}>仅资产</option>
@@ -48,12 +49,12 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
     </section>
 
     <section class="mt-8">
-      <div class="mb-4 text-sm text-muted-foreground" id="discover-count"></div>
+      <div class="mb-4 text-xs font-mono tracking-widest text-muted-foreground" id="discover-count"></div>
       <div id="discover-results" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
-      <div id="discover-empty" class="hidden rounded-3xl border border-dashed border-border bg-card/40 px-6 py-10 text-sm text-muted-foreground">
+      <div id="discover-empty" class="hidden border border-dashed border-border bg-card/40 px-6 py-10 text-sm font-mono text-muted-foreground">
         没有匹配结果，试试更短的关键词，或者切换到“全部”范围。
       </div>
-      <div id="discover-dev-warning" class="hidden rounded-3xl border border-amber-500/20 bg-amber-500/5 p-6 text-sm text-amber-500 mt-4">
+      <div id="discover-dev-warning" class="hidden border border-amber-500/20 bg-amber-500/5 p-6 text-sm font-mono text-amber-500 mt-4">
         ⚠️ 开发环境下未检测到 Pagefind 索引，目前仅展示资产数据。如需验证完整的知识笔记搜索，请先执行 <code>pnpm build</code> 进行打包。
       </div>
     </section>
@@ -105,16 +106,16 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
     items.forEach(item => {
       const card = document.createElement('a');
       card.href = item.href;
-      card.className = 'group rounded-[28px] border border-border bg-card/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40';
+      card.className = 'group border border-border bg-transparent p-5 transition-all duration-300 hover:border-primary/40 hover:bg-card/40';
       card.innerHTML = `
         <div class="mb-3 flex items-center gap-2">
-          <span class="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-primary">${item.label}</span>
-          <span class="text-xs text-muted-foreground">${item.scope}</span>
+          <span class="border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-mono tracking-widest text-primary">${item.label}</span>
+          <span class="text-[10px] font-mono text-muted-foreground tracking-widest">[ ${item.scope.toUpperCase()} ]</span>
         </div>
-        <h2 class="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">${item.title}</h2>
-        <p class="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">${item.description || '暂无描述'}</p>
+        <h2 class="text-xl font-serif text-foreground group-hover:text-primary transition-colors">${item.title}</h2>
+        <p class="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground font-mono">${item.description || '[ EMPTY_SLOT ]'}</p>
         <div class="mt-4 flex flex-wrap gap-2">
-          ${(item.tags || []).slice(0, 4).map(tag => `<span class="rounded-full bg-pane px-2.5 py-1 text-xs text-muted-foreground">#${tag.includes('/') ? tag.split('/').pop() : tag}</span>`).join('')}
+          ${(item.tags || []).slice(0, 4).map(tag => `<span class="border border-border bg-transparent px-2 py-0.5 text-[10px] font-mono text-muted-foreground">#${tag.includes('/') ? tag.split('/').pop() : tag}</span>`).join('')}
         </div>
       `;
       fragment.appendChild(card);

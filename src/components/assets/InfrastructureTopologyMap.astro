@@ -1,0 +1,69 @@
+---
+import SignalTitle from '../common/SignalTitle.astro';
+import TopologyNodeCard from './TopologyNodeCard.astro';
+import type { ResolvedTopologyNode } from '../../utils/infrastructure';
+import { ArrowDown } from '@lucide/astro';
+
+export interface TopologyTier {
+  id: string;
+  title: string;
+  description?: string;
+  items: {
+    node: ResolvedTopologyNode;
+    services: ResolvedTopologyNode[];
+  }[];
+}
+
+interface Props {
+  title: string;
+  description: string;
+  tiers: TopologyTier[];
+}
+
+const { title, description, tiers } = Astro.props;
+---
+
+<div class="flex flex-col gap-8 py-8">
+  <div class="mb-6 border-b border-border pb-6">
+    <SignalTitle as="h2" class="text-2xl font-mono tracking-tight text-foreground" title={title} />
+    <p class="mt-2 text-sm font-mono text-muted-foreground leading-relaxed">
+      {description}
+    </p>
+  </div>
+
+  <div class="relative flex flex-col items-center gap-12 w-full">
+    {tiers.map((tier, index) => (
+      <div class="w-full flex flex-col items-center relative z-10">
+        <!-- Tier Header -->
+        <div class="mb-6 text-center">
+          <span class="inline-block border border-primary/30 bg-primary/5 px-3 py-1 text-[10px] font-mono tracking-widest text-primary uppercase">
+            {tier.title}
+          </span>
+          {tier.description && (
+            <p class="mt-2 max-w-md mx-auto text-[11px] font-mono text-muted-foreground leading-relaxed">
+              {tier.description}
+            </p>
+          )}
+        </div>
+
+        <!-- Nodes in this Tier -->
+        <div class="flex flex-wrap justify-center gap-8 md:gap-16 w-full max-w-5xl">
+          {tier.items.map(item => (
+            <TopologyNodeCard node={item.node} services={item.services} />
+          ))}
+        </div>
+
+        <!-- Connector to next tier -->
+        {index < tiers.length - 1 && (
+          <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50">
+            <div class="w-px h-6 bg-border"></div>
+            <ArrowDown size={14} class="text-border -mt-1" />
+          </div>
+        )}
+      </div>
+    ))}
+    
+    <!-- Background vertical connecting line (optional subtle effect) -->
+    <div class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-border/30 to-transparent pointer-events-none z-0"></div>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import HomelabLayerView from '../../components/assets/HomelabLayerView.astro';
+import InfrastructureTopologyMap, { type TopologyTier } from '../../components/assets/InfrastructureTopologyMap.astro';
+import type { ResolvedTopologyNode } from '../../utils/infrastructure';
 import {
   getAssetCardsForFlows,
   getInfrastructureDataset,
@@ -12,6 +13,33 @@ import {
 const homelabFlows = getTopologyFlows(homelabFlowIds);
 const { assetCards, resolvedNodes } = await getInfrastructureDataset();
 const homelabAssets = getAssetCardsForFlows(homelabFlows, assetCards);
+
+const tiers: TopologyTier[] = homelabLayers.map(layer => {
+  const allNodes = layer.nodeIds.map(id => resolvedNodes[id]).filter(Boolean);
+  
+  const items: {node: ResolvedTopologyNode, services: ResolvedTopologyNode[]}[] = [];
+  let currentItem: {node: ResolvedTopologyNode, services: ResolvedTopologyNode[]} | null = null;
+  
+  for (const n of allNodes) {
+    if (n.kind === 'service' || n.kind === 'tool' || n.kind === 'vm') {
+      if (currentItem) {
+        currentItem.services.push(n);
+      } else {
+        items.push({ node: n, services: [] });
+      }
+    } else {
+      currentItem = { node: n, services: [] };
+      items.push(currentItem);
+    }
+  }
+
+  return {
+    id: layer.id,
+    title: `${layer.level} - ${layer.title}`,
+    description: layer.description,
+    items: items.length > 0 ? items : allNodes.map(node => ({ node, services: [] }))
+  };
+});
 ---
 
 <BaseLayout title="Homelab" description="家庭网络、PVE、NAS 与家庭服务栈">
@@ -29,13 +57,10 @@ const homelabAssets = getAssetCardsForFlows(homelabFlows, assetCards);
       </a>
     </div>
 
-    <HomelabLayerView
-      title="家庭网络与 Homelab 分层图"
-      description="这张页面把家庭网络真正按层拆开：从供电韧性、接入与交换、N100 + PVE 底座，再到虚拟机编排和家庭服务入口，尽量做出一张有 Homelab 骨架感的剖面图。"
-      layers={homelabLayers}
-      assets={homelabAssets}
-      resolvedNodes={resolvedNodes}
-      locale="zh"
+    <InfrastructureTopologyMap
+      title="家庭网络与 Homelab 拓扑"
+      description="这张页面把家庭网络真正按拓扑结构拆开：从供电韧性、接入与交换、N100 + PVE 底座，再到虚拟机编排和家庭服务入口，形成一张层层递进的节点视图。"
+      tiers={tiers}
     />
   </main>
 </BaseLayout>

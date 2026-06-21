@@ -1,14 +1,16 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import type { AssetCard, AssetNoteEntry } from '../../types/notes';
+import InfrastructureTopologyMap, { type TopologyTier } from './InfrastructureTopologyMap.astro';
 
 interface Props {
   entry: AssetNoteEntry;
   Content: any;
   relatedAssets?: AssetCard[];
+  subTopology?: TopologyTier[];
 }
 
-const { entry, Content, relatedAssets = [] } = Astro.props;
+const { entry, Content, relatedAssets = [], subTopology = [] } = Astro.props;
 const { title, description, asset_type, asset_id, tags = [], links = [], monitor } = entry.data;
 const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'monitor' || link.kind === 'panel')?.url;
 ---
@@ -62,7 +64,7 @@ const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'mon
                 <span class="text-xs uppercase tracking-[0.16em] text-muted-foreground">{link.kind || 'link'}</span>
               </a>
             )) : (
-              <p class="text-sm text-muted-foreground">还没有配置可跳转链接。</p>
+              <p class="text-sm text-muted-foreground font-mono">[ NO_SIGNAL ] 未检测到链接映射。</p>
             )}
           </div>
         </section>
@@ -81,12 +83,12 @@ const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'mon
                     rel="noopener noreferrer"
                     class="inline-flex rounded-full border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
                   >
-                    {monitor?.label || '打开监控页'}
+                    {monitor?.label || '[ LAUNCH_PROBE ]'}
                   </a>
                 )}
               </div>
             ) : (
-              <p>这个资产还没有接入监控映射。</p>
+              <p class="font-mono text-sm">[ NO_SIGNAL ] 监控探针未接入。</p>
             )}
           </div>
         </section>
@@ -94,7 +96,17 @@ const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'mon
     </div>
 
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <article class="rounded-[32px] border border-border bg-card/70 p-7 md:p-9">
+      <article class="flex flex-col gap-8 rounded-[32px] border border-border bg-card/70 p-7 md:p-9">
+        {subTopology.length > 0 && (
+          <div class="border border-border bg-background/50 rounded-2xl p-6">
+            <InfrastructureTopologyMap
+              title="内嵌拓扑 / Sub-Topology"
+              description="该资产承载的下级节点与服务。"
+              tiers={subTopology}
+            />
+          </div>
+        )}
+
         <div class="prose prose-neutral max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:border prose-pre:border-border prose-pre:bg-card prose-blockquote:border-l-primary prose-img:rounded-xl prose-img:border prose-img:border-border">
           <Content />
         </div>

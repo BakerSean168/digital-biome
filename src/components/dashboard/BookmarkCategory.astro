@@ -1,5 +1,4 @@
 ---
-import { Link, Play } from '@lucide/astro';
 import type { Bookmark } from '../../types/notes';
 
 interface Props {
@@ -48,7 +47,7 @@ const { name, bookmarks } = Astro.props;
                     alt={`${bookmark.title} favicon`}
                     class="w-7 h-7 object-contain transition-transform duration-300 group-hover:scale-110"
                     loading="lazy"
-                    onerror={`this.onerror=null; this.src='${fallbackIconUrl}';`}
+                    onerror={`this.onerror=null; if(!this.getAttribute('data-second-fallback')){ this.setAttribute('data-second-fallback','true'); this.src='${fallbackIconUrl}'; } else { const p = this.parentNode; p.innerHTML = '<div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">${bookmark.title.charAt(0).toUpperCase()}</div>'; }`}
                   />
               }
             </div>

@@ -1,8 +1,14 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap');
 @custom-variant dark (&:where(.dark, .dark *));
 @plugin "@tailwindcss/typography";
 
 @theme {
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Newsreader', ui-serif, Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
   /* Colors */
   --color-background: var(--bg);
   --color-background-secondary: var(--bg-secondary);
@@ -15,16 +21,19 @@
   --color-muted-foreground: var(--text-muted);
   --color-tertiary-foreground: var(--text-tertiary);
   
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-text-tertiary: var(--text-tertiary);
+  
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
-
   /* Biome Tree Specific Branches Colors */
-  --color-branch-dev: hsl(152, 90%, 42%);
-  --color-branch-life: hsl(28, 95%, 52%);
-  --color-branch-mind: hsl(196, 95%, 48%);
-  --color-glow-root: hsl(170, 90%, 45%);
-  --color-branch-lab: hsl(180, 95%, 45%);
-  --color-branch-about: hsl(0, 0%, 95%);
+  --color-branch-dev: var(--branch-dev);
+  --color-branch-life: var(--branch-life);
+  --color-branch-mind: var(--branch-mind);
+  --color-glow-root: var(--glow-root);
+  --color-branch-lab: var(--branch-lab);
+  --color-branch-about: var(--branch-about);
   
   /* Radii */
   --radius-sm: 4px;
@@ -36,20 +45,32 @@
 
 /* ===== Base Theme Variables ===== */
 :root {
-  /* Light Theme (Derived to match the green accent) */
-  --bg: #F8FAFC; 
-  --bg-secondary: #F1F5F9;
-  --card: #FFFFFF;
-  --card-hover: #F1F5F9;
-  --pane: #F8FAFC;
-  --border-color: #E2E8F0;
+  /* Light Theme (Forced to match Wabi-Sabi Dark for unity) */
+  --bg: #151614; 
+  --bg-secondary: #1C1D1A;
+  --card: #1A1B19;
+  --card-hover: #222320;
+  --pane: #1A1B19;
+  --border-color: #2C2D2A;
   
-  --text-main: #0F172A;
-  --text-muted: #64748B;
-  --text-tertiary: #94A3B8;
+  --text-main: #E2E1DD;
+  --text-muted: #A8A9A4;
+  --text-tertiary: #8B8C86;
   
-  --primary: #10B981; /* Accent / Primary */
-  --primary-hover: #059669;
+  --primary: #8B9A46; /* Moss Green Accent */
+  --primary-hover: #728038;
+
+  /* Biome Tree Specific Colors (Desaturated Organics) */
+  --branch-dev: hsl(71, 40%, 60%);
+  --branch-life: hsl(45, 40%, 60%);
+  --branch-mind: hsl(120, 35%, 60%);
+  --branch-lab: hsl(160, 35%, 60%);
+  --branch-about: hsl(0, 0%, 65%);
+  --glow-root: hsl(71, 37%, 44%);
+  --bg-circle-node: #151614;
+  --tree-opacity: 0.85;
+  --tree-shadow: drop-shadow(0px 0px 40px rgba(139, 154, 70, 0.15));
+  --cyber-grid-color: rgba(139, 154, 70, 0.05);
 
   /* Pagefind overrides */
   --pagefind-ui-scale: 1;
@@ -64,20 +85,31 @@
 }
 
 html.dark {
-  /* Dark Theme (From Figma) */
-  --bg: #121212;
-  --bg-secondary: #1A1A1A;
-  --card: #1E1E1E;
-  --card-hover: #2D2D2D;
-  --pane: #242424;
-  --border-color: #333333;
+  /* Dark Theme */
+  --bg: #151614;
+  --bg-secondary: #1C1D1A;
+  --card: #1A1B19;
+  --card-hover: #222320;
+  --pane: #1A1B19;
+  --border-color: #2C2D2A;
   
-  --text-main: #E2E8F0;
-  --text-muted: #94A3B8;
-  --text-tertiary: #64748B;
+  --text-main: #E2E1DD;
+  --text-muted: #A8A9A4;
+  --text-tertiary: #8B8C86;
   
-  --primary: #10B981;
-  --primary-hover: #059669;
+  --primary: #8B9A46;
+  --primary-hover: #728038;
+
+  --branch-dev: hsl(71, 40%, 60%);
+  --branch-life: hsl(45, 40%, 60%);
+  --branch-mind: hsl(120, 35%, 60%);
+  --branch-lab: hsl(160, 35%, 60%);
+  --branch-about: hsl(0, 0%, 65%);
+  --glow-root: hsl(71, 37%, 44%);
+  --bg-circle-node: #151614;
+  --tree-opacity: 0.85;
+  --tree-shadow: drop-shadow(0px 0px 40px rgba(139, 154, 70, 0.15));
+  --cyber-grid-color: rgba(139, 154, 70, 0.03);
 }
 
 /* Base styles using the new theme variables */
@@ -490,3 +522,72 @@ html.dark {
 .animate-pulse-soft {
   animation: pulse-soft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Biome Tree Interactive Enhancements */
+.hud-connector-line {
+  stroke-dasharray: 6;
+  animation: hud-line-dash 1.2s linear infinite;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes hud-line-dash {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+.fruit-node {
+  transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+}
+
+.fruit-node:focus-visible {
+  outline: 2px dashed var(--primary);
+  outline-offset: 4px;
+}
+
+.has-active-node .fruit-node:not(.active-hover) {
+  opacity: 0.3;
+  filter: saturate(0.5) blur(0.5px);
+}
+
+/* ===== Neural Pulse (Biome Graph) ===== */
+@keyframes neural-pulse {
+  0% {
+    stroke-dashoffset: 1000;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.neural-pulse-path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 1000;
+  animation: neural-pulse 3s linear infinite;
+  opacity: 0.8;
+}
+
+/* ===== Signal Decode (Titles) ===== */
+.signal-decode {
+  position: relative;
+  display: inline-block;
+}
+
+.signal-decode::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--primary);
+  background: var(--bg);
+  overflow: hidden;
+  clip-path: inset(0 100% 0 0);
+  animation: signal-sweep 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes signal-sweep {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+

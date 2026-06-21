@@ -33,9 +33,12 @@ src/
 └── utils/               # 工具函数 / Remark 插件
 ```
 
-## Commands
+## Commands & Development Specifications
 
-pnpm dev; pnpm build; pnpm sync
+- **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步与favicons处理。
+- **不要在开发时使用 `pnpm build`**：开发过程中不要使用 `pnpm build`。因为这会触发耗时且不需要的笔记全量打包与处理。开发环境自带热更新，在 `dev:only` 模式下直接预览即可。
+- **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm astro check` 进行代码准确性和 TypeScript 类型诊断。
+- **提交前运行 build:only 测试**：在提交代码前，必须使用 `pnpm build:only` 对纯前端逻辑进行构建测试，确保没有任何编译阻碍。
 
 ## Context Workflow
 
@@ -50,18 +53,20 @@ pnpm dev; pnpm build; pnpm sync
 - TypeScript 5.9.x，遵循标准规范
 - 组件格式：`.astro` 文件
 
-### 样式
-- **使用 Tailwind v4 utility classes**，不要写 scoped `<style>` 块（除非有 Tailwind 无法覆盖的特殊样式）
-- Tailwind 入口在 `src/styles/global.css` 的 `@import "tailwindcss"`
-- 项目已有 CSS 变量（Design Tokens），在 Tailwind 中通过 `var()` 引用：
-  - 主色: `var(--color-primary)` #10B981
-  - 背景: `var(--bg)` #F8FAFC (dark: #121212)
-  - 文字: `var(--text-main)` #0F172A (dark: #E2E8F0)
-  - 次要文字: `var(--text-muted)` #64748B (dark: #94A3B8)
-  - 边框: `var(--border-color)` #E2E8F0 (dark: #333333)
-  - 卡片背景: `var(--card)` #FFFFFF (dark: #1E1E1E)
-  - 圆角: `--radius-sm` 4px / `--radius-md` 8px / `--radius-lg` 12px
-- 暗色模式通过 `html.dark` class 切换（不用 Tailwind dark: 前缀）
+### 样式与设计语言 (Basalt & Moss)
+- **核心风格**: 极客侘寂风 (Geek Wabi-Sabi)。严禁使用弥散阴影、大面积光晕和过大的圆角。
+- **设计规范文件**: `docs/design-system-basalt-and-moss.md`。在新建任何组件前，必须参考此文档。
+- **使用 Tailwind v4 utility classes**，不要写 scoped `<style>` 块。
+- 项目已有 CSS 变量（Design Tokens），在 Tailwind 中映射为类名使用（如 `bg-background`、`text-foreground`、`text-muted-foreground`、`border-border`）：
+  - 主色 (Moss): `--primary` 暗绿色体系 (用于极少数的高光点缀)
+  - 背景 (Basalt): `--bg` 极度深灰 (映射为 `bg-background`，如 `#151614`)
+  - 卡片背景: `--card` (映射为 `bg-card`)
+  - 文字: `--text-main` 冷白高对比度 (映射为 `text-foreground`)
+  - 次要文字: `--text-muted` (映射为 `text-muted-foreground`)
+  - 边框: `--border-color` (映射为 `border-border`，大量用于 1px solid 边框)
+- **UI 元素**: 
+  - 杜绝使用 `rounded-xl`、`rounded-2xl`，使用直角或 `rounded-sm`。
+  - 强调终端视觉效果（Terminal-like），多用等宽字体 (`font-mono`) 配合大写和字距 (`tracking-widest`)，如按钮 `[ BUTTON_TEXT ]`。
 
 ### 图标
 - **统一使用 `@lucide/astro`**，不要用 emoji 或内联 SVG

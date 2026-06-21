@@ -4,7 +4,6 @@ import NotesSidebar from '../components/notes/NotesSidebar.astro';
 import TableOfContents from '../components/notes/TableOfContents.astro';
 import WikilinkPreview from '../components/notes/WikilinkPreview.astro';
 
-
 interface Props {
   title: string;
   description?: string;
@@ -26,46 +25,81 @@ const {
 const hasToc = showToc && headings.length > 0;
 ---
 
-<BaseLayout title={title} description={description}>
-  <div
-    class:list={[
-      'max-w-[1400px] mx-auto min-h-[calc(100vh-120px)] grid gap-6 md:gap-8 px-4 sm:px-6 lg:px-8',
-      showSidebar && hasToc ? 'grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr_200px]' : 
-      showSidebar && !hasToc ? 'grid-cols-1 md:grid-cols-[240px_1fr]' : 
-      !showSidebar && hasToc ? 'grid-cols-1 lg:grid-cols-[1fr_200px]' : 
-      'grid-cols-1'
-    ]}
-  >
-    {showSidebar && (
-      <aside class="hidden md:block py-6 md:py-8 lg:py-10 border-r border-border/50 sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto pr-4 lg:pr-6 custom-scrollbar">
-        <div class="mb-6">
-          <a href="/notes" class="text-lg font-semibold text-foreground hover:text-primary transition-colors">笔记</a>
-        </div>
-        <NotesSidebar currentSlug={currentSlug} />
-      </aside>
-    )}
+<BaseLayout title={title} description={description} bodyClass="bg-background text-foreground">
+  <div class="max-w-[1600px] mx-auto min-h-[calc(100vh-120px)] grid gap-8 px-4 sm:px-6 lg:px-12 grid-cols-1 lg:grid-cols-[20%_55%_25%] relative pt-24 pb-32">
+    
+    <!-- Left Column: Upstream / Breadcrumbs -->
+    <aside class="hidden lg:flex flex-col py-10 sticky top-[100px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto opacity-40 hover:opacity-100 transition-opacity custom-scrollbar">
+      <div class="text-xs font-mono tracking-widest text-text-muted mb-6 border-b border-border/50 pb-2">上游脉络</div>
+      {showSidebar && <NotesSidebar currentSlug={currentSlug} />}
+    </aside>
 
-    <main class="py-6 md:py-8 lg:py-10 min-w-0 max-w-3xl w-full mx-auto">      
-        <article class="w-full text-foreground/90 leading-relaxed">
-        <div class="w-full text-base">
-          <slot />
-        </div>
+    <!-- Middle Column: The Core -->
+    <main class="py-10 min-w-0 w-full mx-auto relative">      
+      <article class="w-full text-text-main leading-[1.8] font-serif text-lg prose prose-invert max-w-none prose-headings:font-serif prose-headings:text-text-main prose-h1:text-4xl prose-h1:font-bold prose-h1:mb-12 prose-h2:text-2xl prose-p:text-text-main prose-li:text-text-main prose-strong:text-text-main prose-a:text-primary prose-a:no-underline hover:prose-a:bg-primary/10 prose-code:font-mono prose-code:text-sm prose-pre:bg-[#1A1B19] prose-pre:border prose-pre:border-[#2C2D2A]">
+        <slot />
       </article>
     </main>
 
-    {hasToc && (
-      <aside class="hidden lg:block py-8 lg:py-10 sticky top-[60px] h-fit max-h-[calc(100vh-60px)] overflow-y-auto pl-4 custom-scrollbar">
-        <TableOfContents headings={headings} />
-      </aside>
-    )}
+    <!-- Right Column: Downstream Spores -->
+    <aside class="hidden lg:flex flex-col py-10 sticky top-[100px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto pl-8 custom-scrollbar">
+      <div class="text-xs font-mono tracking-widest text-text-muted mb-6 border-b border-border/50 pb-2 text-right">下游关联</div>
+      {hasToc && <TableOfContents headings={headings} />}
+      
+      <!-- Visual representation of floating spores for backlinks/tags -->
+      <div class="mt-8 opacity-80">
+        <div class="text-[10px] font-mono mb-3 text-right text-text-muted">图谱动态</div>
+        <div class="flex flex-wrap gap-2 justify-end">
+          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full hover:border-primary/50 transition-colors cursor-pointer text-text-muted">#wabi-sabi</span>
+          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full hover:border-primary/50 transition-colors cursor-pointer text-text-muted">#architecture</span>
+        </div>
+      </div>
+    </aside>
   </div>
   <WikilinkPreview />
 </BaseLayout>
 
+<script>
+  // Auto-apply signal-decode to main h1 in notes
+  const h1 = document.querySelector('article h1');
+  if (h1 && !h1.classList.contains('signal-decode')) {
+    const text = h1.textContent || '';
+    h1.classList.add('signal-decode', 'relative', 'inline-block');
+    h1.setAttribute('data-text', text);
+    h1.innerHTML = `
+      <span class="opacity-0 pointer-events-none">${text}</span>
+      <span class="absolute inset-0 whitespace-nowrap font-mono tracking-widest text-muted-foreground signal-text" aria-hidden="true">${text}</span>
+    `;
+    
+    // Scramble effect
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
+    const el = h1.querySelector('.signal-text') as HTMLElement;
+    if (el) {
+      let iterations = 0;
+      const interval = setInterval(() => {
+        el.textContent = text.split('').map((letter, index) => {
+          if (index < iterations) {
+            return text[index];
+          }
+          return chars[Math.floor(Math.random() * chars.length)];
+        }).join('');
+        
+        if (iterations >= text.length) {
+          clearInterval(interval);
+          el.textContent = text;
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.2s ease-out';
+        }
+        iterations += 1/4;
+      }, 30);
+    }
+  }
+</script>
+
 <style>
   /* Optional: Custom thin scrollbar for sidebars */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 2px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
@@ -75,6 +109,6 @@ const hasToc = showToc && headings.length > 0;
     border-radius: 4px;
   }
   .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--color-muted-foreground);
+    background: var(--color-primary);
   }
 </style>

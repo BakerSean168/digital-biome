@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import FleetRegionMatrix from '../../components/assets/FleetRegionMatrix.astro';
+import InfrastructureTopologyMap, { type TopologyTier } from '../../components/assets/InfrastructureTopologyMap.astro';
 import {
   fleetRegionCards,
   getAssetCardsForFlows,
@@ -12,6 +12,18 @@ import {
 const fleetFlows = getTopologyFlows(publicFleetFlowIds);
 const { assetCards, resolvedNodes } = await getInfrastructureDataset();
 const fleetAssets = getAssetCardsForFlows(fleetFlows, assetCards);
+
+const tiers: TopologyTier[] = fleetRegionCards.map(region => {
+  const nodes = region.hostNodeIds.map(id => resolvedNodes[id]).filter(Boolean);
+  const services = region.serviceNodeIds.map(id => resolvedNodes[id]).filter(Boolean);
+
+  return {
+    id: region.id,
+    title: `${region.region} - ${region.role}`,
+    description: region.description,
+    items: nodes.map(node => ({ node, services }))
+  };
+});
 ---
 
 <BaseLayout title="Fleet" description="公网控制平面、区域 VPS 与公开站点">
@@ -29,13 +41,10 @@ const fleetAssets = getAssetCardsForFlows(fleetFlows, assetCards);
       </a>
     </div>
 
-    <FleetRegionMatrix
-      title="公网舰队与服务入口图"
-      description="这里把你的公网资产改造成真正的区域矩阵：每个节点位都有 region、provider、role 编码，控制面、业务面、代理面和展示面不再混成一团。"
-      regions={fleetRegionCards}
-      assets={fleetAssets}
-      resolvedNodes={resolvedNodes}
-      locale="zh"
+    <InfrastructureTopologyMap
+      title="公网舰队与服务入口拓扑"
+      description="这里把你的公网资产改造成真正的节点拓扑图：通过控制面、业务面、代理面和展示面的物理位置和职能，清晰展示节点间的连通性。"
+      tiers={tiers}
     />
   </main>
 </BaseLayout>
