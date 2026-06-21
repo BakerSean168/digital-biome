@@ -80,10 +80,9 @@
   async function loadPagefind() {
     if (pagefindInstance) return pagefindInstance;
     try {
-      // Bypass Vite's static analysis by using a variable
-      const pfUrl = '/pagefind/pagefind.js';
+      // Bypass Vite's static analysis of public directory imports by using runtime Function compilation
       // @ts-ignore
-      pagefindInstance = await import(/* @vite-ignore */ pfUrl);
+      pagefindInstance = await new Function('return import("/pagefind/pagefind.js")')();
       await pagefindInstance.init();
       return pagefindInstance;
     } catch (e) {

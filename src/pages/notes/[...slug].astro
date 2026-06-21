@@ -1,7 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
 import NotesLayout from '../../layouts/NotesLayout.astro';
-import Backlinks from '../../components/notes/Backlinks.astro';
 import { isAssetEntry } from '../../utils/notes';
 
 export const prerender = true;
@@ -73,8 +72,5 @@ const { title, description, tags, created, updated } = entry.data;
       {updated && <span>更新于 {new Date(updated).toLocaleDateString('zh-CN')}</span>}
     </footer>
   )}
-
-  <div class="mt-12">
-    <Backlinks currentSlug={slug} />
-  </div>
 </NotesLayout>
+

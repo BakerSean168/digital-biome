@@ -479,24 +479,125 @@ export async function getNewCreatedNotes(limit: number = 5): Promise<NoteCollect
     .slice(0, limit);
 }
 
+let noteResolutionMap: Map<string, string> | null = null;
+
+function buildResolutionMap(allNotes: NoteCollectionEntry[]) {
+  if (noteResolutionMap) return;
+  noteResolutionMap = new Map();
+  allNotes.forEach(note => {
+    const title = (note.data.title ?? '').toLowerCase().trim();
+    const id = note.id.toLowerCase().trim();
+    const relativeId = note.id.replace(/^obsidian\//, '').toLowerCase().trim();
+    const aliases = (note.data.aliases || []).map((a: string) => a.toLowerCase().trim());
+
+    if (title) noteResolutionMap!.set(title, note.id);
+    noteResolutionMap!.set(id, note.id);
+    noteResolutionMap!.set(relativeId, note.id);
+    aliases.forEach(alias => {
+      noteResolutionMap!.set(alias, note.id);
+    });
+  });
+}
+
 export function resolveNoteLink(
   target: string,
   allNotes: NoteCollectionEntry[]
 ): { exists: boolean; slug?: string } {
+  buildResolutionMap(allNotes);
   const normalizedTarget = target.toLowerCase().trim();
+  const matchedId = noteResolutionMap!.get(normalizedTarget);
+  if (matchedId) {
+    return { exists: true, slug: matchedId };
+  }
 
+  // Fallback check in case of complex endsWith matches
   const match = allNotes.find(note => {
-    const title = (note.data.title ?? '').toLowerCase();
     const id = note.id.toLowerCase();
-    const aliases = (note.data.aliases || []).map((a: string) => a.toLowerCase());
-
-    return (
-      title === normalizedTarget ||
-      id === normalizedTarget ||
-      id.endsWith('/' + normalizedTarget) ||
-      aliases.includes(normalizedTarget)
-    );
+    return id.endsWith('/' + normalizedTarget);
   });
-
   return { exists: !!match, slug: match?.id };
 }
+
+let outgoingLinksCache: Map<string, NoteCollectionEntry[]> | null = null;
+let backlinksCache: Map<string, NoteCollectionEntry[]> | null = null;
+
+function buildLinksCache(allNotes: NoteCollectionEntry[]) {
+  if (outgoingLinksCache && backlinksCache) return;
+
+  outgoingLinksCache = new Map();
+  backlinksCache = new Map();
+
+  // Initialize backlinks map for all notes
+  allNotes.forEach(note => {
+    backlinksCache!.set(note.id, []);
+  });
+
+  // Calculate outgoing and backlinks for all notes in one pass
+  allNotes.forEach(note => {
+    const body = note.body || '';
+    const outgoing = new Map<string, NoteCollectionEntry>();
+
+    // 1. Match wikilinks: [[Target]] or [[Target|Display]]
+    const wikilinkRegex = /\[\[([^\]|]+)(?:\||\\\|)?[^\]]*\]\]/g;
+    let match;
+    while ((match = wikilinkRegex.exec(body)) !== null) {
+      const target = match[1].trim();
+      const resolved = resolveNoteLink(target, allNotes);
+      if (resolved.exists && resolved.slug && resolved.slug !== note.id) {
+        const linkedNote = allNotes.find(n => n.id === resolved.slug);
+        if (linkedNote) {
+          outgoing.set(linkedNote.id, linkedNote);
+        }
+      }
+    }
+
+    // 2. Match standard markdown links: [text](/notes/obsidian/slug)
+    const markdownLinkRegex = /\[[^\]]*\]\(([^)]+)\)/g;
+    while ((match = markdownLinkRegex.exec(body)) !== null) {
+      const url = match[1].trim();
+      if (url.includes('/notes/obsidian/')) {
+        const parts = url.split('/notes/obsidian/');
+        if (parts.length > 1) {
+          const slugSuffix = decodeURIComponent(parts[1].split('#')[0]);
+          const fullSlug = `obsidian/${slugSuffix}`;
+          if (fullSlug !== note.id) {
+            const linkedNote = allNotes.find(n => n.id === fullSlug);
+            if (linkedNote) {
+              outgoing.set(linkedNote.id, linkedNote);
+            }
+          }
+        }
+      }
+    }
+
+    const outgoingList = Array.from(outgoing.values());
+    outgoingLinksCache!.set(note.id, outgoingList);
+
+    // Populate backlinksCache
+    outgoingList.forEach(linkedNote => {
+      const list = backlinksCache!.get(linkedNote.id) || [];
+      if (!list.some(n => n.id === note.id)) {
+        list.push(note);
+        backlinksCache!.set(linkedNote.id, list);
+      }
+    });
+  });
+}
+
+export function getOutgoingLinksForNote(
+  note: NoteCollectionEntry,
+  allNotes: NoteCollectionEntry[]
+): NoteCollectionEntry[] {
+  buildLinksCache(allNotes);
+  return outgoingLinksCache!.get(note.id) || [];
+}
+
+export function getBacklinksForNote(
+  currentSlug: string,
+  allNotes: NoteCollectionEntry[]
+): NoteCollectionEntry[] {
+  buildLinksCache(allNotes);
+  return backlinksCache!.get(currentSlug) || [];
+}
+
+

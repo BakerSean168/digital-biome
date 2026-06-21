@@ -58,3 +58,7 @@ public/vault-assets/
 
 # Local Netlify folder
 .netlify
+
+# Pagefind local dev index
+public/pagefind/
+

@@ -1,6 +1,6 @@
 ---
-import { getPublicNotes, getBacklinksForNote } from '../../utils/notes';
-import { CornerLeftUp } from '@lucide/astro';
+import { getPublicNotes, getOutgoingLinksForNote } from '../../utils/notes';
+import { CornerRightDown } from '@lucide/astro';
 
 interface Props {
   currentSlug: string;
@@ -9,14 +9,15 @@ interface Props {
 const { currentSlug } = Astro.props;
 
 const allNotes = await getPublicNotes();
-const backlinks = getBacklinksForNote(currentSlug, allNotes);
+const currentNote = allNotes.find(note => note.id === currentSlug);
+const outgoing = currentNote ? getOutgoingLinksForNote(currentNote, allNotes) : [];
 ---
 
-{backlinks.length > 0 ? (
+{outgoing.length > 0 ? (
   <ul class="m-0 p-0 list-none space-y-2.5 font-mono text-xs">
-    {backlinks.map((note) => (
+    {outgoing.map((note) => (
       <li class="flex items-start gap-1">
-        <CornerLeftUp size={12} class="mt-0.5 text-text-muted shrink-0" />
+        <CornerRightDown size={12} class="mt-0.5 text-text-muted shrink-0" />
         <a 
           href={`/notes/${note.id}`} 
           class="text-foreground/80 hover:text-primary transition-colors duration-150 break-all leading-tight"
@@ -28,6 +29,5 @@ const backlinks = getBacklinksForNote(currentSlug, allNotes);
     ))}
   </ul>
 ) : (
-  <div class="text-xs text-text-muted/50 font-mono italic pl-4">无上游引用</div>
+  <div class="text-xs text-text-muted/50 font-mono italic pl-4">无下游关联</div>
 )}
-

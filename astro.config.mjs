@@ -13,11 +13,12 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   i18n: {
     defaultLocale: "zh",
-    locales: ["zh", "en"],
+    locales: ["zh"],
     routing: {
       prefixDefaultLocale: false
     }
   },
+
   adapter: cloudflare(),
 
   site: process.env.PUBLIC_SITE_URL || 'https://digital-biome.netlify.app/',
