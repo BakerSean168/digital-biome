@@ -1,32 +1,19 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getPublicAssets, getPublicNotes, getAssetHref } from '../../utils/notes';
+import { getPublicAssets, getAssetHref } from '../../utils/notes';
 
-const noteEntries = await getPublicNotes();
 const assetEntries = await getPublicAssets();
 
-const results = [
-  ...assetEntries.map(entry => ({
-    id: entry.data.asset_id!,
-    scope: 'assets',
-    kind: entry.data.asset_type!,
-    label: entry.data.asset_type!,
-    title: entry.data.title,
-    description: entry.data.description || '',
-    tags: entry.data.tags || [],
-    href: getAssetHref(entry.data),
-  })),
-  ...noteEntries.map(entry => ({
-    id: entry.id,
-    scope: 'notes',
-    kind: 'note',
-    label: 'note',
-    title: entry.data.title,
-    description: entry.data.description || '',
-    tags: entry.data.tags || [],
-    href: `/notes/${entry.id}`,
-  })),
-];
+const assetResults = assetEntries.map(entry => ({
+  id: entry.data.asset_id!,
+  scope: 'assets',
+  kind: entry.data.asset_type!,
+  label: entry.data.asset_type!,
+  title: entry.data.title,
+  description: entry.data.description || '',
+  tags: entry.data.tags || [],
+  href: getAssetHref(entry.data),
+}));
 
 const initialQuery = Astro.url.searchParams.get('q') || '';
 const initialScope = Astro.url.searchParams.get('scope') || 'all';
@@ -66,16 +53,40 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
       <div id="discover-empty" class="hidden rounded-3xl border border-dashed border-border bg-card/40 px-6 py-10 text-sm text-muted-foreground">
         没有匹配结果，试试更短的关键词，或者切换到“全部”范围。
       </div>
+      <div id="discover-dev-warning" class="hidden rounded-3xl border border-amber-500/20 bg-amber-500/5 p-6 text-sm text-amber-500 mt-4">
+        ⚠️ 开发环境下未检测到 Pagefind 索引，目前仅展示资产数据。如需验证完整的知识笔记搜索，请先执行 <code>pnpm build</code> 进行打包。
+      </div>
     </section>
   </main>
 </BaseLayout>
 
-<script define:vars={{ results, initialQuery, initialScope }}>
+<script define:vars={{ assetResults, initialQuery, initialScope }}>
   const queryInput = document.getElementById('discover-query');
   const scopeInput = document.getElementById('discover-scope');
   const resultsEl = document.getElementById('discover-results');
   const countEl = document.getElementById('discover-count');
   const emptyEl = document.getElementById('discover-empty');
+  const devWarningEl = document.getElementById('discover-dev-warning');
+
+  let pagefind = null;
+
+  async function loadPagefind() {
+    if (pagefind) return pagefind;
+    try {
+      // @ts-ignore
+      pagefind = await import('/pagefind/pagefind.js');
+      // @ts-ignore
+      await pagefind.init();
+      devWarningEl?.classList.add('hidden');
+      return pagefind;
+    } catch (e) {
+      console.warn('Pagefind is not available in dev mode.', e);
+      if (queryInput?.value.trim()) {
+        devWarningEl?.classList.remove('hidden');
+      }
+      return null;
+    }
+  }
 
   function render(items) {
     if (!resultsEl || !countEl || !emptyEl) return;
@@ -100,7 +111,7 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
           <span class="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-primary">${item.label}</span>
           <span class="text-xs text-muted-foreground">${item.scope}</span>
         </div>
-        <h2 class="text-xl font-semibold text-foreground">${item.title}</h2>
+        <h2 class="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">${item.title}</h2>
         <p class="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">${item.description || '暂无描述'}</p>
         <div class="mt-4 flex flex-wrap gap-2">
           ${(item.tags || []).slice(0, 4).map(tag => `<span class="rounded-full bg-pane px-2.5 py-1 text-xs text-muted-foreground">#${tag.includes('/') ? tag.split('/').pop() : tag}</span>`).join('')}
@@ -112,19 +123,11 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
     resultsEl.appendChild(fragment);
   }
 
-  function filterResults() {
+  async function filterResults() {
     const query = (queryInput?.value || '').trim().toLowerCase();
     const scope = scopeInput?.value || 'all';
 
-    const filtered = results.filter(item => {
-      const matchesScope = scope === 'all' || item.scope === scope;
-      const haystack = [item.title, item.description, item.id, ...(item.tags || [])]
-        .join(' ')
-        .toLowerCase();
-      const matchesQuery = !query || haystack.includes(query);
-      return matchesScope && matchesQuery;
-    });
-
+    // 1. Update URL search params
     const url = new URL(window.location.href);
     if (query) {
       url.searchParams.set('q', query);
@@ -138,11 +141,103 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
     }
     window.history.replaceState({}, '', url);
 
-    render(filtered);
+    // 2. Query empty state
+    if (!query) {
+      devWarningEl?.classList.add('hidden');
+      if (scope === 'notes') {
+        render([]);
+        if (countEl) countEl.textContent = '请输入关键词开始搜索 2400+ 篇知识笔记...';
+      } else {
+        // Show assets when empty query
+        const filteredAssets = assetResults.filter(item => {
+          return scope === 'all' || item.scope === scope;
+        });
+        render(filteredAssets);
+      }
+      return;
+    }
+
+    // 3. Try searching notes and assets via Pagefind
+    const pf = await loadPagefind();
+    if (pf) {
+      devWarningEl?.classList.add('hidden');
+      try {
+        const search = await pf.search(query);
+        const rawResults = await Promise.all(search.results.map(r => r.data()));
+        
+        const formatted = rawResults.map(item => {
+          const itemUrl = item.url;
+          let itemScope = 'notes';
+          let label = 'note';
+          
+          if (itemUrl.includes('/services/')) {
+            itemScope = 'assets';
+            label = 'service';
+          } else if (itemUrl.includes('/tools/')) {
+            itemScope = 'assets';
+            label = 'tool';
+          } else if (itemUrl.includes('/infrastructure/')) {
+            itemScope = 'assets';
+            label = 'host';
+          }
+          
+          // Use Pagefind's excerpt
+          const description = item.excerpt || '';
+          const title = item.meta?.title || itemUrl.split('/').pop()?.replace(/-/g, ' ') || 'Untitled';
+          
+          return {
+            id: itemUrl,
+            scope: itemScope,
+            kind: label,
+            label: label,
+            title: title,
+            description: description,
+            tags: [],
+            href: itemUrl,
+          };
+        });
+
+        const filtered = formatted.filter(item => {
+          if (scope === 'all') return true;
+          return item.scope === scope;
+        });
+
+        render(filtered);
+        return;
+      } catch (err) {
+        console.error('Error querying Pagefind:', err);
+      }
+    }
+
+    // 4. Fallback search (only searches assets in memory)
+    devWarningEl?.classList.remove('hidden');
+    const filteredAssets = assetResults.filter(item => {
+      const matchesScope = scope === 'all' || item.scope === scope;
+      const haystack = [item.title, item.description, item.id, ...(item.tags || [])]
+        .join(' ')
+        .toLowerCase();
+      const matchesQuery = haystack.includes(query);
+      return matchesScope && matchesQuery;
+    });
+
+    render(filteredAssets);
   }
 
-  queryInput?.addEventListener('input', filterResults);
+  // Debounce helper
+  let debounceTimeout = null;
+  function handleInput() {
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      filterResults();
+    }, 150);
+  }
+
+  queryInput?.addEventListener('input', handleInput);
   scopeInput?.addEventListener('change', filterResults);
-  render(results);
+
+  // Initial load
+  if (queryInput && initialQuery) {
+    queryInput.value = initialQuery;
+  }
   filterResults();
 </script>

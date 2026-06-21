@@ -1,0 +1,351 @@
+---
+// TagNetworkGraph.astro
+// Canvas-based interactive physics force-directed tag constellation
+interface Props {
+  tags: [string, number][];
+}
+
+const { tags } = Astro.props;
+
+// Serialize tag data for client-side
+const tagData = tags.map(([name, count]) => ({
+  name,
+  count,
+  slug: encodeURIComponent(name)
+}));
+---
+
+<div class="w-full h-80 relative bg-background-secondary/40 border border-border rounded-2xl overflow-hidden group/canvas shadow-inner">
+  <!-- Interactive instructions overlay -->
+  <div class="absolute top-3 left-3 text-[9px] font-mono text-muted-foreground/60 select-none pointer-events-none uppercase tracking-wider">
+    Interactive Knowledge Net / 拖拽图谱
+  </div>
+  
+  <canvas id="tag-graph-canvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+</div>
+
+<script define:vars={{ tagData }}>
+  const canvas = document.getElementById('tag-graph-canvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    let nodes = [];
+    let edges = [];
+    let width = canvas.clientWidth;
+    let height = canvas.clientHeight;
+    
+    let dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+    
+    // Initialize nodes
+    tagData.forEach((tag, idx) => {
+      const angle = (idx / tagData.length) * Math.PI * 2;
+      const radius = 70 + Math.random() * 30;
+      nodes.push({
+        id: tag.name,
+        name: tag.name,
+        slug: tag.slug,
+        count: tag.count,
+        x: width / 2 + Math.cos(angle) * radius,
+        y: height / 2 + Math.sin(angle) * radius,
+        vx: 0,
+        vy: 0,
+        r: Math.max(22, Math.min(36, 18 + Math.sqrt(tag.count) * 2)),
+        isHovered: false,
+        isDragging: false,
+        color: getRandomNeonColor(idx)
+      });
+    });
+
+    // Create simple connections (edges) to form a constellation/ring network
+    for (let i = 0; i < nodes.length; i++) {
+      edges.push({ source: nodes[i], target: nodes[(i + 1) % nodes.length] });
+      if (nodes.length > 5 && i % 2 === 0) {
+        const targetIdx = (i + Math.floor(nodes.length / 2)) % nodes.length;
+        edges.push({ source: nodes[i], target: nodes[targetIdx] });
+      }
+    }
+
+    function getRandomNeonColor(idx) {
+      const colors = [
+        '#10b981', // emerald
+        '#06b6d4', // cyan
+        '#3b82f6', // blue
+        '#8b5cf6', // violet
+        '#d946ef', // fuchsia
+        '#f59e0b', // amber
+      ];
+      return colors[idx % colors.length];
+    }
+
+    let draggedNode = null;
+    let dragOffset = { x: 0, y: 0 };
+    let initialTouchPos = { x: 0, y: 0 };
+
+    // Physics parameters
+    const damping = 0.85;
+    const repulsionStrength = 220;
+    const gravityStrength = 0.025;
+    const edgeStrength = 0.02;
+    const restDistance = 100;
+
+    function resize() {
+      if (!canvas) return;
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+    }
+
+    window.addEventListener('resize', resize);
+
+    // Physics update loop
+    function updatePhysics() {
+      // 1. Repulsion between nodes
+      for (let i = 0; i < nodes.length; i++) {
+        const n1 = nodes[i];
+        for (let j = i + 1; j < nodes.length; j++) {
+          const n2 = nodes[j];
+          const dx = n2.x - n1.x;
+          const dy = n2.y - n1.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          
+          if (dist < 200) {
+            const force = (repulsionStrength / (dist * dist)) * 2.5;
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            
+            if (!n1.isDragging) {
+              n1.vx -= fx;
+              n1.vy -= fy;
+            }
+            if (!n2.isDragging) {
+              n2.vx += fx;
+              n2.vy += fy;
+            }
+          }
+        }
+      }
+
+      // 2. Attraction of connected edges (spring force)
+      edges.forEach(edge => {
+        const n1 = edge.source;
+        const n2 = edge.target;
+        const dx = n2.x - n1.x;
+        const dy = n2.y - n1.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        
+        const force = (dist - restDistance) * edgeStrength;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        
+        if (!n1.isDragging) {
+          n1.vx += fx;
+          n1.vy += fy;
+        }
+        if (!n2.isDragging) {
+          n2.vx -= fx;
+          n2.vy -= fy;
+        }
+      });
+
+      // 3. Gravity/Center attraction & Update positions
+      nodes.forEach(node => {
+        if (node.isDragging) return;
+
+        // Attract to center of canvas
+        const dx = width / 2 - node.x;
+        const dy = height / 2 - node.y;
+        node.vx += dx * gravityStrength;
+        node.vy += dy * gravityStrength;
+
+        // Apply velocities
+        node.x += node.vx;
+        node.y += node.vy;
+
+        // Friction damping
+        node.vx *= damping;
+        node.vy *= damping;
+
+        // Boundary constraints
+        node.x = Math.max(node.r + 5, Math.min(width - node.r - 5, node.x));
+        node.y = Math.max(node.r + 5, Math.min(height - node.r - 5, node.y));
+      });
+    }
+
+    // Render loop
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw background grid lines (cyber style matching site grid)
+      ctx.strokeStyle = 'rgba(0, 255, 144, 0.015)';
+      ctx.lineWidth = 1;
+      const gridSize = 24;
+      for (let x = 0; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Draw edges
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+      ctx.lineWidth = 1;
+      edges.forEach(edge => {
+        ctx.beginPath();
+        ctx.moveTo(edge.source.x, edge.source.y);
+        ctx.lineTo(edge.target.x, edge.target.y);
+        ctx.stroke();
+      });
+
+      // Draw nodes
+      nodes.forEach(node => {
+        ctx.save();
+        
+        if (node.isHovered || node.isDragging) {
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = node.color;
+        } else {
+          ctx.shadowBlur = 4;
+          ctx.shadowColor = 'rgba(0,0,0,0.15)';
+        }
+
+        ctx.fillStyle = '#0f172a'; // Match card base bg-dark
+        ctx.strokeStyle = node.color;
+        ctx.lineWidth = node.isHovered ? 2.5 : 1.5;
+        
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.restore();
+
+        // Draw tag text label
+        ctx.fillStyle = node.isHovered ? node.color : 'rgba(226, 232, 240, 0.8)';
+        ctx.font = 'bold 9px font-mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Draw leaf tag
+        const displayLabel = node.name.includes('/') ? node.name.split('/').pop() : node.name;
+        ctx.fillText(displayLabel, node.x, node.y);
+      });
+    }
+
+    function loop() {
+      updatePhysics();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function handleStart(e) {
+      const pos = getMousePos(e);
+      let clickedNode = null;
+      
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        const node = nodes[i];
+        const dx = node.x - pos.x;
+        const dy = node.y - pos.y;
+        if (dx * dx + dy * dy < node.r * node.r) {
+          clickedNode = node;
+          break;
+        }
+      }
+
+      if (clickedNode) {
+        draggedNode = clickedNode;
+        draggedNode.isDragging = true;
+        dragOffset.x = pos.x - draggedNode.x;
+        dragOffset.y = pos.y - draggedNode.y;
+        initialTouchPos.x = pos.x;
+        initialTouchPos.y = pos.y;
+        
+        // Prevent default touch actions (like scroll)
+        if (e.cancelable) e.preventDefault();
+      }
+    }
+
+    function handleMove(e) {
+      const pos = getMousePos(e);
+      
+      if (draggedNode) {
+        draggedNode.x = pos.x - dragOffset.x;
+        draggedNode.y = pos.y - dragOffset.y;
+        draggedNode.vx = 0;
+        draggedNode.vy = 0;
+        if (e.cancelable) e.preventDefault();
+        return;
+      }
+
+      let currentHover = null;
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        const node = nodes[i];
+        const dx = node.x - pos.x;
+        const dy = node.y - pos.y;
+        if (dx * dx + dy * dy < node.r * node.r) {
+          currentHover = node;
+          break;
+        }
+      }
+
+      nodes.forEach(node => {
+        node.isHovered = (node === currentHover);
+      });
+      
+      if (currentHover) {
+        canvas.style.cursor = 'pointer';
+      } else {
+        canvas.style.cursor = 'grab';
+      }
+    }
+
+    function handleEnd(e) {
+      if (draggedNode) {
+        draggedNode.isDragging = false;
+        
+        const pos = getMousePos(e);
+        const dx = pos.x - initialTouchPos.x;
+        const dy = pos.y - initialTouchPos.y;
+        
+        // If movement is very small, treat it as a click/tap and navigate
+        if (Math.sqrt(dx * dx + dy * dy) < 6) {
+          window.location.href = `/notes?tag=${encodeURIComponent(draggedNode.name)}`;
+        }
+        
+        draggedNode = null;
+      }
+    }
+
+    canvas.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+
+    canvas.addEventListener('touchstart', handleStart, { passive: false });
+    canvas.addEventListener('touchmove', handleMove, { passive: false });
+    canvas.addEventListener('touchend', handleEnd);
+
+    loop();
+  }
+</script>

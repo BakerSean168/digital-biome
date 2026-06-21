@@ -1,0 +1,220 @@
+---
+/**
+ * 近期萌芽组件 (RecentSprouts)
+ * 动态拉取最新的 5 篇知识笔记或生活感悟，
+ * 以 5 列高对比度的毛玻璃图片卡片网格形式，展现最新内容动态。
+ */
+import { getCollection } from 'astro:content';
+import { Calendar, Eye, ArrowUpRight } from '@lucide/astro';
+
+// 定义萌芽数据结构
+interface SproutItem {
+  type: string;
+  label: string;
+  color: string;
+  title: string;
+  desc: string;
+  time: string;
+  stat: string;
+  slug: string;
+  bg: string;
+}
+
+// 兜底静态数据 (在未同步本地笔记时展示)
+const staticSprouts: SproutItem[] = [
+  {
+    type: 'Note',
+    label: '思考',
+    color: '#00d8ff', // 思想蓝
+    title: '关于「专注力」的重新定义',
+    desc: '在信息过载的时代，如何守护自己的心智边界与静谧自留地。',
+    time: '2 天前',
+    stat: '1.2k 字',
+    slug: '/notes',
+    bg: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=300&q=80'
+  },
+  {
+    type: 'Game',
+    label: '游戏',
+    color: '#ff9000', // 生活橘
+    title: '《艾尔登法环》DLC 通关随记',
+    desc: '黄金树幽影之下，褪色者的意志与复杂战斗交互设计的碎片反思。',
+    time: '1 天前',
+    stat: 'Steam',
+    slug: '/notes',
+    bg: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=300&q=80'
+  },
+  {
+    type: 'Movie',
+    label: '电影',
+    color: '#ff9000',
+    title: '《沙丘 2》：命运与选择',
+    desc: '在宏大叙事与黄沙美学中寻找人性的微光，镜头构图极度震撼。',
+    time: '3 天前',
+    stat: '影评',
+    slug: '/notes',
+    bg: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=300&q=80'
+  },
+  {
+    type: 'Music',
+    label: '音乐',
+    color: '#ff9000',
+    title: '春日歌单 · 温柔与希望',
+    desc: '收集了这个季节最治愈的旋律，静静听完，治愈且充满力量。',
+    time: '5 天前',
+    stat: '23 首歌',
+    slug: '/notes',
+    bg: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=300&q=80'
+  },
+  {
+    type: 'Project',
+    label: '项目',
+    color: '#00ff90', // 开发绿
+    title: 'Lumen Theme v1.2 发布',
+    desc: '为热爱深夜写代码的开发者专门打磨的高对比度护眼深色代码主题。',
+    time: '1 周前',
+    stat: 'GitHub',
+    slug: '/services',
+    bg: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=300&q=80'
+  }
+];
+
+let displaySprouts = staticSprouts;
+
+try {
+  const allNotes = await getCollection('notes');
+  const publicNotes = allNotes
+    .filter(note => !note.id.startsWith('.'))
+    .sort((a, b) => {
+      const dateA = new Date(a.data.updated || a.data.date || 0);
+      const dateB = new Date(b.data.updated || b.data.date || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+  if (publicNotes.length > 0) {
+    // 动态映射真实的笔记到卡片中
+    const realSprouts = publicNotes.slice(0, 5).map((note, index) => {
+      // 区分类型
+      const tags = note.data.tags || [];
+      let type = 'Note';
+      let label = '思考';
+      let color = '#00d8ff'; // 思想蓝
+      let bg = staticSprouts[index % 5].bg; // 用静态美图兜底
+
+      const tagString = tags.join('/').toLowerCase();
+      if (tagString.includes('game') || tagString.includes('gaming')) {
+        type = 'Game';
+        label = '游戏';
+        color = '#ff9000';
+      } else if (tagString.includes('movie') || tagString.includes('cinema')) {
+        type = 'Movie';
+        label = '电影';
+        color = '#ff9000';
+      } else if (tagString.includes('music') || tagString.includes('song')) {
+        type = 'Music';
+        label = '音乐';
+        color = '#ff9000';
+      } else if (tagString.includes('tech') || tagString.includes('dev') || tagString.includes('build')) {
+        type = 'Project';
+        label = '项目';
+        color = '#00ff90';
+      }
+
+      // 获取更新时间
+      const date = note.data.updated || note.data.date;
+      const timeStr = date ? new Date(date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) : '近期';
+
+      return {
+        type,
+        label,
+        color,
+        title: note.data.title || note.id,
+        desc: note.data.description || '点击阅读这篇关于 ' + (note.data.title || note.id) + ' 的深度内容笔记沉淀。',
+        time: timeStr,
+        stat: `${note.body ? Math.round(note.body.length / 2) : 500} 字`,
+        slug: `/notes/${note.slug}`,
+        bg
+      };
+    });
+
+    // 如果拉出来的笔记少于 5，用静态的补全
+    if (realSprouts.length < 5) {
+      displaySprouts = [...realSprouts, ...staticSprouts.slice(realSprouts.length)];
+    } else {
+      displaySprouts = realSprouts;
+    }
+  }
+} catch (e) {
+  console.warn("Failed to load real sprouts, fallback to static: ", e);
+}
+---
+
+<section class="max-w-7xl mx-auto px-4 md:px-6 mt-16 md:mt-24 pb-12">
+  
+  <!-- 标题区 -->
+  <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-col gap-1.5">
+      <h3 class="text-lg font-bold font-mono text-text-main flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-primary/20 border border-primary flex items-center justify-center">
+          <span class="w-1 h-1 rounded-full bg-primary animate-ping"></span>
+        </span>
+        🌱 近期萌芽
+      </h3>
+      <p class="text-xs text-text-muted">我生命不同维度的成长脉搏：最新的随笔、体验与实验构建</p>
+    </div>
+    
+    <a href="/notes" class="text-xs font-mono text-primary hover:text-primary-hover flex items-center gap-1 transition-colors group">
+      View all 
+      <ArrowUpRight size={14} class="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+    </a>
+  </div>
+
+  <!-- 5 列高对比度卡片网格 -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+    {displaySprouts.map(item => (
+      <a 
+        href={item.slug} 
+        class="group relative bg-bg-panel border border-border-soft rounded-2xl overflow-hidden hover:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all duration-300 flex flex-col justify-between h-84 shadow-lg"
+      >
+        <!-- 图片背景 (Hover 时模糊和尺度渐变) -->
+        <div 
+          class="absolute inset-0 bg-cover bg-center opacity-[0.14] group-hover:opacity-[0.26] group-hover:scale-105 transition-all duration-500 filter grayscale group-hover:grayscale-0"
+          style={`background-image: url(${item.bg})`}
+        ></div>
+        <!-- 渐变阴影保障绝对的可读性 -->
+        <div class="absolute inset-0 bg-gradient-to-t from-bg-deep via-bg-deep/80 to-transparent z-10"></div>
+        
+        <!-- 卡片前景容器 -->
+        <div class="relative z-20 p-5 flex flex-col justify-between h-full">
+          <div>
+            <!-- 类型小胶囊 -->
+            <span 
+              class="inline-block text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border"
+              style={`color: ${item.color}; border-color: ${item.color}35; background: ${item.color}08`}
+            >
+              {item.type} / {item.label}
+            </span>
+            
+            <!-- 标题 -->
+            <h4 class="text-sm font-bold text-text-main group-hover:text-primary leading-snug transition-colors line-clamp-2 mt-4">
+              {item.title}
+            </h4>
+            
+            <!-- 简介 -->
+            <p class="text-[11px] text-text-muted mt-2 line-clamp-3 leading-relaxed opacity-85 group-hover:opacity-100 transition-opacity">
+              {item.desc}
+            </p>
+          </div>
+          
+          <!-- 卡片底部元数据 -->
+          <div class="flex justify-between items-center text-[10px] font-mono text-text-muted mt-4 border-t border-border-soft/40 pt-3">
+            <span>{item.time} · {item.stat}</span>
+            <span class="w-6 h-6 rounded-full bg-border-soft/60 group-hover:bg-primary/20 group-hover:text-primary flex items-center justify-center transition-all duration-300">
+              →
+            </span>
+          </div>
+        </div>
+      </a>
+    ))}
+  </div>
+</section>

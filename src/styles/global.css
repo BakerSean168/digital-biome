@@ -17,6 +17,14 @@
   
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+
+  /* Biome Tree Specific Branches Colors */
+  --color-branch-dev: hsl(152, 90%, 42%);
+  --color-branch-life: hsl(28, 95%, 52%);
+  --color-branch-mind: hsl(196, 95%, 48%);
+  --color-glow-root: hsl(170, 90%, 45%);
+  --color-branch-lab: hsl(180, 95%, 45%);
+  --color-branch-about: hsl(0, 0%, 95%);
   
   /* Radii */
   --radius-sm: 4px;
@@ -432,4 +440,53 @@ html.dark {
   .biome-hero-visual {
     min-height: auto;
   }
+}
+
+/* ===== Biome Tree & Soil Search Custom Animations ===== */
+@keyframes root-feed-pulse {
+  0% {
+    stroke-dashoffset: 200;
+  }
+  100% {
+    stroke-dashoffset: -200;
+  }
+}
+
+.cyber-root-path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: root-feed-pulse 6s linear infinite;
+}
+
+@keyframes wind-sway {
+  0% {
+    transform: rotate(-1.2deg) translateY(0);
+  }
+  100% {
+    transform: rotate(1.2deg) translateY(-2px);
+  }
+}
+
+.biome-branch-sway {
+  animation: wind-sway 6s ease-in-out infinite alternate;
+}
+
+.biome-branch-sway-delayed {
+  animation: wind-sway 8s ease-in-out infinite alternate-reverse;
+  animation-delay: -2s;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

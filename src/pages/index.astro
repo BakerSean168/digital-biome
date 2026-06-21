@@ -1,80 +1,79 @@
 ---
 /**
- * 首页 - 导航索引页
+ * 首页 - 数字化生命群落 & 生态树
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SearchBox from '../components/dashboard/SearchBox.astro';
-import AssetSection from '../components/assets/AssetSection.astro';
-import FeaturedBookmarkGrid from '../components/dashboard/FeaturedBookmarkGrid.astro';
-import { getHomepageAssets, getInfrastructureAssets } from '../utils/notes';
+import SoilSearch from '../components/dashboard/SoilSearch.astro';
+import BiomeTree from '../components/dashboard/BiomeTree.astro';
+import RecentSprouts from '../components/dashboard/RecentSprouts.astro';
 import { SITE_NAME } from '../constants';
-
-const services = await getHomepageAssets('services');
-const projects = await getHomepageAssets('projects');
-const infrastructure = await getInfrastructureAssets();
+import { Github, Mail } from '@lucide/astro';
 ---
 
-<BaseLayout title={SITE_NAME} bodyClass="bg-background min-h-screen relative overflow-x-hidden">
-  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.16),transparent_26%),radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.10),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_40%)]"></div>
+<BaseLayout title={SITE_NAME} bodyClass="bg-bg-deep min-h-screen relative overflow-x-hidden">
+  <!-- 精美细腻的背景发光氛围 -->
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(0,255,144,0.06),transparent_35%),radial-gradient(circle_at_20%_20%,rgba(6,182,212,0.04),transparent_25%)]"></div>
+  <div class="fixed inset-0 -z-10 bg-[linear-gradient(180deg,rgba(11,15,25,0.2),transparent_50%)] bg-cyber-grid"></div>
 
-  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-12 md:pt-18 pb-20">
-    <section class="mx-auto max-w-4xl text-center">
-      <p class="text-sm uppercase tracking-[0.3em] text-primary/80">Digital Biome</p>
-      <h1 class="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-        我的服务、工具、主机和知识笔记，汇在一个入口里。
+  <main class="container mx-auto max-w-7xl px-4 md:px-6 pt-10 md:pt-14 pb-20 overflow-visible">
+    
+    <!-- 头部极简宣言区 -->
+    <section class="mx-auto max-w-3xl text-center flex flex-col items-center gap-4">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-mono text-primary tracking-widest animate-pulse-soft">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+        SYSTEM INITIALIZED: ONLINE
+      </div>
+      <h1 class="text-4xl font-extrabold tracking-tight text-text-main sm:text-5xl font-mono mt-2 bg-clip-text text-transparent bg-gradient-to-b from-text-main via-text-main/90 to-text-main/70">
+        心智之根，扎于探索的土壤
       </h1>
-      <p class="mx-auto mt-5 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
-        先搜索，再进入服务；需要状态时跳到监控页，需要上下文时回到知识笔记。
+      <p class="mx-auto max-w-2xl text-xs leading-relaxed text-text-muted font-mono tracking-wide">
+        我是卢楼豪 (BakerSean)，一名热衷于打磨用户体验的全栈工程师。这里是我的自建 Homelab、个人作品集与 1000+ 篇 Obsidian 笔记交织出的数字生态。
       </p>
-      <SearchBox
-        placeholder="搜索资产 / 笔记，或用 g / gh / tr 走外部命令…"
-        discoverPath="/discover"
-      />
     </section>
 
-    <div class="mt-16 space-y-14">
-      <section class="space-y-6">
-        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 class="text-2xl font-semibold text-foreground">Tools</h2>
-            <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              首页这里只放少量高频入口。完整分类导航仍然保留在工具页里。
-            </p>
-          </div>
-          <a href="/tools" class="text-sm text-primary transition-colors hover:text-foreground">
-            打开工具导航
-          </a>
+    <!-- 生态大树展示区 (DOM 卡片嵌套在其内部) -->
+    <BiomeTree />
+
+    <!-- 土壤智能搜索框 -->
+    <SoilSearch />
+
+    <!-- 近期萌芽模块 (动态与静态混合网格) -->
+    <RecentSprouts />
+
+    <!-- 底部连接握手区 (Uplink Connection Port) -->
+    <section class="mt-20 max-w-4xl mx-auto px-4">
+      <div class="relative bg-bg-panel/40 backdrop-blur-xl border border-border-soft p-6 md:p-8 rounded-2xl shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden">
+        <div class="absolute top-0 right-0 p-3 text-[10px] font-mono text-primary/30 select-none">
+          PORT_HANDSHAKE: ACTIVE
+        </div>
+        
+        <div class="flex flex-col gap-2 max-w-xl">
+          <h4 class="text-base font-bold font-mono text-text-main flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-primary"></span>
+            ESTABLISH_UPLINK / 建立连接
+          </h4>
+          <p class="text-xs text-text-muted leading-relaxed">
+            物理网卡已就绪。无论是关于 Vue3/React 还原痛点交流、Obsidian 笔记流探讨，还是 Homelab 极客玩法，我的信箱随时欢迎握手。
+          </p>
         </div>
 
-        <FeaturedBookmarkGrid />
-      </section>
+        <div class="flex flex-wrap gap-3 shrink-0">
+          <a href="mailto:bakersean@foxmail.com" class="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/40 text-primary text-xs font-mono rounded-lg transition-all">
+            <Mail size={14} /> mailto:bakersean@foxmail.com
+          </a>
+          <a href="https://github.com/BakerSean168" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 px-4 py-2 bg-border-soft hover:bg-border-soft/80 border border-border-soft text-text-main text-xs font-mono rounded-lg transition-all">
+            <Github size={14} /> GitHub
+          </a>
+        </div>
+      </div>
+    </section>
 
-      <AssetSection
-        title="My Services"
-        description="首页只放精选服务。点击详情页可以看到部署说明、关联主机，以及监控入口。"
-        href="/services"
-        assets={services}
-        emptyText="还没有被标记到首页的服务资产。给资产笔记加上 homepage.featured: true 和 section: services 就会出现在这里。"
-      />
-
-      <AssetSection
-        title="Projects & Sites"
-        description="这里放你自己的项目、产品和公开站点。它们本质上也是服务，但展示方式应该更像作品集，而不是运维卡片。"
-        href="/services"
-        hrefLabel="查看项目型服务"
-        assets={projects}
-        emptyText="还没有被标记到 Projects 分区的项目资产。"
-        variant="project"
-      />
-
-      <AssetSection
-        title="Infrastructure"
-        description="主机、网络和整体拓扑从这里进入，逐步过渡到更图形化的家庭网络展示。"
-        href="/infrastructure"
-        hrefLabel="进入基础设施"
-        assets={infrastructure.slice(0, 3)}
-        emptyText="还没有公开的主机或网络资产。"
-      />
-    </div>
   </main>
 </BaseLayout>
+
+<style>
+  .bg-cyber-grid {
+    background-image: radial-gradient(rgba(0, 255, 144, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+</style>

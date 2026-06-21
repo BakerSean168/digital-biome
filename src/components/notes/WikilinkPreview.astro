@@ -1,0 +1,192 @@
+---
+// WikilinkPreview.astro
+// Client-side hover preview card for Obsidian [[wikilinks]]
+---
+
+<div
+  id="wikilink-preview-card"
+  class="fixed hidden z-[999] w-72 md:w-80 bg-card/95 backdrop-blur-md border border-border p-4 rounded-xl shadow-xl transition-all duration-200 pointer-events-none select-none text-left opacity-0"
+>
+  <div id="wikilink-preview-loading" class="flex items-center gap-2 text-xs text-muted-foreground py-2">
+    <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <span class="font-mono text-[10px]">PREVIEW_LOADING...</span>
+  </div>
+  <div id="wikilink-preview-content" class="hidden">
+    <h5 id="wikilink-preview-title" class="text-xs font-bold text-foreground mb-1.5 font-mono tracking-wide border-b border-border pb-1"></h5>
+    <p id="wikilink-preview-desc" class="text-[11px] text-muted-foreground leading-relaxed line-clamp-4 m-0 font-mono"></p>
+  </div>
+</div>
+
+<script>
+  // Simple hover preview mechanism
+  const previewCard = document.getElementById('wikilink-preview-card');
+  const previewLoading = document.getElementById('wikilink-preview-loading');
+  const previewContent = document.getElementById('wikilink-preview-content');
+  const previewTitle = document.getElementById('wikilink-preview-title');
+  const previewDesc = document.getElementById('wikilink-preview-desc');
+
+  const cache = new Map<string, { title: string; desc: string }>();
+  let activeHoverLink: HTMLAnchorElement | null = null;
+  let showTimeout: any = null;
+  let hideTimeout: any = null;
+
+  function registerWikilinks() {
+    const wikilinks = document.querySelectorAll('.wikilink') as NodeListOf<HTMLAnchorElement>;
+
+    wikilinks.forEach(link => {
+      // Avoid duplicate bindings
+      if (link.dataset.previewBound) return;
+      link.dataset.previewBound = 'true';
+
+      link.addEventListener('mouseenter', () => {
+        if (window.innerWidth < 768) return; // Skip on mobile
+
+        if (hideTimeout) clearTimeout(hideTimeout);
+        activeHoverLink = link;
+
+        // Position the card and show loading state
+        showTimeout = setTimeout(() => {
+          showPreview(link);
+        }, 180); // 180ms hover debounce to avoid spamming
+      });
+
+      link.addEventListener('mouseleave', () => {
+        if (showTimeout) clearTimeout(showTimeout);
+        activeHoverLink = null;
+        
+        hideTimeout = setTimeout(() => {
+          hidePreview();
+        }, 200); // 200ms grace period
+      });
+    });
+  }
+
+  // Position the preview card relative to the link element
+  function showPreview(link: HTMLAnchorElement) {
+    if (!previewCard || !previewLoading || !previewContent) return;
+
+    const href = link.getAttribute('href');
+    if (!href) return;
+
+    const rect = link.getBoundingClientRect();
+    const top = rect.bottom + window.scrollY + 6;
+    const left = Math.max(10, Math.min(window.innerWidth - 330, rect.left + window.scrollX - 40));
+
+    previewCard.style.top = `${top}px`;
+    previewCard.style.left = `${left}px`;
+    previewCard.classList.remove('hidden');
+    
+    // Trigger transition reflow
+    void previewCard.offsetWidth;
+    previewCard.classList.remove('opacity-0');
+    previewCard.classList.add('opacity-100');
+    
+    // Show loading initially
+    previewLoading.classList.remove('hidden');
+    previewContent.classList.add('hidden');
+
+    if (cache.has(href)) {
+      renderCardContent(cache.get(href)!);
+    } else {
+      fetchPreviewContent(href);
+    }
+  }
+
+  function hidePreview() {
+    if (previewCard) {
+      previewCard.classList.remove('opacity-100');
+      previewCard.classList.add('opacity-0');
+      setTimeout(() => {
+        // Double check it wasn't re-shown in the meantime
+        if (previewCard.classList.contains('opacity-0')) {
+          previewCard.classList.add('hidden');
+        }
+      }, 200);
+    }
+  }
+
+  function renderCardContent(data: { title: string; desc: string }) {
+    if (!previewLoading || !previewContent || !previewTitle || !previewDesc) return;
+    previewLoading.classList.add('hidden');
+    previewContent.classList.remove('hidden');
+    previewTitle.textContent = data.title;
+    previewDesc.textContent = data.desc;
+  }
+
+  async function fetchPreviewContent(url: string) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network error');
+      
+      const htmlText = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlText, 'text/html');
+      
+      // Extract title and first prose paragraph
+      const titleEl = doc.querySelector('article h1') || doc.querySelector('h1') || doc.querySelector('title');
+      const title = titleEl ? titleEl.textContent?.trim() : 'Untitled Note';
+      
+      // Find first paragraph inside prose article
+      const proseContainer = doc.querySelector('.prose') || doc.querySelector('article') || doc.body;
+      let desc = '';
+      if (proseContainer) {
+        // Filter out empty paragraphs
+        const paragraphs = proseContainer.querySelectorAll('p');
+        for (const p of paragraphs) {
+          const text = p.textContent?.trim();
+          if (text && text.length > 10) {
+            desc = text;
+            break;
+          }
+        }
+      }
+      
+      if (!desc) {
+        desc = '该笔记暂无描述或预览内容。';
+      } else if (desc.length > 160) {
+        desc = desc.slice(0, 160) + '...';
+      }
+
+      const cleanData = {
+        title: title || '未命名笔记',
+        desc: desc
+      };
+
+      cache.set(url, cleanData);
+
+      // Make sure the user is still hovering this exact link
+      if (activeHoverLink && activeHoverLink.getAttribute('href') === url) {
+        renderCardContent(cleanData);
+      }
+    } catch (err) {
+      console.error('Failed to fetch wikilink preview:', err);
+      const fallbackData = {
+        title: url.split('/').pop()?.replace(/-/g, ' ') || '笔记预览',
+        desc: '无法加载预览内容。'
+      };
+      cache.set(url, fallbackData);
+      if (activeHoverLink && activeHoverLink.getAttribute('href') === url) {
+        renderCardContent(fallbackData);
+      }
+    }
+  }
+
+  // Setup observer for dynamically loaded pages
+  const observer = new MutationObserver(() => {
+    registerWikilinks();
+  });
+
+  document.addEventListener('astro:page-load', () => {
+    registerWikilinks();
+    const mainEl = document.querySelector('main') || document.body;
+    observer.observe(mainEl, { childList: true, subtree: true });
+  });
+
+  // Initial register
+  registerWikilinks();
+  const mainEl = document.querySelector('main') || document.body;
+  observer.observe(mainEl, { childList: true, subtree: true });
+</script>

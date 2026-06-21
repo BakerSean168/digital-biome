@@ -1,0 +1,312 @@
+---
+/**
+ * 数字化生态树组件 (BiomeTree)
+ * 基于 1:1 坐标轴对齐的高保真赛博生态树组件，
+ * 将 CSS Screen 混合底图与 SVG 嵌套式交互果实相结合。
+ */
+import { getCollection } from 'astro:content';
+import { Book, Code, Gamepad2, User, Sparkles } from '@lucide/astro';
+
+// 动态获取真实 Obsidian 笔记总数
+let notesCount = 1042;
+try {
+  const allNotes = await getCollection('notes');
+  const publicNotes = allNotes.filter(note => !note.id.startsWith('.'));
+  if (publicNotes.length > 0) {
+    notesCount = publicNotes.length;
+  }
+} catch (e) {
+  console.warn("Failed to load notes count: ", e);
+}
+---
+
+<div class="relative w-full max-w-4xl mx-auto aspect-square overflow-visible flex items-center justify-center select-none mt-4 md:mt-6 px-4">
+  
+  <!-- 0. 大树底图图层 (Layer 2) - 使用 screen 滤色模式过滤黑色背景，渲染出无瑕疵的亮部发光 -->
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+    <img 
+      src="/assets/images/organic_biome_tree_transparent.webp" 
+      alt="Ecosystem Tree Base" 
+      class="w-[85%] h-[85%] object-contain opacity-85"
+      style="filter: drop-shadow(0px 0px 40px rgba(0, 255, 144, 0.15));"
+    />
+  </div>
+
+  <!-- 1. 生态树 SVG 动态矢量图层 (Layer 3) -->
+  <svg viewBox="0 0 800 800" class="absolute inset-0 w-full h-full overflow-visible z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- 高保真霓虹发光滤镜 -->
+      <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="6" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+
+    <!-- 图层 C: 交互果实节点 (Fruit Nodes - 发光呼吸徽章，嵌套结构防止 CSS transform 冲掉位移) -->
+    
+    <!-- 节点 1: MIND 思维之枝 (树冠中心偏上) -->
+    <g transform="translate(385, 200)">
+      <g class="fruit-node group cursor-pointer biome-branch-sway" data-target="notes-card">
+        <circle cx="0" cy="0" r="22" fill="#070a13" stroke="var(--color-branch-mind)" stroke-width="2.5" filter="url(#neon-glow)" class="animate-pulse-soft"/>
+        <circle cx="0" cy="0" r="2" fill="var(--color-branch-mind)" filter="url(#neon-glow)"/>
+        <text x="0" y="4" text-anchor="middle" font-size="12" class="select-none">📓</text>
+        <text x="0" y="-32" text-anchor="middle" class="fill-text-main font-mono text-[9px] font-bold tracking-[0.2em] opacity-80 group-hover:opacity-100 group-hover:fill-branch-mind transition-all duration-300">MIND</text>
+      </g>
+    </g>
+
+    <!-- 节点 2: DEV 创造之枝 (左侧粗枝末端) -->
+    <g transform="translate(250, 305)">
+      <g class="fruit-node group cursor-pointer biome-branch-sway-delayed" data-target="builds-card">
+        <circle cx="0" cy="0" r="20" fill="#070a13" stroke="var(--color-branch-dev)" stroke-width="2" filter="url(#neon-glow)" class="animate-pulse-soft"/>
+        <circle cx="0" cy="0" r="2" fill="var(--color-branch-dev)" filter="url(#neon-glow)"/>
+        <text x="0" y="4" text-anchor="middle" font-size="11" class="select-none">💻</text>
+        <text x="0" y="32" text-anchor="middle" class="fill-text-main font-mono text-[9px] font-bold tracking-[0.2em] opacity-80 group-hover:opacity-100 group-hover:fill-branch-dev transition-all duration-300">DEV</text>
+      </g>
+    </g>
+
+    <!-- 节点 3: LIFE 生活与游戏之果 (右侧粗枝末端) -->
+    <g transform="translate(565, 305)">
+      <g class="fruit-node group cursor-pointer biome-branch-sway" data-target="life-card">
+        <circle cx="0" cy="0" r="20" fill="#070a13" stroke="var(--color-branch-life)" stroke-width="2" filter="url(#neon-glow)" class="animate-pulse-soft"/>
+        <circle cx="0" cy="0" r="2" fill="var(--color-branch-life)" filter="url(#neon-glow)"/>
+        <text x="0" y="4" text-anchor="middle" font-size="11" class="select-none">🎮</text>
+        <text x="0" y="32" text-anchor="middle" class="fill-text-main font-mono text-[9px] font-bold tracking-[0.2em] opacity-80 group-hover:opacity-100 group-hover:fill-branch-life transition-all duration-300">LIFE</text>
+      </g>
+    </g>
+
+    <!-- 节点 4: LAB 极客之叶 (开发左侧细分枝梢) -->
+    <g transform="translate(180, 450)">
+      <g class="fruit-node group cursor-pointer biome-branch-sway-delayed" data-target="lab-card">
+        <circle cx="0" cy="0" r="18" fill="#070a13" stroke="var(--color-branch-lab)" stroke-width="2" filter="url(#neon-glow)" class="animate-pulse-soft"/>
+        <circle cx="0" cy="0" r="2" fill="var(--color-branch-lab)" filter="url(#neon-glow)"/>
+        <text x="0" y="3.5" text-anchor="middle" font-size="9" class="select-none">⚙️</text>
+        <text x="0" y="30" text-anchor="middle" class="fill-text-main font-mono text-[8px] font-bold tracking-widest opacity-80 group-hover:opacity-100 group-hover:fill-branch-lab transition-colors duration-300">LAB</text>
+      </g>
+    </g>
+
+    <!-- 节点 5: ABOUT 宿主轮廓 (生活右侧细分枝梢) -->
+    <g transform="translate(580, 475)">
+      <g class="fruit-node group cursor-pointer biome-branch-sway" data-target="about-card">
+        <circle cx="0" cy="0" r="18" fill="#070a13" stroke="var(--color-branch-about)" stroke-width="2" filter="url(#neon-glow)" class="animate-pulse-soft"/>
+        <circle cx="0" cy="0" r="2" fill="var(--color-branch-about)" filter="url(#neon-glow)"/>
+        <text x="0" y="3.5" text-anchor="middle" font-size="9" class="select-none">👤</text>
+        <text x="0" y="30" text-anchor="middle" class="fill-text-main font-mono text-[8px] font-bold tracking-widest opacity-80 group-hover:opacity-100 group-hover:fill-branch-about transition-colors duration-300">ABOUT</text>
+      </g>
+    </g>
+  </svg>
+
+  <!-- 图层 D: 悬浮详情卡片 (DOM Overlays - 绝对定位，完美配合 1:1 树体结构) -->
+
+  <!-- CARD 1: MIND 思维之枝 -->
+  <div id="notes-card" class="detail-card absolute hidden top-[10%] left-[50%] -translate-x-1/2 bg-bg-panel/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-80 md:w-88 z-30 transition-all duration-300">
+    <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-mind to-transparent"></div>
+    <div class="flex items-center gap-2 mb-3">
+      <Book class="text-branch-mind" size={18} />
+      <h4 class="text-sm font-bold font-mono text-text-main">MIND / 思维之枝</h4>
+    </div>
+    <p class="text-[11px] text-text-muted leading-relaxed mb-4">
+      记录我的知识体系与日常思考。已累计灌溉了 <strong class="text-branch-mind font-mono font-bold text-sm">{notesCount}</strong> 篇 Obsidian 沉淀笔记。
+    </p>
+    <div class="flex flex-wrap gap-1.5 mb-4">
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">笔记沉淀</span>
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">知识森林</span>
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">心智地图</span>
+    </div>
+    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
+      <span class="text-text-muted">同步工作流：Obsidian Linter</span>
+      <a href="/notes" class="text-branch-mind hover:underline flex items-center gap-0.5">进入知识库 →</a>
+    </div>
+  </div>
+
+  <!-- CARD 2: DEV 创造之枝 -->
+  <div id="builds-card" class="detail-card absolute hidden top-[28%] left-[1%] md:left-[4%] bg-bg-panel/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-80 md:w-88 z-30 transition-all duration-300">
+    <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-dev to-transparent"></div>
+    <div class="flex items-center gap-2 mb-3">
+      <Code class="text-branch-dev" size={18} />
+      <h4 class="text-sm font-bold font-mono text-text-main">DEV / 创造之枝</h4>
+    </div>
+    <p class="text-[11px] text-text-muted leading-relaxed mb-4">
+      手艺人的作品集。开发追求极致交互的全栈效能中枢 **DailyUse** 及多套高性能工程底座。
+    </p>
+    <div class="flex flex-wrap gap-1.5 mb-4">
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">Vue3 & React</span>
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">Prisma 全栈</span>
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">工程攻坚</span>
+    </div>
+    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
+      <span class="text-text-muted">开发状态：Vibe Coding</span>
+      <a href="/services" class="text-branch-dev hover:underline flex items-center gap-0.5">代表项目 →</a>
+    </div>
+  </div>
+
+  <!-- CARD 3: LIFE 生活之枝 -->
+  <div id="life-card" class="detail-card absolute hidden top-[28%] right-[1%] md:right-[4%] bg-bg-panel/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-80 md:w-88 z-30 transition-all duration-300">
+    <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-life to-transparent"></div>
+    <div class="flex items-center gap-2 mb-3">
+      <Gamepad2 class="text-branch-life" size={18} />
+      <h4 class="text-sm font-bold font-mono text-text-main">LIFE / 生命与体验</h4>
+    </div>
+    <p class="text-[11px] text-text-muted leading-relaxed mb-4">
+      生活不止有代码。这里收录了我的游戏日记（Steam 通关评测）、影视推荐（沙丘/电影美学评论）与音乐榜单。
+    </p>
+    <div class="flex flex-wrap gap-1.5 mb-4">
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">Steam 游玩</span>
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">光影电影</span>
+      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">春日歌单</span>
+    </div>
+    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
+      <span class="text-text-muted">状态：热爱可抵岁月漫长</span>
+      <a href="/notes" class="text-branch-life hover:underline flex items-center gap-0.5">生活碎念 →</a>
+    </div>
+  </div>
+
+  <!-- CARD 4: LAB 极客之叶 -->
+  <div id="lab-card" class="detail-card absolute hidden top-[52%] left-[1%] md:left-[4%] bg-bg-panel/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-72 z-30 transition-all duration-300">
+    <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-lab to-transparent"></div>
+    <div class="flex items-center gap-2 mb-2">
+      <Sparkles class="text-branch-lab" size={16} />
+      <h4 class="text-xs font-bold font-mono text-text-main">LAB / 极客实验室</h4>
+    </div>
+    <p class="text-[10px] text-text-muted leading-relaxed mb-3">
+      自建物理底座。汇集了我的家庭网络拓扑、VPS 折腾和自部署服务面板。
+    </p>
+    <div class="pt-2 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
+      <span class="text-text-muted">Uptime: 99.98%</span>
+      <a href="/infrastructure" class="text-text-main hover:underline flex items-center gap-0.5">进入实验室 →</a>
+    </div>
+  </div>
+
+  <!-- CARD 5: ABOUT 宿主年轮 -->
+  <div id="about-card" class="detail-card absolute hidden top-[52%] right-[1%] md:right-[4%] bg-bg-panel/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-72 z-30 transition-all duration-300">
+    <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-about to-transparent"></div>
+    <div class="flex items-center gap-2 mb-2">
+      <User class="text-branch-about" size={16} />
+      <h4 class="text-xs font-bold font-mono text-text-main">ABOUT / 宿主年轮</h4>
+    </div>
+    <p class="text-[10px] text-text-muted leading-relaxed mb-3">
+      卢楼豪，专注于打磨像素级 UI/UX 体验的全栈独立开发者，崇尚优雅的逻辑与美学的共存。
+    </p>
+    <div class="pt-2 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
+      <span class="text-text-muted">定位：数字手艺人</span>
+      <a href="/about" class="text-text-main hover:underline flex items-center gap-0.5">关于我 →</a>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Sheet / Drawer -->
+  <div id="mobile-drawer" class="fixed inset-x-0 bottom-0 z-50 translate-y-full md:hidden transition-transform duration-300 ease-out pb-safe">
+    <div class="mx-auto max-w-md bg-bg-panel/95 backdrop-blur-2xl border-t border-border-soft rounded-t-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.6)] p-6 relative">
+      <!-- Drag handle line -->
+      <div class="w-12 h-1.5 bg-border-soft/60 rounded-full mx-auto mb-5 cursor-pointer" id="mobile-drawer-close-handle"></div>
+      
+      <!-- Content Area -->
+      <div id="mobile-drawer-content" class="text-foreground">
+        <!-- Will be filled dynamically by JS -->
+      </div>
+    </div>
+    <!-- Backdrop for mobile drawer -->
+    <div id="mobile-drawer-backdrop" class="fixed inset-0 -z-10 bg-black/50 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-300"></div>
+  </div>
+
+</div>
+
+<script>
+  // 悬停与触控交互控制 JS 逻辑
+  const fruitNodes = document.querySelectorAll('.fruit-node');
+  const detailCards = document.querySelectorAll('.detail-card');
+  const drawer = document.getElementById('mobile-drawer');
+  const drawerContent = document.getElementById('mobile-drawer-content');
+  const backdrop = document.getElementById('mobile-drawer-backdrop');
+  const closeHandle = document.getElementById('mobile-drawer-close-handle');
+
+  // 显示指定卡片 (Desktop only)
+  function showCard(targetId: string) {
+    if (window.innerWidth < 768) return;
+    detailCards.forEach(c => {
+      if (c.id !== targetId) {
+        c.classList.add('hidden');
+      }
+    });
+    const card = document.getElementById(targetId);
+    if (card) {
+      card.classList.remove('hidden');
+    }
+  }
+
+  // 隐藏所有卡片 (Desktop only)
+  function hideAllCards() {
+    detailCards.forEach(c => c.classList.add('hidden'));
+  }
+
+  // Mobile Drawer 控制
+  function openMobileDrawer(targetId: string) {
+    const card = document.getElementById(targetId);
+    if (card && drawer && drawerContent && backdrop) {
+      drawerContent.innerHTML = card.innerHTML;
+      drawer.classList.remove('translate-y-full');
+      backdrop.classList.remove('pointer-events-none', 'opacity-0');
+      backdrop.classList.add('opacity-100');
+      document.body.style.overflow = 'hidden'; // 阻止背景滚动
+    }
+  }
+
+  function closeMobileDrawer() {
+    if (drawer && backdrop) {
+      drawer.classList.add('translate-y-full');
+      backdrop.classList.remove('opacity-100');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      document.body.style.overflow = '';
+    }
+  }
+
+  fruitNodes.forEach(node => {
+    const targetId = node.getAttribute('data-target');
+    if (!targetId) return;
+
+    // Click/Touch 点击事件
+    node.addEventListener('click', (e) => {
+      if (window.innerWidth < 768) {
+        e.preventDefault();
+        e.stopPropagation();
+        openMobileDrawer(targetId);
+      } else {
+        showCard(targetId);
+      }
+    });
+
+    // Hover 悬停事件
+    node.addEventListener('mouseenter', () => {
+      showCard(targetId);
+    });
+
+    // Hover 移出事件 (带有小延迟，让用户可以把鼠标移进卡片内部进行点击)
+    node.addEventListener('mouseleave', (e) => {
+      const toElement = e.relatedTarget as HTMLElement;
+      if (toElement && toElement.closest('.detail-card')) return;
+      
+      // 延迟微秒隐藏，给鼠标留出移动到 Popover 的缓冲时间
+      setTimeout(() => {
+        const activeHover = document.querySelector('.fruit-node:hover');
+        const activeCardHover = document.querySelector('.detail-card:hover');
+        if (!activeHover && !activeCardHover) {
+          hideAllCards();
+        }
+      }, 100);
+    });
+  });
+
+  // 卡片内部的鼠标事件监听
+  detailCards.forEach(card => {
+    card.addEventListener('mouseleave', (e) => {
+      const toElement = e.relatedTarget as HTMLElement;
+      if (toElement && toElement.closest('.fruit-node')) return;
+      hideAllCards();
+    });
+  });
+
+  // Drawer 关闭点击事件
+  backdrop?.addEventListener('click', closeMobileDrawer);
+  closeHandle?.addEventListener('click', closeMobileDrawer);
+</script>
