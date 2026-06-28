@@ -53,7 +53,7 @@ export default defineConfig({
     },
     remarkPlugins: [
       remarkNormalizeCodeLang,
-      [remarkWikilinks, { hrefTemplate: (/** @type {string} */ slug) => `/notes/obsidian/${slug}` }],
+      [remarkWikilinks, { notesRoot: './src/data/obsidian' }],
     ],
     rehypePlugins: []
   }

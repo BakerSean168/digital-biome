@@ -1,122 +1,81 @@
-# Digital Biome 架构设计
+# Digital Biome 架构设计与集成规范
 
-> 说明：
-> 本文档描述项目当前的总体结构。
-> 如果你要看下一阶段的资产体系与信息架构，请同时阅读 [资产架构设计](./asset-architecture.md)。
+本文档描述 `digital-biome` 前端网站的整体系统架构、同步流水线、查询层设计及与上游 `thought-forest` 知识库的集成规范。
 
-## 架构概览
+---
 
-基于 Obsidian vault 的个人知识站点，同一数据源，多种布局，服务不同场景。
+## 1. 架构概览
+
+`digital-biome` 采用 **“静态元数据索引 + 物理 Markdown 正文”** 的双通道解耦架构。核心链路流程如下：
 
 ```
+┌───────────────────────────────┐
+│     thought-forest 静态索引    │
+│  (asset-index, link-graph等)  │
+└───────────────┬───────────────┘
+                │
+                ▼ [pnpm sync] (物理同步管道)
 ┌─────────────────────────────────────────────────────────────┐
-│                    数据层 (Content Collections)              │
-│   notes/obsidian/          meta/                            │
-│   (Obsidian vault 同步)     (简历等元数据)                    │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│                       数据与缓存层                           │
+│   src/data/obsidian/       src/data/indexes/                │
+│   (Markdown 物理正文)      (上游融合后的静态索引)            │
+└───────┬───────────────────────────────┬─────────────────────┘
+        │                               │
+        │ (正文通道)                     │ (元数据通道)
+        ▼                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    视图层 (Layouts)                          │
-│   DashboardLayout    NotesLayout      BaseLayout            │
-│   极简/工具优先       侧边栏/阅读      通用壳                  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│                    查询隔离层 (Repositories)                 │
+│   notes-repository.ts     assets-repository.ts              │
+│   (按需调用 getEntry)      (静态内存加载 index.json)          │
+└───────────────┬───────────────────────┬─────────────────────┘
+                │                       │
+                └───────────┬───────────┘
+                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    路由层 (Pages)                            │
-│      /              /notes/[...slug]      /about/resume     │
-│   Dashboard          笔记详情              简历               │
+│                    路由与视图层 (Astro Pages)                │
+│       /notes/[...slug]            /infrastructure/[assetId] │
+│      (普通知识笔记详情)             (基础设施资产详情)        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 设计原则
+---
 
-### 1. 静态优先
+## 2. 核心设计原则
 
-- 所有页面在构建时生成 HTML
-- 客户端 JavaScript 最小化
-- Islands Architecture：交互组件按需水合
+### 2.1 静态元数据优先
+* 站内任何**列表查询、全局搜索、MOC 目录、反链查找、标签统计**，均严禁扫描物理文件或调用裸 `getCollection('notes')`。
+* 上述业务一律只读取编译进内存的 `src/data/indexes/` 下的 JSON 数据，确保构建效率和检索速度。
 
-### 2. 内容即数据
+### 2.2 双通道渲染 (Dual-Channel Rendering)
+* 在详情页（如资产详情页）构建时：
+  * **元数据**：由已融合上游字段的 `asset-index.json` 直接提供，保证 Quick Links 和 Monitoring 面板的信息准确性。
+  * **文章正文**：根据 ID 显式调用 Astro 内置的 `getEntry('notes', noteId)` 载入物理 Markdown 文件，并对其调用 `render()` 编译，确保 HTML 渲染的高保真度与代码高亮（Shiki）效果。
 
-- Obsidian vault 为唯一内容来源
-- `pnpm sync` 同步 vault 到 Content Collections
-- YAML frontmatter 定义 schema，支持层级标签
-- 类型安全的查询接口
+### 2.3 运维/配置文档物理屏蔽
+* 在 `knowledge-index-loader.ts` 过滤公开文章时，对以 `obsidian/config/` 开头的 note ID 进行拦截。
+* 同步过来的 AI skills 操作说明、系统指令和 `AGENTS.md` 仅留在后端数据层，无法被公开发布至站点页面，防止语义污染。
 
-### 3. 布局分离
+---
 
-| Layout | 目标用户 | 设计目标 |
-|--------|----------|----------|
-| Dashboard | 自己 | 效率、快速访问 |
-| Notes | 同行/读者 | 沉浸阅读、导航 |
-| Resume | 面试官/甲方 | 视觉冲击、打印友好 |
+## 3. 同步流水线机制 (`scripts/sync/`)
 
-## 数据层
+同步脚本通过分步 Module 实现状态校准：
 
-### Content Collections Schema
+| 模块 | 职责 |
+|---|---|
+| `source-adapter.ts` | 扫描上游目录并拷贝 Markdown 文件到内容库。提供 frontmatter 规范预检，捕获未闭合 YAML 引号等风险。 |
+| `build-indexes.ts` | 扫描并提取同步后的笔记 frontmatter，在本地建立基础 notes/tags 静态索引。 |
+| `merge-asset-index.ts` | 从配置的 `notesConfig.upstream.generatedPath` 读取上游由 gray-matter 解析出的 `asset-index.json`，把 monitor/links/homepage 合并到本地，补齐本地解析器的缺陷。 |
+| `copy-upstream-indexes.ts` | 复制并覆盖上游已解析好的 `link-graph.json`，获取准确的出链与反向链接网络。 |
+| `stale-cleaner.ts` | 检查并清除本地不再对应的陈旧 Markdown 缓存，防止路由死链。 |
 
-```
-src/content/
-├── config.ts              # 集合定义和 schema
-├── notes/obsidian/        # 笔记（同步生成，.gitignored）
-└── meta/                  # 元数据 (resume.yaml)
-```
+---
 
-### 查询模式
+## 4. 路由映射与布局
 
-```typescript
-const notes = await getCollection('notes');
-```
-
-## 视图层
-
-### Dashboard Layout
-
-- 搜索框 + 书签网格 + 快捷链接
-- 无侧边栏，最大化内容区
-
-### Notes Layout
-
-- 左侧：分类导航（按层级标签根维度分组）
-- 右侧：文章大纲 (TOC)
-- 中间：Markdown 渲染 + 反向链接
-
-### Resume Layout
-
-- 无干扰布局
-- 时间轴样式
-- 打印媒体查询优化
-
-## 路由映射
-
-| URL | 页面文件 | Layout |
-|-----|----------|--------|
-| `/` | `pages/index.astro` | DashboardLayout |
-| `/about` | `pages/about/index.astro` | BaseLayout |
-| `/about/resume` | `pages/about/resume.astro` | BaseLayout |
-| `/notes` | `pages/notes/index.astro` | NotesLayout |
-| `/notes/[...slug]` | `pages/notes/[...slug].astro` | NotesLayout |
-
-## 标签系统
-
-笔记使用层级标签（Hierarchical Tags），格式为 `维度/子分类/...`：
-
-| 维度 | 示例 | 用途 |
-|------|------|------|
-| `status/` | `status/growing`, `status/evergreen` | 笔记成熟度 |
-| `tech/` | `tech/lang/typescript`, `tech/ops` | 技术领域分类 |
-| `type/` | `type/concept`, `type/howto`, `type/moc` | 笔记类型 |
-| `life/` | `life/material`, `life/shopping` | 生活相关 |
-| `website/` | `website/video`, `website/dev/tool` | 书签分类 |
-
-## 技术决策
-
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| 框架 | Astro | 静态优先、岛屿架构、零 JS 默认 |
-| 内容管理 | Content Collections | 类型安全、schema 验证、统一查询 |
-| 笔记来源 | Obsidian vault (submodule) | 本地编辑体验、成熟的知识管理生态 |
-| 部署 | Netlify | 边缘函数、自动部署、免费额度 |
-| 包管理 | pnpm | 磁盘效率、严格依赖 |
+| 路由 | 页面源文件 | Layout 壳 | 查询源 |
+|---|---|---|---|
+| `/` | `pages/index.astro` | `DashboardLayout` | BiomeTree (最近创建/更新) 从 index 过滤读取 |
+| `/notes` | `pages/notes/index.astro` | `NotesLayout` | 笔记目录，从 index 中按层级标签提取 |
+| `/notes/[...slug]` | `pages/notes/[...slug].astro` | `NotesLayout` | `notes-repository` 提供路由，`render()` 渲染正文 |
+| `/infrastructure/[assetId]` | `pages/infrastructure/[assetId].astro` | `BaseLayout` | 元数据自 `asset-index.json`，正文从 collection 编译 |
