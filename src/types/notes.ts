@@ -1,7 +1,9 @@
 import type { CollectionEntry } from 'astro:content';
+import type { Visibility, AssetType } from '../domain/foundation/constants';
 
-export type Visibility = 'public' | 'private' | 'internal';
-export type AssetType = 'service' | 'tool' | 'host' | 'network';
+// Re-export primitive type aliases from foundation (single source of truth)
+export type { Visibility, AssetType };
+
 export type AssetRole = 'ops' | 'product' | 'showcase' | 'portal';
 export type HomepageSection = 'services' | 'projects' | 'tools';
 
@@ -111,3 +113,27 @@ export type AssetNoteEntry = Omit<NoteCollectionEntry, 'data'> & {
     asset_type: AssetType;
   };
 };
+
+// Re-export separated data contracts
+export type { AssetNoteData } from './asset';
+
+/**
+ * Narrow a NoteCollectionEntry to an AssetNoteEntry.
+ * An asset must have both `asset_id` and `asset_type` present,
+ * OR live under the obsidian/assets/ path prefix.
+ */
+export function isAssetNoteData(
+  data: NoteCollectionEntry['data']
+): data is AssetNoteEntry['data'] {
+  return Boolean(data.asset_id && data.asset_type);
+}
+
+/**
+ * Check whether a collection entry is a knowledge note (not an asset).
+ * A knowledge note is any note that is NOT an asset.
+ */
+export function isKnowledgeNoteData(
+  data: NoteCollectionEntry['data']
+): boolean {
+  return !isAssetNoteData(data);
+}

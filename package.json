@@ -13,8 +13,10 @@
     "dev:pull": "git submodule update --remote --merge && pnpm sync && astro dev",
     "build": "pnpm sync && astro build && pagefind --site dist && tsx scripts/postbuild.ts",
     "build:only": "astro build && pagefind --site dist && tsx scripts/postbuild.ts",
+    "check": "astro check",
     "preview": "astro preview",
     "sync": "tsx scripts/sync-obsidian.ts",
+    "build:indexes": "tsx scripts/sync/build-indexes.ts",
     "pull-notes": "git submodule update --remote --merge",
     "astro": "astro"
   },

@@ -53,6 +53,9 @@ dist-ssr/
 # Synced notes - generated at build time, do not commit
 src/data/obsidian/
 
+# Generated index JSON - built by pnpm sync, do not commit
+src/data/indexes/
+
 # Synced vault assets - generated at build time, do not commit
 public/vault-assets/
 

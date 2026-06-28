@@ -1,5 +1,6 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { toNoteId } from '../domain/note-routing';
 
 const optionalString = () => z.string().nullable().optional();
 const optionalDate = () => z.union([z.string(), z.date()]).nullable().optional();
@@ -9,14 +10,14 @@ const optionalBooleanish = () => z.union([z.boolean(), z.string()]).nullable().o
 
 /**
  * Notes 笔记集合（统一来源，包含所有 Obsidian 同步笔记）
- * 来源：src/content/notes/obsidian/（由 pnpm sync 从 thought-forest submodule 同步生成）
+ * 来源：src/data/obsidian/（由 pnpm sync 从 thought-forest submodule 同步生成）
  * 使用 glob loader 精确锁定目录，避免与其他子目录产生 id 冲突
  */
 const notes = defineCollection({
   loader: glob({
     pattern: '**/*.md',
     base: './src/data/obsidian',
-    generateId: ({ entry }) => `obsidian/${entry.replace(/\.md$/, '')}`,
+    generateId: ({ entry }) => toNoteId(entry),
   }),
   schema: z.object({
     title: optionalString(),
@@ -67,8 +68,8 @@ const notes = defineCollection({
     title: data.title ?? undefined,
     description: data.description ?? undefined,
     tags: data.tags ?? [],
-    created: data.created ?? undefined,
-    updated: data.updated ?? undefined,
+    created: data.created ? new Date(data.created) : undefined,
+    updated: data.updated ? new Date(data.updated) : undefined,
     draft: data.draft === true || data.draft === 'true',
     private: data.private === true || data.private === 'true',
     visibility: data.visibility ?? undefined,
