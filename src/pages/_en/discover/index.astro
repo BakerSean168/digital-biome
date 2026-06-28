@@ -3,7 +3,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getPublicAssets, getPublicNotes, getAssetHref } from '../../../utils/notes';
 
 const noteEntries = await getPublicNotes();
-const assetEntries = await getPublicAssets();
+const assetEntries = getPublicAssets();
 
 const results = [
   ...assetEntries.map(entry => ({

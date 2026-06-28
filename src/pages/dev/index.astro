@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import AssetSection from '../../components/assets/AssetSection.astro';
 import { getServiceDisplayGroups } from '../../utils/notes';
 
-const { projects } = await getServiceDisplayGroups();
+const { projects } = getServiceDisplayGroups();
 ---
 
 <BaseLayout title="DEV" description="Projects & Development">

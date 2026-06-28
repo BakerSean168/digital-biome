@@ -6,7 +6,7 @@ import { getAssetsByAssetIds, getAssetsByType, getRelatedAssetsByParent, toAsset
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const entries = await getAssetsByType('service');
+  const entries = getAssetsByType('service');
   return entries.map(entry => ({
     params: { assetId: entry.data.asset_id },
     props: { entry },
@@ -23,8 +23,8 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 
 const relatedEntries = entry.data.host_asset_id
-  ? await getAssetsByAssetIds([entry.data.host_asset_id])
-  : await getRelatedAssetsByParent(entry.data.asset_id);
+  ? getAssetsByAssetIds([entry.data.host_asset_id])
+  : getRelatedAssetsByParent(entry.data.asset_id);
 
 const relatedAssets = relatedEntries.map(toAssetCard);
 ---

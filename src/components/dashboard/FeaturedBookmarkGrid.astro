@@ -1,7 +1,7 @@
 ---
 import { getHomepageFeaturedBookmarks } from '../../utils/notes';
 
-const bookmarks = await getHomepageFeaturedBookmarks();
+const bookmarks = getHomepageFeaturedBookmarks();
 ---
 
 {bookmarks.length > 0 ? (

@@ -5,7 +5,7 @@ import { SITE_NAME } from '../../../constants';
 import { getAllNoteTags } from '../../../utils/notes';
 
 // Fetch all tags
-const allTagsMap = await getAllNoteTags();
+const allTagsMap = getAllNoteTags();
 
 // Filter and sort tags
 const filteredTags = Array.from(allTagsMap.entries())

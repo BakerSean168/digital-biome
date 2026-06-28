@@ -8,7 +8,7 @@ import { formatTimeAgo } from '../../../utils/date';
 import ScrollingTagWall from '../../../components/resume/ScrollingTagWall.astro';
 import GitHubContributions from '../../../components/common/GitHubContributions.astro';
 
-const allTagsMap = await getAllNoteTags();
+const allTagsMap = getAllNoteTags();
 
 const filteredTags = Array.from(allTagsMap.entries())
   .filter(([tag]) => {

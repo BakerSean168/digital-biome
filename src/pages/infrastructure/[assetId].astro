@@ -1,13 +1,13 @@
 ---
-import { render } from 'astro:content';
+import { getEntry, render } from 'astro:content';
 import AssetDetailView from '../../components/assets/AssetDetailView.astro';
 import { getAssetsByType, getRelatedAssetsByParent, toAssetCard } from '../../utils/notes';
 
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const hosts = await getAssetsByType('host');
-  const networks = await getAssetsByType('network');
+  const hosts = getAssetsByType('host');
+  const networks = getAssetsByType('network');
   return [...hosts, ...networks].map(entry => ({
     params: { assetId: entry.data.asset_id },
     props: { entry },
@@ -23,9 +23,22 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const { Content } = await render(entry);
-const relatedAssets = (await getRelatedAssetsByParent(entry.data.asset_id)).map(toAssetCard);
-const { resolvedNodes } = await getInfrastructureDataset();
+
+// Dual-channel rendering:
+//   - Metadata (title, tags, monitor, links…) comes from `entry` which is
+//     assembled from the asset-index (enriched with upstream nested fields).
+//   - Body is rendered from the real Astro Collection entry. The compat entry
+//     produced by assets-repository has body: '' and rendered: undefined, so
+//     calling render() on it yields an empty <Content />. We must look up the
+//     real CollectionEntry by note id and render that instead.
+const noteId = entry.id; // e.g. "obsidian/assets/hosts/aliyun-chengdu-dailyuse-vps"
+const realEntry = await getEntry('notes', noteId);
+const { Content } = realEntry
+  ? await render(realEntry)
+  : await render(entry); // fallback: renders empty but doesn't crash
+
+const relatedAssets = getRelatedAssetsByParent(entry.data.asset_id).map(toAssetCard);
+const { resolvedNodes } = getInfrastructureDataset();
 
 // Build sub-topology from related assets
 let subTopology: TopologyTier[] = [];

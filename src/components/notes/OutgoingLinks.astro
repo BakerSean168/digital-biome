@@ -1,5 +1,5 @@
 ---
-import { getPublicNotes, getOutgoingLinksForNote } from '../../utils/notes';
+import { getOutgoingLinksForNote, buildKnowledgeNoteHref } from '../../utils/notes';
 import { CornerRightDown } from '@lucide/astro';
 
 interface Props {
@@ -8,9 +8,7 @@ interface Props {
 
 const { currentSlug } = Astro.props;
 
-const allNotes = await getPublicNotes();
-const currentNote = allNotes.find(note => note.id === currentSlug);
-const outgoing = currentNote ? getOutgoingLinksForNote(currentNote, allNotes) : [];
+const outgoing = getOutgoingLinksForNote(currentSlug);
 ---
 
 {outgoing.length > 0 ? (
@@ -18,12 +16,12 @@ const outgoing = currentNote ? getOutgoingLinksForNote(currentNote, allNotes) : 
     {outgoing.map((note) => (
       <li class="flex items-start gap-1">
         <CornerRightDown size={12} class="mt-0.5 text-text-muted shrink-0" />
-        <a 
-          href={`/notes/${note.id}`} 
+        <a
+          href={buildKnowledgeNoteHref(note.id)}
           class="text-foreground/80 hover:text-primary transition-colors duration-150 break-all leading-tight"
-          title={note.data.description || note.data.title}
+          title={note.description || note.title}
         >
-          {note.data.title}
+          {note.title}
         </a>
       </li>
     ))}

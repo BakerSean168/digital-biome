@@ -6,7 +6,7 @@ import { getAssetsByType, getRelatedAssetsByParent, toAssetCard } from '../../..
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const entries = await getAssetsByType('tool');
+  const entries = getAssetsByType('tool');
   return entries.map(entry => ({
     params: { assetId: entry.data.asset_id },
     props: { entry },
@@ -21,7 +21,7 @@ interface Props {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
-const relatedAssets = (await getRelatedAssetsByParent(entry.data.asset_id)).map(toAssetCard).map(asset => ({ ...asset, href: `/en${asset.href}` }));
+const relatedAssets = getRelatedAssetsByParent(entry.data.asset_id).map(toAssetCard).map(asset => ({ ...asset, href: `/en${asset.href}` }));
 ---
 
 <AssetDetailView entry={entry} Content={Content} relatedAssets={relatedAssets} />

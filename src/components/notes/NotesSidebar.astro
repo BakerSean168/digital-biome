@@ -65,7 +65,7 @@ allNotes.forEach((entry) => {
   categories.get(category)!.push({
     slug,
     title: entry.data.title,
-    order: (entry.data as any).order || 999,
+    order: 999,
   });
 });
 

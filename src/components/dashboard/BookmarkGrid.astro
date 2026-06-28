@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { compact = false } = Astro.props;
-const bookmarksByCategory = await getBookmarksByCategory();
+const bookmarksByCategory = getBookmarksByCategory();
 const hasBookmarks = bookmarksByCategory.size > 0;
 
 // Gather all unique categories with shortcuts

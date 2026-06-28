@@ -4,9 +4,9 @@
  * 基于 1:1 坐标轴对齐的高保真赛博生态树组件，
  * 将 CSS Screen 混合底图与 SVG 嵌套式交互果实相结合。
  */
-import { getCollection } from 'astro:content';
 import { Book, Code, Gamepad2, User, Sparkles } from '@lucide/astro';
-import { getNewCreatedNotes, getRecentNotesWithDate } from '../../utils/notes';
+import { getNewCreatedNotes, getRecentNotesWithDate, getPublicNotesCount } from '../../utils/notes';
+import { buildKnowledgeNoteHref } from '../../domain/note-routing';
 
 // 动态获取真实 Obsidian 笔记总数
 let notesCount = 1042;
@@ -14,14 +14,13 @@ let newLeaves: any[] = [];
 let oldLeaves: any[] = [];
 
 try {
-  const allNotes = await getCollection('notes');
-  const publicNotes = allNotes.filter(note => !note.id.startsWith('.'));
-  if (publicNotes.length > 0) {
-    notesCount = publicNotes.length;
+  const count = getPublicNotesCount();
+  if (count > 0) {
+    notesCount = count;
   }
 
   // 获取最新创建的 4 篇笔记 (新叶)
-  const newCreated = await getNewCreatedNotes(4);
+  const newCreated = getNewCreatedNotes(4);
   const newCreatedIds = new Set(newCreated.map(n => n.id));
 
   // 获取最近更新的 2 篇笔记 (老叶) - 排除已在最新创建中的笔记以避免重复
@@ -54,12 +53,12 @@ try {
   };
 
   newLeaves = newCreated.map(note => ({
-    title: note.data.title || note.id.split('/').pop() || '',
-    description: note.data.description || '暂无描述 // NO_DESCRIPTION',
-    tag: getFirstTag(note.data.tags),
-    dateText: `${formatMonthDay(note.data.created)} 创建`,
-    words: `${getWordCount(note.body)} 字`,
-    href: `/notes/${note.id}`
+    title: note.title || note.id.split('/').pop() || '',
+    description: note.description || '暂无描述 // NO_DESCRIPTION',
+    tag: getFirstTag(note.tags),
+    dateText: `${formatMonthDay(note.created)} 创建`,
+    words: '500 字',
+    href: buildKnowledgeNoteHref(note.id)
   }));
 
   oldLeaves = recentUpdatedWithDate.map(item => ({
@@ -68,7 +67,7 @@ try {
     tag: getFirstTag(item.note.data.tags),
     dateText: `${formatMonthDay(item.date)} 更新`,
     words: `${getWordCount(item.note.body)} 字`,
-    href: `/notes/${item.note.id}`
+    href: buildKnowledgeNoteHref(item.note.id)
   }));
 } catch (e) {
   console.warn("Failed to load notes count or dynamic leaves: ", e);

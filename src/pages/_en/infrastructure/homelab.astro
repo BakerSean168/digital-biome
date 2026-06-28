@@ -10,7 +10,7 @@ import {
 } from '../../../utils/infrastructure';
 
 const homelabFlows = getTopologyFlows(homelabFlowIds);
-const { assetCards, resolvedNodes } = await getInfrastructureDataset('/en');
+const { assetCards, resolvedNodes } = getInfrastructureDataset('/en');
 const homelabAssets = getAssetCardsForFlows(homelabFlows, assetCards);
 ---
 

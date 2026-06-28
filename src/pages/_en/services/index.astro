@@ -4,7 +4,7 @@ import AssetSection from '../../../components/assets/AssetSection.astro';
 import { getServiceDisplayGroups } from '../../../utils/notes';
 
 const withEnPrefix = (asset: any) => ({ ...asset, href: `/en${asset.href}` });
-const { operations, projects } = await getServiceDisplayGroups();
+const { operations, projects } = getServiceDisplayGroups();
 ---
 
 <BaseLayout title="Services" description="Public service assets">

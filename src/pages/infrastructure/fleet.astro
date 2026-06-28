@@ -10,7 +10,7 @@ import {
 } from '../../utils/infrastructure';
 
 const fleetFlows = getTopologyFlows(publicFleetFlowIds);
-const { assetCards, resolvedNodes } = await getInfrastructureDataset();
+const { assetCards, resolvedNodes } = getInfrastructureDataset();
 const fleetAssets = getAssetCardsForFlows(fleetFlows, assetCards);
 
 const tiers: TopologyTier[] = fleetRegionCards.map(region => {

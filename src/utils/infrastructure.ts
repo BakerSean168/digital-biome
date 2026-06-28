@@ -1,5 +1,5 @@
 import { familyTopology, familyTopologyLinkedAssetIds, type TopologyFlow, type TopologyNode } from '../data/infrastructure/family-topology';
-import type { AssetCard, NoteCollectionEntry } from '../types/notes';
+import type { AssetCard, AssetNoteEntry } from '../types/notes';
 import { getAssetsByAssetIds, toAssetCard } from './notes';
 
 export interface ResolvedTopologyNode extends TopologyNode {
@@ -299,12 +299,12 @@ export function getTopologyFactCounts(flows: TopologyFlow[]): {
   };
 }
 
-export async function getInfrastructureDataset(localePrefix = ''): Promise<{
-  assetEntries: NoteCollectionEntry[];
+export function getInfrastructureDataset(localePrefix = ''): {
+  assetEntries: AssetNoteEntry[];
   assetCards: AssetCard[];
   resolvedNodes: Record<string, ResolvedTopologyNode>;
-}> {
-  const assetEntries = await getAssetsByAssetIds(familyTopologyLinkedAssetIds);
+} {
+  const assetEntries = getAssetsByAssetIds(familyTopologyLinkedAssetIds);
   const assetMap = new Map(assetEntries.map(entry => [entry.data.asset_id, entry]));
 
   const assetCards = assetEntries

@@ -1,21 +1,23 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { formatDate } from '../../../utils/date';
 import { SITE_NAME } from '../../../constants';
-import { isAssetEntry } from '../../../utils/notes';
+import { getPublicKnowledgeNoteEntries } from '../../../utils/notes';
+import { toRouteSlug } from '../../../domain/note-routing';
+import type { NoteCollectionEntry } from '../../../types/notes';
 
 export const prerender = true;
 
 export async function getStaticPaths() {
-  const noteEntries = await getCollection('notes', ({ data }) => {
-    return !data.draft && !(data as any).private;
-  });
-  return noteEntries
-    .filter(entry => !isAssetEntry(entry as any))
-    .map(entry => ({
-    params: { slug: entry.id.replace(/^en\//, '') }, props: { entry },
+  const noteEntries = await getPublicKnowledgeNoteEntries();
+  return noteEntries.map(entry => ({
+    params: { slug: toRouteSlug(entry.id) }, props: { entry },
   }));
+}
+
+interface Props {
+  entry: NoteCollectionEntry;
 }
 
 const { entry } = Astro.props;

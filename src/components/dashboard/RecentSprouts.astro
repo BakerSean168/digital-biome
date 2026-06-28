@@ -4,8 +4,9 @@
  * 动态拉取最新的 5 篇知识笔记或生活感悟，
  * 以 5 列高对比度的毛玻璃图片卡片网格形式，展现最新内容动态。
  */
-import { getCollection } from 'astro:content';
 import { ArrowUpRight } from '@lucide/astro';
+import { getNewCreatedNotes } from '../../utils/notes';
+import { buildKnowledgeNoteHref } from '../../domain/note-routing';
 
 // 定义萌芽数据结构
 interface SproutItem {
@@ -82,20 +83,13 @@ const staticSprouts: SproutItem[] = [
 let displaySprouts = staticSprouts;
 
 try {
-  const allNotes = await getCollection('notes');
-  const publicNotes = allNotes
-    .filter(note => !note.id.startsWith('.'))
-    .sort((a, b) => {
-      const dateA = new Date(a.data.created || 0);
-      const dateB = new Date(b.data.created || 0);
-      return dateB.getTime() - dateA.getTime();
-    });
+  const recentNotes = getNewCreatedNotes(5);
 
-  if (publicNotes.length > 0) {
+  if (recentNotes.length > 0) {
     // 动态映射真实的笔记到卡片中
-    const realSprouts = publicNotes.slice(0, 5).map((note, index) => {
+    const realSprouts = recentNotes.map((note, index) => {
       // 区分类型
-      const tags = note.data.tags || [];
+      const tags = note.tags || [];
       let type = 'Note';
       let label = '思考';
       let color = '#00d8ff'; // 思想蓝
@@ -121,18 +115,18 @@ try {
       }
 
       // 获取更新时间
-      const date = note.data.created;
+      const date = note.created;
       const timeStr = date ? new Date(date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }) : '近期';
 
       return {
         type,
         label,
         color,
-        title: note.data.title || note.id,
-        desc: note.data.description || '点击阅读这篇关于 ' + (note.data.title || note.id) + ' 的深度内容笔记沉淀。',
+        title: note.title || note.id,
+        desc: note.description || '点击阅读这篇关于 ' + (note.title || note.id) + ' 的深度内容笔记沉淀。',
         time: timeStr,
-        stat: `${note.body ? Math.round(note.body.length / 2) : 500} 字`,
-        slug: `/notes/${note.id}`,
+        stat: '500 字',
+        slug: buildKnowledgeNoteHref(note.id),
         bg
       };
     });

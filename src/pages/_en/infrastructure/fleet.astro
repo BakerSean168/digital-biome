@@ -10,7 +10,7 @@ import {
 } from '../../../utils/infrastructure';
 
 const fleetFlows = getTopologyFlows(publicFleetFlowIds);
-const { assetCards, resolvedNodes } = await getInfrastructureDataset('/en');
+const { assetCards, resolvedNodes } = getInfrastructureDataset('/en');
 const fleetAssets = getAssetCardsForFlows(fleetFlows, assetCards);
 ---
 

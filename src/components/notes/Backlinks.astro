@@ -1,5 +1,5 @@
 ---
-import { getPublicNotes, getBacklinksForNote } from '../../utils/notes';
+import { getBacklinksForNote, buildKnowledgeNoteHref } from '../../utils/notes';
 import { CornerLeftUp } from '@lucide/astro';
 
 interface Props {
@@ -8,8 +8,7 @@ interface Props {
 
 const { currentSlug } = Astro.props;
 
-const allNotes = await getPublicNotes();
-const backlinks = getBacklinksForNote(currentSlug, allNotes);
+const backlinks = getBacklinksForNote(currentSlug);
 ---
 
 {backlinks.length > 0 ? (
@@ -17,12 +16,12 @@ const backlinks = getBacklinksForNote(currentSlug, allNotes);
     {backlinks.map((note) => (
       <li class="flex items-start gap-1">
         <CornerLeftUp size={12} class="mt-0.5 text-text-muted shrink-0" />
-        <a 
-          href={`/notes/${note.id}`} 
+        <a
+          href={buildKnowledgeNoteHref(note.id)}
           class="text-foreground/80 hover:text-primary transition-colors duration-150 break-all leading-tight"
-          title={note.data.description || note.data.title}
+          title={note.description || note.title}
         >
-          {note.data.title}
+          {note.title}
         </a>
       </li>
     ))}
@@ -30,4 +29,3 @@ const backlinks = getBacklinksForNote(currentSlug, allNotes);
 ) : (
   <div class="text-xs text-text-muted/50 font-mono italic pl-4">无上游引用</div>
 )}
-

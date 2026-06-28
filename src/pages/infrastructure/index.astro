@@ -11,7 +11,7 @@ import {
   publicFleetFlowIds,
 } from '../../utils/infrastructure';
 
-const { assetCards, resolvedNodes } = await getInfrastructureDataset();
+const { assetCards, resolvedNodes } = getInfrastructureDataset();
 const fleetFlows = getTopologyFlows(publicFleetFlowIds);
 const homelabFlows = getTopologyFlows(homelabFlowIds);
 const fleetFacts = getTopologyFactCounts(fleetFlows);

@@ -11,7 +11,7 @@ import {
 } from '../../utils/infrastructure';
 
 const homelabFlows = getTopologyFlows(homelabFlowIds);
-const { assetCards, resolvedNodes } = await getInfrastructureDataset();
+const { assetCards, resolvedNodes } = getInfrastructureDataset();
 const homelabAssets = getAssetCardsForFlows(homelabFlows, assetCards);
 
 const tiers: TopologyTier[] = homelabLayers.map(layer => {

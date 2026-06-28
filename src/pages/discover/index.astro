@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SignalTitle from '../../components/common/SignalTitle.astro';
 import { getPublicAssets, getAssetHref } from '../../utils/notes';
 
-const assetEntries = await getPublicAssets();
+const assetEntries = getPublicAssets();
 
 const assetResults = assetEntries.map(entry => ({
   id: entry.data.asset_id!,
