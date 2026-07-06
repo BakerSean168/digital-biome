@@ -188,97 +188,96 @@ try {
 
   <!-- 图层 D: 悬浮详情卡片 (DOM Overlays - 绝对定位，完美配合 1:1 树体结构) -->
 
-  <!-- CARD 1: MIND 思维之枝 -->
+  <!-- CARD 1: MIND 知识库 -->
   <div id="notes-card" class="detail-card absolute hidden top-[10%] left-[50%] -translate-x-1/2 bg-card/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-80 md:w-88 z-30 transition-all duration-300">
     <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-mind to-transparent"></div>
     <div class="flex items-center gap-2 mb-3">
       <Book class="text-branch-mind" size={18} />
-      <h4 class="text-sm font-bold font-mono text-foreground">MIND / 思维之枝</h4>
+      <h4 class="text-base font-bold font-mono text-foreground">MIND / 知识库</h4>
     </div>
-    <p class="text-[11px] text-muted-foreground leading-relaxed mb-4">
-      记录我的知识体系与日常思考。已累计灌溉了 <strong class="text-branch-mind font-mono font-bold text-sm">{notesCount}</strong> 篇 Obsidian 沉淀笔记。
+    <p class="text-xs text-foreground/80 leading-relaxed mb-4">
+      记录个人知识体系与日常思考。已同步了 <strong class="text-branch-mind font-mono font-bold text-sm">{notesCount}</strong> 篇 Obsidian 沉淀笔记。
     </p>
     <div class="flex flex-wrap gap-1.5 mb-4">
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">笔记沉淀</span>
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">知识森林</span>
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">心智地图</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">笔记沉淀</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">知识森林</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-mind/10 border border-branch-mind/20 text-branch-mind">心智地图</span>
     </div>
-    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
-      <span class="text-muted-foreground">同步工作流：Obsidian Linter</span>
+    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-xs font-mono">
+      <span class="text-foreground/60">同步工作流：Obsidian</span>
       <a href="/notes" class="text-branch-mind hover:underline flex items-center gap-0.5">进入知识库 →</a>
     </div>
   </div>
 
-  <!-- CARD 2: DEV 创造之枝 -->
+  <!-- CARD 2: DEV 项目开发 -->
   <div id="builds-card" class="detail-card absolute hidden top-[28%] left-[1%] md:left-[4%] bg-card/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-80 md:w-88 z-30 transition-all duration-300">
     <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-dev to-transparent"></div>
     <div class="flex items-center gap-2 mb-3">
       <Code class="text-branch-dev" size={18} />
-      <h4 class="text-sm font-bold font-mono text-foreground">DEV / 创造之枝</h4>
+      <h4 class="text-base font-bold font-mono text-foreground">DEV / 项目开发</h4>
     </div>
-    <p class="text-[11px] text-muted-foreground leading-relaxed mb-4">
-      工程切片与架构推演。存放高性能工程底座及全栈系统构建记录。
+    <p class="text-xs text-foreground/80 leading-relaxed mb-4">
+      技术项目与工程实践。存放全栈系统构建与开发过程中的记录。
     </p>
     <div class="flex flex-wrap gap-1.5 mb-4">
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">Vue3 & React</span>
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">Prisma 全栈</span>
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">工程攻坚</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">Vue3 & React</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">Prisma 全栈</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-dev/10 border border-branch-dev/20 text-branch-dev">工程攻坚</span>
     </div>
-    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
-      <span class="text-muted-foreground">开发状态：Vibe Coding</span>
+    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-xs font-mono">
+      <span class="text-foreground/60">技术栈：Vue & React & Node.js</span>
       <a href="/dev" class="text-branch-dev hover:underline flex items-center gap-0.5">代表项目 →</a>
     </div>
   </div>
 
-  <!-- CARD 3: LIFE 生活之枝 -->
+  <!-- CARD 3: LIFE 生活日常 -->
   <div id="life-card" class="detail-card absolute hidden top-[28%] right-[1%] md:right-[4%] bg-card/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-80 md:w-88 z-30 transition-all duration-300">
     <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-life to-transparent"></div>
     <div class="flex items-center gap-2 mb-3">
       <Gamepad2 class="text-branch-life" size={18} />
-      <h4 class="text-sm font-bold font-mono text-foreground">LIFE / 生命与体验</h4>
+      <h4 class="text-base font-bold font-mono text-foreground">LIFE / 生活日常</h4>
     </div>
-    <p class="text-[11px] text-muted-foreground leading-relaxed mb-4">
-      代码之外的碳基体验采样。不仅是游戏记录，更是对光影、声场与数字生活叙事的颗粒度记录。
+    <p class="text-xs text-foreground/80 leading-relaxed mb-4">
+      代码之外的个人生活记录，包含随笔、书影音及日常随笔。
     </p>
     <div class="flex flex-wrap gap-1.5 mb-4">
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">Steam 游玩</span>
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">光影电影</span>
-      <span class="px-2 py-0.5 text-[9px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">春日歌单</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">Steam 游玩</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">光影电影</span>
+      <span class="px-2 py-0.5 text-[10px] font-mono rounded bg-branch-life/10 border border-branch-life/20 text-branch-life">春日歌单</span>
     </div>
-    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
-      <span class="text-muted-foreground">状态：热爱可抵岁月漫长</span>
-      <a href="/notes" class="text-branch-life hover:underline flex items-center gap-0.5">生活碎念 →</a>
+    <div class="pt-3 border-t border-border-soft flex justify-between items-center text-xs font-mono">
+      <span class="text-foreground/60">生活碎念</span>
+      <a href="/notes" class="text-branch-life hover:underline flex items-center gap-0.5">日常随感 →</a>
     </div>
   </div>
 
-  <!-- CARD 4: LAB 极客之叶 -->
+  <!-- CARD 4: LAB 实验室 -->
   <div id="lab-card" class="detail-card absolute hidden top-[52%] left-[1%] md:left-[4%] bg-card/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-72 z-30 transition-all duration-300">
     <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-lab to-transparent"></div>
     <div class="flex items-center gap-2 mb-2">
       <Sparkles class="text-branch-lab" size={16} />
-      <h4 class="text-xs font-bold font-mono text-foreground">LAB / 极客实验室</h4>
+      <h4 class="text-sm font-bold font-mono text-foreground">LAB / 实验室</h4>
     </div>
-    <p class="text-[10px] text-muted-foreground leading-relaxed mb-3">
-      承载整个生态运行的算力底座。涵盖公网控制面、边界路由与私有云容器编排。
+    <p class="text-xs text-foreground/80 leading-relaxed mb-3">
+      个人算力底座，包含服务器配置、网络拓扑与容器编排。
     </p>
-    <div class="pt-2 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
-      <span class="text-muted-foreground">Uptime: 99.98%</span>
+    <div class="pt-2 border-t border-border-soft flex justify-between items-center text-xs font-mono">
+      <span class="text-foreground/60">Uptime: 99.98%</span>
       <a href="/infrastructure" class="text-foreground hover:underline flex items-center gap-0.5">进入实验室 →</a>
     </div>
   </div>
 
-  <!-- CARD 5: ABOUT 宿主年轮 -->
+  <!-- CARD 5: ABOUT 关于我 -->
   <div id="about-card" class="detail-card absolute hidden top-[52%] right-[1%] md:right-[4%] bg-card/85 backdrop-blur-xl border border-border-soft p-5 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.6)] w-72 z-30 transition-all duration-300">
     <div class="absolute -top-px left-10 right-10 h-px bg-gradient-to-r from-transparent via-branch-about to-transparent"></div>
     <div class="flex items-center gap-2 mb-2">
       <User class="text-branch-about" size={16} />
-      <h4 class="text-xs font-bold font-mono text-foreground">ABOUT / 宿主年轮</h4>
+      <h4 class="text-sm font-bold font-mono text-foreground">ABOUT / 关于我</h4>
     </div>
-    <p class="text-[10px] text-muted-foreground leading-relaxed mb-3">
-      卢楼豪，专注于打磨像素级 UI/UX 体验的全栈独立开发者，崇尚优雅的逻辑与美学的共存。
+    <p class="text-xs text-foreground/80 leading-relaxed mb-3">
+      Sean Baker，一名专注于全栈开发与体验设计的工程师。
     </p>
-    <div class="pt-2 border-t border-border-soft flex justify-between items-center text-[10px] font-mono">
-      <span class="text-muted-foreground">定位：数字手艺人</span>
+    <div class="pt-2 border-t border-border-soft flex justify-end items-center text-xs font-mono">
       <a href="/about" class="text-foreground hover:underline flex items-center gap-0.5">关于我 →</a>
     </div>
   </div>
@@ -288,12 +287,12 @@ try {
     <a href={newLeaves[0].href} class="hud-card-1 absolute hidden xl:flex flex-col justify-between top-[4%] left-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
       <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
       <div class="flex items-center justify-between gap-2">
-        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[0].tag}</span>
-        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[0].dateText}</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[0].tag}</span>
+        <span class="text-[10px] font-mono text-foreground/60">{newLeaves[0].dateText}</span>
       </div>
-      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[0].title}</h5>
-      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[0].description}</p>
-      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+      <h5 class="text-sm font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-1.5">{newLeaves[0].title}</h5>
+      <p class="text-xs text-foreground/80 leading-relaxed mt-0.5 line-clamp-2">{newLeaves[0].description}</p>
+      <div class="mt-1.5 pt-1.5 border-t border-border/20 flex justify-between items-center text-[10px] font-mono text-foreground/60">
         <span>{newLeaves[0].words}</span>
         <span class="group-hover:text-primary transition-colors">&gt; READ</span>
       </div>
@@ -304,12 +303,12 @@ try {
     <a href={newLeaves[1].href} class="hud-card-2 absolute hidden xl:flex flex-col justify-between top-[36%] left-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
       <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
       <div class="flex items-center justify-between gap-2">
-        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[1].tag}</span>
-        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[1].dateText}</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[1].tag}</span>
+        <span class="text-[10px] font-mono text-foreground/60">{newLeaves[1].dateText}</span>
       </div>
-      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[1].title}</h5>
-      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[1].description}</p>
-      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+      <h5 class="text-sm font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-1.5">{newLeaves[1].title}</h5>
+      <p class="text-xs text-foreground/80 leading-relaxed mt-0.5 line-clamp-2">{newLeaves[1].description}</p>
+      <div class="mt-1.5 pt-1.5 border-t border-border/20 flex justify-between items-center text-[10px] font-mono text-foreground/60">
         <span>{newLeaves[1].words}</span>
         <span class="group-hover:text-primary transition-colors">&gt; READ</span>
       </div>
@@ -320,12 +319,12 @@ try {
     <a href={oldLeaves[0].href} class="hud-card-3 absolute hidden xl:flex flex-col justify-between top-[68%] left-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
       <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
       <div class="flex items-center justify-between gap-2">
-        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 uppercase font-bold tracking-wider">🍂 {oldLeaves[0].tag}</span>
-        <span class="text-[8px] font-mono text-muted-foreground">{oldLeaves[0].dateText}</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 uppercase font-bold tracking-wider">🍂 {oldLeaves[0].tag}</span>
+        <span class="text-[10px] font-mono text-foreground/60">{oldLeaves[0].dateText}</span>
       </div>
-      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{oldLeaves[0].title}</h5>
-      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{oldLeaves[0].description}</p>
-      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+      <h5 class="text-sm font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-1.5">{oldLeaves[0].title}</h5>
+      <p class="text-xs text-foreground/80 leading-relaxed mt-0.5 line-clamp-2">{oldLeaves[0].description}</p>
+      <div class="mt-1.5 pt-1.5 border-t border-border/20 flex justify-between items-center text-[10px] font-mono text-foreground/60">
         <span>{oldLeaves[0].words}</span>
         <span class="group-hover:text-primary transition-colors">&gt; READ</span>
       </div>
@@ -336,12 +335,12 @@ try {
     <a href={newLeaves[2].href} class="hud-card-4 absolute hidden xl:flex flex-col justify-between top-[4%] right-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
       <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
       <div class="flex items-center justify-between gap-2">
-        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[2].tag}</span>
-        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[2].dateText}</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[2].tag}</span>
+        <span class="text-[10px] font-mono text-foreground/60">{newLeaves[2].dateText}</span>
       </div>
-      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[2].title}</h5>
-      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[2].description}</p>
-      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+      <h5 class="text-sm font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-1.5">{newLeaves[2].title}</h5>
+      <p class="text-xs text-foreground/80 leading-relaxed mt-0.5 line-clamp-2">{newLeaves[2].description}</p>
+      <div class="mt-1.5 pt-1.5 border-t border-border/20 flex justify-between items-center text-[10px] font-mono text-foreground/60">
         <span>{newLeaves[2].words}</span>
         <span class="group-hover:text-primary transition-colors">&gt; READ</span>
       </div>
@@ -352,12 +351,12 @@ try {
     <a href={newLeaves[3].href} class="hud-card-5 absolute hidden xl:flex flex-col justify-between top-[36%] right-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
       <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"></div>
       <div class="flex items-center justify-between gap-2">
-        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[3].tag}</span>
-        <span class="text-[8px] font-mono text-muted-foreground">{newLeaves[3].dateText}</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold tracking-wider">🌱 {newLeaves[3].tag}</span>
+        <span class="text-[10px] font-mono text-foreground/60">{newLeaves[3].dateText}</span>
       </div>
-      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{newLeaves[3].title}</h5>
-      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{newLeaves[3].description}</p>
-      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+      <h5 class="text-sm font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-1.5">{newLeaves[3].title}</h5>
+      <p class="text-xs text-foreground/80 leading-relaxed mt-0.5 line-clamp-2">{newLeaves[3].description}</p>
+      <div class="mt-1.5 pt-1.5 border-t border-border/20 flex justify-between items-center text-[10px] font-mono text-foreground/60">
         <span>{newLeaves[3].words}</span>
         <span class="group-hover:text-primary transition-colors">&gt; READ</span>
       </div>
@@ -368,12 +367,12 @@ try {
     <a href={oldLeaves[1].href} class="hud-card-6 absolute hidden xl:flex flex-col justify-between top-[68%] right-[-28%] w-[24%] h-[20%] bg-card/45 backdrop-blur-md border border-border/40 hover:border-primary/50 hover:bg-card/75 p-4 rounded-xl shadow-lg transition-all duration-300 group hover:-translate-y-1 z-20">
       <div class="absolute -top-px left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
       <div class="flex items-center justify-between gap-2">
-        <span class="px-1.5 py-0.5 text-[8px] font-mono rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 uppercase font-bold tracking-wider">🍂 {oldLeaves[1].tag}</span>
-        <span class="text-[8px] font-mono text-muted-foreground">{oldLeaves[1].dateText}</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 uppercase font-bold tracking-wider">🍂 {oldLeaves[1].tag}</span>
+        <span class="text-[10px] font-mono text-foreground/60">{oldLeaves[1].dateText}</span>
       </div>
-      <h5 class="text-xs font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-2">{oldLeaves[1].title}</h5>
-      <p class="text-[9px] text-muted-foreground leading-relaxed mt-1 line-clamp-2">{oldLeaves[1].description}</p>
-      <div class="mt-2 pt-1.5 border-t border-border/20 flex justify-between items-center text-[8px] font-mono text-muted-foreground/60">
+      <h5 class="text-sm font-bold font-mono text-foreground line-clamp-1 group-hover:text-primary transition-colors mt-1.5">{oldLeaves[1].title}</h5>
+      <p class="text-xs text-foreground/80 leading-relaxed mt-0.5 line-clamp-2">{oldLeaves[1].description}</p>
+      <div class="mt-1.5 pt-1.5 border-t border-border/20 flex justify-between items-center text-[10px] font-mono text-foreground/60">
         <span>{oldLeaves[1].words}</span>
         <span class="group-hover:text-primary transition-colors">&gt; READ</span>
       </div>
