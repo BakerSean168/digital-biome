@@ -1,6 +1,5 @@
 ---
 import Header from '../components/common/Header.astro';
-import Footer from '../components/common/Footer.astro';
 import '../styles/global.css';
 import { SITE_NAME, SITE_URL, SITE_AUTHOR, SITE_DESCRIPTION } from '../constants';
 import { getLangFromUrl } from '../i18n/utils';
@@ -63,7 +62,6 @@ const lang = getLangFromUrl(Astro.url);
   <body class={`font-sans ${bodyClass || ''}`}>
     {showHeader && <Header />}
     <slot />
-    {showFooter && <Footer />}
   </body>
 </html>
 
