@@ -32,7 +32,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -45,6 +45,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Sync notes
+        run: pnpm sync
 
       - name: Run astro check
         run: pnpm check
