@@ -2,40 +2,27 @@
 import { getEntry, render } from 'astro:content';
 import AssetDetailView from '../../components/assets/AssetDetailView.astro';
 import { getAssetsByType, getRelatedAssetsByParent, toAssetCard } from '../../utils/notes';
-
-export const prerender = true;
-
-export async function getStaticPaths() {
-  const hosts = getAssetsByType('host');
-  const networks = getAssetsByType('network');
-  return [...hosts, ...networks].map(entry => ({
-    params: { assetId: entry.data.asset_id },
-    props: { entry },
-  }));
-}
-
 import type { AssetNoteEntry } from '../../types/notes';
 import type { TopologyTier } from '../../components/assets/InfrastructureTopologyMap.astro';
 import { getInfrastructureDataset } from '../../utils/infrastructure';
 
-interface Props {
-  entry: AssetNoteEntry;
+export const prerender = false;
+
+const { assetId } = Astro.params;
+const hosts = getAssetsByType('host');
+const networks = getAssetsByType('network');
+const entry = [...hosts, ...networks].find(e => e.data.asset_id === assetId) as AssetNoteEntry | undefined;
+
+if (!entry) {
+  return new Response("Not Found", { status: 404 });
 }
 
-const { entry } = Astro.props;
-
 // Dual-channel rendering:
-//   - Metadata (title, tags, monitor, links…) comes from `entry` which is
-//     assembled from the asset-index (enriched with upstream nested fields).
-//   - Body is rendered from the real Astro Collection entry. The compat entry
-//     produced by assets-repository has body: '' and rendered: undefined, so
-//     calling render() on it yields an empty <Content />. We must look up the
-//     real CollectionEntry by note id and render that instead.
 const noteId = entry.id; // e.g. "obsidian/assets/hosts/aliyun-chengdu-dailyuse-vps"
 const realEntry = await getEntry('notes', noteId);
 const { Content } = realEntry
   ? await render(realEntry)
-  : await render(entry); // fallback: renders empty but doesn't crash
+  : await render(entry); // fallback
 
 const relatedAssets = getRelatedAssetsByParent(entry.data.asset_id).map(toAssetCard);
 const { resolvedNodes } = getInfrastructureDataset();

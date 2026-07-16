@@ -1,19 +1,45 @@
 ---
 import SiteSearch from './SiteSearch.astro';
-import { Search } from '@lucide/astro';
+import { Search, Lock, LockOpen } from '@lucide/astro';
+
+const isAuthed = Astro.locals.auth?.isAuthed ?? false;
+const currentPath = Astro.url.pathname;
+const loginNext = currentPath && currentPath !== "/login" ? currentPath : "/";
 ---
 
 <!-- Floating Magnetic Command Pill -->
 <div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 group">
-  <button 
+  <div 
     id="magnetic-pill"
-    class="search-trigger flex items-center gap-3 px-6 py-2.5 rounded-full border border-border bg-background/40 backdrop-blur-md text-sm font-mono text-muted-foreground hover:text-foreground hover:bg-background/60 hover:border-primary/50 transition-all shadow-lg"
-    aria-label="Initialize Search"
-    aria-haspopup="dialog"
+    class="flex items-center gap-3 px-4 py-2 rounded-full border border-border bg-background/50 backdrop-blur-md text-sm font-mono transition-all shadow-lg"
   >
-    <Search size={16} class="text-primary" />
-    <span>[ ⌘K / Ctrl+K ] 唤醒搜索</span>
-  </button>
+    <!-- Search Button inside pill -->
+    <button 
+      class="search-trigger flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+      aria-label="Initialize Search"
+      aria-haspopup="dialog"
+    >
+      <Search size={14} class="text-primary" />
+      <span class="text-xs">[ ⌘K ] 搜索</span>
+    </button>
+
+    <div class="w-px h-4 bg-border/80"></div>
+
+    <!-- Dynamic Auth controls inside pill -->
+    {isAuthed ? (
+      <form method="POST" action="/api/auth/logout" class="flex items-center">
+        <button type="submit" class="flex items-center gap-1.5 text-primary hover:text-[#728038] text-xs transition-colors cursor-pointer" title="退出特权模式">
+          <LockOpen size={12} />
+          <span>[ OUT / 退出 ]</span>
+        </button>
+      </form>
+    ) : (
+      <a href={`/login?next=${encodeURIComponent(loginNext)}`} class="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-xs transition-colors" title="进入特权模式">
+        <Lock size={12} />
+        <span>[ IN / 登录 ]</span>
+      </a>
+    )}
+  </div>
 </div>
 
 <!-- Global Site Search Modal -->
@@ -25,9 +51,6 @@ import { Search } from '@lucide/astro';
   if (pill) {
     document.addEventListener('mousemove', (e) => {
       const rect = pill.getBoundingClientRect();
-      // Original position is implicitly centered because of parent, but the pill itself is static in the flex container
-      // For accurate magnetic effect without layout jitter, we translate the pill itself.
-      // Wait, we need to be careful with offset calculation.
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
       const distance = Math.sqrt(Math.pow(e.clientX - x, 2) + Math.pow(e.clientY - y, 2));

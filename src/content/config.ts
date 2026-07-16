@@ -113,46 +113,4 @@ const notes = defineCollection({
   })),
 });
 
-/**
- * 个人资料/简历数据
- * 存储位置: src/content/meta/
- */
-const meta = defineCollection({
-  type: 'data',
-  schema: z.object({
-    name: z.string(),
-    title: z.string(),
-    bio: z.string().optional(),
-    avatar: z.string().optional(),
-    contact: z.object({
-      email: z.string().optional(),
-      phone: z.string().optional(),
-      location: z.string().optional(),
-      github: z.string().optional(),
-      linkedin: z.string().optional(),
-      website: z.string().optional(),
-    }).optional(),
-    experience: z.array(z.object({
-      role: z.string(),
-      company: z.string(),
-      period: z.string(),
-      description: z.string().optional(),
-      highlights: z.array(z.string()).default([]),
-    })).default([]),
-    education: z.array(z.object({
-      degree: z.string(),
-      school: z.string(),
-      period: z.string(),
-      major: z.string().optional(),
-    })).default([]),
-    skills: z.record(z.array(z.string())).default({}),
-    projects: z.array(z.object({
-      name: z.string(),
-      tech: z.string().optional(),
-      description: z.string(),
-      url: z.string().optional(),
-    })).default([]),
-  }),
-});
-
-export const collections = { notes, meta };
+export const collections = { notes };

@@ -7,7 +7,6 @@
 | 集合 | 目录 | 格式 | 用途 |
 |------|------|------|------|
 | notes | `notes/obsidian/` | Markdown | Obsidian 笔记（同步生成） |
-| meta | `meta/` | YAML | 元数据（简历等） |
 
 ## 笔记系统
 
@@ -62,32 +61,6 @@ rating: 4
 ---
 ```
 
-## 更新简历
-
-编辑 `meta/resume.yaml`：
-
-```yaml
-name: 你的名字
-title: 职位头衔
-bio: 个人简介
-contact:
-  email: your@email.com
-  github: github.com/username
-experience:
-  - role: 职位
-    company: 公司
-    period: 2024 - Present
-    highlights:
-      - 成就1
-education:
-  - degree: 学位
-    school: 学校
-    period: 2018 - 2022
-skills:
-  编程语言:
-    - JavaScript
-    - TypeScript
-```
 
 ## 私有笔记
 

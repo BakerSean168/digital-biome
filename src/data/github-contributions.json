@@ -1,42 +1,7 @@
 {
   "username": "BakerSean168",
-  "updatedAt": "2026-07-06T13:38:23.711Z",
+  "updatedAt": "2026-07-16T08:01:06.363Z",
   "contributions": [
-    {
-      "date": "2025-07-06",
-      "level": 1,
-      "tooltip": "3 contributions on July 6th."
-    },
-    {
-      "date": "2025-07-07",
-      "level": 1,
-      "tooltip": "1 contribution on July 7th."
-    },
-    {
-      "date": "2025-07-08",
-      "level": 1,
-      "tooltip": "2 contributions on July 8th."
-    },
-    {
-      "date": "2025-07-09",
-      "level": 0,
-      "tooltip": "No contributions on July 9th."
-    },
-    {
-      "date": "2025-07-10",
-      "level": 0,
-      "tooltip": "No contributions on July 10th."
-    },
-    {
-      "date": "2025-07-11",
-      "level": 0,
-      "tooltip": "No contributions on July 11th."
-    },
-    {
-      "date": "2025-07-12",
-      "level": 1,
-      "tooltip": "1 contribution on July 12th."
-    },
     {
       "date": "2025-07-13",
       "level": 1,
@@ -164,7 +129,7 @@
     },
     {
       "date": "2025-08-07",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on August 7th."
     },
     {
@@ -454,7 +419,7 @@
     },
     {
       "date": "2025-10-04",
-      "level": 1,
+      "level": 2,
       "tooltip": "12 contributions on October 4th."
     },
     {
@@ -464,7 +429,7 @@
     },
     {
       "date": "2025-10-06",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on October 6th."
     },
     {
@@ -514,7 +479,7 @@
     },
     {
       "date": "2025-10-16",
-      "level": 1,
+      "level": 2,
       "tooltip": "12 contributions on October 16th."
     },
     {
@@ -544,22 +509,22 @@
     },
     {
       "date": "2025-10-22",
-      "level": 3,
+      "level": 4,
       "tooltip": "35 contributions on October 22nd."
     },
     {
       "date": "2025-10-23",
-      "level": 3,
+      "level": 4,
       "tooltip": "35 contributions on October 23rd."
     },
     {
       "date": "2025-10-24",
-      "level": 2,
+      "level": 3,
       "tooltip": "18 contributions on October 24th."
     },
     {
       "date": "2025-10-25",
-      "level": 1,
+      "level": 2,
       "tooltip": "13 contributions on October 25th."
     },
     {
@@ -569,7 +534,7 @@
     },
     {
       "date": "2025-10-27",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on October 27th."
     },
     {
@@ -734,7 +699,7 @@
     },
     {
       "date": "2025-11-29",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on November 29th."
     },
     {
@@ -754,7 +719,7 @@
     },
     {
       "date": "2025-12-03",
-      "level": 1,
+      "level": 2,
       "tooltip": "11 contributions on December 3rd."
     },
     {
@@ -769,12 +734,12 @@
     },
     {
       "date": "2025-12-06",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on December 6th."
     },
     {
       "date": "2025-12-07",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on December 7th."
     },
     {
@@ -1119,12 +1084,12 @@
     },
     {
       "date": "2026-02-14",
-      "level": 2,
+      "level": 4,
       "tooltip": "28 contributions on February 14th."
     },
     {
       "date": "2026-02-15",
-      "level": 2,
+      "level": 3,
       "tooltip": "23 contributions on February 15th."
     },
     {
@@ -1134,7 +1099,7 @@
     },
     {
       "date": "2026-02-17",
-      "level": 3,
+      "level": 4,
       "tooltip": "32 contributions on February 17th."
     },
     {
@@ -1144,7 +1109,7 @@
     },
     {
       "date": "2026-02-19",
-      "level": 1,
+      "level": 2,
       "tooltip": "14 contributions on February 19th."
     },
     {
@@ -1154,17 +1119,17 @@
     },
     {
       "date": "2026-02-21",
-      "level": 2,
+      "level": 3,
       "tooltip": "18 contributions on February 21st."
     },
     {
       "date": "2026-02-22",
-      "level": 2,
+      "level": 4,
       "tooltip": "27 contributions on February 22nd."
     },
     {
       "date": "2026-02-23",
-      "level": 2,
+      "level": 4,
       "tooltip": "26 contributions on February 23rd."
     },
     {
@@ -1174,7 +1139,7 @@
     },
     {
       "date": "2026-02-25",
-      "level": 2,
+      "level": 3,
       "tooltip": "18 contributions on February 25th."
     },
     {
@@ -1199,7 +1164,7 @@
     },
     {
       "date": "2026-03-02",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on March 2nd."
     },
     {
@@ -1219,17 +1184,17 @@
     },
     {
       "date": "2026-03-06",
-      "level": 2,
+      "level": 3,
       "tooltip": "19 contributions on March 6th."
     },
     {
       "date": "2026-03-07",
-      "level": 1,
+      "level": 2,
       "tooltip": "14 contributions on March 7th."
     },
     {
       "date": "2026-03-08",
-      "level": 1,
+      "level": 2,
       "tooltip": "14 contributions on March 8th."
     },
     {
@@ -1244,22 +1209,22 @@
     },
     {
       "date": "2026-03-11",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on March 11th."
     },
     {
       "date": "2026-03-12",
-      "level": 1,
+      "level": 2,
       "tooltip": "11 contributions on March 12th."
     },
     {
       "date": "2026-03-13",
-      "level": 2,
+      "level": 3,
       "tooltip": "19 contributions on March 13th."
     },
     {
       "date": "2026-03-14",
-      "level": 2,
+      "level": 3,
       "tooltip": "20 contributions on March 14th."
     },
     {
@@ -1279,7 +1244,7 @@
     },
     {
       "date": "2026-03-18",
-      "level": 1,
+      "level": 2,
       "tooltip": "11 contributions on March 18th."
     },
     {
@@ -1304,7 +1269,7 @@
     },
     {
       "date": "2026-03-23",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on March 23rd."
     },
     {
@@ -1329,17 +1294,17 @@
     },
     {
       "date": "2026-03-28",
-      "level": 1,
+      "level": 2,
       "tooltip": "12 contributions on March 28th."
     },
     {
       "date": "2026-03-29",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on March 29th."
     },
     {
       "date": "2026-03-30",
-      "level": 2,
+      "level": 3,
       "tooltip": "21 contributions on March 30th."
     },
     {
@@ -1349,7 +1314,7 @@
     },
     {
       "date": "2026-04-01",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on April 1st."
     },
     {
@@ -1369,7 +1334,7 @@
     },
     {
       "date": "2026-04-05",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on April 5th."
     },
     {
@@ -1404,7 +1369,7 @@
     },
     {
       "date": "2026-04-12",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on April 12th."
     },
     {
@@ -1499,7 +1464,7 @@
     },
     {
       "date": "2026-05-01",
-      "level": 1,
+      "level": 2,
       "tooltip": "12 contributions on May 1st."
     },
     {
@@ -1569,7 +1534,7 @@
     },
     {
       "date": "2026-05-15",
-      "level": 2,
+      "level": 3,
       "tooltip": "18 contributions on May 15th."
     },
     {
@@ -1594,7 +1559,7 @@
     },
     {
       "date": "2026-05-20",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on May 20th."
     },
     {
@@ -1619,7 +1584,7 @@
     },
     {
       "date": "2026-05-25",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on May 25th."
     },
     {
@@ -1629,7 +1594,7 @@
     },
     {
       "date": "2026-05-27",
-      "level": 1,
+      "level": 2,
       "tooltip": "11 contributions on May 27th."
     },
     {
@@ -1644,7 +1609,7 @@
     },
     {
       "date": "2026-05-30",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on May 30th."
     },
     {
@@ -1669,12 +1634,12 @@
     },
     {
       "date": "2026-06-04",
-      "level": 1,
+      "level": 2,
       "tooltip": "10 contributions on June 4th."
     },
     {
       "date": "2026-06-05",
-      "level": 1,
+      "level": 2,
       "tooltip": "14 contributions on June 5th."
     },
     {
@@ -1719,7 +1684,7 @@
     },
     {
       "date": "2026-06-14",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on June 14th."
     },
     {
@@ -1729,7 +1694,7 @@
     },
     {
       "date": "2026-06-16",
-      "level": 1,
+      "level": 2,
       "tooltip": "9 contributions on June 16th."
     },
     {
@@ -1809,7 +1774,7 @@
     },
     {
       "date": "2026-07-02",
-      "level": 1,
+      "level": 2,
       "tooltip": "14 contributions on July 2nd."
     },
     {
@@ -1824,13 +1789,63 @@
     },
     {
       "date": "2026-07-05",
-      "level": 1,
+      "level": 2,
       "tooltip": "14 contributions on July 5th."
     },
     {
       "date": "2026-07-06",
+      "level": 3,
+      "tooltip": "25 contributions on July 6th."
+    },
+    {
+      "date": "2026-07-07",
+      "level": 1,
+      "tooltip": "5 contributions on July 7th."
+    },
+    {
+      "date": "2026-07-08",
+      "level": 3,
+      "tooltip": "18 contributions on July 8th."
+    },
+    {
+      "date": "2026-07-09",
       "level": 2,
-      "tooltip": "21 contributions on July 6th."
+      "tooltip": "11 contributions on July 9th."
+    },
+    {
+      "date": "2026-07-10",
+      "level": 2,
+      "tooltip": "16 contributions on July 10th."
+    },
+    {
+      "date": "2026-07-11",
+      "level": 2,
+      "tooltip": "16 contributions on July 11th."
+    },
+    {
+      "date": "2026-07-12",
+      "level": 1,
+      "tooltip": "7 contributions on July 12th."
+    },
+    {
+      "date": "2026-07-13",
+      "level": 4,
+      "tooltip": "34 contributions on July 13th."
+    },
+    {
+      "date": "2026-07-14",
+      "level": 3,
+      "tooltip": "18 contributions on July 14th."
+    },
+    {
+      "date": "2026-07-15",
+      "level": 2,
+      "tooltip": "9 contributions on July 15th."
+    },
+    {
+      "date": "2026-07-16",
+      "level": 0,
+      "tooltip": "No contributions on July 16th."
     }
   ]
 }

@@ -11,6 +11,8 @@ import {
   publicFleetFlowIds,
 } from '../../utils/infrastructure';
 
+export const prerender = false;
+
 const { assetCards, resolvedNodes } = getInfrastructureDataset();
 const fleetFlows = getTopologyFlows(publicFleetFlowIds);
 const homelabFlows = getTopologyFlows(homelabFlowIds);
@@ -24,6 +26,8 @@ const heroFacts = [
   `${homelabFacts.flowCount} 条家庭实验室链路，包含供电、网络、计算、虚拟化与服务层`,
   `${assetCards.length} 个资产化节点，已接入详情页、入口和监控跳板`,
 ];
+
+const isAuthed = Astro.locals.auth?.isAuthed ?? false;
 ---
 
 <BaseLayout title="Infrastructure" description="家庭网络与公网资产">
@@ -35,6 +39,7 @@ const heroFacts = [
       featuredAssets={featuredAssets}
       resolvedNodes={resolvedNodes}
       locale="zh"
+      isAuthed={isAuthed}
     />
   </main>
 </BaseLayout>

@@ -331,7 +331,6 @@ export const familyTopology: TopologyFlow[] = [
         description: '家庭服务导航页与统一入口',
         status: 'active',
         href: '/notes/obsidian/debian-docker-deploy-homepage-vaultwarden',
-        primaryUrl: 'http://192.168.0.51:3000',
       },
       {
         id: 'vaultwarden',

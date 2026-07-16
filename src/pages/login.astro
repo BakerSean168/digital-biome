@@ -1,0 +1,80 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Shield, Lock, ArrowRight } from '@lucide/astro';
+
+export const prerender = false;
+
+const url = Astro.url;
+const error = url.searchParams.get("error");
+const next = url.searchParams.get("next") || "/";
+
+if (Astro.locals.auth?.isAuthed) {
+  return Astro.redirect(next);
+}
+
+const errorMessage =
+  error === "bad-password"
+    ? "密码验证失败，请重新输入。"
+    : error === "missing-config"
+      ? "服务端配置异常：缺失 SITE_AUTH_PASSWORD 或 SITE_AUTH_SECRET 环境变量。"
+      : null;
+---
+
+<BaseLayout title="验证终端 / Gate Authentication" showHeader={true} showFooter={false}>
+  <main class="mx-auto max-w-md px-6 py-20 md:py-28 min-h-[75vh] flex flex-col justify-center">
+    <div class="border border-[#8B9A46]/30 bg-[#1A1B19] p-8 rounded-2xl relative overflow-hidden text-left shadow-2xl">
+      <!-- Top banner decor -->
+      <div class="absolute top-0 inset-x-0 h-1.5 bg-[#8B9A46]"></div>
+      
+      <!-- Brand & Header -->
+      <div class="space-y-4 mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 border border-[#8B9A46]/20 bg-[#8B9A46]/5 flex items-center justify-center text-primary rounded-lg">
+            <Lock size={20} />
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-foreground font-sans">终端特权认证</h1>
+            <p class="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mt-0.5">Terminal Authentication Gate</p>
+          </div>
+        </div>
+        <p class="text-xs font-mono text-muted-foreground leading-relaxed">
+          普通访客可公开浏览常规文章和架构图谱。登录后将通过 Cloudflare Edge 动态解密家庭内网 IP 地址、完整的设备管理入口和相关的敏感日志面板。
+        </p>
+      </div>
+
+      <!-- Error Message -->
+      {errorMessage && (
+        <div class="border border-red-900/40 bg-red-950/10 px-4 py-3 rounded-lg text-xs font-mono text-red-400 mb-6 flex items-start gap-2.5">
+          <Shield size={14} class="shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      <!-- Form -->
+      <form method="POST" action="/api/auth/login" class="space-y-5">
+        <input type="hidden" name="next" value={next} />
+
+        <div class="space-y-2">
+          <label for="password" class="block text-xs font-mono text-muted-foreground uppercase tracking-wider">验证密钥 / Password</label>
+          <div class="relative flex items-center">
+            <input 
+              id="password" 
+              type="password" 
+              name="password" 
+              required 
+              autocomplete="current-password" 
+              autofocus 
+              placeholder="请输入安全访问密码..." 
+              class="w-full bg-[#151614] border border-[#2C2D2A] focus:border-primary/50 text-foreground font-mono text-sm px-4 py-3 outline-none transition-colors rounded-xl placeholder:text-muted-foreground/40"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-primary hover:bg-[#728038] text-background font-mono font-bold text-sm tracking-widest transition-colors flex items-center justify-center gap-2 cursor-pointer rounded-xl">
+          <span>[ VERIFY / 认证 ]</span>
+          <ArrowRight size={14} />
+        </button>
+      </form>
+    </div>
+  </main>
+</BaseLayout>

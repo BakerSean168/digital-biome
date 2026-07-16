@@ -5,7 +5,7 @@ import { Github, BookMarked, ArrowRight, Terminal } from '@lucide/astro';
 import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../constants';
 import { getAllNoteTags, getRecentNotesWithDate } from '../../utils/notes';
 import { formatTimeAgo } from '../../utils/date';
-import ScrollingTagWall from '../../components/resume/ScrollingTagWall.astro';
+import ScrollingTagWall from '../../components/common/ScrollingTagWall.astro';
 import GitHubContributions from '../../components/common/GitHubContributions.astro';
 
 const allTagsMap = getAllNoteTags();

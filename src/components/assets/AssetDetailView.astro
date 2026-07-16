@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import type { AssetCard, AssetNoteEntry } from '../../types/notes';
 import InfrastructureTopologyMap, { type TopologyTier } from './InfrastructureTopologyMap.astro';
+import { Lock } from '@lucide/astro';
 
 interface Props {
   entry: AssetNoteEntry;
@@ -13,6 +14,8 @@ interface Props {
 const { entry, Content, relatedAssets = [], subTopology = [] } = Astro.props;
 const { title, description, asset_type, asset_id, tags = [], links = [], monitor } = entry.data;
 const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'monitor' || link.kind === 'panel')?.url;
+const isAuthed = Astro.locals.auth?.isAuthed ?? false;
+const currentPath = Astro.url.pathname;
 ---
 
 <BaseLayout title={title} description={description || ''} type="article">
@@ -53,17 +56,45 @@ const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'mon
         <section class="rounded-[28px] border border-border bg-card/70 p-5">
           <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Quick Links</h2>
           <div class="mt-4 flex flex-col gap-3">
-            {links.length > 0 ? links.map((link: any) => (
-              <a
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex items-center justify-between rounded-2xl border border-border px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                <span>{link.label}</span>
-                <span class="text-xs uppercase tracking-[0.16em] text-muted-foreground">{link.kind || 'link'}</span>
-              </a>
-            )) : (
+            {links.length > 0 ? links.map((link: any) => {
+              const isPublic = link.visibility !== 'internal' && (
+                link.visibility === 'public' ||
+                link.url.startsWith('/') ||
+                link.kind === 'monitor' ||
+                link.kind === 'docs'
+              );
+
+              if (isPublic || isAuthed) {
+                return (
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center justify-between rounded-sm border border-border bg-background px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    <span>{link.label}</span>
+                    <span class="text-xs uppercase tracking-[0.16em] text-muted-foreground font-mono">{link.kind || 'link'}</span>
+                  </a>
+                );
+              } else {
+                return (
+                  <a
+                    href={`/login?next=${encodeURIComponent(currentPath)}`}
+                    class="flex items-center justify-between rounded-sm border border-border/40 bg-background/20 px-4 py-3 text-sm text-muted-foreground hover:border-primary/45 hover:text-primary transition-colors"
+                    title="该入口为私有管理通道。点击进行特权身份认证后可打开。"
+                  >
+                    <span class="flex items-center gap-1.5 font-mono font-bold">
+                      <span>{link.label}</span>
+                      <span class="text-[8px] bg-border/40 px-1 py-0.5 text-muted-foreground tracking-widest font-mono">INTERNAL</span>
+                    </span>
+                    <span class="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/75 font-mono">
+                      <Lock size={10} />
+                      <span>LOCKED</span>
+                    </span>
+                  </a>
+                );
+              }
+            }) : (
               <p class="text-sm text-muted-foreground font-mono">[ NO_SIGNAL ] 未检测到链接映射。</p>
             )}
           </div>
