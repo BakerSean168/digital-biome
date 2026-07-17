@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import type { AssetCard, AssetNoteEntry } from '../../types/notes';
+import type { AssetCard, AssetLink, AssetNoteEntry } from '../../types/notes';
 import InfrastructureTopologyMap, { type TopologyTier } from './InfrastructureTopologyMap.astro';
 import { Lock } from '@lucide/astro';
 
@@ -13,9 +13,11 @@ interface Props {
 
 const { entry, Content, relatedAssets = [], subTopology = [] } = Astro.props;
 const { title, description, asset_type, asset_id, tags = [], links = [], monitor } = entry.data;
-const monitorHref = monitor?.url ?? links.find((link: any) => link.kind === 'monitor' || link.kind === 'panel')?.url;
-const isAuthed = Astro.locals.auth?.isAuthed ?? false;
 const currentPath = Astro.url.pathname;
+const isProtectedLink = (link: AssetLink) => link.visibility === 'internal' || link.visibility === 'private';
+const monitorLink = links.find(link => link.kind === 'monitor' || link.kind === 'panel');
+const monitorHref = monitor?.url ?? (!monitorLink || isProtectedLink(monitorLink) ? undefined : monitorLink.url);
+const monitorPrivateRef = monitorLink && isProtectedLink(monitorLink) ? monitorLink.private_ref : undefined;
 ---
 
 <BaseLayout title={title} description={description || ''} type="article">
@@ -56,15 +58,8 @@ const currentPath = Astro.url.pathname;
         <section class="rounded-[28px] border border-border bg-card/70 p-5">
           <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Quick Links</h2>
           <div class="mt-4 flex flex-col gap-3">
-            {links.length > 0 ? links.map((link: any) => {
-              const isPublic = link.visibility !== 'internal' && (
-                link.visibility === 'public' ||
-                link.url.startsWith('/') ||
-                link.kind === 'monitor' ||
-                link.kind === 'docs'
-              );
-
-              if (isPublic || isAuthed) {
+            {links.length > 0 ? links.map((link: AssetLink) => {
+              if (!isProtectedLink(link) && link.url) {
                 return (
                   <a
                     href={link.url}
@@ -76,15 +71,19 @@ const currentPath = Astro.url.pathname;
                     <span class="text-xs uppercase tracking-[0.16em] text-muted-foreground font-mono">{link.kind || 'link'}</span>
                   </a>
                 );
-              } else {
+              }
+
+              if (link.private_ref) {
                 return (
                   <a
                     href={`/login?next=${encodeURIComponent(currentPath)}`}
+                    data-private-link={link.private_ref}
+                    data-private-unlocked-label={link.label}
                     class="flex items-center justify-between rounded-sm border border-border/40 bg-background/20 px-4 py-3 text-sm text-muted-foreground hover:border-primary/45 hover:text-primary transition-colors"
-                    title="该入口为私有管理通道。点击进行特权身份认证后可打开。"
+                    title="该入口由 Cloudflare Access 保护。"
                   >
                     <span class="flex items-center gap-1.5 font-mono font-bold">
-                      <span>{link.label}</span>
+                      <span data-private-link-label>{link.label}</span>
                       <span class="text-[8px] bg-border/40 px-1 py-0.5 text-muted-foreground tracking-widest font-mono">INTERNAL</span>
                     </span>
                     <span class="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/75 font-mono">
@@ -94,6 +93,13 @@ const currentPath = Astro.url.pathname;
                   </a>
                 );
               }
+
+              return (
+                <span class="flex items-center justify-between rounded-sm border border-border/40 bg-background/20 px-4 py-3 text-sm text-muted-foreground">
+                  <span>{link.label}</span>
+                  <span class="font-mono text-[10px]">UNAVAILABLE</span>
+                </span>
+              );
             }) : (
               <p class="text-sm text-muted-foreground font-mono">[ NO_SIGNAL ] 未检测到链接映射。</p>
             )}
@@ -103,7 +109,7 @@ const currentPath = Astro.url.pathname;
         <section class="rounded-[28px] border border-border bg-card/70 p-5">
           <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Monitoring</h2>
           <div class="mt-4 text-sm text-muted-foreground">
-            {(monitor?.provider || monitorHref) ? (
+            {(monitor?.provider || monitorHref || monitorPrivateRef) ? (
               <div class="space-y-3">
                 {monitor?.provider && <p>来源：{monitor.provider}</p>}
                 {monitor?.target_id && <p>Target: {monitor.target_id}</p>}
@@ -115,6 +121,17 @@ const currentPath = Astro.url.pathname;
                     class="inline-flex rounded-full border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
                   >
                     {monitor?.label || '[ LAUNCH_PROBE ]'}
+                  </a>
+                )}
+                {!monitorHref && monitorPrivateRef && (
+                  <a
+                    href={`/login?next=${encodeURIComponent(currentPath)}`}
+                    data-private-link={monitorPrivateRef}
+                    data-private-unlocked-label={monitor?.label || '[ LAUNCH_PROBE ]'}
+                    class="inline-flex rounded-sm border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    <Lock size={12} class="mr-2" />
+                    <span data-private-link-label>[ ACCESS_REQUIRED ]</span>
                   </a>
                 )}
               </div>

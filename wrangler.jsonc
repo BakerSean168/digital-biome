@@ -1,16 +1,12 @@
 {
-	"main": "dist/_worker.js/index.js",
-	"name": "digital-biome",
-  "compatibility_date": "2026-03-05",
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "digital-biome",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-07-17",
   "compatibility_flags": [
-    "nodejs_compat",
-    "global_fetch_strictly_public"
+    "nodejs_compat"
   ],
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./dist"
-	},
-	"observability": {
+  "observability": {
     "enabled": true
   }
 }

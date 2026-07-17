@@ -7,6 +7,45 @@
 import path from 'path';
 
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico|tiff?)$/i;
+const FULL_IPV4 = /(?<![\d.])(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)(?![\d.])/g;
+
+/** Public DNS / documentation addresses that may remain in educational notes. */
+const PUBLIC_SAFE_IPV4 = new Set([
+  '1.1.1.1',
+  '1.0.0.1',
+  '8.8.8.8',
+  '8.8.4.4',
+  '9.9.9.9',
+  '114.114.114.114',
+  '223.5.5.5',
+  '223.6.6.6',
+  '192.0.2.1',
+  '198.51.100.1',
+  '203.0.113.1',
+]);
+
+export interface ProcessContentOptions {
+  redactNetworkIdentifiers?: boolean;
+  protectedInfrastructureUrls?: ReadonlySet<string>;
+}
+
+export function redactIPv4Addresses(content: string): string {
+  return content.replace(FULL_IPV4, (match, firstOctet: string, secondOctet: string) => {
+    if (PUBLIC_SAFE_IPV4.has(match)) return match;
+    return `${firstOctet}.${secondOctet}.x.x`;
+  });
+}
+
+export function redactProtectedInfrastructureUrls(
+  content: string,
+  protectedUrls: ReadonlySet<string>,
+): string {
+  let redacted = content;
+  for (const url of protectedUrls) {
+    redacted = redacted.replaceAll(url, 'private://redacted');
+  }
+  return redacted;
+}
 
 /**
  * Rewrite local image references to /vault-assets/<filename>.
@@ -134,7 +173,8 @@ export function normalizeFrontmatterIndentation(frontmatter: string): string {
 export function processContent(
   content: string,
   filename: string,
-  assetsUrlPrefix: string
+  assetsUrlPrefix: string,
+  options: ProcessContentOptions = {},
 ): string {
   const baseName = filename.replace(/\.md$/, '');
 
@@ -199,5 +239,13 @@ export function processContent(
     }
   }
 
-  return rewriteVaultNoteLinks(rewriteImagePaths(processed, assetsUrlPrefix));
+  let rewritten = rewriteVaultNoteLinks(rewriteImagePaths(processed, assetsUrlPrefix));
+  if (options.redactNetworkIdentifiers) rewritten = redactIPv4Addresses(rewritten);
+  if (options.protectedInfrastructureUrls) {
+    rewritten = redactProtectedInfrastructureUrls(
+      rewritten,
+      options.protectedInfrastructureUrls,
+    );
+  }
+  return rewritten;
 }

@@ -1,15 +1,17 @@
 ---
-import type { AssetCard as AssetCardType } from '../../types/notes';
+import type { AssetCard as AssetCardType, AssetLink } from '../../types/notes';
 
 interface Props {
   asset: AssetCardType;
 }
 
 const { asset } = Astro.props;
+const currentPath = Astro.url.pathname;
+const isProtectedLink = (link: AssetLink) => link.visibility === 'internal' || link.visibility === 'private';
 const primaryLink = asset.links.find(link => link.kind === 'app' || link.kind === 'admin') ?? asset.links[0];
-const monitorLink = asset.links.find(link => link.kind === 'monitor') ?? (asset.monitor?.url
+const monitorLink: AssetLink | undefined = asset.links.find(link => link.kind === 'monitor') ?? (asset.monitor?.url
   ? { label: asset.monitor.label || '监控', url: asset.monitor.url, kind: 'monitor' as const }
-  : null);
+  : undefined);
 const roleLabelMap = {
   ops: 'OPS',
   portal: 'PORTAL',
@@ -62,7 +64,7 @@ const roleLabelMap = {
     >
       查看详情
     </a>
-    {primaryLink && (
+    {primaryLink && !isProtectedLink(primaryLink) && primaryLink.url && (
       <a
         href={primaryLink.url}
         target="_blank"
@@ -72,7 +74,17 @@ const roleLabelMap = {
         {primaryLink.label}
       </a>
     )}
-    {monitorLink && (
+    {primaryLink && isProtectedLink(primaryLink) && primaryLink.private_ref && (
+      <a
+        href={`/login?next=${encodeURIComponent(currentPath)}`}
+        data-private-link={primaryLink.private_ref}
+        data-private-unlocked-label={primaryLink.label}
+        class="inline-flex items-center rounded-sm border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+      >
+        <span data-private-link-label>[ ACCESS_REQUIRED ]</span>
+      </a>
+    )}
+    {monitorLink && !isProtectedLink(monitorLink) && monitorLink.url && (
       <a
         href={monitorLink.url}
         target="_blank"
@@ -80,6 +92,16 @@ const roleLabelMap = {
         class="inline-flex items-center rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
       >
         {monitorLink.label}
+      </a>
+    )}
+    {monitorLink && isProtectedLink(monitorLink) && monitorLink.private_ref && (
+      <a
+        href={`/login?next=${encodeURIComponent(currentPath)}`}
+        data-private-link={monitorLink.private_ref}
+        data-private-unlocked-label={monitorLink.label}
+        class="inline-flex items-center rounded-sm border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+      >
+        <span data-private-link-label>[ ACCESS_REQUIRED ]</span>
       </a>
     )}
   </div>

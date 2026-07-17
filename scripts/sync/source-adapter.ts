@@ -97,7 +97,8 @@ export async function validateSourceFiles(
   layout: SourceLayout,
   withFavicons: boolean,
   stats: SyncStats,
-  summary: ValidationSummary
+  summary: ValidationSummary,
+  protectedInfrastructureUrls: ReadonlySet<string>,
 ): Promise<void> {
   if (!fs.existsSync(srcDir)) {
     throw new Error(`Source directory does not exist: ${srcDir}. Check notes.config.ts for correct paths.`);
@@ -113,7 +114,15 @@ export async function validateSourceFiles(
     const stat = fs.statSync(srcPath);
 
     if (stat.isDirectory()) {
-      await validateSourceFiles(srcPath, nextDestPath, layout, withFavicons, stats, summary);
+      await validateSourceFiles(
+        srcPath,
+        nextDestPath,
+        layout,
+        withFavicons,
+        stats,
+        summary,
+        protectedInfrastructureUrls,
+      );
       continue;
     }
 
@@ -149,7 +158,10 @@ export async function validateSourceFiles(
         }
       }
 
-      processContent(content, file, layout.assetsUrlPrefix);
+      processContent(content, file, layout.assetsUrlPrefix, {
+        redactNetworkIdentifiers: true,
+        protectedInfrastructureUrls,
+      });
 
       if (withFavicons) {
         const urlMatch = content.match(/^url:\s*['"]?([^'"\n]+)['"]?/m);
@@ -172,7 +184,8 @@ export async function syncFiles(
   destDir: string,
   layout: SourceLayout,
   withFavicons: boolean,
-  stats: SyncStats
+  stats: SyncStats,
+  protectedInfrastructureUrls: ReadonlySet<string>,
 ): Promise<void> {
   if (!fs.existsSync(srcDir)) {
     throw new Error(`Source directory does not exist: ${srcDir}. Check notes.config.ts for correct paths.`);
@@ -192,7 +205,14 @@ export async function syncFiles(
     const stat = fs.statSync(srcPath);
 
     if (stat.isDirectory()) {
-      await syncFiles(srcPath, destPath, layout, withFavicons, stats);
+      await syncFiles(
+        srcPath,
+        destPath,
+        layout,
+        withFavicons,
+        stats,
+        protectedInfrastructureUrls,
+      );
     } else if (file.endsWith('.md')) {
       try {
         let content = fs.readFileSync(srcPath, 'utf-8');
@@ -212,7 +232,10 @@ export async function syncFiles(
           }
         }
 
-        content = processContent(content, file, layout.assetsUrlPrefix);
+        content = processContent(content, file, layout.assetsUrlPrefix, {
+          redactNetworkIdentifiers: true,
+          protectedInfrastructureUrls,
+        });
         fs.writeFileSync(destPath, content, 'utf-8');
         stats.copied++;
       } catch (err) {

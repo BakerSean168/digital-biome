@@ -58,7 +58,8 @@ const notes = defineCollection({
     }).nullable().optional(),
     links: z.array(z.object({
       label: z.string(),
-      url: z.string(),
+      url: optionalString(),
+      private_ref: optionalString(),
       kind: z.enum(['app', 'admin', 'repo', 'docs', 'monitor', 'panel', 'ssh', 'other']).default('other'),
       description: optionalString(),
       visibility: z.enum(['public', 'private', 'internal']).nullable().optional(),
@@ -105,7 +106,8 @@ const notes = defineCollection({
     } : undefined,
     links: data.links ? data.links.map(link => ({
       label: link.label,
-      url: link.url,
+      url: link.url ?? undefined,
+      private_ref: link.private_ref ?? undefined,
       kind: link.kind,
       description: link.description ?? undefined,
       visibility: link.visibility ?? undefined,

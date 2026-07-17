@@ -9,7 +9,8 @@ export type HomepageSection = 'services' | 'projects' | 'tools';
 
 export interface AssetLink {
   label: string;
-  url: string;
+  url?: string;
+  private_ref?: string;
   kind?: 'app' | 'admin' | 'repo' | 'docs' | 'monitor' | 'panel' | 'ssh' | 'other';
   description?: string;
   visibility?: Visibility;

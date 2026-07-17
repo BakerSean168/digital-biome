@@ -1,0 +1,4 @@
+# Local placeholders only. Cloudflare Access does not issue JWTs in plain Astro dev mode.
+CF_ACCESS_TEAM_DOMAIN=example.cloudflareaccess.com
+CF_ACCESS_AUD=0000000000000000000000000000000000000000000000000000000000000000
+PRIVATE_INFRASTRUCTURE_JSON={"version":1,"values":{"vps.example.ip":"192.0.2.10"},"links":{"host-example.links.ssh":"ssh://admin@192.0.2.10","portal.home":"https://private.example.test"}}

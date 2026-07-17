@@ -20,6 +20,7 @@ import { createStats, printSyncReport } from './sync-report';
 import { buildIndexes } from './build-indexes';
 import { mergeAssetIndex } from './merge-asset-index';
 import { copyUpstreamLinkGraph } from './copy-upstream-indexes';
+import { loadProtectedInfrastructureUrls } from './privacy';
 
 export interface RunSyncOptions {
   /** Enable favicon caching (default: false) */
@@ -32,6 +33,9 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   const { withFavicons = false, dryRun = false } = options;
 
   const layout = buildSourceLayout(notesConfig);
+  const protectedInfrastructureUrls = loadProtectedInfrastructureUrls(
+    notesConfig.upstream.generatedPath,
+  );
 
   console.log('Syncing Obsidian notes...');
   console.log(`  notes : ${layout.notesSource} -> ${layout.notesDest}`);
@@ -68,10 +72,10 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
       assetSchemaRiskCount: 0,
     };
 
-    await validateSourceFiles(layout.notesSource, layout.notesDest, layout, withFavicons, stats, validationSummary);
-    await validateSourceFiles(layout.assetNotesSource, layout.assetNotesDest, layout, withFavicons, stats, validationSummary);
+    await validateSourceFiles(layout.notesSource, layout.notesDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
+    await validateSourceFiles(layout.assetNotesSource, layout.assetNotesDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
     if (layout.configSource && fs.existsSync(layout.configSource)) {
-      await validateSourceFiles(layout.configSource, layout.configDest, layout, withFavicons, stats, validationSummary);
+      await validateSourceFiles(layout.configSource, layout.configDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
     }
 
     console.log('\n[dry-run] Sync plan:');
@@ -134,14 +138,14 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   cleanStaleFiles(layout.notesDest, expectedFiles, stats);
 
   // Sync markdown files
-  await syncFiles(layout.notesSource, layout.notesDest, layout, withFavicons, stats);
-  await syncFiles(layout.assetNotesSource, layout.assetNotesDest, layout, withFavicons, stats);
+  await syncFiles(layout.notesSource, layout.notesDest, layout, withFavicons, stats, protectedInfrastructureUrls);
+  await syncFiles(layout.assetNotesSource, layout.assetNotesDest, layout, withFavicons, stats, protectedInfrastructureUrls);
 
   // Sync config directory
   if (layout.configSource) {
     const fs = await import('fs');
     if (fs.existsSync(layout.configSource)) {
-      await syncFiles(layout.configSource, layout.configDest, layout, withFavicons, stats);
+      await syncFiles(layout.configSource, layout.configDest, layout, withFavicons, stats, protectedInfrastructureUrls);
     }
   }
 

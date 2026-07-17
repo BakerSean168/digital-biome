@@ -1,0 +1,69 @@
+<script>
+  interface PrivateInfrastructurePayload {
+    version: 1;
+    values: Record<string, string>;
+    links: Record<string, string>;
+  }
+
+  const valueTargets = document.querySelectorAll<HTMLElement>('[data-private-value]');
+  const linkTargets = document.querySelectorAll<HTMLAnchorElement>('[data-private-link]');
+
+  function isStringRecord(value: unknown): value is Record<string, string> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value) &&
+      Object.values(value).every(item => typeof item === 'string');
+  }
+
+  function isPrivatePayload(value: unknown): value is PrivateInfrastructurePayload {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+    const payload = value as Partial<PrivateInfrastructurePayload>;
+    return payload.version === 1 && isStringRecord(payload.values) && isStringRecord(payload.links);
+  }
+
+  function getAllowedHref(value: string): string | null {
+    try {
+      const url = new URL(value);
+      return ['http:', 'https:', 'ssh:'].includes(url.protocol) && url.hostname ? url.href : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function unlockPrivateInfrastructure() {
+    if (valueTargets.length === 0 && linkTargets.length === 0) return;
+
+    try {
+      const response = await fetch('/api/private/infrastructure', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+        redirect: 'manual',
+      });
+      if (!response.ok) return;
+
+      const payload: unknown = await response.json();
+      if (!isPrivatePayload(payload)) return;
+
+      for (const target of valueTargets) {
+        const key = target.dataset.privateValue;
+        if (key && payload.values[key]) {
+          target.textContent = payload.values[key];
+        }
+      }
+
+      for (const target of linkTargets) {
+        const key = target.dataset.privateLink;
+        const href = key ? getAllowedHref(payload.links[key] || '') : null;
+        if (!href) continue;
+
+        target.href = href;
+        const label = target.querySelector<HTMLElement>('[data-private-link-label]');
+        if (label && target.dataset.privateUnlockedLabel) {
+          label.textContent = target.dataset.privateUnlockedLabel;
+        }
+      }
+    } catch {
+      // Access failures intentionally leave all private fields locked.
+    }
+  }
+
+  void unlockPrivateInfrastructure();
+</script>

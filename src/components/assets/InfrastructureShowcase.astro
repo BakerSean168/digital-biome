@@ -1,7 +1,7 @@
 ---
 import type { AssetCard } from '../../types/notes';
 import type { ResolvedTopologyNode } from '../../utils/infrastructure';
-import { Shield, Activity, Lock, ExternalLink, Cpu, Globe, Server } from '@lucide/astro';
+import { Shield, Activity, Lock, ExternalLink, Cpu, Globe, Server, Lightbulb } from '@lucide/astro';
 
 interface Props {
   title: string;
@@ -10,7 +10,6 @@ interface Props {
   featuredAssets: AssetCard[];
   heroFacts: string[];
   locale?: 'zh' | 'en';
-  isAuthed?: boolean;
 }
 
 const {
@@ -19,7 +18,6 @@ const {
   resolvedNodes,
   featuredAssets,
   locale = 'zh',
-  isAuthed = false,
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
@@ -31,7 +29,7 @@ const portalLabels = locale === 'en'
       monitorDesc: 'Tracks global VPS resource metrics, bandwidth, latency, and node health worldwide. Publicly readable.',
       monitorBtn: '[ VIEW_REALTIME_MONITOR ]',
       controlTitle: 'Private Control Center',
-      controlSub: 'home.bakersean.top',
+      controlSub: 'CF_ACCESS.PROTECTED',
       controlDesc: 'Protected by Cloudflare Access. Unified dashboard for PVE, RouterOS, storage, and private containers.',
       controlBtn: '[ AUTHENTICATE_AND_ENTER ]',
     }
@@ -43,7 +41,7 @@ const portalLabels = locale === 'en'
       monitorDesc: '基于哪吒监控探针，提供家庭计算底座、公网云 VPS 及网络节点的实时负载、下行带宽与服务在线率视图。',
       monitorBtn: '[ 进入监控面板 ]',
       controlTitle: '私人基础设施控制中心',
-      controlSub: 'home.bakersean.top',
+      controlSub: 'CF_ACCESS.PROTECTED',
       controlDesc: '基于 Cloudflare Access 提供 Google / GitHub 强身份验证，集中调度 PVE 宿主机、RouterOS 网关及容器集群后台。',
       controlBtn: '[ 认证并进入控制台 ]',
     };
@@ -52,7 +50,8 @@ const vpsNodes = [
   {
     provider: "Azure",
     region: "Hong Kong (East Asia)",
-    ip: isAuthed ? "20.205.8.5" : "20.205.x.x",
+    ip: "20.205.x.x",
+    privateRef: "vps.azure-hk.ip",
     role: "Control Plane / 控制平面",
     specs: "1 vCPU / 2 GB / 30 GB SSD",
     os: "Ubuntu 24.04 LTS",
@@ -71,7 +70,7 @@ const vpsNodes = [
         subName: "Subscription Admin",
         description: "订阅管理与分发中心，负责公网运维入口",
         repoUrl: "https://github.com/sub-store-org/Sub-Store",
-        liveUrl: "https://home.bakersean.top",
+        privateRef: "portal.home",
         isPublic: false
       }
     ]
@@ -79,7 +78,8 @@ const vpsNodes = [
   {
     provider: "Aliyun",
     region: "Chengdu (cn-chengdu)",
-    ip: isAuthed ? "47.108.31.25" : "47.108.x.x",
+    ip: "47.108.x.x",
+    privateRef: "vps.aliyun-chengdu.ip",
     role: "Workload Node / 业务负载",
     specs: "2 vCPU / 4 GB / 80 GB SSD",
     os: "Debian 12",
@@ -98,7 +98,8 @@ const vpsNodes = [
   {
     provider: "Azure",
     region: "Tokyo (Japan East)",
-    ip: isAuthed ? "20.210.14.92" : "20.210.x.x",
+    ip: "20.210.x.x",
+    privateRef: "vps.azure-japan.ip",
     role: "Proxy Node / 区域代理",
     specs: "1 vCPU / 1 GB / 32 GB SSD",
     os: "Ubuntu 22.04 LTS",
@@ -109,7 +110,7 @@ const vpsNodes = [
         subName: "Proxy Core",
         description: "日本区域的出站代理与分流服务",
         repoUrl: "https://github.com/SagerNet/sing-box",
-        liveUrl: "https://home.bakersean.top",
+        privateRef: "portal.home",
         isPublic: false
       }
     ]
@@ -117,7 +118,8 @@ const vpsNodes = [
   {
     provider: "Azure",
     region: "Seoul (Korea Central)",
-    ip: isAuthed ? "20.249.44.8" : "20.249.x.x",
+    ip: "20.249.x.x",
+    privateRef: "vps.azure-korea.ip",
     role: "Proxy Node / 备用代理",
     specs: "1 vCPU / 1 GB / 32 GB SSD",
     os: "Ubuntu 22.04 LTS",
@@ -128,7 +130,7 @@ const vpsNodes = [
         subName: "Backup Proxy",
         description: "韩国区域出站代理与链路测试节点",
         repoUrl: "https://github.com/SagerNet/sing-box",
-        liveUrl: "https://home.bakersean.top",
+        privateRef: "portal.home",
         isPublic: false
       }
     ]
@@ -158,7 +160,7 @@ const vpsNodes = [
   <!-- Gateway Portals -->
   <section class="grid gap-6 md:grid-cols-2">
     <!-- Monitor Portal -->
-    <div class="border border-border bg-card p-6 flex flex-col justify-between hover:border-primary/50 transition-colors relative overflow-hidden group rounded-xl">
+    <div class="border border-border bg-card p-6 flex flex-col justify-between hover:border-primary/50 transition-colors relative overflow-hidden group rounded-sm">
       <div class="absolute top-0 right-0 border-b border-l border-primary/20 bg-primary/5 px-2 py-0.5 text-[8px] font-mono text-primary tracking-widest uppercase">
         Public Status
       </div>
@@ -185,7 +187,7 @@ const vpsNodes = [
     </div>
 
     <!-- Private Portal -->
-    <div class="border border-border bg-card p-6 flex flex-col justify-between hover:border-primary/50 transition-colors relative overflow-hidden group rounded-xl">
+    <div class="border border-border bg-card p-6 flex flex-col justify-between hover:border-primary/50 transition-colors relative overflow-hidden group rounded-sm">
       <div class="absolute top-0 right-0 border-b border-l border-amber-500/20 bg-amber-500/5 px-2 py-0.5 text-[8px] font-mono text-amber-400 tracking-widest uppercase">
         Access Controlled
       </div>
@@ -204,8 +206,15 @@ const vpsNodes = [
         </p>
       </div>
       <div class="mt-6 pt-4 border-t border-border/50">
-        <a href="https://home.bakersean.top" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full py-2.5 bg-background border border-border hover:border-primary/50 text-xs font-mono tracking-widest text-foreground transition-colors group/btn rounded-lg">
-          <span>{portalLabels.controlBtn}</span>
+        <a
+          href={`/login?next=${encodeURIComponent(currentPath)}`}
+          data-private-link="portal.home"
+          data-private-unlocked-label={portalLabels.controlBtn}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center justify-center gap-2 w-full py-2.5 bg-background border border-border hover:border-primary/50 text-xs font-mono tracking-widest text-foreground transition-colors group/btn rounded-sm"
+        >
+          <span data-private-link-label>{portalLabels.controlBtn}</span>
           <Shield size={12} class="text-muted-foreground group-hover/btn:text-primary transition-colors" />
         </a>
       </div>
@@ -225,7 +234,7 @@ const vpsNodes = [
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
       {vpsNodes.map(vps => (
-        <div class="border border-[#8B9A46]/35 bg-[#1A1B19] hover:border-primary/50 transition-colors p-6 rounded-2xl flex flex-col gap-4 text-left relative overflow-hidden group">
+        <div class="border border-[#8B9A46]/35 bg-[#1A1B19] hover:border-primary/50 transition-colors p-6 rounded-sm flex flex-col gap-4 text-left relative overflow-hidden group">
           <!-- Header Block -->
           <div class="flex items-center justify-between border-b border-border/40 pb-4">
             <div class="flex items-center gap-3">
@@ -239,7 +248,7 @@ const vpsNodes = [
             </div>
             <div class="text-right text-[11px] font-mono text-muted-foreground leading-normal">
               <p>Region: <span class="text-foreground">{vps.region}</span></p>
-              <p>IP: <span class="text-foreground">{vps.ip}</span></p>
+              <p>IP: <span class="text-foreground" data-private-value={vps.privateRef}>{vps.ip}</span></p>
             </div>
           </div>
 
@@ -268,7 +277,7 @@ const vpsNodes = [
             <span class="text-[9px] font-mono tracking-widest text-muted-foreground uppercase">Deployed Services / 运行服务</span>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               {vps.services.map(svc => (
-                <div class="border border-border/50 bg-[#161715]/70 p-4 rounded-xl flex flex-col justify-between hover:border-primary/45 transition-colors">
+                <div class="border border-border/50 bg-[#161715]/70 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors">
                   <div class="space-y-1.5">
                     <div class="flex items-center gap-2">
                       <div class="w-7 h-7 border border-primary/20 bg-primary/5 flex items-center justify-center text-primary rounded-md">
@@ -287,15 +296,23 @@ const vpsNodes = [
                       <Shield size={10} />
                       <span>Git</span>
                     </a>
-                    {svc.isPublic || isAuthed ? (
+                    {svc.isPublic && svc.liveUrl ? (
                       <a href={svc.liveUrl} target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-primary/95 hover:bg-primary text-[10px] font-mono font-bold text-background rounded-lg transition-colors">
                         <ExternalLink size={10} />
                         <span>Open</span>
                       </a>
                     ) : (
-                      <a href={`/login?next=${encodeURIComponent(currentPath)}`} class="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-border/20 hover:bg-border/30 text-[10px] font-mono text-muted-foreground rounded-lg transition-colors" title="该入口为私有管理通道。点击进行特权身份认证后可打开。">
+                      <a
+                        href={`/login?next=${encodeURIComponent(currentPath)}`}
+                        data-private-link={svc.privateRef}
+                        data-private-unlocked-label="Open"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-border/20 hover:bg-border/30 text-[10px] font-mono text-muted-foreground rounded-sm transition-colors"
+                        title="该入口由 Cloudflare Access 保护。"
+                      >
                         <Lock size={9} />
-                        <span>Locked</span>
+                        <span data-private-link-label>Locked</span>
                       </a>
                     )}
                   </div>
@@ -318,7 +335,7 @@ const vpsNodes = [
     </div>
 
     <!-- Responsive SVG Container -->
-    <div class="border border-[#8B9A46]/30 bg-[#1A1B19] p-4 md:p-8 rounded-2xl w-full flex flex-col items-center overflow-hidden">
+    <div class="border border-[#8B9A46]/30 bg-[#1A1B19] p-4 md:p-8 rounded-sm w-full flex flex-col items-center overflow-hidden">
       <div class="w-full overflow-x-auto scrollbar-thin select-none">
         <div class="min-w-[760px] max-w-4xl mx-auto w-full">
         <svg viewBox="0 0 800 450" class="w-full h-auto font-mono text-[10px]">
@@ -417,21 +434,21 @@ const vpsNodes = [
         
         <!-- Related documentation links -->
         <div class="mt-6 w-full border-t border-border/40 pt-4 flex flex-col gap-2 text-left">
-          <span class="text-[9px] font-mono tracking-widest text-muted-foreground uppercase">💡 相关运维与搭建配置笔记 / INFRASTRUCTURE_WIKI</span>
+          <span class="flex items-center gap-1.5 text-[9px] font-mono tracking-widest text-muted-foreground uppercase"><Lightbulb size={12} class="text-primary" />相关运维与搭建配置笔记 / INFRASTRUCTURE_WIKI</span>
           <div class="flex flex-wrap gap-2.5 font-mono text-xs mt-1">
-            <a href="/notes/obsidian/home-server-setup" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-lg hover:border-primary/50 hover:text-primary transition-colors">
+            <a href="/notes/obsidian/home-server-setup" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
               [ PVE 宿主机搭建 ]
             </a>
-            <a href="/notes/obsidian/routeros-configuration" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-lg hover:border-primary/50 hover:text-primary transition-colors">
+            <a href="/notes/obsidian/routeros-configuration" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
               [ RouterOS 配置 ]
             </a>
-            <a href="/notes/obsidian/immortalwrt-configuration" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-lg hover:border-primary/50 hover:text-primary transition-colors">
+            <a href="/notes/obsidian/immortalwrt-configuration" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
               [ iStoreOS / EmuWrt 配置 ]
             </a>
-            <a href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-lg hover:border-primary/50 hover:text-primary transition-colors">
+            <a href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
               [ Docker 业务部署 ]
             </a>
-            <a href="/notes/obsidian/pve-install-fnos" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-lg hover:border-primary/50 hover:text-primary transition-colors">
+            <a href="/notes/obsidian/pve-install-fnos" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
               [ fnOS 安装与直通 ]
             </a>
           </div>
@@ -442,9 +459,9 @@ const vpsNodes = [
 </div>
 
 <!-- Interactive Modal for N100 Host Virtualization details -->
-<div id="n100-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md items-center justify-center hidden z-[9999] transition-opacity duration-300 opacity-0 pointer-events-none">
+<div id="n100-modal" class="fixed inset-0 bg-black/80 items-center justify-center hidden z-[9999] transition-opacity duration-300 opacity-0 pointer-events-none">
   <!-- Modal Content Container -->
-  <div class="border border-[#8B9A46]/40 bg-[#151614] max-w-2xl w-full mx-4 rounded-2xl p-6 relative flex flex-col gap-6 text-left shadow-[0_20px_50px_rgba(0,0,0,0.5)] scale-95 transition-transform duration-300 pointer-events-auto">
+  <div class="border border-[#8B9A46]/40 bg-[#151614] max-w-2xl w-full mx-4 rounded-sm p-6 relative flex flex-col gap-6 text-left scale-95 transition-transform duration-300 pointer-events-auto">
     <!-- Close button -->
     <button id="modal-close" class="absolute top-4 right-4 text-muted-foreground hover:text-foreground font-mono text-xs cursor-pointer">[ ESC_CLOSE / 关闭 ]</button>
     
@@ -460,7 +477,7 @@ const vpsNodes = [
     </div>
 
     <!-- PVE Parent Info -->
-    <a href="/notes/obsidian/home-server-setup" class="block bg-[#1C1D1A] border border-[#8B9A46]/20 p-4 rounded-xl space-y-2 hover:border-primary/40 transition-colors group/pve">
+    <a href="/notes/obsidian/home-server-setup" class="block bg-[#1C1D1A] border border-[#8B9A46]/20 p-4 rounded-sm space-y-2 hover:border-primary/40 transition-colors group/pve">
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold text-foreground font-mono">宿主底座系统 / Host OS</span>
         <span class="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-mono">HYPERVISOR</span>
@@ -476,7 +493,7 @@ const vpsNodes = [
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         <!-- RouterOS VM -->
-        <a href="/notes/obsidian/routeros-configuration" class="border border-border bg-[#161715]/90 p-4 rounded-xl flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a href="/notes/obsidian/routeros-configuration" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
           <div>
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-foreground font-mono font-bold group-hover/vm:text-primary transition-colors">RouterOS VM</h4>
@@ -492,7 +509,7 @@ const vpsNodes = [
         </a>
 
         <!-- iStoreOS VM -->
-        <a href="/notes/obsidian/immortalwrt-configuration" class="border border-border bg-[#161715]/90 p-4 rounded-xl flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a href="/notes/obsidian/immortalwrt-configuration" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
           <div>
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-foreground font-mono font-bold">iStoreOS (EmuWrt) VM</h4>
@@ -508,7 +525,7 @@ const vpsNodes = [
         </a>
 
         <!-- Debian VM -->
-        <a href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden" class="border border-border bg-[#161715]/90 p-4 rounded-xl flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
           <div>
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-foreground font-mono font-bold group-hover/vm:text-primary transition-colors">Debian Linux VM</h4>
@@ -524,7 +541,7 @@ const vpsNodes = [
         </a>
 
         <!-- fnOS NAS VM -->
-        <a href="/notes/obsidian/pve-install-fnos" class="border border-border bg-[#161715]/90 p-4 rounded-xl flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a href="/notes/obsidian/pve-install-fnos" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
           <div>
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-foreground font-mono font-bold">fnOS (飞牛 NAS) VM</h4>
@@ -595,28 +612,3 @@ const vpsNodes = [
     });
   }
 </script>
-
-<style>
-  @keyframes hud-line-dash {
-    to {
-      stroke-dashoffset: -20;
-    }
-  }
-  .hud-connector-line {
-    stroke-dasharray: 6, 6;
-    animation: hud-line-dash 1.5s linear infinite;
-  }
-  .animate-pulse-soft {
-    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-  @keyframes pulse-soft {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.4;
-      transform: scale(1.05);
-    }
-  }
-</style>

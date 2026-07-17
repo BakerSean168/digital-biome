@@ -1,13 +1,10 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import netlify from '@astrojs/netlify';
 import sitemap from '@astrojs/sitemap';
 import remarkNormalizeCodeLang from './src/utils/remark-normalize-code-lang.ts';
 import remarkWikilinks from './src/utils/remark-wikilinks.ts';
 
 import tailwindcss from '@tailwindcss/vite';
-
-import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
@@ -19,9 +16,7 @@ export default defineConfig({
     }
   },
 
-  adapter: cloudflare(),
-
-  site: process.env.PUBLIC_SITE_URL || 'https://digital-biome.netlify.app/',
+  site: process.env.PUBLIC_SITE_URL || 'https://bakersean.top/',
 
   outDir: './dist',
   publicDir: './public',

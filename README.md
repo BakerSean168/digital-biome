@@ -9,7 +9,7 @@
 ```bash
 pnpm install      # 安装依赖
 pnpm sync         # 同步 Obsidian 笔记到内容目录
-pnpm dev          # 启动开发服务器 (localhost:4321)
+pnpm dev:only     # 启动开发服务器 (localhost:4321)
 pnpm build        # 构建生产版本
 pnpm preview      # 预览构建结果
 ```
@@ -51,11 +51,20 @@ specs/               # 功能规格
 
 ## 部署
 
-项目已配置 Netlify 适配器，推送到 GitHub 后自动部署。
+生产环境使用 Cloudflare Pages + Pages Functions。`/api/private/*` 由 Cloudflare
+Access 保护，Functions 会再次验证 Access JWT；私有基础设施值只存放在加密的
+`PRIVATE_INFRASTRUCTURE_JSON` secret 中，不进入静态 HTML 或 Pagefind 索引。
 
-部署前更新：
-- `astro.config.mjs` -> `site` 字段
-- `src/constants.ts` -> 个人信息
+```bash
+pnpm check
+pnpm check:edge
+pnpm test:edge
+pnpm build:only
+pnpm deploy:cloudflare
+```
+
+首次部署、Access 策略、secrets 和验收步骤见
+[Cloudflare 部署清单](docs/cloudflare-deployment.md)。
 
 ## 技术栈
 
@@ -66,7 +75,7 @@ specs/               # 功能规格
 | 样式 | Tailwind CSS v4 |
 | 图标 | Lucide Icons |
 | 包管理 | pnpm |
-| 部署 | Netlify |
+| 部署 | Cloudflare Pages + Access |
 
 ## 文档
 

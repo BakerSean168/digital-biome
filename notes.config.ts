@@ -33,6 +33,7 @@ function resolveUpstreamGeneratedPath(): string {
     return process.env.NOTES_UPSTREAM_GENERATED.trim();
   }
   const candidates = [
+    `${vaultRoot}/generated`,
     `${DEFAULT_VAULT_ROOT}/generated`,
     '../thought-forest/generated',
     '../../thought-forest/generated',

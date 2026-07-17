@@ -1,67 +1,86 @@
 ---
 import SiteSearch from './SiteSearch.astro';
-import { Search, Lock, LockOpen } from '@lucide/astro';
+import { Search, Lock, LogOut } from '@lucide/astro';
 
-const isAuthed = Astro.locals.auth?.isAuthed ?? false;
 const currentPath = Astro.url.pathname;
-const loginNext = currentPath && currentPath !== "/login" ? currentPath : "/";
+const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
 ---
 
-<!-- Floating Magnetic Command Pill -->
-<div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 group">
-  <div 
-    id="magnetic-pill"
-    class="flex items-center gap-3 px-4 py-2 rounded-full border border-border bg-background/50 backdrop-blur-md text-sm font-mono transition-all shadow-lg"
+<div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 group">
+  <nav
+    class="flex h-10 items-center gap-3 rounded-sm border border-border bg-background/95 px-4 text-sm font-mono"
+    aria-label="快捷操作"
   >
-    <!-- Search Button inside pill -->
-    <button 
-      class="search-trigger flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-      aria-label="Initialize Search"
+    <button
+      class="search-trigger flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+      aria-label="打开搜索"
       aria-haspopup="dialog"
     >
       <Search size={14} class="text-primary" />
-      <span class="text-xs">[ ⌘K ] 搜索</span>
+      <span class="text-xs">[ SEARCH ]</span>
     </button>
 
-    <div class="w-px h-4 bg-border/80"></div>
+    <div class="h-4 w-px bg-border/80"></div>
 
-    <!-- Dynamic Auth controls inside pill -->
-    {isAuthed ? (
-      <form method="POST" action="/api/auth/logout" class="flex items-center">
-        <button type="submit" class="flex items-center gap-1.5 text-primary hover:text-[#728038] text-xs transition-colors cursor-pointer" title="退出特权模式">
-          <LockOpen size={12} />
-          <span>[ OUT / 退出 ]</span>
-        </button>
-      </form>
-    ) : (
-      <a href={`/login?next=${encodeURIComponent(loginNext)}`} class="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-xs transition-colors" title="进入特权模式">
-        <Lock size={12} />
-        <span>[ IN / 登录 ]</span>
-      </a>
-    )}
-  </div>
+    <a
+      data-auth-login
+      href={`/login?next=${encodeURIComponent(loginNext)}`}
+      class="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+      title="使用 GitHub 身份登录"
+    >
+      <Lock size={12} />
+      <span>[ ACCESS ]</span>
+    </a>
+
+    <a
+      data-auth-logout
+      href="/cdn-cgi/access/logout"
+      class="hidden items-center gap-1.5 text-xs text-primary transition-colors hover:text-foreground"
+      title="退出 Cloudflare Access"
+    >
+      <LogOut size={12} />
+      <span>[ LOGOUT ]</span>
+    </a>
+
+    <span data-auth-announcer class="sr-only" aria-live="polite"></span>
+  </nav>
 </div>
 
-<!-- Global Site Search Modal -->
 <SiteSearch />
 
 <script>
-  // Magnetic Effect
-  const pill = document.getElementById('magnetic-pill');
-  if (pill) {
-    document.addEventListener('mousemove', (e) => {
-      const rect = pill.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
-      const distance = Math.sqrt(Math.pow(e.clientX - x, 2) + Math.pow(e.clientY - y, 2));
-      
-      if (distance < 120) { 
-        const pullX = (e.clientX - x) * 0.15;
-        const pullY = (e.clientY - y) * 0.15;
-        pill.style.transform = `translate(${pullX}px, ${pullY}px)`;
-      } else {
-        pill.style.transform = `translate(0px, 0px)`;
+  async function refreshAccessSession() {
+    const loginControl = document.querySelector<HTMLElement>('[data-auth-login]');
+    const logoutControl = document.querySelector<HTMLElement>('[data-auth-logout]');
+    const announcer = document.querySelector<HTMLElement>('[data-auth-announcer]');
+    if (!loginControl || !logoutControl) return;
+
+    try {
+      const response = await fetch('/api/private/session', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+        redirect: 'manual',
+      });
+      if (!response.ok) return;
+
+      const payload: unknown = await response.json();
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        !('authenticated' in payload) ||
+        payload.authenticated !== true
+      ) {
+        return;
       }
-    });
+
+      loginControl.classList.add('hidden');
+      logoutControl.classList.remove('hidden');
+      logoutControl.classList.add('flex');
+      if (announcer) announcer.textContent = 'Cloudflare Access 已认证';
+    } catch {
+      // Guests keep the default login control.
+    }
   }
+
+  void refreshAccessSession();
 </script>

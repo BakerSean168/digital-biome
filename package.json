@@ -15,6 +15,10 @@
     "build": "pnpm sync && astro build && pagefind --site dist && tsx scripts/postbuild.ts",
     "build:only": "astro build && pagefind --site dist && tsx scripts/postbuild.ts",
     "check": "astro check",
+    "check:edge": "tsc -p functions/tsconfig.json --noEmit",
+    "test:edge": "tsx --test edge/*.test.ts",
+    "export:private": "tsx scripts/export-private-infrastructure.ts",
+    "deploy:cloudflare": "pnpm build && wrangler pages deploy dist --project-name digital-biome --branch main",
     "preview": "astro preview",
     "sync": "tsx scripts/sync-obsidian.ts",
     "build:indexes": "tsx scripts/sync/build-indexes.ts",
@@ -22,14 +26,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.12",
-    "@astrojs/netlify": "^6.6.3",
     "@astrojs/sitemap": "^3.7.0",
     "@lucide/astro": "^0.575.0",
     "@pagefind/default-ui": "^1.4.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.1",
     "astro": "^5.16.9",
+    "jose": "^6.2.3",
     "mdast": "^3.0.0",
     "tailwindcss": "^4.2.1",
     "undici": "^7.22.0",
@@ -38,10 +41,12 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@cloudflare/workers-types": "^5.20260717.1",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.0.0",
     "pagefind": "^1.4.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.111.0"
   }
 }

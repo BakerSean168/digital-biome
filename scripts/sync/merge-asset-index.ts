@@ -27,6 +27,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { redactProtectedLinks } from '../../edge/private-refs';
 
 // ── Upstream asset-index types (matches thought-forest/scripts/knowledge-index/types.ts) ──
 
@@ -34,7 +35,7 @@ interface UpstreamAssetLink {
   label: string;
   url: string;
   kind?: string;
-  visibility?: 'public' | 'internal';
+  visibility?: 'public' | 'private' | 'internal';
 }
 
 interface UpstreamMonitorConfig {
@@ -137,7 +138,7 @@ export function mergeAssetIndex(knowledgeIndexDir: string, indexDir: string): vo
 
     // Overlay links (array of objects)
     if (upstreamEntry.links !== undefined && upstreamEntry.links.length > 0) {
-      merged['links'] = upstreamEntry.links;
+      merged['links'] = redactProtectedLinks(assetId, upstreamEntry.links);
     }
 
     // Overlay homepage (homepage config object)
