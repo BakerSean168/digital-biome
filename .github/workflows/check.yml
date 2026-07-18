@@ -29,10 +29,24 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Create short-lived Vault token
+        id: vault-token
+        uses: actions/create-github-app-token@v3
         with:
-          submodules: true
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            digital-biome
+            thought-forest
+          permission-contents: read
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.vault-token.outputs.token }}
+          submodules: recursive
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -46,8 +60,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Sync notes
+      - name: Install Vault index dependencies
+        run: npm --prefix thought-forest ci --ignore-scripts
+
+      - name: Build and sync the pinned Vault
         run: pnpm sync
 
       - name: Run astro check
         run: pnpm check
+
+      - name: Check Pages Functions
+        run: pnpm check:edge
+
+      - name: Test infrastructure contracts
+        run: pnpm test:infrastructure

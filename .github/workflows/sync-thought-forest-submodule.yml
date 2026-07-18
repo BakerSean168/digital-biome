@@ -17,17 +17,32 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   sync-submodule:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout digital-biome
-        uses: actions/checkout@v4
+      - name: Create short-lived read-only Vault token
+        id: vault-token
+        uses: actions/create-github-app-token@v3
         with:
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            digital-biome
+            thought-forest
+          permission-contents: read
+
+      - name: Checkout digital-biome
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.vault-token.outputs.token }}
           fetch-depth: 0
           ref: main
           submodules: recursive
+          persist-credentials: false
 
       - name: Resolve target thought-forest SHA
         id: target
@@ -78,13 +93,23 @@ jobs:
         shell: bash
         env:
           TARGET_SHA: ${{ steps.update.outputs.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
+          SHORT_SHA="${TARGET_SHA:0:12}"
+          BRANCH="automation/thought-forest-${SHORT_SHA}-${GITHUB_RUN_ID}"
+          git switch -c "${BRANCH}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: bump thought-forest submodule to ${TARGET_SHA}"
-          git push origin HEAD:main
+          gh auth setup-git
+          git push --set-upstream origin "${BRANCH}"
+          gh pr create \
+            --base main \
+            --head "${BRANCH}" \
+            --title "chore: update thought-forest to ${SHORT_SHA}" \
+            --body "Pins the private Vault submodule to \`${TARGET_SHA}\`. Merge this PR only after the repository checks pass."
 
       - name: Report no-op
         if: steps.update.outputs.changed != 'true'

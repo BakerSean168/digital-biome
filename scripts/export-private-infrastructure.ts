@@ -6,11 +6,12 @@
  *   pnpm export:private -- --out .dev.vars.private.json
  *   pnpm export:private -- --print
  *
- * Values are derived from protected asset links + HostName/IP fields.
- * Showcase UI aliases (vps.*.ip, portal.home) are included for unlock compatibility.
+ * Values are derived from protected asset links. Host IPs are accepted only
+ * from an explicit protected SSH link, never from the first arbitrary URL.
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { notesConfig } from '../notes.config';
 import { buildPrivateLinkRefs } from '../edge/private-refs';
 import { parsePrivateInfrastructure } from '../edge/private-infrastructure';
@@ -24,44 +25,31 @@ interface UpstreamAssetLink {
 
 interface UpstreamAssetItem {
   assetId: string;
+  assetType?: string;
   links?: UpstreamAssetLink[];
 }
 
-const FULL_IPV4 =
-  /(?<![\d.])(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?![\d.])/g;
+const IPV4_HOSTNAME =
+  /^(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
 
-/** Showcase aliases kept for InfrastructureShowcase private_ref keys. */
-const SHOWCASE_IP_ALIASES: Record<string, string> = {
-  'vps.azure-hk.ip': 'host-azure-hk-vps',
-  'vps.aliyun-chengdu.ip': 'host-aliyun-chengdu-dailyuse-vps',
-  'vps.azure-japan.ip': 'host-azure-japan-singbox-vps',
-  'vps.azure-korea.ip': 'host-azure-korea-singbox-vps',
-};
+const REQUIRED_SHOWCASE_HOSTS = [
+  'host-azure-hk-vps',
+  'host-aliyun-chengdu-dailyuse-vps',
+  'host-azure-japan-singbox-vps',
+  'host-azure-korea-singbox-vps',
+] as const;
 
-const PORTAL_HOME_CANDIDATES = [
-  'svc-homepage-dashboard.links.app',
-  'host-debian-services-vm.links.app.homepage',
-  'host-n100-pve.links.admin',
-];
-
-function extractIpv4(value: string): string | null {
-  const match = value.match(FULL_IPV4);
-  return match?.[0] ?? null;
-}
-
-function extractHostnameIp(url: string): string | null {
+function extractSshHostnameIp(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (FULL_IPV4.test(parsed.hostname)) {
-      // reset lastIndex side effect from /g
-      FULL_IPV4.lastIndex = 0;
+    if (parsed.protocol !== 'ssh:') return null;
+    if (IPV4_HOSTNAME.test(parsed.hostname)) {
       return parsed.hostname;
     }
   } catch {
     // ignore invalid URLs
   }
-  FULL_IPV4.lastIndex = 0;
-  return extractIpv4(url);
+  return null;
 }
 
 function loadUpstreamAssets(): UpstreamAssetItem[] {
@@ -86,33 +74,35 @@ function loadUpstreamAssets(): UpstreamAssetItem[] {
 export function buildPrivateInfrastructurePayload(assets: UpstreamAssetItem[]) {
   const values: Record<string, string> = {};
   const links: Record<string, string> = {};
-  const ipByAsset = new Map<string, string>();
+  const sshIpsByAsset = new Map<string, Set<string>>();
 
   for (const asset of assets) {
     const assetLinks = asset.links ?? [];
     for (const { link, privateRef } of buildPrivateLinkRefs(asset.assetId, assetLinks)) {
       if (!privateRef || !link.url) continue;
       links[privateRef] = link.url.trim();
-      const ip = extractHostnameIp(link.url);
-      if (ip && !ipByAsset.has(asset.assetId)) {
-        ipByAsset.set(asset.assetId, ip);
+      if (link.kind === 'ssh') {
+        const ip = extractSshHostnameIp(link.url);
+        if (!ip) {
+          throw new Error(`${asset.assetId} has a protected SSH link without an IPv4 hostname.`);
+        }
+        const ips = sshIpsByAsset.get(asset.assetId) ?? new Set<string>();
+        ips.add(ip);
+        sshIpsByAsset.set(asset.assetId, ips);
       }
     }
   }
 
-  for (const [assetId, ip] of ipByAsset) {
-    values[`${assetId}.ip`] = ip;
+  for (const [assetId, ips] of sshIpsByAsset) {
+    if (ips.size !== 1) {
+      throw new Error(`${assetId} must resolve to exactly one IP from protected SSH links.`);
+    }
+    values[`${assetId}.ip`] = [...ips][0];
   }
 
-  for (const [alias, assetId] of Object.entries(SHOWCASE_IP_ALIASES)) {
-    const ip = ipByAsset.get(assetId);
-    if (ip) values[alias] = ip;
-  }
-
-  for (const candidate of PORTAL_HOME_CANDIDATES) {
-    if (links[candidate]) {
-      links['portal.home'] = links[candidate];
-      break;
+  for (const assetId of REQUIRED_SHOWCASE_HOSTS) {
+    if (!values[`${assetId}.ip`]) {
+      throw new Error(`${assetId} must define exactly one protected SSH IPv4 link.`);
     }
   }
 
@@ -167,4 +157,6 @@ function main() {
   console.log('Set Cloudflare secret PRIVATE_INFRASTRUCTURE_JSON to the minified JSON (or use the file contents).');
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main();
+}

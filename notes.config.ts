@@ -5,9 +5,6 @@
  * 如需临时指向外部 vault，可显式设置 `NOTES_VAULT_ROOT` 环境变量。
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
-
 const DEFAULT_VAULT_ROOT = 'thought-forest';
 const vaultRoot = process.env.NOTES_VAULT_ROOT?.trim() || DEFAULT_VAULT_ROOT;
 
@@ -16,36 +13,15 @@ function vaultPath(...segments: string[]): string {
 }
 
 /**
- * Resolve the path to the upstream thought-forest/generated/ directory.
- *
- * The git submodule at `thought-forest/` has `generated/` in its .gitignore,
- * so the generated files (knowledge-index/*.json) only exist in the full local
- * clone of the thought-forest repo.
- *
- * Resolution priority:
- *   1. NOTES_UPSTREAM_GENERATED env var (explicit override for CI or custom setups)
- *   2. {vaultRoot}/generated — works when `kb:index` was run inside the submodule
- *   3. ../thought-forest/generated — sibling clone of thought-forest (local dev default)
- *   4. Fallback to {vaultRoot}/generated (merge/copy steps will skip gracefully)
+ * Default to the generated index beside the selected Vault. Never search parent
+ * directories: doing so makes a build depend on an unrelated local clone.
+ * NOTES_UPSTREAM_GENERATED remains an explicit development-only escape hatch.
  */
 function resolveUpstreamGeneratedPath(): string {
   if (process.env.NOTES_UPSTREAM_GENERATED?.trim()) {
     return process.env.NOTES_UPSTREAM_GENERATED.trim();
   }
-  const candidates = [
-    `${vaultRoot}/generated`,
-    `${DEFAULT_VAULT_ROOT}/generated`,
-    '../thought-forest/generated',
-    '../../thought-forest/generated',
-  ];
-  const cwd = process.cwd();
-  for (const candidate of candidates) {
-    const resolved = path.resolve(cwd, candidate);
-    if (fs.existsSync(path.join(resolved, 'knowledge-index'))) {
-      return candidate;
-    }
-  }
-  return `${DEFAULT_VAULT_ROOT}/generated`;
+  return `${vaultRoot}/generated`;
 }
 
 const upstreamGenerated = resolveUpstreamGeneratedPath();
