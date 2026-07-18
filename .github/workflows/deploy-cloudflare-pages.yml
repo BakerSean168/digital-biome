@@ -221,9 +221,18 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
             "${PRODUCTION_URL}/" > /dev/null
-          STATUS="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+          HEADERS="$(mktemp)"
+          trap 'rm -f "${HEADERS}"' EXIT
+          STATUS="$(curl --silent --dump-header "${HEADERS}" --output /dev/null \
+            --write-out '%{http_code}' \
             "${PRODUCTION_URL}/api/private/infrastructure")"
           case "${STATUS}" in
             401|403) ;;
+            302)
+              grep --ignore-case --quiet '^www-authenticate: cloudflare-access' "${HEADERS}"
+              grep --ignore-case --quiet \
+                '^location: https://[^/]*\.cloudflareaccess\.com/cdn-cgi/access/login/' \
+                "${HEADERS}"
+              ;;
             *) echo "Protected API returned unexpected HTTP ${STATUS}" >&2; exit 1 ;;
           esac
