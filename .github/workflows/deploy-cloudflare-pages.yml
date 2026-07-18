@@ -1,0 +1,229 @@
+name: Deploy Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build pinned public artifact
+    runs-on: ubuntu-latest
+    outputs:
+      asset-index-sha256: ${{ steps.manifest.outputs.asset-index-sha256 }}
+      vault-sha: ${{ steps.manifest.outputs.vault-sha }}
+    steps:
+      - name: Create short-lived Vault token
+        id: vault-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            digital-biome
+            thought-forest
+          permission-contents: read
+
+      - name: Checkout exact application and Vault revisions
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.vault-token.outputs.token }}
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install application dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vault index dependencies
+        run: npm --prefix thought-forest ci --ignore-scripts
+
+      - name: Check application and Pages Functions
+        run: |
+          pnpm sync
+          pnpm check
+          pnpm check:edge
+          pnpm test:edge
+          pnpm test:infrastructure
+
+      - name: Build, index, and scan public artifact
+        run: pnpm build:only
+
+      - name: Record source manifest
+        id: manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          VAULT_SHA="$(git -C thought-forest rev-parse HEAD)"
+          ASSET_INDEX_SHA256="$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
+          echo "vault-sha=${VAULT_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "asset-index-sha256=${ASSET_INDEX_SHA256}" >> "${GITHUB_OUTPUT}"
+          jq -n \
+            --arg application_sha "${GITHUB_SHA}" \
+            --arg vault_sha "${VAULT_SHA}" \
+            --arg asset_index_sha256 "${ASSET_INDEX_SHA256}" \
+            '{application_sha: $application_sha, vault_sha: $vault_sha, asset_index_sha256: $asset_index_sha256}' \
+            > deployment-manifest.json
+
+      - name: Upload reviewed deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-pages-${{ github.sha }}
+          path: |
+            dist
+            deployment-manifest.json
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Approve and deploy production
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    steps:
+      - name: Create short-lived Vault token
+        id: vault-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            digital-biome
+            thought-forest
+          permission-contents: read
+
+      - name: Checkout exact application and Vault revisions
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.vault-token.outputs.token }}
+          ref: ${{ github.sha }}
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install payload generator dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          npm --prefix thought-forest ci --ignore-scripts
+
+      - name: Download reviewed public artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cloudflare-pages-${{ github.sha }}
+
+      - name: Rebuild and verify private source index
+        shell: bash
+        env:
+          EXPECTED_ASSET_INDEX_SHA256: ${{ needs.build.outputs.asset-index-sha256 }}
+          EXPECTED_VAULT_SHA: ${{ needs.build.outputs.vault-sha }}
+        run: |
+          set -euo pipefail
+          ACTUAL_VAULT_SHA="$(git -C thought-forest rev-parse HEAD)"
+          test "${ACTUAL_VAULT_SHA}" = "${EXPECTED_VAULT_SHA}"
+          pnpm build:upstream-indexes
+          ACTUAL_ASSET_INDEX_SHA256="$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
+          test "${ACTUAL_ASSET_INDEX_SHA256}" = "${EXPECTED_ASSET_INDEX_SHA256}"
+          pnpm test:infrastructure
+
+      - name: Generate and update encrypted Pages payload
+        shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          PAYLOAD_FILE="${RUNNER_TEMP}/private-infrastructure.json"
+          pnpm export:private -- --out "${PAYLOAD_FILE}"
+          pnpm exec wrangler pages secret put PRIVATE_INFRASTRUCTURE_JSON \
+            --project-name digital-biome < "${PAYLOAD_FILE}"
+
+      - name: Deploy reviewed artifact and Pages Functions
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: >-
+            pages deploy dist
+            --project-name digital-biome
+            --branch main
+            --commit-hash ${{ github.sha }}
+            --commit-dirty=false
+
+      - name: Record Cloudflare deployment identity
+        shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          DEPLOYMENTS_FILE="${RUNNER_TEMP}/pages-deployments.json"
+          pnpm wrangler pages deployment list \
+            --project-name digital-biome \
+            --environment production \
+            --json > "${DEPLOYMENTS_FILE}"
+          DEPLOYMENT_ID="$(jq -r --arg url "${DEPLOYMENT_URL}" \
+            '[.[] | select(.Deployment == $url)][0].Id // empty' "${DEPLOYMENTS_FILE}")"
+          test -n "${DEPLOYMENT_ID}"
+          jq \
+            --arg deployment_id "${DEPLOYMENT_ID}" \
+            --arg deployment_url "${DEPLOYMENT_URL}" \
+            '. + {deployment_id: $deployment_id, deployment_url: $deployment_url}' \
+            deployment-manifest.json > deployment-result.json
+
+      - name: Upload production deployment record
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-pages-production-${{ github.sha }}
+          path: deployment-result.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Smoke test public site and protected API
+        shell: bash
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://digital-biome.pages.dev' }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            "${PRODUCTION_URL}/" > /dev/null
+          STATUS="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            "${PRODUCTION_URL}/api/private/infrastructure")"
+          case "${STATUS}" in
+            401|403) ;;
+            *) echo "Protected API returned unexpected HTTP ${STATUS}" >&2; exit 1 ;;
+          esac

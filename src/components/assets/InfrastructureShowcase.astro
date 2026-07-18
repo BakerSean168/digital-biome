@@ -21,11 +21,21 @@ const {
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
+const requireAssetUrl = (assetName: string, value?: string) => {
+  if (!value) throw new Error(`Missing authoritative public URL for ${assetName}.`);
+  return value;
+};
+const monitorUrl = requireAssetUrl(
+  'svc-nezha-panel',
+  resolvedNodes['nezha-panel']?.monitorUrl ?? resolvedNodes['nezha-panel']?.primaryUrl,
+);
+const memoflowUrl = requireAssetUrl('svc-memoflow-dailyuse', resolvedNodes['memoflow-dailyuse']?.primaryUrl);
+const monitorHostname = new URL(monitorUrl).hostname;
 
 const portalLabels = locale === 'en'
   ? {
       monitorTitle: 'Real-time Server Monitor',
-      monitorSub: 'status.bakersean.top',
+      monitorSub: monitorHostname,
       monitorDesc: 'Tracks global VPS resource metrics, bandwidth, latency, and node health worldwide. Publicly readable.',
       monitorBtn: '[ VIEW_REALTIME_MONITOR ]',
       controlTitle: 'Private Control Center',
@@ -37,7 +47,7 @@ const portalLabels = locale === 'en'
       sectionTitle: '核心网关与监控通道',
       sectionDesc: '数字基础设施的统一管理入口与运行状态观测点。',
       monitorTitle: '服务器实时监控',
-      monitorSub: 'status.bakersean.top',
+      monitorSub: monitorHostname,
       monitorDesc: '基于哪吒监控探针，提供家庭计算底座、公网云 VPS 及网络节点的实时负载、下行带宽与服务在线率视图。',
       monitorBtn: '[ 进入监控面板 ]',
       controlTitle: '私人基础设施控制中心',
@@ -50,8 +60,8 @@ const vpsNodes = [
   {
     provider: "Azure",
     region: "Hong Kong (East Asia)",
-    ip: "20.205.x.x",
-    privateRef: "vps.azure-hk.ip",
+    ip: "LOCKED",
+    privateRef: "host-azure-hk-vps.ip",
     role: "Control Plane / 控制平面",
     specs: "1 vCPU / 2 GB / 30 GB SSD",
     os: "Ubuntu 24.04 LTS",
@@ -62,7 +72,7 @@ const vpsNodes = [
         subName: "Monitor Console",
         description: "VPS 节点状态与探针观测面板",
         repoUrl: "https://github.com/naiba/nezha",
-        liveUrl: "https://status.bakersean.top",
+        liveUrl: monitorUrl,
         isPublic: true
       },
       {
@@ -70,7 +80,7 @@ const vpsNodes = [
         subName: "Subscription Admin",
         description: "订阅管理与分发中心，负责公网运维入口",
         repoUrl: "https://github.com/sub-store-org/Sub-Store",
-        privateRef: "portal.home",
+        privateRef: "svc-sub-store.links.admin",
         isPublic: false
       }
     ]
@@ -78,8 +88,8 @@ const vpsNodes = [
   {
     provider: "Aliyun",
     region: "Chengdu (cn-chengdu)",
-    ip: "47.108.x.x",
-    privateRef: "vps.aliyun-chengdu.ip",
+    ip: "LOCKED",
+    privateRef: "host-aliyun-chengdu-dailyuse-vps.ip",
     role: "Workload Node / 业务负载",
     specs: "2 vCPU / 4 GB / 80 GB SSD",
     os: "Debian 12",
@@ -90,7 +100,7 @@ const vpsNodes = [
         subName: "Personal API",
         description: "个人产品生产业务端服务与数据流桥接",
         repoUrl: "https://github.com/BakerSean168/daily-use",
-        liveUrl: "https://api.bakersean.top",
+        liveUrl: memoflowUrl,
         isPublic: true
       }
     ]
@@ -98,8 +108,8 @@ const vpsNodes = [
   {
     provider: "Azure",
     region: "Tokyo (Japan East)",
-    ip: "20.210.x.x",
-    privateRef: "vps.azure-japan.ip",
+    ip: "LOCKED",
+    privateRef: "host-azure-japan-singbox-vps.ip",
     role: "Proxy Node / 区域代理",
     specs: "1 vCPU / 1 GB / 32 GB SSD",
     os: "Ubuntu 22.04 LTS",
@@ -110,7 +120,7 @@ const vpsNodes = [
         subName: "Proxy Core",
         description: "日本区域的出站代理与分流服务",
         repoUrl: "https://github.com/SagerNet/sing-box",
-        privateRef: "portal.home",
+        privateRef: "svc-homepage-dashboard.links.app",
         isPublic: false
       }
     ]
@@ -118,8 +128,8 @@ const vpsNodes = [
   {
     provider: "Azure",
     region: "Seoul (Korea Central)",
-    ip: "20.249.x.x",
-    privateRef: "vps.azure-korea.ip",
+    ip: "LOCKED",
+    privateRef: "host-azure-korea-singbox-vps.ip",
     role: "Proxy Node / 备用代理",
     specs: "1 vCPU / 1 GB / 32 GB SSD",
     os: "Ubuntu 22.04 LTS",
@@ -130,7 +140,7 @@ const vpsNodes = [
         subName: "Backup Proxy",
         description: "韩国区域出站代理与链路测试节点",
         repoUrl: "https://github.com/SagerNet/sing-box",
-        privateRef: "portal.home",
+        privateRef: "svc-homepage-dashboard.links.app",
         isPublic: false
       }
     ]
@@ -179,7 +189,7 @@ const vpsNodes = [
         </p>
       </div>
       <div class="mt-6 pt-4 border-t border-border/50">
-        <a href="https://status.bakersean.top" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full py-2.5 bg-background border border-border hover:border-primary/50 text-xs font-mono tracking-widest text-foreground transition-colors group/btn rounded-lg">
+        <a href={monitorUrl} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full py-2.5 bg-background border border-border hover:border-primary/50 text-xs font-mono tracking-widest text-foreground transition-colors group/btn rounded-lg">
           <span>{portalLabels.monitorBtn}</span>
           <ExternalLink size={12} class="text-muted-foreground group-hover/btn:text-primary transition-colors" />
         </a>
@@ -208,7 +218,7 @@ const vpsNodes = [
       <div class="mt-6 pt-4 border-t border-border/50">
         <a
           href={`/login?next=${encodeURIComponent(currentPath)}`}
-          data-private-link="portal.home"
+          data-private-link="svc-homepage-dashboard.links.app"
           data-private-unlocked-label={portalLabels.controlBtn}
           target="_blank"
           rel="noopener noreferrer"
