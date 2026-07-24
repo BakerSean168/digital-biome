@@ -64,10 +64,12 @@ jobs:
         id: update
         shell: bash
         env:
+          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
           TARGET_SHA: ${{ steps.target.outputs.sha }}
         run: |
           set -euo pipefail
 
+          gh auth setup-git
           git -C thought-forest fetch origin main --depth=1
 
           if [ -n "${TARGET_SHA}" ]; then

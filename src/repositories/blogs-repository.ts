@@ -4,7 +4,8 @@
  * Reads entirely from notes-index.json.
  */
 
-import { getAllNoteEntries, NoteIndexEntry } from './knowledge-index-loader';
+import { getAllNoteEntries } from './knowledge-index-loader';
+import type { NoteIndexEntry } from '../types/knowledge-index';
 import { VISIBILITY_PRIVATE } from '../domain/constants';
 
 export function getBlogPosts(): NoteIndexEntry[] {
