@@ -77,6 +77,11 @@ flowchart LR
 - `visibility: private`；
 - `obsidian/config/` 运维配置内容。
 
+GitHub 贡献图是一个独立的公开外部数据快照。`src/data/github-contributions.json`
+纳入版本控制，Astro 构建只读取该文件，不在构建期间访问 GitHub 或写回源码。
+刷新必须通过 `pnpm refresh:github-contributions` 显式执行并审查差异，因此同一 Git
+提交不会因构建时间或外部页面变化而生成不同的贡献图。
+
 ### 3.4 静态交付层
 
 Astro 生成 `dist/`，Pagefind 随后生成搜索索引。`scripts/postbuild.ts` 在部署前扫描 HTML、JavaScript、JSON 和 Pagefind 文件：
@@ -208,25 +213,25 @@ Access Application、Allow Policy、Pages Secrets、自动构建开关和 GitHub
 
 应逐步引入 Terraform/Pulumi 或至少维护定期导出的配置快照与人工审计清单。
 
-### 6.9 P2：缺少端到端自动验收和告警
+### 6.9 P2：自动验收覆盖不完整且缺少告警
 
-当前单元测试覆盖 JWT 规则，但没有自动化验证：
+生产工作流现在自动验证公开首页可访问，并确认自定义域上的私有 API 返回
+`401`、`403` 或带有 Cloudflare Access 挑战头和登录地址的 `302`。仍未自动覆盖：
 
-- 未登录自定义域是否被 Access 拦截；
-- 直连 `pages.dev` 是否被 Functions 拒绝；
 - 允许身份是否能完成解锁；
+- 最新不可变 `pages.dev` 部署是否被 Functions 拒绝；
 - Secret key 是否覆盖所有公开 `private_ref`；
 - 最新部署失败时是否告警。
 
 ## 7. 推荐演进路线
 
-### 阶段 A：先让交付可重复
+### 阶段 A：交付可重复（已完成）
 
-1. 为 GitHub Actions 配置只能读取 `thought-forest` 的 GitHub App token 或 deploy key；
-2. 在 CI 内显式生成上游 knowledge index，不再依赖未版本化的本机 `generated/`；
-3. 添加 `release` 工作流：同步 → 检查 → 构建 → 泄漏扫描 → Wrangler 部署 → HTTP 验收；
-4. Cloudflare API token 只授予目标账户的 Pages Edit 权限；
-5. 生产部署使用 GitHub Environment 审批。
+- GitHub Actions 使用仅限两个仓库、Contents Read 的短期 GitHub App token；
+- CI 从锁定的 Vault SHA 显式生成 knowledge index；
+- 生产工作流执行同步、检查、构建、泄漏扫描、Wrangler 部署与 HTTP 验收；
+- Cloudflare API token 仅具备目标账户 Pages Edit 权限；
+- `production` Environment 对 `main` 部署执行人工审批。
 
 ### 阶段 B：收敛内容契约
 

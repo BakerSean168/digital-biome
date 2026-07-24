@@ -41,6 +41,7 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   console.log(`  notes : ${layout.notesSource} -> ${layout.notesDest}`);
   console.log(`  assets: ${layout.assetNotesSource} -> ${layout.assetNotesDest}`);
   if (layout.configSource) console.log(`  config: ${layout.configSource} -> ${layout.configDest}`);
+  if (layout.blogsSource) console.log(`  blogs : ${layout.blogsSource} -> ${layout.blogsDest}`);
   console.log(`  media : ${layout.mediaSource} -> ${layout.assetsDest}`);
   if (withFavicons) console.log('  favicons: enabled');
   console.log('');
@@ -76,6 +77,9 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
     await validateSourceFiles(layout.assetNotesSource, layout.assetNotesDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
     if (layout.configSource && fs.existsSync(layout.configSource)) {
       await validateSourceFiles(layout.configSource, layout.configDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
+    }
+    if (layout.blogsSource && fs.existsSync(layout.blogsSource)) {
+      await validateSourceFiles(layout.blogsSource, layout.blogsDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
     }
 
     console.log('\n[dry-run] Sync plan:');
@@ -149,13 +153,18 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
     }
   }
 
+  // Sync blogs directory
+  if (layout.blogsSource) {
+    const fs = await import('fs');
+    if (fs.existsSync(layout.blogsSource)) {
+      await syncFiles(layout.blogsSource, layout.blogsDest, layout, withFavicons, stats, protectedInfrastructureUrls);
+    }
+  }
+
   // Build static JSON indexes from synced markdown
   buildIndexes(layout.notesDest);
 
-  // Merge upstream asset-index fields (monitor, links, homepage) that the
-  // local line-by-line YAML scanner cannot parse from multi-line block scalars.
-  // upstreamKnowledgeIndexDir points to thought-forest/generated/knowledge-index/
-  // (configurable via notesConfig.upstream.generatedPath or NOTES_UPSTREAM_GENERATED env var).
+  // Merge upstream asset-index fields
   const indexDir = path.join(process.cwd(), 'src', 'data', 'indexes');
   const upstreamKnowledgeIndexDir = path.resolve(
     process.cwd(),
@@ -164,8 +173,7 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   );
   mergeAssetIndex(upstreamKnowledgeIndexDir, indexDir);
 
-  // Replace local link-graph.json with the upstream version which uses
-  // gray-matter-resolved IDs and has pre-computed backlinks.
+  // Replace local link-graph.json with upstream
   copyUpstreamLinkGraph(upstreamKnowledgeIndexDir, indexDir);
 
   return printSyncReport(stats);

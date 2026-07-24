@@ -48,6 +48,9 @@ export const notesConfig = {
     /** 图片/附件资源目录（Obsidian vault 的 assets 文件夹） */
     mediaPath: vaultPath('assets'),
 
+    /** 博客文章目录 (thought-forest/blogs) */
+    blogsPath: vaultPath('blogs'),
+
     /** 要包含的文件模式 */
     include: ['**/*.md'],
 

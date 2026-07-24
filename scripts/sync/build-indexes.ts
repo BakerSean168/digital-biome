@@ -248,6 +248,9 @@ function processNoteFile(filePath: string, notesRoot: string): ProcessedNote {
   const id = toNoteId(relativePath);
   const fmText = extractFrontmatter(raw);
   const fm = fmText ? parseFrontmatter(fmText) : { tags: [], draft: false, private: false, type: 'note', aliases: [] };
+  if (relativePath.startsWith('blogs/') && (!fmText || !/^type:\s*.+$/m.test(fmText))) {
+    fm.type = 'blog';
+  }
   const body = extractBody(raw);
 
   const isAsset = id.startsWith(ASSET_NOTE_PREFIX);

@@ -15,93 +15,32 @@ interface ContributionDay {
   tooltip: string;
 }
 
-let contributions: ContributionDay[] = [];
-let source = 'cache';
+interface ContributionCache {
+  username: string;
+  updatedAt: string;
+  contributions: ContributionDay[];
+}
 
-// First, read from local cache as the fallback
+let contributions: ContributionDay[] = [];
+let updatedAt: string | undefined;
+
+// The committed snapshot keeps local and production builds deterministic.
 try {
   const cachePath = path.resolve('./src/data/github-contributions.json');
   if (fs.existsSync(cachePath)) {
-    const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
-    if (cacheData.username === username) {
+    const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf8')) as ContributionCache;
+    if (cacheData.username === username && Array.isArray(cacheData.contributions)) {
       contributions = cacheData.contributions;
+      updatedAt = cacheData.updatedAt;
     }
   }
 } catch (e) {
-  console.warn('Failed to read local GitHub contribution cache:', e);
+  console.warn('Failed to read committed GitHub contribution snapshot:', e);
 }
 
-// In production, we fetch fresh data to keep it updated at build-time.
-// If it fails, we fall back to the cache we read above.
-if (import.meta.env.PROD || contributions.length === 0) {
-  try {
-    const url = `https://github.com/users/${username}/contributions`;
-    const res = await fetch(url, { 
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-      signal: AbortSignal.timeout(5000) 
-    });
-    
-    if (res.ok) {
-      const data = await res.text();
-      const tdRegex = /<td([^>]*class="[^"]*ContributionCalendar-day[^"]*"[^>]*)>/g;
-      let match;
-      const daysMap: Record<string, ContributionDay> = {};
-      const freshList: ContributionDay[] = [];
-      
-      while ((match = tdRegex.exec(data)) !== null) {
-        const attrs = match[1];
-        const dateMatch = attrs.match(/data-date="([^"]+)"/);
-        const levelMatch = attrs.match(/data-level="([^"]+)"/);
-        const idMatch = attrs.match(/id="([^"]+)"/);
-        
-        if (dateMatch && levelMatch && idMatch) {
-          const id = idMatch[1];
-          const day = {
-            date: dateMatch[1],
-            level: parseInt(levelMatch[1], 10),
-            tooltip: ''
-          };
-          daysMap[id] = day;
-          freshList.push(day);
-        }
-      }
-      
-      const tooltipRegex = /<tool-tip[^>]*for="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/g;
-      let ttMatch;
-      while ((ttMatch = tooltipRegex.exec(data)) !== null) {
-        const forId = ttMatch[1];
-        const text = ttMatch[2].trim();
-        if (daysMap[forId]) {
-          daysMap[forId].tooltip = text;
-        }
-      }
-      
-      if (freshList.length > 0) {
-        freshList.sort((a, b) => a.date.localeCompare(b.date));
-        contributions = freshList;
-        source = 'network';
-        
-        // Update cache file so next builds are updated
-        try {
-          const cachePath = path.resolve('./src/data/github-contributions.json');
-          const cacheDir = path.dirname(cachePath);
-          if (!fs.existsSync(cacheDir)) {
-            fs.mkdirSync(cacheDir, { recursive: true });
-          }
-          fs.writeFileSync(cachePath, JSON.stringify({
-            username,
-            updatedAt: new Date().toISOString(),
-            contributions: freshList
-          }, null, 2));
-        } catch (e) {
-          // ignore cache write failures in read-only environments
-        }
-      }
-    }
-  } catch (e) {
-    console.warn(`Failed to fetch fresh contributions for ${username}, falling back to cache:`, e);
-  }
-}
+const updatedLabel = updatedAt
+  ? new Date(updatedAt).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US')
+  : 'UNKNOWN';
 
 // Generate Month Labels
 const monthLabels: { name: string; colIndex: number }[] = [];
@@ -185,7 +124,7 @@ const daysOfWeekLabels = lang === 'zh' ? ['', '周一', '', '周三', '', '周�
   <!-- Legend -->
   <div class="flex items-center justify-between mt-3 text-[10px] font-mono text-muted-foreground select-none border-t border-border/20 pt-2.5">
     <div class="text-[9px] uppercase tracking-wider opacity-60">
-      SOURCE: {source.toUpperCase()} // UPDATED: {new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US')}
+      SOURCE: GIT SNAPSHOT // UPDATED: {updatedLabel}
     </div>
     <div class="flex items-center gap-1.5">
       <span class="text-[9px] uppercase tracking-wider pr-1">Less</span>

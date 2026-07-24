@@ -1,0 +1,124 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SignalTitle from '../components/common/SignalTitle.astro';
+import { getFriendLinks } from '../repositories/friends-repository';
+import { ExternalLink, Users, Link2, Copy, Check } from '@lucide/astro';
+
+const friendLinks = getFriendLinks();
+
+const mySiteInfo = {
+  title: 'Digital Biome',
+  url: 'https://bakersean.top/',
+  avatar: 'https://bakersean.top/favicon.ico',
+  description: 'Digital Biome — 个人数字生态、基础设施与 Obsidian 知识基座',
+};
+---
+
+<BaseLayout title="友链网络 // Friends - Digital Biome" description="社区友链与独立博客节点">
+  <main class="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+    <!-- Header -->
+    <header class="mb-12 border-b border-border/60 pb-6">
+      <SignalTitle title="COMMUNITY_NODES // FRIEND_LINKS" subtitle="独立博客与社区节点网络" />
+      <p class="mt-4 font-mono text-sm text-muted-foreground max-w-2xl">
+        欢迎来到 Digital Biome 友链节点空间。这里记录着志同道合的技术伙伴、独立博主与思想基地。
+      </p>
+    </header>
+
+    <!-- My Site Information Card (for exchange) -->
+    <section class="mb-12 rounded-sm border border-border bg-card p-6 relative overflow-hidden">
+      <div class="absolute top-0 right-0 bg-primary/10 border-l border-b border-border px-3 py-1 text-[10px] font-mono text-primary">
+        [ MY_SITE_CARD ]
+      </div>
+      <h2 class="text-base font-mono font-semibold text-foreground flex items-center gap-2 mb-4">
+        <Link2 size={16} class="text-primary" />
+        本站信息（申请互换友链）
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs text-muted-foreground">
+        <div class="bg-background/50 border border-border/40 p-3 rounded-sm">
+          <span class="text-primary opacity-80">NAME:</span>
+          <span class="text-foreground ml-2 select-all">{mySiteInfo.title}</span>
+        </div>
+        <div class="bg-background/50 border border-border/40 p-3 rounded-sm">
+          <span class="text-primary opacity-80">URL:</span>
+          <span class="text-foreground ml-2 select-all">{mySiteInfo.url}</span>
+        </div>
+        <div class="bg-background/50 border border-border/40 p-3 rounded-sm md:col-span-2">
+          <span class="text-primary opacity-80">DESC:</span>
+          <span class="text-foreground ml-2 select-all">{mySiteInfo.description}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Friends Grid -->
+    <section>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-sm font-mono tracking-widest text-muted-foreground uppercase flex items-center gap-2">
+          <Users size={14} class="text-primary" />
+          ACTIVE_NODES [{friendLinks.length}]
+        </h2>
+      </div>
+
+      {friendLinks.length === 0 ? (
+        <div class="p-12 text-center border border-dashed border-border/60 rounded-sm font-mono text-sm text-muted-foreground">
+          SYS.INFO: NO_FRIEND_LINKS_FOUND. 在 Obsidian Vault 中为笔记添加 <code class="text-primary font-bold">tags: [type/friend-link]</code> 即可自动在此展示。
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {friendLinks.map(friend => (
+            <a
+              href={friend.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group relative flex flex-col justify-between border border-border bg-card p-5 rounded-sm transition-all duration-200 hover:border-primary hover:bg-card/80 hover:shadow-lg"
+            >
+              <div>
+                <!-- Top row: Avatar & Status -->
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    {friend.avatar ? (
+                      <img
+                        src={friend.avatar}
+                        alt={friend.title}
+                        class="w-10 h-10 rounded-sm border border-border object-cover bg-background"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                      />
+                    ) : null}
+                    <div
+                      class={`w-10 h-10 rounded-sm border border-border bg-primary/10 flex items-center justify-center text-primary font-mono text-base font-bold ${friend.avatar ? 'hidden' : 'flex'}`}
+                    >
+                      {friend.title.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 class="font-mono text-sm font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                        {friend.title}
+                        <ExternalLink size={12} class="opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </h3>
+                      <span class="font-mono text-[10px] text-muted-foreground truncate max-w-[180px] block">
+                        {new URL(friend.url).hostname}
+                      </span>
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm border border-emerald-500/30 bg-emerald-500/10 text-[9px] font-mono text-emerald-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    ONLINE
+                  </span>
+                </div>
+
+                <!-- Description -->
+                <p class="font-mono text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+                  {friend.description || '暂无描述。'}
+                </p>
+              </div>
+
+              <!-- Tags / Footer -->
+              <div class="pt-3 border-t border-border/40 flex items-center justify-between font-mono text-[10px] text-muted-foreground">
+                <span class="text-primary/70">[ CONNECT ]</span>
+                <span class="group-hover:translate-x-0.5 transition-transform">访问节点 →</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  </main>
+</BaseLayout>

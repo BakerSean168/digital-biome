@@ -49,6 +49,10 @@ docs/                  # 架构、开发、部署与运维文档
 `src/data/obsidian/`，索引写入 `src/data/indexes/`。完整流程见
 [笔记同步与公开投影](docs/notes-sync-process.md)。
 
+GitHub 贡献图使用已提交的 `src/data/github-contributions.json` 快照，构建过程不会
+联网改写源码。需要更新时显式运行 `pnpm refresh:github-contributions`，检查差异后
+与普通源码一起提交。
+
 ## 部署
 
 生产环境使用 Cloudflare Pages + Pages Functions。`/api/private/*` 由 Cloudflare

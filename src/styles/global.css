@@ -31,11 +31,13 @@
   /* Biome Tree Specific Branches Colors */
   --color-branch-dev: var(--branch-dev);
   --color-branch-life: var(--branch-life);
+  --color-branch-blog: var(--branch-blog);
+  --color-branch-friends: var(--branch-friends);
   --color-branch-mind: var(--branch-mind);
   --color-glow-root: var(--glow-root);
   --color-branch-lab: var(--branch-lab);
   --color-branch-about: var(--branch-about);
-  
+
   /* Radii */
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -64,6 +66,8 @@
   /* Biome Tree Specific Colors (Desaturated Organics) */
   --branch-dev: hsl(71, 40%, 60%);
   --branch-life: hsl(45, 40%, 60%);
+  --branch-blog: hsl(45, 45%, 60%);
+  --branch-friends: hsl(190, 50%, 60%);
   --branch-mind: hsl(120, 35%, 60%);
   --branch-lab: hsl(160, 35%, 60%);
   --branch-about: hsl(0, 0%, 65%);

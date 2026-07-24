@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SignalTitle from '../../components/common/SignalTitle.astro';
+import { getBlogPosts } from '../../repositories/blogs-repository';
+import { Calendar, Tag, ArrowRight, BookOpen } from '@lucide/astro';
+
+const posts = getBlogPosts();
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return 'N/A';
+  try {
+    const d = new Date(dateStr);
+    return d.toISOString().split('T')[0];
+  } catch {
+    return dateStr;
+  }
+}
+---
+
+<BaseLayout title="博客日志 // Blog - Digital Biome" description="个人博客与技术维护日志">
+  <main class="min-h-screen bg-background text-foreground pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+    <!-- Header -->
+    <header class="mb-12 border-b border-border/60 pb-6">
+      <SignalTitle title="TRANSMISSION_LOGS // BLOG" subtitle="个人博客、服务器实操与工程日志" />
+      <p class="mt-4 font-mono text-sm text-muted-foreground max-w-2xl">
+        从系统配置、故障排查到生活思考，记录每一个在真实环境中遇到的技术细节与思考总结。
+      </p>
+    </header>
+
+    <!-- Post List -->
+    <section>
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-sm font-mono tracking-widest text-muted-foreground uppercase flex items-center gap-2">
+          <BookOpen size={14} class="text-primary" />
+          POST_ARCHIVE [{posts.length}]
+        </h2>
+      </div>
+
+      {posts.length === 0 ? (
+        <div class="p-12 text-center border border-dashed border-border/60 rounded-sm font-mono text-sm text-muted-foreground">
+          SYS.INFO: NO_BLOG_POSTS_FOUND. 运行 <code class="text-primary font-bold">pnpm sync</code> 重新同步 Obsidian Vault blogs/ 目录下的文章。
+        </div>
+      ) : (
+        <div class="space-y-6">
+          {posts.map(post => {
+            const noteSlug = post.id.replace(/^note\//, '');
+            return (
+              <article class="group border border-border bg-card p-6 rounded-sm transition-all duration-200 hover:border-primary hover:bg-card/90">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 font-mono text-xs text-muted-foreground">
+                  <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-1.5 text-primary">
+                      <Calendar size={13} />
+                      {formatDate(post.created || post.updated)}
+                    </span>
+                    <span class="text-border">|</span>
+                    <span class="text-muted-foreground/80 font-mono text-[10px]">
+                      {post.id}
+                    </span>
+                  </div>
+
+                  {post.tags && post.tags.length > 0 && (
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      {post.tags.map(tag => (
+                        <span class="px-2 py-0.5 rounded-sm border border-border/60 bg-background/50 text-[10px] text-muted-foreground font-mono">
+                          #{tag.split('/').pop()}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <h3 class="text-lg font-mono font-semibold text-foreground group-hover:text-primary transition-colors mb-2">
+                  <a href={`/notes/${noteSlug}`} class="focus:outline-none">
+                    {post.title || noteSlug.split('/').pop()}
+                  </a>
+                </h3>
+
+                {post.description && (
+                  <p class="font-mono text-sm text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
+                    {post.description}
+                  </p>
+                )}
+
+                <div class="pt-4 border-t border-border/40 flex items-center justify-between">
+                  <a
+                    href={`/notes/${noteSlug}`}
+                    class="font-mono text-xs text-primary flex items-center gap-1.5 group-hover:translate-x-1 transition-transform"
+                  >
+                    [ READ_ARTICLE ]
+                    <ArrowRight size={12} />
+                  </a>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  </main>
+</BaseLayout>

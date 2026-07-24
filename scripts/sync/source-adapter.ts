@@ -88,6 +88,15 @@ export function collectExpectedFiles(layout: SourceLayout): Set<string> {
     }
   }
 
+  if (layout.blogsSource && fs.existsSync(layout.blogsSource)) {
+    const blogFiles = collectFiles(layout.blogsSource, layout.blogsSource);
+    for (const f of blogFiles) {
+      if (f.endsWith('.md')) {
+        expectedFiles.add(path.join('blogs', f));
+      }
+    }
+  }
+
   return expectedFiles;
 }
 

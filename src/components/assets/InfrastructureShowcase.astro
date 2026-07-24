@@ -144,6 +144,46 @@ const vpsNodes = [
         isPublic: false
       }
     ]
+  },
+  {
+    provider: "Oracle Cloud",
+    region: "Osaka (Japan West)",
+    ip: "LOCKED",
+    privateRef: "host-oracle-osaka-amd-proxy-vps.ip",
+    role: "Proxy & Edge Node / 边缘代理",
+    specs: "1 vCPU / 1 GB / 45 GB SSD",
+    os: "Ubuntu 22.04 LTS",
+    network: "480 Mbps / Always Free AMD",
+    services: [
+      {
+        name: "sing-box / Egress",
+        subName: "Proxy Edge",
+        description: "大阪区域边缘代理与链路优化节点",
+        repoUrl: "https://github.com/SagerNet/sing-box",
+        privateRef: "svc-homepage-dashboard.links.app",
+        isPublic: false
+      }
+    ]
+  },
+  {
+    provider: "Oracle Cloud",
+    region: "Osaka (Japan West)",
+    ip: "LOCKED",
+    privateRef: "host-oracle-osaka-arm-development-vps.ip",
+    role: "Development Host / 极客开发",
+    specs: "4 vCPU / 24 GB / 100 GB SSD",
+    os: "Ubuntu 22.04 LTS",
+    network: "1 Gbps / Always Free ARM",
+    services: [
+      {
+        name: "Dev Workspace",
+        subName: "Build Engine",
+        description: "高配 ARM64 远程编译与极客开发节点",
+        repoUrl: "https://github.com/BakerSean168",
+        privateRef: "svc-homepage-dashboard.links.app",
+        isPublic: false
+      }
+    ]
   }
 ];
 ---

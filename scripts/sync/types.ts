@@ -17,10 +17,12 @@ export interface SourceLayout {
   notesSource: string;
   assetNotesSource: string;
   configSource: string | null;
+  blogsSource: string | null;
   mediaSource: string;
   notesDest: string;
   assetNotesDest: string;
   configDest: string;
+  blogsDest: string;
   assetsDest: string;
   faviconsDest: string;
   assetsUrlPrefix: string;

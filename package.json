@@ -25,6 +25,7 @@
     "sync:content": "tsx scripts/sync-obsidian.ts",
     "build:upstream-indexes": "npm --prefix thought-forest run kb:index",
     "build:indexes": "tsx scripts/sync/build-indexes.ts",
+    "refresh:github-contributions": "node scripts/bootstrap-github-cache.js",
     "pull-notes": "git submodule update --remote --merge",
     "astro": "astro"
   },

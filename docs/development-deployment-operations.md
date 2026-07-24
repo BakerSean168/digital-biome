@@ -71,6 +71,7 @@ git submodule update --init --recursive
 - `functions/` 与 `edge/`；
 - `scripts/`、`notes.config.ts`；
 - `wrangler.jsonc`、`public/_routes.json`；
+- `src/data/github-contributions.json`（公开、可审查的 GitHub 贡献快照）；
 - `thought-forest` 子模块指针。
 
 ### 4.2 私有外部输入
@@ -90,6 +91,21 @@ git submodule update --init --recursive
 - `tmp/`。
 
 这些目录不应提交。出现缓存或重复 ID 问题时，可在确认路径后删除对应生成目录并重新运行 `pnpm sync`。
+
+### 4.4 GitHub 贡献快照
+
+`src/data/github-contributions.json` 不是可删除生成物，也不应加入 `.gitignore`。它是
+生产构建的版本化输入；组件只读该文件，以避免构建时网络波动和工作区自动变脏。
+
+需要刷新时运行：
+
+```bash
+pnpm refresh:github-contributions
+git diff -- src/data/github-contributions.json
+```
+
+确认用户名、日期范围和贡献数合理后再提交。GitHub 会根据当前年度数据重新计算热力图
+`level`，因此刷新时历史日期的等级变化并不一定表示贡献数发生变化。
 
 ## 5. 日常开发流程
 

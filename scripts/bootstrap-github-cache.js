@@ -11,7 +11,10 @@ const url = `https://github.com/users/${username}/contributions`;
 async function bootstrap() {
   try {
     console.log(`Fetching contributions for ${username}...`);
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'digital-biome-contribution-snapshot' },
+      signal: AbortSignal.timeout(10000)
+    });
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
@@ -70,11 +73,11 @@ async function bootstrap() {
     }
     
     const cachePath = path.join(dataDir, 'github-contributions.json');
-    fs.writeFileSync(cachePath, JSON.stringify({
+    fs.writeFileSync(cachePath, `${JSON.stringify({
       username,
       updatedAt: new Date().toISOString(),
       contributions: daysList
-    }, null, 2));
+    }, null, 2)}\n`);
     
     console.log(`Cache written to ${cachePath}`);
   } catch (error) {

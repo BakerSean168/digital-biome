@@ -37,6 +37,8 @@ const REQUIRED_SHOWCASE_HOSTS = [
   'host-aliyun-chengdu-dailyuse-vps',
   'host-azure-japan-singbox-vps',
   'host-azure-korea-singbox-vps',
+  'host-oracle-osaka-amd-proxy-vps',
+  'host-oracle-osaka-arm-development-vps',
 ] as const;
 
 function extractSshHostnameIp(url: string): string | null {
