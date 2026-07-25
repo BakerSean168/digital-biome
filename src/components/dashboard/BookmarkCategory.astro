@@ -41,18 +41,23 @@ const { name, bookmarks } = Astro.props;
         >
           <a
             href={bookmark.url}
-            class="group flex items-center gap-3 p-3 border border-border bg-card hover:border-primary/50 hover:bg-primary/[0.02] transition-all duration-200 rounded-none w-full relative"
+            class="group flex items-center gap-3 p-3 border border-border bg-card hover:border-primary/50 hover:bg-primary/[0.02] transition-all duration-200 rounded-none w-full relative group-[.kb-active]/card:border-primary group-[.kb-active]/card:bg-primary/[0.08] group-[.kb-active]/card:ring-1 group-[.kb-active]/card:ring-primary/80 group-[.kb-active]/card:shadow-[0_0_15px_rgba(139,154,70,0.25)]"
             target="_blank"
             rel="noopener noreferrer"
           >
+            <!-- Cursor indicator -->
+            <div class="kb-cursor-indicator absolute -left-2.5 top-1/2 -translate-y-1/2 text-primary font-mono font-bold text-xs opacity-0 invisible group-[.kb-active]/card:opacity-100 group-[.kb-active]/card:visible group-[.kb-active]/card:-left-2 transition-all duration-150 pointer-events-none select-none z-10 animate-pulse">
+              &gt;
+            </div>
+
             <!-- Favicon Box -->
-            <div class="w-10 h-10 border border-border flex items-center justify-center bg-background text-foreground shrink-0 rounded-none overflow-hidden relative group-hover:border-primary/30 transition-colors">
+            <div class="w-10 h-10 border border-border flex items-center justify-center bg-background text-foreground shrink-0 rounded-none overflow-hidden relative group-hover:border-primary/30 group-[.kb-active]/card:border-primary/50 transition-colors">
               {bookmark.icon
                 ? <Fragment set:html={bookmark.icon} />
                 : <img
                     src={localIconUrl}
                     alt={`${bookmark.title} favicon`}
-                    class="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-110"
+                    class="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-110 group-[.kb-active]/card:scale-110"
                     loading="lazy"
                     onerror={`this.onerror=null; if(!this.getAttribute('data-second-fallback')){ this.setAttribute('data-second-fallback','true'); this.src='${fallbackIconUrl}'; } else { const p = this.parentNode; p.innerHTML = '<div class="w-full h-full text-primary bg-primary/10 flex items-center justify-center font-mono font-bold text-xs select-none">[${bookmark.title.charAt(0).toUpperCase()}]</div>'; }`}
                   />
@@ -61,7 +66,7 @@ const { name, bookmarks } = Astro.props;
 
             <!-- Text Details -->
             <div class="flex flex-col min-w-0 flex-1">
-              <span class="text-sm font-mono font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+              <span class="text-sm font-mono font-semibold text-foreground truncate group-hover:text-primary group-[.kb-active]/card:text-primary transition-colors">
                 {bookmark.title}
               </span>
               <span class="text-[10px] font-mono text-muted-foreground tracking-tight truncate mt-0.5 flex items-center gap-1 select-none">
@@ -73,7 +78,7 @@ const { name, bookmarks } = Astro.props;
 
           <!-- Retro Tooltip readout -->
           {bookmark.description && (
-            <div class="absolute bottom-[calc(100%-8px)] mb-2 left-1/2 -translate-x-1/2 w-max max-w-[240px] px-3 py-2 bg-card border border-primary/40 text-foreground text-[10px] leading-relaxed rounded-none opacity-0 invisible group-hover/card:opacity-100 group-hover/card:visible translate-y-2 group-hover/card:translate-y-0 transition-all duration-200 z-50 whitespace-normal text-left pointer-events-none font-mono shadow-none">
+            <div class="absolute bottom-[calc(100%-8px)] mb-2 left-1/2 -translate-x-1/2 w-max max-w-[240px] px-3 py-2 bg-card border border-primary/40 text-foreground text-[10px] leading-relaxed rounded-none opacity-0 invisible group-hover/card:opacity-100 group-hover/card:visible group-[.kb-active]/card:opacity-100 group-[.kb-active]/card:visible translate-y-2 group-hover/card:translate-y-0 group-[.kb-active]/card:translate-y-0 transition-all duration-200 z-50 whitespace-normal text-left pointer-events-none font-mono shadow-none">
               <div class="text-[9px] text-primary mb-1 border-b border-primary/20 pb-0.5 select-none font-bold tracking-widest">[ DIAGNOSTIC_INFO ]</div>
               {bookmark.description}
             </div>

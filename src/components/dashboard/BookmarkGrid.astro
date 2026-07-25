@@ -164,8 +164,78 @@ bookmarksByCategory.forEach((list) => {
       activeBtn.classList.add('bg-primary', 'text-background', 'border-primary');
     }
 
+    let activeCardIndex = -1;
+
+    // Helper: Get all currently visible bookmark cards
+    function getVisibleCards(): HTMLElement[] {
+      const cards: HTMLElement[] = [];
+      categorySections.forEach(section => {
+        if ((section as HTMLElement).style.display === 'none') return;
+        const items = section.querySelectorAll<HTMLElement>('.bookmark-card-item');
+        items.forEach(item => {
+          if (item.style.display !== 'none') {
+            cards.push(item);
+          }
+        });
+      });
+      return cards;
+    }
+
+    // Helper: Set active card selection index
+    function setActiveCardIndex(index: number) {
+      const visibleCards = getVisibleCards();
+      
+      // Clear previous active states
+      document.querySelectorAll('.bookmark-card-item.kb-active').forEach(el => {
+        el.classList.remove('kb-active');
+      });
+
+      if (visibleCards.length === 0 || index < 0) {
+        activeCardIndex = -1;
+        return;
+      }
+
+      // Clamp index within range
+      activeCardIndex = Math.max(0, Math.min(index, visibleCards.length - 1));
+      const targetCard = visibleCards[activeCardIndex];
+      targetCard.classList.add('kb-active');
+
+      // Scroll into view if needed
+      targetCard.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth',
+      });
+    }
+
+    // Helper: Calculate number of grid columns for spatial ArrowUp/ArrowDown movement
+    function getGridColumns(cards: HTMLElement[], currentIndex: number): number {
+      if (cards.length <= 1 || currentIndex < 0 || currentIndex >= cards.length) return 1;
+      const currentTop = cards[currentIndex].offsetTop;
+      let cols = 0;
+      // Count items with the same offsetTop on the right
+      for (let i = currentIndex; i < cards.length; i++) {
+        if (Math.abs(cards[i].offsetTop - currentTop) < 5) {
+          cols++;
+        } else {
+          break;
+        }
+      }
+      // Count items with the same offsetTop on the left
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        if (Math.abs(cards[i].offsetTop - currentTop) < 5) {
+          cols++;
+        } else {
+          break;
+        }
+      }
+      return cols || 1;
+    }
+
     // Update visibility logic
     function updateFilters() {
+      // Reset keyboard selection whenever filter criteria change
+      setActiveCardIndex(-1);
+
       const query = searchInput.value.toLowerCase().trim();
       const activeBtn = document.querySelector('.bookmark-filter-btn.bg-primary');
       const category = activeBtn ? activeBtn.getAttribute('data-category') || 'all' : 'all';
@@ -267,17 +337,87 @@ bookmarksByCategory.forEach((list) => {
       });
     }
 
-    // Bind hotkeys
+    // Bind hotkeys and grid navigation
     document.addEventListener('keydown', (e) => {
-      // Focus search input on "/" key if not already focused on input/textarea
-      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const activeEl = document.activeElement;
+      const isSearchFocused = activeEl === searchInput;
+      const activeTag = activeEl?.tagName.toLowerCase();
+      const visibleCards = getVisibleCards();
+
+      // 1. Focus search input on '/' key if not in an input/textarea
       if (e.key === '/' && activeTag !== 'input' && activeTag !== 'textarea') {
         e.preventDefault();
+        setActiveCardIndex(-1);
         searchInput.focus();
         searchInput.select();
+        return;
       }
 
-      // Hotkeys for switching categories: '1' -> '9'
+      // 2. Pressing Enter inside search input jumps to first visible card
+      if (isSearchFocused && e.key === 'Enter') {
+        if (visibleCards.length > 0) {
+          e.preventDefault();
+          searchInput.blur();
+          setActiveCardIndex(0);
+        }
+        return;
+      }
+
+      // 3. Grid navigation mode (when a card is currently selected)
+      if (activeCardIndex >= 0) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const targetCard = visibleCards[activeCardIndex];
+          const anchor = targetCard?.querySelector<HTMLAnchorElement>('a');
+          if (anchor) {
+            anchor.click();
+          }
+          return;
+        }
+
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          setActiveCardIndex(-1);
+          searchInput.focus();
+          searchInput.select();
+          return;
+        }
+
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          setActiveCardIndex(activeCardIndex + 1);
+          return;
+        }
+
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setActiveCardIndex(activeCardIndex - 1);
+          return;
+        }
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const cols = getGridColumns(visibleCards, activeCardIndex);
+          setActiveCardIndex(activeCardIndex + cols);
+          return;
+        }
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const cols = getGridColumns(visibleCards, activeCardIndex);
+          if (activeCardIndex - cols < 0) {
+            // Jump back to search input when pressing Up on top row
+            setActiveCardIndex(-1);
+            searchInput.focus();
+            searchInput.select();
+          } else {
+            setActiveCardIndex(activeCardIndex - cols);
+          }
+          return;
+        }
+      }
+
+      // 4. Hotkeys for switching categories: '1' -> '9' (when not typing in search)
       if (activeTag !== 'input' && activeTag !== 'textarea' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const num = parseInt(e.key);
         if (num >= 1 && num <= 9) {
