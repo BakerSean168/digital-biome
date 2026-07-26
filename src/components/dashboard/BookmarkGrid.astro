@@ -121,8 +121,8 @@ bookmarksByCategory.forEach((list) => {
 </div>
 
 <script>
-  // Client-side interactivity script for filtering and search
-  document.addEventListener('DOMContentLoaded', () => {
+  // Client-side interactivity script for filtering, search, and keyboard grid navigation
+  function initBookmarkGrid() {
     const searchInput = document.getElementById('bookmark-search-input') as HTMLInputElement;
     const filterButtons = document.querySelectorAll('.bookmark-filter-btn');
     const categorySections = document.querySelectorAll('.bookmark-category-section');
@@ -214,7 +214,7 @@ bookmarksByCategory.forEach((list) => {
       let cols = 0;
       // Count items with the same offsetTop on the right
       for (let i = currentIndex; i < cards.length; i++) {
-        if (Math.abs(cards[i].offsetTop - currentTop) < 5) {
+        if (Math.abs(cards[i].offsetTop - currentTop) < 10) {
           cols++;
         } else {
           break;
@@ -222,7 +222,7 @@ bookmarksByCategory.forEach((list) => {
       }
       // Count items with the same offsetTop on the left
       for (let i = currentIndex - 1; i >= 0; i--) {
-        if (Math.abs(cards[i].offsetTop - currentTop) < 5) {
+        if (Math.abs(cards[i].offsetTop - currentTop) < 10) {
           cols++;
         } else {
           break;
@@ -337,6 +337,21 @@ bookmarksByCategory.forEach((list) => {
       });
     }
 
+    // Mouse hover synchronization
+    categoriesContainer?.addEventListener('mouseover', (e) => {
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.bookmark-card-item');
+      if (!card) return;
+      const visibleCards = getVisibleCards();
+      const idx = visibleCards.indexOf(card);
+      if (idx >= 0 && idx !== activeCardIndex) {
+        document.querySelectorAll('.bookmark-card-item.kb-active').forEach(el => {
+          el.classList.remove('kb-active');
+        });
+        activeCardIndex = idx;
+        card.classList.add('kb-active');
+      }
+    });
+
     // Bind hotkeys and grid navigation
     document.addEventListener('keydown', (e) => {
       const activeEl = document.activeElement;
@@ -433,5 +448,14 @@ bookmarksByCategory.forEach((list) => {
 
     // Run initial filter application
     updateFilters();
-  });
+  }
+
+  // Ensure script executes reliably regardless of document.readyState timing
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBookmarkGrid);
+  } else {
+    initBookmarkGrid();
+  }
+
+  document.addEventListener('astro:page-load', initBookmarkGrid);
 </script>
