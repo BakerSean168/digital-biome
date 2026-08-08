@@ -17,7 +17,8 @@ export interface SubscriptionItem {
 }
 
 const { exchangeRateRmb } = subscriptionData;
-const subscriptions: SubscriptionItem[] = subscriptionData.subscriptions as SubscriptionItem[];
+const subscriptions: SubscriptionItem[] = (subscriptionData.subscriptions as SubscriptionItem[])
+  .filter(item => item.status === 'active');
 
 // Calculate total monthly USD and RMB
 const totalMonthlyUsd = subscriptions.reduce((sum, item) => {
@@ -37,12 +38,13 @@ const renewals = subscriptions
     const diffDays = Math.ceil((nextDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
     return { ...sub, diffDays };
   })
+  .filter(sub => sub.diffDays >= 0)
   .sort((a, b) => a.diffDays - b.diffDays);
 
 const nearestRenewal = renewals[0];
 ---
 
-<div class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col justify-between hover:border-primary/50 transition-all duration-200">
+<article class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" data-observability-card="subscriptions">
   <!-- Header -->
   <div>
     <div class="flex items-center justify-between mb-3">
@@ -51,7 +53,7 @@ const nearestRenewal = renewals[0];
         <span>[ SUBSCRIPTION_OVERVIEW ]</span>
       </div>
       <div class="inline-flex items-center gap-1.5 px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-wider rounded-sm">
-        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+        <span class={`w-1.5 h-1.5 rounded-full ${activeCount > 0 ? 'bg-primary' : 'bg-muted-foreground'}`}></span>
         <span>{activeCount} 活跃</span>
       </div>
     </div>
@@ -66,8 +68,8 @@ const nearestRenewal = renewals[0];
     </div>
 
     <!-- Subscription Items List -->
-    <div class="flex flex-col gap-2.5 my-4">
-      {subscriptions.map(item => (
+    <div class="flex flex-col gap-2 my-4">
+      {subscriptions.length > 0 ? subscriptions.map(item => (
         <div class="flex items-center justify-between p-2.5 bg-background/60 border border-border/80 rounded-sm hover:border-border transition-colors">
           <div class="flex items-center gap-2.5 min-w-0">
             <div class="w-6 h-6 flex items-center justify-center bg-card border border-border text-[10px] font-mono font-bold text-primary shrink-0">
@@ -83,7 +85,11 @@ const nearestRenewal = renewals[0];
             <div class="text-[9px] font-mono text-muted-foreground">≈ ¥{(item.cost * exchangeRateRmb).toFixed(2)}</div>
           </div>
         </div>
-      ))}
+      )) : (
+        <div class="border border-dashed border-border px-3 py-5 font-mono text-[11px] text-muted-foreground">
+          [ NO_SUBSCRIPTION_SOURCE ] 等待 Vault 同步
+        </div>
+      )}
     </div>
   </div>
 
@@ -97,4 +103,4 @@ const nearestRenewal = renewals[0];
       <span class="text-primary font-bold shrink-0 ml-2">{nearestRenewal.diffDays} 天后 →</span>
     </div>
   )}
-</div>
+</article>

@@ -27,42 +27,12 @@ export interface AiUsageEnv extends Env {
 }
 
 export const onRequest: PagesFunction<AiUsageEnv> = async (context) => {
-  const hubUrl = context.env.AI_USAGE_HUB_URL || 'https://vps.bakersean.top';
-  const hubKey = context.env.AI_USAGE_HUB_KEY || 'ai_usage_hub_secret_2026';
+  const hubUrl = context.env.AI_USAGE_HUB_URL;
+  const hubKey = context.env.AI_USAGE_HUB_KEY;
 
-  const fallbackPayload: AiUsageSummaryResponse = {
-    totalTokens7d: 8300000,
-    estimatedCost7d: 3.21,
-    estimatedCostRmb7d: 21.93,
-    currency: 'USD',
-    updatedAt: new Date().toISOString(),
-    tools: [
-      {
-        id: 'claude-3-7-sonnet',
-        name: 'Claude 3.7 Sonnet',
-        vendor: 'anthropic',
-        tokens7d: 6800000,
-        sharePct: 82,
-        status: 'running',
-        costMode: 'api',
-      },
-      {
-        id: 'gemini-2.0-flash',
-        name: 'Gemini 2.0 Flash',
-        vendor: 'google',
-        tokens7d: 1500000,
-        sharePct: 18,
-        status: 'running',
-        costMode: 'api',
-      },
-    ],
-    byMachine: {
-      local: { tokens7d: 6800000, pct: 82 },
-      oracle2: { tokens7d: 1500000, pct: 18 },
-    },
-  };
-
-  let payload = fallbackPayload;
+  if (!hubUrl || !hubKey) {
+    return Response.json({ error: 'AI usage telemetry is not configured.' }, { status: 503 });
+  }
 
   try {
     const cleanUrl = hubUrl.replace(/\/$/, '');
@@ -73,9 +43,12 @@ export const onRequest: PagesFunction<AiUsageEnv> = async (context) => {
       },
     });
 
-    if (response.ok) {
-      const data = (await response.json()) as any;
-      if (data && typeof data.todayTokens === 'number') {
+    if (!response.ok) {
+      return Response.json({ error: 'AI usage hub rejected the request.' }, { status: 502 });
+    }
+
+    const data = (await response.json()) as any;
+    if (data && typeof data.todayTokens === 'number') {
         const totalTokens = data.monthlyTokens || data.totalTokens || data.todayTokens || 0;
         const totalCostUsd = data.monthlyCostUsd || data.totalCostUsd || data.todayCostUsd || 0;
         const totalCostRmb = Math.round(totalCostUsd * 6.83 * 100) / 100;
@@ -94,29 +67,30 @@ export const onRequest: PagesFunction<AiUsageEnv> = async (context) => {
         const oraTokens = data.machines?.oracle2?.monthlyTokens || data.machines?.oracle2?.todayTokens || 0;
         const sumM = locTokens + oraTokens || 1;
 
-        payload = {
+        const payload = {
           totalTokens7d: totalTokens,
           estimatedCost7d: totalCostUsd,
           estimatedCostRmb7d: totalCostRmb,
           currency: 'USD',
           updatedAt: data.updatedAt || new Date().toISOString(),
-          tools: tools.length > 0 ? tools : fallbackPayload.tools,
+          tools,
           byMachine: {
             local: { tokens7d: locTokens, pct: Math.round((locTokens / sumM) * 100) },
             oracle2: { tokens7d: oraTokens, pct: Math.round((oraTokens / sumM) * 100) },
           },
-        };
-      }
+        } satisfies AiUsageSummaryResponse;
+
+      return Response.json(payload, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, max-age=60, s-maxage=300',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
   } catch {
-    // Keep fallback on error
+    return Response.json({ error: 'AI usage hub is unreachable.' }, { status: 502 });
   }
 
-  return Response.json(payload, {
-    status: 200,
-    headers: {
-      'Cache-Control': 'public, max-age=60, s-maxage=300',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
+  return Response.json({ error: 'AI usage hub returned an unsupported payload.' }, { status: 502 });
 };

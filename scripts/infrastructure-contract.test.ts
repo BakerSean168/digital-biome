@@ -77,6 +77,16 @@ test('infrastructure assets expose exactly the four authoritative service endpoi
   }
 });
 
+test('the tracked subscription snapshot prevents an empty dashboard build', () => {
+  const snapshotPath = path.resolve(process.cwd(), 'src/data/subscriptions.json');
+  assert.ok(fs.existsSync(snapshotPath), `Missing subscription snapshot: ${snapshotPath}`);
+  const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8')) as { subscriptions?: unknown[] };
+  assert.ok(
+    Array.isArray(snapshot.subscriptions) && snapshot.subscriptions.length > 0,
+    'The tracked subscription snapshot must contain at least one subscription.',
+  );
+});
+
 test('private payload uses stable asset refs and one explicit SSH IP per showcased host', () => {
   const assets = loadAssets();
   const payload = buildPrivateInfrastructurePayload(assets);

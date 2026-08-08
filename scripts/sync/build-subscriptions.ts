@@ -55,9 +55,27 @@ export function parseYamlFrontmatter(content: string): Record<string, any> {
 
 export function generateSubscriptionsJson() {
   const assetNotesPath = notesConfig.vault.assetNotesPath || 'thought-forest/assets';
+  const targetPath = path.resolve(process.cwd(), 'src/data/subscriptions.json');
+
+  const preserveExistingSnapshot = (reason: string): void => {
+    if (fs.existsSync(targetPath)) {
+      const existing = JSON.parse(fs.readFileSync(targetPath, 'utf8')) as { subscriptions?: unknown[] };
+      if (Array.isArray(existing.subscriptions) && existing.subscriptions.length > 0) {
+        console.warn(`[sync-subscriptions] ${reason}; preserving ${existing.subscriptions.length} tracked subscriptions.`);
+        return;
+      }
+    }
+    throw new Error(`[sync-subscriptions] ${reason}; no valid tracked snapshot is available.`);
+  };
+
   let subsDir = path.resolve(process.cwd(), assetNotesPath, 'subscriptions');
   if (!fs.existsSync(subsDir)) {
     subsDir = path.resolve(process.cwd(), '..', 'thought-forest', 'assets', 'subscriptions');
+  }
+
+  if (!fs.existsSync(subsDir)) {
+    preserveExistingSnapshot(`Missing subscription source directory: ${subsDir}`);
+    return;
   }
 
   const exchangeRateRmb = 6.83;
@@ -72,6 +90,10 @@ export function generateSubscriptionsJson() {
 
   if (fs.existsSync(subsDir)) {
     const files = fs.readdirSync(subsDir).filter((f) => f.endsWith('.md'));
+    if (files.length === 0) {
+      preserveExistingSnapshot(`No subscription notes found in ${subsDir}`);
+      return;
+    }
     for (const file of files) {
       const filePath = path.join(subsDir, file);
       const raw = fs.readFileSync(filePath, 'utf8');
@@ -103,6 +125,11 @@ export function generateSubscriptionsJson() {
     }
   }
 
+  if (subscriptions.length === 0) {
+    preserveExistingSnapshot('Subscription notes were present but none passed validation');
+    return;
+  }
+
   // Sort by nextBillingDate ascending
   subscriptions.sort((a, b) => new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime());
 
@@ -113,7 +140,6 @@ export function generateSubscriptionsJson() {
     subscriptions,
   };
 
-  const targetPath = path.resolve(process.cwd(), 'src/data/subscriptions.json');
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
   fs.writeFileSync(targetPath, JSON.stringify(payload, null, 2), 'utf8');
   console.log(`[sync-subscriptions] Synced ${subscriptions.length} subscriptions from ${subsDir} to src/data/subscriptions.json`);
