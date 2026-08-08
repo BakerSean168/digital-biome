@@ -11,7 +11,7 @@ export interface AssetLink {
   label: string;
   url?: string;
   private_ref?: string;
-  kind?: 'app' | 'admin' | 'repo' | 'repository' | 'docs' | 'monitor' | 'panel' | 'ssh' | 'web' | 'other';
+  kind?: 'app' | 'admin' | 'repo' | 'repository' | 'docs' | 'monitor' | 'panel' | 'ssh' | 'web' | 'service' | 'vm' | 'other';
   description?: string;
   visibility?: Visibility;
 }
