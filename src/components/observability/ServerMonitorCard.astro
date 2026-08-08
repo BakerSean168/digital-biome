@@ -2,9 +2,11 @@
 import { Server, Activity, ShieldCheck } from '@lucide/astro';
 
 const defaultServers = [
-  { id: 1, name: 'Alibaba Cloud', location: 'Hangzhou, CN', cpu: 12, ram: 41 },
-  { id: 2, name: 'Azure Hong Kong', location: 'Hong Kong, CN', cpu: 4, ram: 36 },
-  { id: 3, name: 'Azure US West', location: 'Oregon, US', cpu: 8, ram: 52 }
+  { id: 1, name: 'Azure HK Control Plane', location: 'Hong Kong, CN', online: true },
+  { id: 2, name: 'Oracle Osaka (oracle2)', location: 'Osaka, JP', online: true },
+  { id: 3, name: 'Aliyun Chengdu DailyUse', location: 'Chengdu, CN', online: true },
+  { id: 4, name: 'N100 PVE Home Server', location: 'Local Home Lab', online: true },
+  { id: 5, name: 'fnOS NAS Storage', location: 'Local Home Lab', online: true }
 ];
 ---
 
@@ -24,7 +26,7 @@ const defaultServers = [
 
     <!-- Main Value -->
     <div class="flex items-baseline gap-2 mt-1 mb-1">
-      <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="server-online-text">3 <span class="text-lg font-normal text-muted-foreground">/ 3 在线</span></span>
+      <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="server-online-text">5 <span class="text-lg font-normal text-muted-foreground">/ 5 在线</span></span>
     </div>
 
     <!-- Interactive World Map Graphic (SVG) -->
@@ -33,20 +35,20 @@ const defaultServers = [
       <svg class="w-full h-full text-border/60" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M40 40h60v20H40zM120 30h80v40h-80zM220 50h70v30h-70zM300 40h60v50h-60zM60 90h80v40H60zM160 100h70v30h-70zM250 90h80v40h-80z" fill="currentColor" opacity="0.3"/>
         
-        <!-- Node 1: Hangzhou (Asia) -->
+        <!-- Node 1: Chengdu / HK (Asia) -->
         <circle cx="280" cy="70" r="4" class="fill-primary animate-ping" opacity="0.75" />
         <circle cx="280" cy="70" r="3" class="fill-primary" />
         
-        <!-- Node 2: Hong Kong (Asia) -->
-        <circle cx="275" cy="85" r="4" class="fill-primary animate-ping" opacity="0.75" />
-        <circle cx="275" cy="85" r="3" class="fill-primary" />
+        <!-- Node 2: Osaka (Japan) -->
+        <circle cx="310" cy="60" r="4" class="fill-primary animate-ping" opacity="0.75" />
+        <circle cx="310" cy="60" r="3" class="fill-primary" />
 
-        <!-- Node 3: US West -->
-        <circle cx="100" cy="65" r="4" class="fill-primary animate-ping" opacity="0.75" />
-        <circle cx="100" cy="65" r="3" class="fill-primary" />
+        <!-- Node 3: Home Lab -->
+        <circle cx="270" cy="85" r="4" class="fill-primary animate-ping" opacity="0.75" />
+        <circle cx="270" cy="85" r="3" class="fill-primary" />
 
         <!-- Topology Connecting Lines -->
-        <path d="M100 65 L275 85 L280 70" stroke="var(--primary)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+        <path d="M270 85 L280 70 L310 60" stroke="var(--primary)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
       </svg>
       <div class="absolute bottom-1 right-2 text-[9px] font-mono text-muted-foreground uppercase">NEZHA V2 // REALTIME</div>
     </div>
@@ -55,7 +57,7 @@ const defaultServers = [
     <div class="flex flex-wrap gap-2 my-2" id="server-pills-container">
       {defaultServers.map(srv => (
         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background/60 border border-border/80 text-[11px] font-mono text-foreground hover:border-primary/40 transition-colors">
-          <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          <span class={`w-1.5 h-1.5 rounded-full ${srv.online ? 'bg-primary' : 'bg-red-500'}`}></span>
           <span>{srv.name}</span>
         </div>
       ))}
@@ -64,11 +66,11 @@ const defaultServers = [
 
   <!-- Footer Info -->
   <div class="pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
-    <div class="flex items-center gap-1.5 text-muted-foreground">
+    <a href="https://nezha.bakersean.top/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
       <Activity size={12} class="text-primary shrink-0" />
       <span>Nezha Panel 接入</span>
-    </div>
-    <span class="text-primary font-bold shrink-0 ml-2">查看详情 →</span>
+    </a>
+    <a href="https://nezha.bakersean.top/" target="_blank" rel="noopener noreferrer" class="text-primary font-bold shrink-0 ml-2 hover:underline">查看详情 →</a>
   </div>
 </div>
 
@@ -81,6 +83,7 @@ const defaultServers = [
 
       const onlineEl = document.getElementById('server-online-text');
       const badgeEl = document.getElementById('server-health-badge');
+      const pillsContainer = document.getElementById('server-pills-container');
 
       if (onlineEl && typeof data.online === 'number') {
         onlineEl.innerHTML = `${data.online} <span class="text-lg font-normal text-muted-foreground">/ ${data.total} 在线</span>`;
@@ -91,6 +94,15 @@ const defaultServers = [
         } else {
           badgeEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span><span>部分受损</span>`;
         }
+      }
+
+      if (pillsContainer && Array.isArray(data.servers) && data.servers.length > 0) {
+        pillsContainer.innerHTML = data.servers.slice(0, 6).map((srv: any) => `
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background/60 border border-border/80 text-[11px] font-mono text-foreground hover:border-primary/40 transition-colors">
+            <span class="w-1.5 h-1.5 rounded-full ${srv.online ? 'bg-primary' : 'bg-red-500'}"></span>
+            <span>${srv.name}</span>
+          </div>
+        `).join('');
       }
     } catch (e) {
       // Keep SSR fallback
