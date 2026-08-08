@@ -19,6 +19,9 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  SYNC_BRANCH: automation/thought-forest-sync
+
 jobs:
   sync-submodule:
     runs-on: ubuntu-latest
@@ -52,12 +55,10 @@ jobs:
           INPUT_SHA: ${{ github.event.inputs.thought_forest_sha }}
         run: |
           set -euo pipefail
-
           TARGET_SHA="${INPUT_SHA:-}"
           if [ -z "${TARGET_SHA}" ]; then
             TARGET_SHA="${DISPATCH_SHA:-}"
           fi
-
           echo "sha=${TARGET_SHA}" >> "${GITHUB_OUTPUT}"
 
       - name: Update thought-forest submodule
@@ -68,10 +69,8 @@ jobs:
           TARGET_SHA: ${{ steps.target.outputs.sha }}
         run: |
           set -euo pipefail
-
           gh auth setup-git
           git -C thought-forest fetch origin main --depth=1
-
           if [ -n "${TARGET_SHA}" ]; then
             git -C thought-forest fetch origin "${TARGET_SHA}" --depth=1
             git -C thought-forest checkout --detach "${TARGET_SHA}"
@@ -79,39 +78,58 @@ jobs:
             git -C thought-forest checkout --detach origin/main
             TARGET_SHA="$(git -C thought-forest rev-parse HEAD)"
           fi
-
           git add thought-forest
-
           echo "sha=${TARGET_SHA}" >> "${GITHUB_OUTPUT}"
-
           if git diff --cached --quiet -- thought-forest; then
             echo "changed=false" >> "${GITHUB_OUTPUT}"
           else
             echo "changed=true" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Commit updated submodule pointer
+      - name: Commit & push to fixed sync branch (updates existing PR)
         if: steps.update.outputs.changed == 'true'
         shell: bash
         env:
           TARGET_SHA: ${{ steps.update.outputs.sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SYNC_BRANCH: ${{ env.SYNC_BRANCH }}
         run: |
           set -euo pipefail
-
-          SHORT_SHA="${TARGET_SHA:0:12}"
-          BRANCH="automation/thought-forest-${SHORT_SHA}-${GITHUB_RUN_ID}"
-          git switch -c "${BRANCH}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: bump thought-forest submodule to ${TARGET_SHA}"
           gh auth setup-git
-          git push --set-upstream origin "${BRANCH}"
-          gh pr create \
-            --base main \
-            --head "${BRANCH}" \
-            --title "chore: update thought-forest to ${SHORT_SHA}" \
-            --body "Pins the private Vault submodule to \`${TARGET_SHA}\`. Merge this PR only after the repository checks pass."
+
+          if git rev-parse --verify "origin/${SYNC_BRANCH}" >/dev/null 2>&1; then
+            git fetch origin "${SYNC_BRANCH}"
+            git switch "${SYNC_BRANCH}"
+            git reset --hard origin/main
+          else
+            git switch -c "${SYNC_BRANCH}" main
+          fi
+
+          git add thought-forest
+          git commit -m "chore: bump thought-forest submodule to ${TARGET_SHA}"
+          git push --force --set-upstream origin "${SYNC_BRANCH}"
+
+      - name: Open PR if not already open
+        if: steps.update.outputs.changed == 'true'
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.update.outputs.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SYNC_BRANCH: ${{ env.SYNC_BRANCH }}
+        run: |
+          set -euo pipefail
+          OPEN_PR=$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${SYNC_BRANCH}" --state open 2>/dev/null | awk 'NR==1 {print $1}')
+          if [ -n "${OPEN_PR}" ]; then
+            echo "Sync PR #${OPEN_PR} already open; branch ${SYNC_BRANCH} updated in place."
+          else
+            gh pr create \
+              --base main \
+              --head "${SYNC_BRANCH}" \
+              --title "chore: update thought-forest to ${TARGET_SHA:0:12}" \
+              --body "Pins the private Vault submodule to \`${TARGET_SHA}\`. Merge this PR only after the repository checks pass."
+          fi
 
       - name: Report no-op
         if: steps.update.outputs.changed != 'true'
