@@ -4,7 +4,7 @@
  * Candidate set comes from the index; git mtime logic is preserved.
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { statSync } from 'fs';
 import type { NoteCollectionEntry } from '../types/notes';
 import type { NoteIndexEntry } from '../types/knowledge-index';
@@ -22,8 +22,9 @@ function getPublicNoteIds(): string[] {
 
 export function getGitLastModified(filePath: string): Date | null {
   try {
-    const result = execSync(
-      `git log -1 --format="%ct" -- "${filePath}"`,
+    const result = execFileSync(
+      'git',
+      ['log', '-1', '--format=%ct', '--', filePath],
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
     ).toString().trim();
 
@@ -40,8 +41,9 @@ function getGitLastModifiedMap(basePath: string): Map<string, Date> {
   if (gitMtimeCache) return gitMtimeCache;
 
   try {
-    const output = execSync(
-      `git log --format="${GIT_TS_MARKER}%ct" --name-only -- "${basePath}"`,
+    const output = execFileSync(
+      'git',
+      ['log', '--format=' + GIT_TS_MARKER + '%ct', '--name-only', '--', basePath],
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
     ).toString();
 
