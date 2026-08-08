@@ -11,7 +11,7 @@ export interface AssetLink {
   label: string;
   url?: string;
   private_ref?: string;
-  kind?: 'app' | 'admin' | 'repo' | 'docs' | 'monitor' | 'panel' | 'ssh' | 'other';
+  kind?: 'app' | 'admin' | 'repo' | 'docs' | 'monitor' | 'panel' | 'ssh' | 'web' | 'other';
   description?: string;
   visibility?: Visibility;
 }
@@ -52,7 +52,7 @@ export interface Note {
   rating?: number;
   platform?: string;
   pricing?: 'free' | 'freemium' | 'paid' | 'subscription';
-  status?: 'active' | 'planned' | 'archived' | 'deprecated';
+  status?: 'active' | 'planned' | 'archived' | 'deprecated' | 'decommissioning';
   lastModified?: Date;
   isBookmark: boolean;
   categories: string[];
