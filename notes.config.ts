@@ -28,25 +28,21 @@ const upstreamGenerated = resolveUpstreamGeneratedPath();
 
 export const notesConfig = {
   vault: {
-    /** 常规知识笔记目录 */
+    /** 常规知识笔记目录 (z/) */
     notesPath: vaultPath('z'),
 
     /**
-     * 资产笔记目录。
-     * 当前与图片资源共用 thought-forest/assets 根目录：
-     * - 顶层文件主要是图片/附件
-     * - services/ tools/ hosts/ network/ 等子目录用于资产笔记
+     * 资产笔记目录 (assets/services, assets/subscriptions, assets/hosts...)
      */
     assetNotesPath: vaultPath('assets'),
 
     /**
      * Dashboard 等配置文件目录（同步到 obsidian/config/ 子目录）
-     * 这里的文件会被同步到 output.notes/config/ 以供内容集合读取
      */
     configPath: vaultPath('config'),
 
-    /** 图片/附件资源目录（Obsidian vault 的 assets 文件夹） */
-    mediaPath: vaultPath('assets'),
+    /** 二进制附件与媒体资源目录 (attachments/images) */
+    mediaPath: vaultPath('attachments/images'),
 
     /** 博客文章目录 (thought-forest/blogs) */
     blogsPath: vaultPath('blogs'),

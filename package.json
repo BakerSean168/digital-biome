@@ -22,7 +22,7 @@
     "deploy:cloudflare": "pnpm build && wrangler pages deploy dist --project-name digital-biome --branch main",
     "preview": "astro preview",
     "sync": "pnpm build:upstream-indexes && pnpm sync:content",
-    "sync:content": "tsx scripts/sync-obsidian.ts",
+    "sync:content": "tsx scripts/sync-obsidian.ts && tsx scripts/sync/build-subscriptions.ts",
     "build:upstream-indexes": "npm --prefix thought-forest run kb:index",
     "build:indexes": "tsx scripts/sync/build-indexes.ts",
     "refresh:github-contributions": "node scripts/bootstrap-github-cache.js",

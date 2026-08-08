@@ -1,0 +1,63 @@
+{
+  "currency": "USD",
+  "exchangeRateRmb": 6.83,
+  "updatedAt": "2026-08-08T05:55:21.422Z",
+  "subscriptions": [
+    {
+      "id": "subscription-chatgpt-team",
+      "name": "ChatGPT Business Team",
+      "vendor": "OpenAI",
+      "cost": 8.13,
+      "originalCost": 12.5,
+      "originalCurrency": "AUD",
+      "currency": "USD",
+      "cycle": "monthly",
+      "nextBillingDate": "2026-08-17",
+      "status": "active",
+      "icon": "chatgpt",
+      "notes": "每月 17 号扣款，AU$25/2人，个人平摊 AU$12.50，享 24 个月优惠"
+    },
+    {
+      "id": "subscription-oracle-always-free",
+      "name": "Oracle Cloud Always Free",
+      "vendor": "Oracle Cloud",
+      "cost": 0,
+      "originalCost": 0,
+      "originalCurrency": "USD",
+      "currency": "USD",
+      "cycle": "yearly",
+      "nextBillingDate": "2027-01-01",
+      "status": "active",
+      "icon": "oracle",
+      "notes": "已升级 PayG 绑卡账号，保持 0 刀资源额度防止缩容回收"
+    },
+    {
+      "id": "subscription-google-ai-pro",
+      "name": "Google AI Pro (18个月)",
+      "vendor": "Google",
+      "cost": 0.1,
+      "originalCost": 0.67,
+      "originalCurrency": "CNY",
+      "currency": "USD",
+      "cycle": "monthly",
+      "nextBillingDate": "2027-07-01",
+      "status": "active",
+      "icon": "google",
+      "notes": "18 个月共 12 元 RMB，随时可能变动/失效"
+    },
+    {
+      "id": "subscription-github-student",
+      "name": "GitHub Student Pack",
+      "vendor": "GitHub",
+      "cost": 0,
+      "originalCost": 0,
+      "originalCurrency": "USD",
+      "currency": "USD",
+      "cycle": "yearly",
+      "nextBillingDate": "2028-01-09",
+      "status": "active",
+      "icon": "github",
+      "notes": "GitHub Student Verified, 权益期至 2028-01-09"
+    }
+  ]
+}

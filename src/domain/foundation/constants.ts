@@ -10,7 +10,7 @@
 // ── Primitive type aliases ──
 
 export type Visibility = 'public' | 'private' | 'internal';
-export type AssetType = 'service' | 'tool' | 'host' | 'network';
+export type AssetType = 'service' | 'tool' | 'host' | 'network' | 'subscription' | 'project';
 
 // ── Visibility values ──
 

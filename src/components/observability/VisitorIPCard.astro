@@ -1,0 +1,102 @@
+---
+import { Globe, ShieldCheck } from '@lucide/astro';
+
+// Default SSR Fallback matching prompt screenshot
+const defaultIp = "39.172.*.*";
+const defaultLocation = "Shanghai · Shanghai · CN";
+const defaultAsn = "AS56041 · China Mobile";
+---
+
+<div class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col justify-between hover:border-primary/50 transition-all duration-200" id="visitor-ip-card">
+  <!-- Header -->
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+        <Globe size={14} class="text-primary" />
+        <span>[ VISITOR_TELEMETRY ]</span>
+      </div>
+      <div class="inline-flex items-center gap-1.5 px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-wider rounded-sm" id="ip-trust-badge">
+        <ShieldCheck size={12} class="text-primary" />
+        <span>高可信</span>
+      </div>
+    </div>
+
+    <!-- Main Value (IP) -->
+    <div class="flex items-center gap-3 mt-1 mb-1">
+      <span class="text-2xl font-bold font-mono tracking-tight text-foreground" id="ip-display">{defaultIp}</span>
+    </div>
+    
+    <div class="flex flex-col gap-0.5 font-mono text-xs text-muted-foreground mb-4">
+      <span id="ip-location">{defaultLocation}</span>
+      <span class="text-[10px] text-muted-foreground/80" id="ip-asn">{defaultAsn}</span>
+    </div>
+
+    <!-- Risk vs Trust Bar -->
+    <div class="my-4 p-3 bg-background/60 border border-border/80 rounded-sm flex flex-col gap-2">
+      <div class="flex items-center justify-between font-mono text-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-muted-foreground text-[10px] uppercase">风险</span>
+          <span class="font-bold text-foreground" id="ip-risk-val">0</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-muted-foreground text-[10px] uppercase">可信度</span>
+          <span class="font-bold text-primary" id="ip-trust-val">100</span>
+        </div>
+      </div>
+      <div class="w-full h-1.5 bg-border/40 rounded-full overflow-hidden flex">
+        <div class="h-full bg-red-500/80 transition-all duration-500" id="ip-risk-bar" style="width: 0%"></div>
+        <div class="h-full bg-primary transition-all duration-500" id="ip-trust-bar" style="width: 100%"></div>
+      </div>
+    </div>
+
+    <!-- Threat Security Pills -->
+    <div class="flex flex-wrap gap-1.5 my-2 font-mono text-[10px]">
+      <span class="px-2 py-0.5 bg-background/80 border border-border/60 text-muted-foreground">VPN: OFF</span>
+      <span class="px-2 py-0.5 bg-background/80 border border-border/60 text-muted-foreground">PROXY: OFF</span>
+      <span class="px-2 py-0.5 bg-background/80 border border-border/60 text-muted-foreground">TOR: OFF</span>
+      <span class="px-2 py-0.5 bg-background/80 border border-border/60 text-muted-foreground">机房: OFF</span>
+      <span class="px-2 py-0.5 bg-background/80 border border-border/60 text-muted-foreground">滥用: OFF</span>
+    </div>
+  </div>
+
+  <!-- Footer Info -->
+  <div class="pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
+    <span class="text-muted-foreground shrink-0">Cloudflare Edge 接入</span>
+    <span class="text-primary font-bold shrink-0 ml-2">查看详情 →</span>
+  </div>
+</div>
+
+<script>
+  async function fetchVisitorIp() {
+    try {
+      const res = await fetch('/api/visitor-ip');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const ipEl = document.getElementById('ip-display');
+      const locEl = document.getElementById('ip-location');
+      const asnEl = document.getElementById('ip-asn');
+      const riskValEl = document.getElementById('ip-risk-val');
+      const trustValEl = document.getElementById('ip-trust-val');
+      const riskBarEl = document.getElementById('ip-risk-bar');
+      const trustBarEl = document.getElementById('ip-trust-bar');
+
+      if (ipEl && data.ip) ipEl.textContent = data.ip;
+      if (locEl && (data.city || data.country)) {
+        locEl.textContent = `${data.city || ''} · ${data.country || 'CN'}`;
+      }
+      if (asnEl && data.asn) {
+        asnEl.textContent = `${data.asn} · ${data.isp || ''}`;
+      }
+      if (riskValEl) riskValEl.textContent = String(data.riskScore || 0);
+      if (trustValEl) trustValEl.textContent = String(data.trustScore || 100);
+      
+      if (riskBarEl) riskBarEl.style.width = `${data.riskScore || 0}%`;
+      if (trustBarEl) trustBarEl.style.width = `${data.trustScore || 100}%`;
+    } catch (e) {
+      // Keep SSR fallback
+    }
+  }
+
+  fetchVisitorIp();
+</script>

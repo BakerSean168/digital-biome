@@ -38,7 +38,7 @@ const notes = defineCollection({
     aliases: optionalStringArray(),
     category: optionalString(),
     asset_id: optionalString(),
-    asset_type: z.enum(['service', 'tool', 'host', 'network']).nullable().optional(),
+    asset_type: z.enum(['service', 'tool', 'host', 'network', 'subscription', 'project']).nullable().optional(),
     asset_role: z.enum(['ops', 'product', 'showcase', 'portal']).nullable().optional(),
     host_asset_id: optionalString(),
     parent_asset_id: optionalString(),
