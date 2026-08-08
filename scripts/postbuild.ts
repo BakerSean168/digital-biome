@@ -8,6 +8,10 @@ import { loadProtectedInfrastructureUrls } from './sync/privacy';
 const FULL_IPV4 = /(?<![\d.])(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?![\d.])/g;
 const EXACT_IPV4 = /^(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function collectFiles(directory: string): string[] {
   if (!fs.existsSync(directory)) return [];
 
@@ -79,15 +83,16 @@ function assertNoPrivateDataInBuild(): void {
   if (sensitiveValues.length === 0 || !fs.existsSync(distDirectory)) return;
 
   const sensitiveIpv4 = new Set(sensitiveValues.filter(value => EXACT_IPV4.test(value)));
-  const otherSensitiveValues = sensitiveValues
-    .filter(value => !EXACT_IPV4.test(value))
-    .map(value => Buffer.from(value));
+  const otherSensitiveValues = sensitiveValues.filter(value => !EXACT_IPV4.test(value));
+  const otherSensitivePattern = otherSensitiveValues.length > 0
+    ? new RegExp(otherSensitiveValues.map(escapeRegExp).join('|'), 'u')
+    : null;
   const leakedFiles: string[] = [];
   for (const buildFile of collectFiles(distDirectory)) {
-    const content = fs.readFileSync(buildFile);
+    const content = fs.readFileSync(buildFile, 'utf8');
     const containsSensitiveIpv4 = sensitiveIpv4.size > 0 &&
-      [...content.toString('utf8').matchAll(FULL_IPV4)].some(match => sensitiveIpv4.has(match[0]));
-    const containsOtherSensitiveValue = otherSensitiveValues.some(value => content.indexOf(value) !== -1);
+      [...content.matchAll(FULL_IPV4)].some(match => sensitiveIpv4.has(match[0]));
+    const containsOtherSensitiveValue = otherSensitivePattern?.test(content) ?? false;
     if (containsSensitiveIpv4 || containsOtherSensitiveValue) {
       leakedFiles.push(path.relative(process.cwd(), buildFile));
     }

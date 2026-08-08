@@ -1,6 +1,5 @@
 interface VisitorIPResponse {
   ip: string;
-  rawIp: string;
   country: string;
   city: string;
   asn: string;
@@ -37,14 +36,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const rawIp =
     request.headers.get('cf-connecting-ip') ||
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-    '39.172.88.99';
+    '127.0.0.1';
 
   const cf = (request.cf as Record<string, any>) || {};
 
-  const country = (cf.country as string) || 'CN';
-  const city = (cf.city as string) || 'Shanghai';
-  const asnNum = cf.asn ? `AS${cf.asn}` : 'AS56041';
-  const isp = (cf.asOrganization as string) || 'China Mobile';
+  const country = (cf.country as string) || 'Unknown';
+  const city = (cf.city as string) || 'Local';
+  const asnNum = cf.asn ? `AS${cf.asn}` : 'AS--';
+  const isp = (cf.asOrganization as string) || 'Unresolved network';
 
   const maskedIp = maskIp(rawIp);
 
@@ -54,7 +53,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const payload: VisitorIPResponse = {
     ip: maskedIp,
-    rawIp,
     country,
     city,
     asn: asnNum,

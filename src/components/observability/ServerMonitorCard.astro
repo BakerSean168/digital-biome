@@ -2,15 +2,15 @@
 import { Server, Activity, ShieldCheck } from '@lucide/astro';
 
 const defaultServers = [
-  { id: 1, name: 'Azure HK Control Plane', location: 'Hong Kong, CN', online: true },
-  { id: 2, name: 'Oracle Osaka (oracle2)', location: 'Osaka, JP', online: true },
-  { id: 3, name: 'Aliyun Chengdu DailyUse', location: 'Chengdu, CN', online: true },
-  { id: 4, name: 'N100 PVE Home Server', location: 'Local Home Lab', online: true },
-  { id: 5, name: 'fnOS NAS Storage', location: 'Local Home Lab', online: true }
+  { id: 1, name: 'Azure HK Control Plane' },
+  { id: 2, name: 'Oracle Osaka (oracle2)' },
+  { id: 3, name: 'Aliyun Chengdu DailyUse' },
+  { id: 4, name: 'N100 PVE Home Server' },
+  { id: 5, name: 'fnOS NAS Storage' }
 ];
 ---
 
-<div class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col justify-between hover:border-primary/50 transition-all duration-200" id="server-monitor-card">
+<article class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" id="server-monitor-card" data-observability-card="servers" aria-busy="true">
   <!-- Header -->
   <div>
     <div class="flex items-center justify-between mb-3">
@@ -18,46 +18,43 @@ const defaultServers = [
         <Server size={14} class="text-primary" />
         <span>[ INFRA_MONITORING ]</span>
       </div>
-      <div class="inline-flex items-center gap-1.5 px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-wider rounded-sm" id="server-health-badge">
-        <ShieldCheck size={12} class="text-primary" />
-        <span>全部正常</span>
+      <div class="inline-flex items-center gap-1.5 px-2 py-0.5 border border-border bg-background/60 text-muted-foreground text-[10px] font-mono font-bold tracking-wider rounded-sm" id="server-health-badge">
+        <ShieldCheck size={12} />
+        <span>连接中</span>
       </div>
     </div>
 
     <!-- Main Value -->
     <div class="flex items-baseline gap-2 mt-1 mb-1">
-      <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="server-online-text">5 <span class="text-lg font-normal text-muted-foreground">/ 5 在线</span></span>
+      <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="server-online-text">-- <span class="text-lg font-normal text-muted-foreground">/ {defaultServers.length} 注册</span></span>
     </div>
 
     <!-- Interactive World Map Graphic (SVG) -->
-    <div class="my-4 relative bg-background/80 border border-border/80 p-3 rounded-sm flex items-center justify-center overflow-hidden h-28">
-      <!-- Minimalist World Map Dots SVG -->
-      <svg class="w-full h-full text-border/60" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M40 40h60v20H40zM120 30h80v40h-80zM220 50h70v30h-70zM300 40h60v50h-60zM60 90h80v40H60zM160 100h70v30h-70zM250 90h80v40h-80z" fill="currentColor" opacity="0.3"/>
-        
-        <!-- Node 1: Chengdu / HK (Asia) -->
-        <circle cx="280" cy="70" r="4" class="fill-primary animate-ping" opacity="0.75" />
-        <circle cx="280" cy="70" r="3" class="fill-primary" />
-        
-        <!-- Node 2: Osaka (Japan) -->
-        <circle cx="310" cy="60" r="4" class="fill-primary animate-ping" opacity="0.75" />
-        <circle cx="310" cy="60" r="3" class="fill-primary" />
-
-        <!-- Node 3: Home Lab -->
-        <circle cx="270" cy="85" r="4" class="fill-primary animate-ping" opacity="0.75" />
-        <circle cx="270" cy="85" r="3" class="fill-primary" />
-
-        <!-- Topology Connecting Lines -->
-        <path d="M270 85 L280 70 L310 60" stroke="var(--primary)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+    <div class="my-4 relative bg-background/80 border border-border/80 rounded-sm flex items-center justify-center overflow-hidden h-32">
+      <svg class="w-full h-full" viewBox="0 0 420 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="基础设施节点拓扑">
+        <g class="stroke-border" opacity="0.38" stroke-width="0.7">
+          <path d="M0 30H420M0 60H420M0 90H420M0 120H420" />
+          <path d="M70 0V150M140 0V150M210 0V150M280 0V150M350 0V150" />
+        </g>
+        <path d="M305 80L320 68L342 58M305 80L294 91" class="stroke-primary" stroke-width="1" stroke-dasharray="4 4" opacity="0.7" />
+        <g class="fill-primary">
+          <circle cx="305" cy="80" r="3" /><circle cx="320" cy="68" r="3" />
+          <circle cx="342" cy="58" r="3" /><circle cx="294" cy="91" r="3" />
+        </g>
+        <g class="fill-primary" opacity="0.24">
+          <circle cx="305" cy="80" r="8" class="animate-pulse" /><circle cx="320" cy="68" r="8" class="animate-pulse" />
+          <circle cx="342" cy="58" r="8" class="animate-pulse" /><circle cx="294" cy="91" r="8" class="animate-pulse" />
+        </g>
       </svg>
-      <div class="absolute bottom-1 right-2 text-[9px] font-mono text-muted-foreground uppercase">NEZHA V2 // REALTIME</div>
+      <div class="absolute left-2 top-1.5 text-[9px] font-mono text-muted-foreground uppercase">APAC / HOME-LAB MESH</div>
+      <div class="absolute bottom-1.5 right-2 text-[9px] font-mono text-muted-foreground uppercase" id="server-map-source">NEZHA V2 // SYNCING</div>
     </div>
 
     <!-- Server Pills -->
     <div class="flex flex-wrap gap-2 my-2" id="server-pills-container">
       {defaultServers.map(srv => (
         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background/60 border border-border/80 text-[11px] font-mono text-foreground hover:border-primary/40 transition-colors">
-          <span class={`w-1.5 h-1.5 rounded-full ${srv.online ? 'bg-primary' : 'bg-red-500'}`}></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground"></span>
           <span>{srv.name}</span>
         </div>
       ))}
@@ -72,40 +69,66 @@ const defaultServers = [
     </a>
     <a href="https://nezha.bakersean.top/" target="_blank" rel="noopener noreferrer" class="text-primary font-bold shrink-0 ml-2 hover:underline">查看详情 →</a>
   </div>
-</div>
+</article>
+
+<template id="server-pill-template">
+  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background/60 border border-border/80 text-[11px] font-mono text-foreground">
+    <span class="w-1.5 h-1.5 rounded-full" data-server-dot></span>
+    <span data-server-name></span>
+  </div>
+</template>
 
 <script>
   async function fetchServerStatus() {
+    const card = document.getElementById('server-monitor-card');
+    const sourceEl = document.getElementById('server-map-source');
+    const onlineEl = document.getElementById('server-online-text');
+    const badgeEl = document.getElementById('server-health-badge');
+    const pillsContainer = document.getElementById('server-pills-container');
     try {
       const res = await fetch('/api/servers');
-      if (!res.ok) return;
+      if (!res.ok) throw new Error('server telemetry unavailable');
       const data = await res.json();
 
-      const onlineEl = document.getElementById('server-online-text');
-      const badgeEl = document.getElementById('server-health-badge');
-      const pillsContainer = document.getElementById('server-pills-container');
-
       if (onlineEl && typeof data.online === 'number') {
-        onlineEl.innerHTML = `${data.online} <span class="text-lg font-normal text-muted-foreground">/ ${data.total} 在线</span>`;
+        onlineEl.replaceChildren(document.createTextNode(`${data.online} `));
+        const total = document.createElement('span');
+        total.className = 'text-lg font-normal text-muted-foreground';
+        total.textContent = `/ ${data.total} 在线`;
+        onlineEl.append(total);
       }
       if (badgeEl && data.status) {
         if (data.status === 'all_normal') {
-          badgeEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-primary"></span><span>全部正常</span>`;
+          badgeEl.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-wider rounded-sm';
+          badgeEl.textContent = '全部正常';
         } else {
-          badgeEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span><span>部分受损</span>`;
+          badgeEl.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-mono font-bold tracking-wider rounded-sm';
+          badgeEl.textContent = '部分受损';
         }
       }
 
       if (pillsContainer && Array.isArray(data.servers) && data.servers.length > 0) {
-        pillsContainer.innerHTML = data.servers.slice(0, 6).map((srv: any) => `
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background/60 border border-border/80 text-[11px] font-mono text-foreground hover:border-primary/40 transition-colors">
-            <span class="w-1.5 h-1.5 rounded-full ${srv.online ? 'bg-primary' : 'bg-red-500'}"></span>
-            <span>${srv.name}</span>
-          </div>
-        `).join('');
+        const template = document.getElementById('server-pill-template') as HTMLTemplateElement | null;
+        pillsContainer.replaceChildren();
+        data.servers.slice(0, 6).forEach((srv: any) => {
+          const fragment = template?.content.cloneNode(true) as DocumentFragment | undefined;
+          if (!fragment) return;
+          const dot = fragment.querySelector('[data-server-dot]');
+          const name = fragment.querySelector('[data-server-name]');
+          if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${srv.online ? 'bg-primary' : 'bg-red-500'}`;
+          if (name) name.textContent = String(srv.name || 'Unnamed node');
+          pillsContainer.append(fragment);
+        });
       }
-    } catch (e) {
-      // Keep SSR fallback
+      if (sourceEl) sourceEl.textContent = 'NEZHA V2 // LIVE';
+      card?.setAttribute('aria-busy', 'false');
+    } catch {
+      if (badgeEl) {
+        badgeEl.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-mono font-bold tracking-wider rounded-sm';
+        badgeEl.textContent = '遥测离线';
+      }
+      if (sourceEl) sourceEl.textContent = 'NEZHA V2 // UNAVAILABLE';
+      card?.setAttribute('aria-busy', 'false');
     }
   }
 
