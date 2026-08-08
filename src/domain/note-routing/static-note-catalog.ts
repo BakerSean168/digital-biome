@@ -24,7 +24,7 @@ interface StaticCatalogEntry {
     private?: boolean | null;
     visibility?: string | null;
     asset_id?: string | null;
-    asset_type?: 'service' | 'tool' | 'host' | 'network' | null;
+    asset_type?: 'service' | 'tool' | 'host' | 'network' | 'subscription' | 'project' | null;
   };
 }
 

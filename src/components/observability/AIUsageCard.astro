@@ -1,0 +1,153 @@
+---
+import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
+
+// SSR default values matching screenshot
+const defaultTokens = "8.3M";
+const defaultCostUsd = "~$3.21";
+const defaultCostRmb = "≈ ¥21.93";
+
+const defaultTools = [
+  { id: 'chatgpt-codex', name: 'ChatGPT Codex', tokens7d: '8.3M', sharePct: 87, status: 'running' },
+  { id: 'codex-cli', name: 'Codex CLI', tokens7d: '1.2M', sharePct: 13, status: 'idle' }
+];
+---
+
+<div class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col justify-between hover:border-primary/50 transition-all duration-200" id="ai-usage-card">
+  <!-- Header -->
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+        <Cpu size={14} class="text-primary" />
+        <span>[ AI_TOOL_OBSERVABILITY ]</span>
+      </div>
+      <div class="inline-flex items-center gap-1.5 px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-wider rounded-sm">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+        <span>HUB 接入</span>
+      </div>
+    </div>
+
+    <!-- Main Value & Cost side-by-side -->
+    <div class="flex items-baseline justify-between mt-1 mb-2">
+      <div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="ai-total-tokens">{defaultTokens}</span>
+        </div>
+        <div class="text-[11px] font-mono text-muted-foreground">
+          tokens · 过去 7 天
+        </div>
+      </div>
+      
+      <div class="text-right font-mono">
+        <div class="text-lg font-bold text-primary" id="ai-cost-usd">{defaultCostUsd}</div>
+        <div class="text-[10px] text-muted-foreground" id="ai-cost-rmb">{defaultCostRmb}</div>
+      </div>
+    </div>
+
+    <!-- AI Tools Breakdown -->
+    <div class="flex flex-col gap-2.5 my-4" id="ai-tools-list">
+      {defaultTools.map(tool => (
+        <div class="p-3 bg-background/60 border border-border/80 rounded-sm hover:border-border transition-colors flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <Sparkles size={13} class="text-primary" />
+              <span class="text-xs font-mono font-medium text-foreground">{tool.name}</span>
+            </div>
+            <div class="flex items-center gap-3 font-mono text-xs">
+              <span class="text-foreground font-bold">{tool.tokens7d}</span>
+              <span class="text-[9px] uppercase px-1.5 py-0.2 border border-primary/20 bg-primary/10 text-primary rounded-xs">
+                {tool.status}
+              </span>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="w-full h-1.5 bg-border/40 rounded-full overflow-hidden">
+            <div class="h-full bg-primary transition-all duration-500" style={`width: ${tool.sharePct}%`}></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- Footer Info & Details Modal trigger -->
+  <div class="pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
+    <span class="text-muted-foreground" id="ai-updated-at">更新于 07/28 18:05</span>
+    <button 
+      type="button" 
+      class="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
+      onclick="document.getElementById('ai-detail-dialog')?.showModal()"
+    >
+      <span>查看详情</span>
+      <ArrowRight size={12} />
+    </button>
+  </div>
+</div>
+
+<!-- Modal / Dialog for AI Usage details -->
+<dialog id="ai-detail-dialog" class="bg-card border border-border p-6 rounded-sm text-foreground max-w-lg w-full backdrop:bg-black/70 font-mono">
+  <div class="flex items-center justify-between pb-4 mb-4 border-b border-border">
+    <div class="flex items-center gap-2 text-sm font-bold text-primary">
+      <Cpu size={16} />
+      <span>[ AI Token Observatory Hub ]</span>
+    </div>
+    <form method="dialog">
+      <button class="text-muted-foreground hover:text-foreground text-xs uppercase">[ CLOSE ]</button>
+    </form>
+  </div>
+
+  <div class="flex flex-col gap-4 text-xs">
+    <p class="text-muted-foreground leading-relaxed">
+      中央 Hub 位于 Oracle 2 VPS，实时汇总 Local (Mac/PC) 与 Oracle 2 VPS 的多端 AI CLI 用量。
+    </p>
+
+    <div class="grid grid-cols-2 gap-3 p-3 bg-background border border-border">
+      <div>
+        <div class="text-[10px] text-muted-foreground uppercase mb-1">Local Machine</div>
+        <div class="text-sm font-bold text-foreground">6.8M tokens (72%)</div>
+      </div>
+      <div>
+        <div class="text-[10px] text-muted-foreground uppercase mb-1">Oracle 2 VPS</div>
+        <div class="text-sm font-bold text-primary">2.7M tokens (28%)</div>
+      </div>
+    </div>
+
+    <div class="p-3 bg-background border border-border flex flex-col gap-2">
+      <div class="text-[10px] text-muted-foreground uppercase">// Privacy & Schema Guarantee</div>
+      <div class="text-[11px] text-muted-foreground leading-normal">
+        本系统仅同步 Usage Ledger 统计元数据（Tokens / Model / Machine / Timestamp），绝不同步任何代码、Prompt 或 Session 对话内容。
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  async function fetchAiUsage() {
+    try {
+      const res = await fetch('/api/ai-usage');
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      const totalEl = document.getElementById('ai-total-tokens');
+      const costUsdEl = document.getElementById('ai-cost-usd');
+      const costRmbEl = document.getElementById('ai-cost-rmb');
+      const updatedAtEl = document.getElementById('ai-updated-at');
+
+      if (totalEl && data.totalTokens7d) {
+        totalEl.textContent = (data.totalTokens7d / 1000000).toFixed(1) + 'M';
+      }
+      if (costUsdEl && data.estimatedCost7d) {
+        costUsdEl.textContent = `~$${data.estimatedCost7d.toFixed(2)}`;
+      }
+      if (costRmbEl && data.estimatedCostRmb7d) {
+        costRmbEl.textContent = `≈ ¥${data.estimatedCostRmb7d.toFixed(2)}`;
+      }
+      if (updatedAtEl && data.updatedAt) {
+        const d = new Date(data.updatedAt);
+        updatedAtEl.textContent = `更新于 ${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+      }
+    } catch (e) {
+      // Keep SSR fallback
+    }
+  }
+
+  fetchAiUsage();
+</script>

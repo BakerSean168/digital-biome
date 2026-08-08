@@ -7,6 +7,7 @@ import { getAllNoteTags, getRecentNotesWithDate } from '../../utils/notes';
 import { formatTimeAgo } from '../../utils/date';
 import ScrollingTagWall from '../../components/common/ScrollingTagWall.astro';
 import GitHubContributions from '../../components/common/GitHubContributions.astro';
+import ObservabilityGrid from '../../components/observability/ObservabilityGrid.astro';
 
 const allTagsMap = getAllNoteTags();
 
@@ -100,6 +101,9 @@ const recentReads = recentNotes.map(item => ({
         </div>
 
       </div>
+
+      <!-- Observability Dashboard Section -->
+      <ObservabilityGrid />
 
       <!-- Row 3 -->
       <div class="border border-border p-6 sm:p-8 bg-transparent">
