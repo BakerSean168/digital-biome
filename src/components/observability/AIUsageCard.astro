@@ -87,6 +87,7 @@ import { Cpu, ArrowRight, Laptop, Server, SlidersHorizontal } from '@lucide/astr
       <button type="button" data-ai-period="1d" class="px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer">1D · 今日</button>
       <button type="button" data-ai-period="7d" class="px-2.5 py-1 border border-primary/50 bg-primary/10 text-[10px] text-primary cursor-pointer">7D · 过去 7 天</button>
       <button type="button" data-ai-period="30d" class="px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer">30D · 过去 30 天</button>
+      <button type="button" data-ai-period="all" class="px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer">ALL · 历史总和</button>
     </div>
     <div class="flex flex-wrap items-center gap-1" role="group" aria-label="统计维度">
       <SlidersHorizontal size={12} class="text-muted-foreground mr-1" />
@@ -94,6 +95,8 @@ import { Cpu, ArrowRight, Laptop, Server, SlidersHorizontal } from '@lucide/astr
       <button type="button" data-ai-dimension="models" class="px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer">[ MODEL ]</button>
     </div>
   </div>
+
+  <div id="ai-detail-coverage" class="hidden mb-4 px-3 py-2 border border-primary/20 bg-primary/5 text-[9px] uppercase tracking-wider text-muted-foreground"></div>
 
   <div class="grid grid-cols-3 border border-border bg-background/70 mb-4">
     <div class="p-3 border-r border-border">
@@ -147,7 +150,7 @@ import { Cpu, ArrowRight, Laptop, Server, SlidersHorizontal } from '@lucide/astr
   </div>
 
   <p class="mt-4 text-[9px] leading-relaxed text-muted-foreground">
-    // SOURCE: 官方 Token Monitor 按设备日历史。这里展示实际 tokens 与估算成本，不代表订阅套餐的剩余额度；不上传代码、Prompt 或会话正文。
+    // SOURCE: 官方 Token Monitor。ALL 使用各设备原生 allTime 快照；其余窗口使用按日历史。这里展示实际 tokens 与估算成本，不代表订阅套餐的剩余额度；不上传代码、Prompt 或会话正文。
   </p>
 </dialog>
 
@@ -169,7 +172,7 @@ import { Cpu, ArrowRight, Laptop, Server, SlidersHorizontal } from '@lucide/astr
 </template>
 
 <script>
-  type PeriodKey = '1d' | '7d' | '30d';
+  type PeriodKey = '1d' | '7d' | '30d' | 'all';
   type DimensionKey = 'agents' | 'models';
 
   let aiUsageData: any = null;
@@ -224,10 +227,19 @@ import { Cpu, ArrowRight, Laptop, Server, SlidersHorizontal } from '@lucide/astr
     const totalTokens = document.getElementById('ai-detail-total-tokens');
     const totalCost = document.getElementById('ai-detail-total-cost');
     const activeCount = document.getElementById('ai-detail-active-count');
+    const coverage = document.getElementById('ai-detail-coverage');
     const entries = ['local', 'hermes'].flatMap((id) => period.machines?.[id]?.[selectedDimension] || []);
     if (totalTokens) totalTokens.textContent = `${formatTokens(period.totalTokens)} tokens`;
     if (totalCost) totalCost.textContent = `${formatCost(period.totalCostUsd)} · ¥${Number(period.totalCostRmb).toFixed(2)}`;
     if (activeCount) activeCount.textContent = `${entries.filter((item: any) => Number(item.tokens) > 0).length} ${selectedDimension === 'agents' ? 'agents' : 'models'}`;
+    if (coverage) {
+      const range = period.coverage;
+      const hasRange = selectedPeriod === 'all' && range?.startDate && range?.endDate;
+      coverage.classList.toggle('hidden', selectedPeriod !== 'all');
+      coverage.textContent = hasRange
+        ? `COVERAGE // ${range.startDate} → ${range.endDate} · ${Number(range.activeDays) || 0} ACTIVE DAYS · ${Number(range.calendarDays) || 0} CALENDAR DAYS`
+        : 'COVERAGE // HUB 当前保存的全部历史 · 尚无可用日期范围';
+    }
 
     document.querySelectorAll<HTMLElement>('[data-ai-period]').forEach((button) => {
       const active = button.dataset.aiPeriod === selectedPeriod;
@@ -297,7 +309,7 @@ import { Cpu, ArrowRight, Laptop, Server, SlidersHorizontal } from '@lucide/astr
       const response = await fetch('/api/ai-usage');
       if (!response.ok) throw new Error('AI usage unavailable');
       aiUsageData = await response.json();
-      if (!aiUsageData?.periods?.['7d']) throw new Error('AI usage contract unsupported');
+      if (!aiUsageData?.periods?.['7d'] || !aiUsageData?.periods?.all) throw new Error('AI usage contract unsupported');
       card?.setAttribute('aria-busy', 'false');
       if (badge) {
         badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-wider rounded-sm';

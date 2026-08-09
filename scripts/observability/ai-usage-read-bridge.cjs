@@ -57,6 +57,19 @@ function addBreakdown(target, values) {
   }
 }
 
+function addSnapshotBreakdown(target, tokenValues, costValues) {
+  const ids = new Set([
+    ...Object.keys(tokenValues && typeof tokenValues === 'object' ? tokenValues : {}),
+    ...Object.keys(costValues && typeof costValues === 'object' ? costValues : {}),
+  ]);
+  for (const id of ids) {
+    const current = target.get(id) || { tokens: 0, costUsd: 0 };
+    current.tokens += numeric(tokenValues?.[id]);
+    current.costUsd += numeric(costValues?.[id]);
+    target.set(id, current);
+  }
+}
+
 function rankedBreakdown(values, totalTokens, labels = {}) {
   return [...values.entries()]
     .map(([id, usage]) => ({
@@ -115,6 +128,73 @@ function calculatePeriod(records, dayCount, now) {
   };
 }
 
+function calculateAllTime(records) {
+  const machines = {
+    local: { id: 'local', name: 'Local · forest', tokens: 0, costUsd: 0, agents: new Map(), models: new Map() },
+    hermes: { id: 'hermes', name: 'Hermes · Oracle 2', tokens: 0, costUsd: 0, agents: new Map(), models: new Map() },
+  };
+  const observedDates = new Set();
+  const activeDates = new Set();
+
+  for (const record of records) {
+    const deviceId = String(record?.deviceId || '').toLowerCase();
+    const machine = deviceId === 'hermes' ? 'hermes' : 'local';
+    const days = Array.isArray(record?.history?.daily) ? record.history.daily : [];
+    for (const day of days) {
+      const date = String(day?.date || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      observedDates.add(date);
+      if (numeric(day.tokens) > 0) activeDates.add(date);
+    }
+
+    const allTime = record?.periods?.allTime;
+    if (allTime && typeof allTime === 'object') {
+      machines[machine].tokens += numeric(allTime.totalTokens);
+      machines[machine].costUsd += numeric(allTime.costUsd);
+      addSnapshotBreakdown(machines[machine].agents, allTime.clients, allTime.clientCosts);
+      addSnapshotBreakdown(machines[machine].models, allTime.models, allTime.modelCosts);
+      continue;
+    }
+
+    for (const day of days) {
+      machines[machine].tokens += numeric(day?.tokens);
+      machines[machine].costUsd += numeric(day?.cost);
+      addBreakdown(machines[machine].agents, day?.perClient);
+      addBreakdown(machines[machine].models, day?.perModel);
+    }
+  }
+
+  const dates = [...observedDates].sort();
+  const startDate = dates[0] || null;
+  const endDate = dates.at(-1) || null;
+  const calendarDays = startDate && endDate
+    ? Math.floor((Date.parse(`${endDate}T00:00:00Z`) - Date.parse(`${startDate}T00:00:00Z`)) / 86_400_000) + 1
+    : 0;
+  const totalTokens = machines.local.tokens + machines.hermes.tokens;
+  const totalCostUsd = machines.local.costUsd + machines.hermes.costUsd;
+  const normalizeMachine = (machine) => ({
+    id: machine.id,
+    name: machine.name,
+    tokens: machine.tokens,
+    costUsd: roundCost(machine.costUsd),
+    sharePct: pct(machine.tokens, totalTokens),
+    agents: rankedBreakdown(machine.agents, machine.tokens, TOOL_LABELS),
+    models: rankedBreakdown(machine.models, machine.tokens),
+  });
+
+  return {
+    days: calendarDays,
+    totalTokens,
+    totalCostUsd: roundCost(totalCostUsd),
+    totalCostRmb: roundCost(totalCostUsd * 6.83),
+    coverage: { startDate, endDate, calendarDays, activeDays: activeDates.size },
+    machines: {
+      local: normalizeMachine(machines.local),
+      hermes: normalizeMachine(machines.hermes),
+    },
+  };
+}
+
 function calculateSummary(database, now = new Date()) {
   const records = database && typeof database.devices === 'object'
     ? Object.values(database.devices)
@@ -123,6 +203,7 @@ function calculateSummary(database, now = new Date()) {
     '1d': calculatePeriod(records, 1, now),
     '7d': calculatePeriod(records, 7, now),
     '30d': calculatePeriod(records, 30, now),
+    all: calculateAllTime(records),
   };
   const current = periods['7d'];
   const toolTotals = new Map();

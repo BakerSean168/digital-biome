@@ -17,7 +17,12 @@ async function withMockFetch(
   }
 }
 
-function aiPeriod(days: number, localTokens: number, hermesTokens: number) {
+function aiPeriod(days: number, localTokens: number, hermesTokens: number, coverage?: {
+  startDate: string | null;
+  endDate: string | null;
+  calendarDays: number;
+  activeDays: number;
+}) {
   const totalTokens = localTokens + hermesTokens;
   const machine = (id: 'local' | 'hermes', tokens: number) => ({
     id,
@@ -33,6 +38,7 @@ function aiPeriod(days: number, localTokens: number, hermesTokens: number) {
     totalTokens,
     totalCostUsd: 0,
     totalCostRmb: 0,
+    ...(coverage ? { coverage } : {}),
     machines: {
       local: machine('local', localTokens),
       hermes: machine('hermes', hermesTokens),
@@ -71,6 +77,9 @@ test('AI usage maps the current seven-day Hub contract with the read-only key', 
         '1d': aiPeriod(1, 100, 20),
         '7d': aiPeriod(7, 700000, 116100),
         '30d': aiPeriod(30, 900000, 200000),
+        all: aiPeriod(192, 6000000, 3000000, {
+          startDate: '2026-01-30', endDate: '2026-08-09', calendarDays: 192, activeDays: 148,
+        }),
       },
     });
   }, async () => {
@@ -84,6 +93,9 @@ test('AI usage maps the current seven-day Hub contract with the read-only key', 
     assert.equal(payload.tools[0].tokens7d, 650400);
     assert.deepEqual(payload.byMachine.hermes, { tokens7d: 116100, costUsd7d: 0.43, pct: 14.2 });
     assert.equal(payload.periods['30d'].machines.local.tokens, 900000);
+    assert.deepEqual(payload.periods.all.coverage, {
+      startDate: '2026-01-30', endDate: '2026-08-09', calendarDays: 192, activeDays: 148,
+    });
   });
 });
 
@@ -129,6 +141,7 @@ test('AI usage accepts an empty current-contract ledger', async () => {
       '1d': aiPeriod(1, 0, 0),
       '7d': aiPeriod(7, 0, 0),
       '30d': aiPeriod(30, 0, 0),
+      all: aiPeriod(0, 0, 0, { startDate: null, endDate: null, calendarDays: 0, activeDays: 0 }),
     },
   }), async () => {
     const response = await getAiUsage({
