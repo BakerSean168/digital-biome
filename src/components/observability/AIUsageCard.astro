@@ -3,7 +3,7 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
 
 ---
 
-<article class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" id="ai-usage-card" data-observability-card="ai-usage" aria-busy="true">
+<article class="group relative h-full bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" id="ai-usage-card" data-observability-card="ai-usage" aria-busy="true">
   <!-- Header -->
   <div>
     <div class="flex items-center justify-between mb-4">
@@ -43,7 +43,7 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
   </div>
 
   <!-- Footer Info & Details Modal trigger -->
-  <div class="pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
+  <div class="mt-auto pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
     <span class="text-muted-foreground" id="ai-updated-at">尚未同步</span>
     <button 
       type="button" 

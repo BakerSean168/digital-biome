@@ -17,6 +17,7 @@
     "check": "astro check",
     "check:edge": "tsc -p functions/tsconfig.json --noEmit",
     "test:edge": "tsx --test edge/*.test.ts",
+    "test:unit": "tsx --test src/utils/*.test.ts",
     "test:infrastructure": "tsx --test scripts/infrastructure-contract.test.ts",
     "export:private": "tsx scripts/export-private-infrastructure.ts",
     "deploy:cloudflare": "pnpm build && wrangler pages deploy dist --project-name digital-biome --branch main",

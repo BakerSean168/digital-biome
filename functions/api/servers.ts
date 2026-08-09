@@ -23,6 +23,56 @@ export interface ObservabilityEnv extends Env {
   NEZHA_PAT?: string;
 }
 
+type JsonRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function numberOrZero(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function mapServer(value: unknown, index: number): ServerItem | null {
+  if (!isRecord(value)) return null;
+  const status = isRecord(value.status) ? value.status : null;
+  const host = isRecord(value.host) ? value.host : null;
+  const online = status && typeof status.online === 'boolean'
+    ? status.online
+    : typeof value.online === 'boolean'
+      ? value.online
+      : null;
+  if (online === null) return null;
+
+  const memUsed = status ? numberOrZero(status.mem_used) : 0;
+  const memTotal = status ? numberOrZero(status.mem_total) : 0;
+  const id = typeof value.id === 'number' ? value.id : index + 1;
+
+  return {
+    id,
+    name: typeof value.name === 'string'
+      ? value.name
+      : host && typeof host.name === 'string'
+        ? host.name
+        : `Server #${id}`,
+    location: typeof value.country_code === 'string'
+      ? value.country_code
+      : typeof value.location === 'string'
+        ? value.location
+        : 'Global',
+    provider: host && typeof host.platform === 'string'
+      ? host.platform
+      : typeof value.platform === 'string'
+        ? value.platform
+        : 'VPS',
+    online,
+    cpu: Math.round(status ? numberOrZero(status.cpu) : numberOrZero(value.cpu)),
+    ram: Math.round(memTotal > 0 ? (memUsed / memTotal) * 100 : numberOrZero(value.ram)),
+    upSpeed: `${((status ? numberOrZero(status.net_out_speed) : numberOrZero(value.up_speed)) / 1024 / 1024).toFixed(1)} Mbps`,
+    downSpeed: `${((status ? numberOrZero(status.net_in_speed) : numberOrZero(value.down_speed)) / 1024 / 1024).toFixed(1)} Mbps`,
+  };
+}
+
 export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
   const nezhaUrl = context.env.NEZHA_BASE_URL || 'https://nezha.bakersean.top';
   const nezhaPat = context.env.NEZHA_PAT;
@@ -31,73 +81,49 @@ export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
     return Response.json({ error: 'Server telemetry is not configured.' }, { status: 503 });
   }
 
-  let servers: ServerItem[] = [];
+  try {
+    const response = await fetch(`${nezhaUrl.replace(/\/$/, '')}/api/v1/server`, {
+      headers: {
+        'Authorization': `Bearer ${nezhaPat.replace(/^Bearer\s+/i, '')}`,
+        'Accept': 'application/json',
+      },
+    });
 
-  if (nezhaUrl && nezhaPat) {
-    try {
-      const authHeader = nezhaPat.startsWith('Bearer ') ? nezhaPat : `Bearer ${nezhaPat}`;
-      
-      // Try Nezha v2 endpoint first, then v1 details
-      let response = await fetch(`${nezhaUrl.replace(/\/$/, '')}/api/v1/server`, {
-        headers: {
-          'Authorization': authHeader,
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        response = await fetch(`${nezhaUrl.replace(/\/$/, '')}/api/v1/server/details`, {
-          headers: {
-            'Authorization': authHeader,
-            'Accept': 'application/json',
-          },
-        });
-      }
-
-      if (response.ok) {
-        const data = (await response.json()) as any;
-        const rawList = Array.isArray(data?.result) ? data.result : Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : null;
-
-        if (rawList && rawList.length > 0) {
-          servers = rawList.map((s: any, idx: number) => ({
-            id: s.id || idx + 1,
-            name: s.name || s.host?.name || `Server #${s.id || idx + 1}`,
-            location: s.country_code || s.location || 'Global',
-            provider: s.host?.platform || s.platform || 'VPS',
-            online: typeof s.status?.online === 'boolean' ? s.status.online : typeof s.online === 'boolean' ? s.online : false,
-            cpu: Math.round(s.status?.cpu || s.cpu || 0),
-            ram: Math.round(s.status?.mem_used && s.status?.mem_total ? (s.status.mem_used / s.status.mem_total) * 100 : s.ram || 0),
-            upSpeed: `${((s.status?.net_out_speed || s.up_speed || 0) / 1024 / 1024).toFixed(1)} Mbps`,
-            downSpeed: `${((s.status?.net_in_speed || s.down_speed || 0) / 1024 / 1024).toFixed(1)} Mbps`,
-          }));
-        }
-      }
-    } catch {
-      return Response.json({ error: 'Nezha telemetry is unreachable.' }, { status: 502 });
+    if (!response.ok) {
+      return Response.json({ error: 'Nezha rejected the request.' }, { status: 502 });
     }
+
+    const body = await response.json() as unknown;
+    if (!isRecord(body) || body.success !== true || !Array.isArray(body.data)) {
+      return Response.json({ error: 'Nezha rejected the request.' }, { status: 502 });
+    }
+    if (body.data.length === 0) {
+      return Response.json({ error: 'Nezha returned no server telemetry.' }, { status: 502 });
+    }
+
+    const mappedServers = body.data.map(mapServer);
+    if (mappedServers.some((server) => server === null)) {
+      return Response.json({ error: 'Nezha returned unsupported server telemetry.' }, { status: 502 });
+    }
+    const servers = mappedServers as ServerItem[];
+    const online = servers.filter((server) => server.online).length;
+
+    const payload: ServerMonitorResponse = {
+      total: servers.length,
+      online,
+      status: online === servers.length ? 'all_normal' : online > 0 ? 'degraded' : 'critical',
+      updatedAt: new Date().toISOString(),
+      servers,
+    };
+
+    return Response.json(payload, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, max-age=10, s-maxage=15',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch {
+    return Response.json({ error: 'Nezha telemetry is unreachable.' }, { status: 502 });
   }
-
-  if (servers.length === 0) {
-    return Response.json({ error: 'Nezha returned no server telemetry.' }, { status: 502 });
-  }
-
-  const onlineCount = servers.filter((s) => s.online).length;
-  const totalCount = servers.length;
-  const healthStatus = onlineCount === totalCount ? 'all_normal' : onlineCount > 0 ? 'degraded' : 'critical';
-
-  const payload: ServerMonitorResponse = {
-    total: totalCount,
-    online: onlineCount,
-    status: healthStatus,
-    updatedAt: new Date().toISOString(),
-    servers,
-  };
-
-  return Response.json(payload, {
-    status: 200,
-    headers: {
-      'Cache-Control': 'public, max-age=10, s-maxage=15',
-      'Access-Control-Allow-Origin': '*',
-    },
-  });
 };

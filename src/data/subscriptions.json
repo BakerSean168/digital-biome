@@ -1,7 +1,7 @@
 {
   "currency": "USD",
   "exchangeRateRmb": 6.83,
-  "updatedAt": "2026-08-08T05:55:21.422Z",
+  "updatedAt": "2026-08-09T01:53:04.108Z",
   "subscriptions": [
     {
       "id": "subscription-chatgpt-team",
@@ -16,6 +16,20 @@
       "status": "active",
       "icon": "chatgpt",
       "notes": "每月 17 号扣款，AU$25/2人，个人平摊 AU$12.50，享 24 个月优惠"
+    },
+    {
+      "id": "subscription-bakersean-top-domain",
+      "name": "bakersean.top 域名续费",
+      "vendor": "阿里云",
+      "cost": 5.71,
+      "originalCost": 39,
+      "originalCurrency": "CNY",
+      "currency": "USD",
+      "cycle": "yearly",
+      "nextBillingDate": "2026-12-13",
+      "status": "active",
+      "icon": "aliyun",
+      "notes": "每年 12 月 13 日续费 39 元人民币；域名本体见 net-bakersean-top-domain"
     },
     {
       "id": "subscription-oracle-always-free",
