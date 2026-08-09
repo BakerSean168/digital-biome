@@ -17,6 +17,29 @@ async function withMockFetch(
   }
 }
 
+function aiPeriod(days: number, localTokens: number, hermesTokens: number) {
+  const totalTokens = localTokens + hermesTokens;
+  const machine = (id: 'local' | 'hermes', tokens: number) => ({
+    id,
+    name: id,
+    tokens,
+    costUsd: 0,
+    sharePct: totalTokens > 0 ? (tokens / totalTokens) * 100 : 0,
+    agents: [],
+    models: [],
+  });
+  return {
+    days,
+    totalTokens,
+    totalCostUsd: 0,
+    totalCostRmb: 0,
+    machines: {
+      local: machine('local', localTokens),
+      hermes: machine('hermes', hermesTokens),
+    },
+  };
+}
+
 test('AI usage reports missing configuration instead of returning sample telemetry', async () => {
   const response = await getAiUsage({ env: {} } as any);
   assert.equal(response.status, 503);
@@ -39,8 +62,15 @@ test('AI usage maps the current seven-day Hub contract with the read-only key', 
       updatedAt: '2026-08-08T14:25:00.000Z',
       tools: [{ id: 'codex', name: 'Codex', vendor: 'openai', tokens7d: 650400, sharePct: 79.7 }],
       byMachine: {
-        local: { tokens7d: 700000, pct: 85.8 },
-        hermes: { tokens7d: 116100, pct: 14.2 },
+        local: { tokens7d: 700000, costUsd7d: 1.2, pct: 85.8 },
+        hermes: { tokens7d: 116100, costUsd7d: 0.43, pct: 14.2 },
+      },
+      source: 'official-token-monitor',
+      deviceCount: 2,
+      periods: {
+        '1d': aiPeriod(1, 100, 20),
+        '7d': aiPeriod(7, 700000, 116100),
+        '30d': aiPeriod(30, 900000, 200000),
       },
     });
   }, async () => {
@@ -52,7 +82,8 @@ test('AI usage maps the current seven-day Hub contract with the read-only key', 
     assert.equal(response.status, 200);
     assert.equal(payload.totalTokens7d, 816100);
     assert.equal(payload.tools[0].tokens7d, 650400);
-    assert.deepEqual(payload.byMachine.hermes, { tokens7d: 116100, pct: 14.2 });
+    assert.deepEqual(payload.byMachine.hermes, { tokens7d: 116100, costUsd7d: 0.43, pct: 14.2 });
+    assert.equal(payload.periods['30d'].machines.local.tokens, 900000);
   });
 });
 
@@ -89,8 +120,15 @@ test('AI usage accepts an empty current-contract ledger', async () => {
     updatedAt: '2026-08-09T00:00:00.000Z',
     tools: [],
     byMachine: {
-      local: { tokens7d: 0, pct: 0 },
-      hermes: { tokens7d: 0, pct: 0 },
+      local: { tokens7d: 0, costUsd7d: 0, pct: 0 },
+      hermes: { tokens7d: 0, costUsd7d: 0, pct: 0 },
+    },
+    source: 'official-token-monitor',
+    deviceCount: 2,
+    periods: {
+      '1d': aiPeriod(1, 0, 0),
+      '7d': aiPeriod(7, 0, 0),
+      '30d': aiPeriod(30, 0, 0),
     },
   }), async () => {
     const response = await getAiUsage({
