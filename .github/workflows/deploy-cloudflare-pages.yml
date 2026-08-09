@@ -62,6 +62,7 @@ jobs:
           pnpm check
           pnpm check:edge
           pnpm test:edge
+          pnpm test:unit
           pnpm test:infrastructure
 
       - name: Build, index, and scan public artifact
@@ -157,17 +158,38 @@ jobs:
           test "${ACTUAL_ASSET_INDEX_SHA256}" = "${EXPECTED_ASSET_INDEX_SHA256}"
           pnpm test:infrastructure
 
-      - name: Generate and update encrypted Pages payload
+      - name: Validate production observability credentials
+        shell: bash
+        env:
+          AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
+          AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
+          NEZHA_PAT: ${{ secrets.NEZHA_PAT }}
+        run: |
+          set -euo pipefail
+          test -n "${AI_USAGE_HUB_URL}"
+          test -n "${AI_USAGE_HUB_READ_KEY}"
+          test -n "${NEZHA_PAT}"
+
+      - name: Generate and update encrypted Pages bindings
         shell: bash
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
+          AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
+          NEZHA_PAT: ${{ secrets.NEZHA_PAT }}
         run: |
           set -euo pipefail
           PAYLOAD_FILE="${RUNNER_TEMP}/private-infrastructure.json"
           pnpm export:private -- --out "${PAYLOAD_FILE}"
           pnpm exec wrangler pages secret put PRIVATE_INFRASTRUCTURE_JSON \
             --project-name digital-biome < "${PAYLOAD_FILE}"
+          printf '%s' "${AI_USAGE_HUB_URL}" | pnpm exec wrangler pages secret put AI_USAGE_HUB_URL \
+            --project-name digital-biome
+          printf '%s' "${AI_USAGE_HUB_READ_KEY}" | pnpm exec wrangler pages secret put AI_USAGE_HUB_READ_KEY \
+            --project-name digital-biome
+          printf '%s' "${NEZHA_PAT}" | pnpm exec wrangler pages secret put NEZHA_PAT \
+            --project-name digital-biome
 
       - name: Deploy reviewed artifact and Pages Functions
         id: deploy
@@ -213,7 +235,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Smoke test public site and protected API
+      - name: Smoke test public site and telemetry contracts
         shell: bash
         env:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://digital-biome.pages.dev' }}
@@ -221,8 +243,27 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
             "${PRODUCTION_URL}/" > /dev/null
+          AI_USAGE_FILE="$(mktemp)"
+          SERVERS_FILE="$(mktemp)"
           HEADERS="$(mktemp)"
-          trap 'rm -f "${HEADERS}"' EXIT
+          trap 'rm -f "${AI_USAGE_FILE}" "${SERVERS_FILE}" "${HEADERS}"' EXIT
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            "${PRODUCTION_URL}/api/ai-usage" > "${AI_USAGE_FILE}"
+          jq -e '
+            (.totalTokens7d | type == "number") and
+            (.estimatedCost7d | type == "number") and
+            (.tools | type == "array") and
+            (.byMachine.local.tokens7d | type == "number") and
+            (.byMachine.oracle2.tokens7d | type == "number")
+          ' "${AI_USAGE_FILE}" > /dev/null
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            "${PRODUCTION_URL}/api/servers" > "${SERVERS_FILE}"
+          jq -e '
+            (.total | type == "number") and
+            (.online | type == "number") and
+            (.servers | type == "array" and length > 0) and
+            (all(.servers[]; .online | type == "boolean"))
+          ' "${SERVERS_FILE}" > /dev/null
           STATUS="$(curl --silent --dump-header "${HEADERS}" --output /dev/null \
             --write-out '%{http_code}' \
             "${PRODUCTION_URL}/api/private/infrastructure")"

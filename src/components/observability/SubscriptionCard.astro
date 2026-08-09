@@ -1,6 +1,7 @@
 ---
 import subscriptionData from '../../data/subscriptions.json';
 import { CreditCard, Calendar } from '@lucide/astro';
+import { monthlyEquivalentCost } from '../../utils/subscriptions';
 
 export interface SubscriptionItem {
   id: string;
@@ -22,9 +23,7 @@ const subscriptions: SubscriptionItem[] = (subscriptionData.subscriptions as Sub
 
 // Calculate total monthly USD and RMB
 const totalMonthlyUsd = subscriptions.reduce((sum, item) => {
-  if (item.cycle === 'monthly') return sum + item.cost;
-  if (item.cycle === 'yearly') return sum + (item.annualCost ? item.annualCost / 12 : item.cost);
-  return sum + item.cost;
+  return sum + monthlyEquivalentCost(item);
 }, 0);
 
 const totalMonthlyRmb = Math.round(totalMonthlyUsd * exchangeRateRmb * 100) / 100;
@@ -44,7 +43,7 @@ const renewals = subscriptions
 const nearestRenewal = renewals[0];
 ---
 
-<article class="group relative bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" data-observability-card="subscriptions">
+<article class="group relative h-full bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" data-observability-card="subscriptions">
   <!-- Header -->
   <div>
     <div class="flex items-center justify-between mb-3">
@@ -95,7 +94,7 @@ const nearestRenewal = renewals[0];
 
   <!-- Footer Countdown -->
   {nearestRenewal && (
-    <div class="pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
+    <div class="mt-auto pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
       <div class="flex items-center gap-1.5 text-muted-foreground truncate">
         <Calendar size={12} class="text-primary shrink-0" />
         <span class="truncate">下次续费 · {nearestRenewal.name}</span>

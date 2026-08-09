@@ -23,22 +23,97 @@ export interface AiUsageSummaryResponse {
 
 export interface AiUsageEnv extends Env {
   AI_USAGE_HUB_URL?: string;
-  AI_USAGE_HUB_KEY?: string;
+  AI_USAGE_HUB_READ_KEY?: string;
+}
+
+type JsonRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function machineUsage(value: unknown): { tokens7d: number; pct: number } | null {
+  if (!isRecord(value)) return null;
+  const tokens7d = finiteNumber(value.tokens7d);
+  const pct = finiteNumber(value.pct);
+  return tokens7d === null || pct === null ? null : { tokens7d, pct };
+}
+
+function normalizeTool(value: unknown, index: number): AiToolUsageItem | null {
+  if (!isRecord(value)) return null;
+  const tokens7d = finiteNumber(value.tokens7d);
+  const sharePct = finiteNumber(value.sharePct ?? value.percentage);
+  if (tokens7d === null || sharePct === null) return null;
+
+  const name = typeof value.name === 'string' && value.name.trim() ? value.name : `AI Tool ${index + 1}`;
+  return {
+    id: typeof value.id === 'string' && value.id ? value.id : name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    name,
+    vendor: typeof value.vendor === 'string' ? value.vendor : 'unknown',
+    tokens7d,
+    sharePct,
+    status: value.status === 'idle' || value.status === 'offline' ? value.status : 'running',
+    costMode: value.costMode === 'subscription' ? 'subscription' : 'api',
+  };
+}
+
+function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
+  if (!isRecord(value)) return null;
+
+  const totalTokens7d = finiteNumber(value.totalTokens7d);
+  const estimatedCost7d = finiteNumber(value.estimatedCost7d);
+  const estimatedCostRmb7d = finiteNumber(value.estimatedCostRmb7d);
+  const sourceTools = Array.isArray(value.tools)
+    ? value.tools
+    : Array.isArray(value.models)
+      ? value.models
+      : null;
+  const sourceMachines = isRecord(value.byMachine)
+    ? value.byMachine
+    : isRecord(value.machines)
+      ? value.machines
+      : null;
+
+  if (
+    totalTokens7d === null
+    || estimatedCost7d === null
+    || estimatedCostRmb7d === null
+    || !sourceTools
+    || !sourceMachines
+  ) return null;
+
+  const tools = sourceTools.map(normalizeTool);
+  const local = machineUsage(sourceMachines.local);
+  const oracle2 = machineUsage(sourceMachines.oracle2);
+  if (tools.some((tool) => tool === null) || !local || !oracle2) return null;
+
+  return {
+    totalTokens7d,
+    estimatedCost7d,
+    estimatedCostRmb7d,
+    currency: typeof value.currency === 'string' ? value.currency : 'USD',
+    updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : new Date().toISOString(),
+    tools: tools as AiToolUsageItem[],
+    byMachine: { local, oracle2 },
+  };
 }
 
 export const onRequest: PagesFunction<AiUsageEnv> = async (context) => {
   const hubUrl = context.env.AI_USAGE_HUB_URL;
-  const hubKey = context.env.AI_USAGE_HUB_KEY;
+  const readKey = context.env.AI_USAGE_HUB_READ_KEY;
 
-  if (!hubUrl || !hubKey) {
+  if (!hubUrl || !readKey) {
     return Response.json({ error: 'AI usage telemetry is not configured.' }, { status: 503 });
   }
 
   try {
-    const cleanUrl = hubUrl.replace(/\/$/, '');
-    const response = await fetch(`${cleanUrl}/api/usage/summary`, {
+    const response = await fetch(`${hubUrl.replace(/\/$/, '')}/api/usage/summary`, {
       headers: {
-        'Authorization': `Bearer ${hubKey}`,
+        'Authorization': `Bearer ${readKey}`,
         'Accept': 'application/json',
       },
     });
@@ -47,50 +122,19 @@ export const onRequest: PagesFunction<AiUsageEnv> = async (context) => {
       return Response.json({ error: 'AI usage hub rejected the request.' }, { status: 502 });
     }
 
-    const data = (await response.json()) as any;
-    if (data && typeof data.todayTokens === 'number') {
-        const totalTokens = data.monthlyTokens || data.totalTokens || data.todayTokens || 0;
-        const totalCostUsd = data.monthlyCostUsd || data.totalCostUsd || data.todayCostUsd || 0;
-        const totalCostRmb = Math.round(totalCostUsd * 6.83 * 100) / 100;
-
-        const tools: AiToolUsageItem[] = (data.models || []).map((m: any, idx: number) => ({
-          id: m.name || `model_${idx}`,
-          name: m.name || 'AI Model',
-          vendor: m.name?.includes('claude') ? 'anthropic' : m.name?.includes('gpt') ? 'openai' : 'google',
-          tokens7d: m.tokens || 0,
-          sharePct: m.percentage || 0,
-          status: 'running',
-          costMode: 'api',
-        }));
-
-        const locTokens = data.machines?.local?.monthlyTokens || data.machines?.local?.todayTokens || 0;
-        const oraTokens = data.machines?.oracle2?.monthlyTokens || data.machines?.oracle2?.todayTokens || 0;
-        const sumM = locTokens + oraTokens || 1;
-
-        const payload = {
-          totalTokens7d: totalTokens,
-          estimatedCost7d: totalCostUsd,
-          estimatedCostRmb7d: totalCostRmb,
-          currency: 'USD',
-          updatedAt: data.updatedAt || new Date().toISOString(),
-          tools,
-          byMachine: {
-            local: { tokens7d: locTokens, pct: Math.round((locTokens / sumM) * 100) },
-            oracle2: { tokens7d: oraTokens, pct: Math.round((oraTokens / sumM) * 100) },
-          },
-        } satisfies AiUsageSummaryResponse;
-
-      return Response.json(payload, {
-        status: 200,
-        headers: {
-          'Cache-Control': 'public, max-age=60, s-maxage=300',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
+    const payload = normalizePayload(await response.json());
+    if (!payload) {
+      return Response.json({ error: 'AI usage hub returned an unsupported payload.' }, { status: 502 });
     }
+
+    return Response.json(payload, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=300',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   } catch {
     return Response.json({ error: 'AI usage hub is unreachable.' }, { status: 502 });
   }
-
-  return Response.json({ error: 'AI usage hub returned an unsupported payload.' }, { status: 502 });
 };
