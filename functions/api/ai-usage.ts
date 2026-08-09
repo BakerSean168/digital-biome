@@ -17,7 +17,7 @@ export interface AiUsageSummaryResponse {
   tools: AiToolUsageItem[];
   byMachine: {
     local: { tokens7d: number; pct: number };
-    oracle2: { tokens7d: number; pct: number };
+    hermes: { tokens7d: number; pct: number };
   };
 }
 
@@ -88,8 +88,8 @@ function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
 
   const tools = sourceTools.map(normalizeTool);
   const local = machineUsage(sourceMachines.local);
-  const oracle2 = machineUsage(sourceMachines.oracle2);
-  if (tools.some((tool) => tool === null) || !local || !oracle2) return null;
+  const hermes = machineUsage(sourceMachines.hermes);
+  if (tools.some((tool) => tool === null) || !local || !hermes) return null;
 
   return {
     totalTokens7d,
@@ -98,7 +98,7 @@ function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
     currency: typeof value.currency === 'string' ? value.currency : 'USD',
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : new Date().toISOString(),
     tools: tools as AiToolUsageItem[],
-    byMachine: { local, oracle2 },
+    byMachine: { local, hermes },
   };
 }
 

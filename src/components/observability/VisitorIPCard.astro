@@ -1,5 +1,5 @@
 ---
-import { Globe, ShieldCheck } from '@lucide/astro';
+import { Globe, ShieldCheck, ArrowRight } from '@lucide/astro';
 
 ---
 
@@ -56,9 +56,58 @@ import { Globe, ShieldCheck } from '@lucide/astro';
   <!-- Footer Info -->
   <div class="mt-auto pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
     <span class="text-muted-foreground shrink-0">Cloudflare Edge 接入</span>
-    <span class="text-primary font-bold shrink-0 ml-2">查看详情 →</span>
+    <button
+      type="button"
+      class="text-primary font-bold shrink-0 ml-2 hover:underline inline-flex items-center gap-1 cursor-pointer"
+      onclick="document.getElementById('visitor-detail-dialog')?.showModal()"
+    >
+      查看详情 <ArrowRight size={12} />
+    </button>
   </div>
 </article>
+
+<dialog id="visitor-detail-dialog" class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-border p-5 sm:p-6 rounded-sm text-foreground max-w-xl w-[calc(100%-2rem)] backdrop:bg-black/70 font-mono">
+  <div class="flex items-center justify-between pb-4 mb-4 border-b border-border">
+    <div class="flex items-center gap-2 text-sm font-bold text-primary">
+      <Globe size={16} />
+      <span>[ VISITOR_EDGE_TRACE ]</span>
+    </div>
+    <form method="dialog">
+      <button class="text-muted-foreground hover:text-foreground text-xs uppercase cursor-pointer">[ CLOSE ]</button>
+    </form>
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-3 text-xs">
+    <div class="p-3 bg-background border border-border">
+      <div class="text-[10px] uppercase text-muted-foreground mb-1">Masked Address</div>
+      <div class="font-bold text-foreground" id="visitor-dialog-ip">--.--.*.*</div>
+    </div>
+    <div class="p-3 bg-background border border-border">
+      <div class="text-[10px] uppercase text-muted-foreground mb-1">Geo Resolution</div>
+      <div class="font-bold text-foreground" id="visitor-dialog-location">--</div>
+    </div>
+    <div class="p-3 bg-background border border-border sm:col-span-2">
+      <div class="text-[10px] uppercase text-muted-foreground mb-1">Network Identity</div>
+      <div class="font-bold text-foreground" id="visitor-dialog-network">--</div>
+    </div>
+    <div class="p-3 bg-background border border-border">
+      <div class="text-[10px] uppercase text-muted-foreground mb-1">Cloudflare Edge</div>
+      <div class="font-bold text-primary" id="visitor-dialog-edge">--</div>
+    </div>
+    <div class="p-3 bg-background border border-border">
+      <div class="text-[10px] uppercase text-muted-foreground mb-1">Transport</div>
+      <div class="font-bold text-foreground" id="visitor-dialog-transport">--</div>
+    </div>
+    <div class="p-3 bg-background border border-border sm:col-span-2">
+      <div class="text-[10px] uppercase text-muted-foreground mb-1">Observed At</div>
+      <div class="text-muted-foreground" id="visitor-dialog-time">--</div>
+    </div>
+  </div>
+
+  <p class="mt-4 text-[10px] leading-relaxed text-muted-foreground">
+    // PRIVACY: 页面只接收掩码后的地址与 Cloudflare 请求元数据，不返回完整 IP，也不保存会话轨迹。
+  </p>
+</dialog>
 
 <script>
   async function fetchVisitorIp() {
@@ -77,6 +126,12 @@ import { Globe, ShieldCheck } from '@lucide/astro';
       const riskBarEl = document.getElementById('ip-risk-bar');
       const trustBarEl = document.getElementById('ip-trust-bar');
       const tagEls = document.querySelectorAll<HTMLElement>('#ip-signal-tags [data-signal-label]');
+      const detailIpEl = document.getElementById('visitor-dialog-ip');
+      const detailLocationEl = document.getElementById('visitor-dialog-location');
+      const detailNetworkEl = document.getElementById('visitor-dialog-network');
+      const detailEdgeEl = document.getElementById('visitor-dialog-edge');
+      const detailTransportEl = document.getElementById('visitor-dialog-transport');
+      const detailTimeEl = document.getElementById('visitor-dialog-time');
 
       if (ipEl && data.ip) ipEl.textContent = data.ip;
       if (locEl && (data.city || data.country)) {
@@ -85,6 +140,12 @@ import { Globe, ShieldCheck } from '@lucide/astro';
       if (asnEl && data.asn) {
         asnEl.textContent = `${data.asn} · ${data.isp || ''}`;
       }
+      if (detailIpEl) detailIpEl.textContent = String(data.ip || '--.--.*.*');
+      if (detailLocationEl) detailLocationEl.textContent = `${data.city || 'Unknown'} · ${data.country || 'Unknown'}`;
+      if (detailNetworkEl) detailNetworkEl.textContent = `${data.asn || 'AS--'} · ${data.isp || 'Unresolved network'}`;
+      if (detailEdgeEl) detailEdgeEl.textContent = `${data.edge?.colo || 'UNKNOWN'} · ${data.edge?.timezone || 'Unknown timezone'}`;
+      if (detailTransportEl) detailTransportEl.textContent = `${data.edge?.httpProtocol || 'Unknown'} · ${data.edge?.tlsVersion || 'Unknown TLS'}`;
+      if (detailTimeEl && data.timestamp) detailTimeEl.textContent = new Date(data.timestamp).toLocaleString();
       const riskScore = Math.min(100, Math.max(0, Number(data.riskScore) || 0));
       const trustScore = Math.min(100, Math.max(0, Number(data.trustScore) || 0));
       if (riskValEl) riskValEl.textContent = String(riskScore);

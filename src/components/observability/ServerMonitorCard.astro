@@ -1,13 +1,5 @@
 ---
 import { Server, Activity, ShieldCheck } from '@lucide/astro';
-
-const defaultServers = [
-  { id: 1, name: 'Azure HK Control Plane' },
-  { id: 2, name: 'Oracle Osaka (oracle2)' },
-  { id: 3, name: 'Aliyun Chengdu DailyUse' },
-  { id: 4, name: 'N100 PVE Home Server' },
-  { id: 5, name: 'fnOS NAS Storage' }
-];
 ---
 
 <article class="group relative h-full bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" id="server-monitor-card" data-observability-card="servers" aria-busy="true">
@@ -26,38 +18,56 @@ const defaultServers = [
 
     <!-- Main Value -->
     <div class="flex items-baseline gap-2 mt-1 mb-1">
-      <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="server-online-text">-- <span class="text-lg font-normal text-muted-foreground">/ {defaultServers.length} 注册</span></span>
+      <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="server-online-text">-- <span class="text-lg font-normal text-muted-foreground">/ -- 注册</span></span>
     </div>
 
-    <!-- Interactive World Map Graphic (SVG) -->
+    <!-- Live world deployment map -->
     <div class="my-4 relative bg-background/80 border border-border/80 rounded-sm flex items-center justify-center overflow-hidden h-32">
-      <svg class="w-full h-full" viewBox="0 0 420 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="基础设施节点拓扑">
+      <svg class="w-full h-full" viewBox="0 0 420 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="服务器全球部署地图" role="img">
         <g class="stroke-border" opacity="0.38" stroke-width="0.7">
           <path d="M0 30H420M0 60H420M0 90H420M0 120H420" />
           <path d="M70 0V150M140 0V150M210 0V150M280 0V150M350 0V150" />
         </g>
-        <path d="M305 80L320 68L342 58M305 80L294 91" class="stroke-primary" stroke-width="1" stroke-dasharray="4 4" opacity="0.7" />
-        <g class="fill-primary">
-          <circle cx="305" cy="80" r="3" /><circle cx="320" cy="68" r="3" />
-          <circle cx="342" cy="58" r="3" /><circle cx="294" cy="91" r="3" />
+        <g class="fill-border/40 stroke-border" stroke-width="0.8">
+          <path d="M34 50l17-20 32-11 34 8 19 17-8 13-20 2-8 14-13-4-13 12-16-9-10-13z" />
+          <path d="M100 83l18 7 8 23-8 27-12 2-5-17-9-18z" />
+          <path d="M191 36l18-12 24 4 8 10 20-3 19 9 37-2 44 17 13 16-16 11-27-4-19 10-21-3-18 14-23-8-12-17-21 2-13-12-26-3-3-13z" />
+          <path d="M228 76l23 2 18 16-4 34-17 16-15-8-9-27-11-15z" />
+          <path d="M335 107l23-9 25 9-7 20-25 8-19-12z" />
+          <path d="M373 66l8-8 6 9-5 10z" />
         </g>
-        <g class="fill-primary" opacity="0.24">
-          <circle cx="305" cy="80" r="8" class="animate-pulse" /><circle cx="320" cy="68" r="8" class="animate-pulse" />
-          <circle cx="342" cy="58" r="8" class="animate-pulse" /><circle cx="294" cy="91" r="8" class="animate-pulse" />
+
+        <path d="M88 54L299 65L323 69L338 66M299 65L312 72" class="stroke-primary" stroke-width="0.8" stroke-dasharray="3 4" opacity="0.35" />
+        <g data-server-region data-country="us" opacity="0.18">
+          <path data-region-fill d="M63 45l18-5 16 7-4 10-18 4-13-7z" class="fill-primary" />
+          <circle cx="80" cy="51" r="8" class="fill-primary animate-pulse" opacity="0.18" />
+        </g>
+        <g data-server-region data-country="cn" opacity="0.18">
+          <path data-region-fill d="M292 56l18-6 18 7-5 14-17 6-15-8z" class="fill-primary" />
+          <circle cx="308" cy="64" r="8" class="fill-primary animate-pulse" opacity="0.18" />
+        </g>
+        <g data-server-region data-country="hk" opacity="0.18">
+          <circle data-region-fill cx="312" cy="73" r="3.5" class="fill-primary" />
+          <circle cx="312" cy="73" r="8" class="fill-primary animate-pulse" opacity="0.18" />
+        </g>
+        <g data-server-region data-country="jp" opacity="0.18">
+          <path data-region-fill d="M337 58l4 2-2 7-3 6-3-2 2-7z" class="fill-primary" />
+          <circle cx="337" cy="66" r="8" class="fill-primary animate-pulse" opacity="0.18" />
+        </g>
+        <g data-server-region data-country="kr" opacity="0.18">
+          <path data-region-fill d="M324 58l4 2-1 7-4 1-2-5z" class="fill-primary" />
+          <circle cx="325" cy="63" r="8" class="fill-primary animate-pulse" opacity="0.18" />
         </g>
       </svg>
-      <div class="absolute left-2 top-1.5 text-[9px] font-mono text-muted-foreground uppercase">APAC / HOME-LAB MESH</div>
+      <div class="absolute left-2 top-1.5 text-[9px] font-mono text-muted-foreground uppercase">GLOBAL NODE ATLAS</div>
       <div class="absolute bottom-1.5 right-2 text-[9px] font-mono text-muted-foreground uppercase" id="server-map-source">NEZHA V2 // SYNCING</div>
     </div>
 
     <!-- Server Pills -->
     <div class="flex flex-wrap gap-2 my-2" id="server-pills-container">
-      {defaultServers.map(srv => (
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background/60 border border-border/80 text-[11px] font-mono text-foreground hover:border-primary/40 transition-colors">
-          <span class="w-1.5 h-1.5 rounded-full bg-muted-foreground"></span>
-          <span>{srv.name}</span>
-        </div>
-      ))}
+      <div class="border border-dashed border-border px-3 py-2 font-mono text-[11px] text-muted-foreground">
+        [ AWAITING_NEZHA_INVENTORY ]
+      </div>
     </div>
   </div>
 
@@ -118,6 +128,19 @@ const defaultServers = [
           if (dot) dot.className = `w-1.5 h-1.5 rounded-full ${srv.online ? 'bg-primary' : 'bg-red-500'}`;
           if (name) name.textContent = String(srv.name || 'Unnamed node');
           pillsContainer.append(fragment);
+        });
+
+        const locationCounts = data.servers.reduce((counts: Record<string, number>, server: any) => {
+          if (!server?.online) return counts;
+          const country = String(server.location || '').toLowerCase();
+          counts[country] = (counts[country] || 0) + 1;
+          return counts;
+        }, {});
+        document.querySelectorAll<SVGGElement>('[data-server-region]').forEach((region) => {
+          const country = String(region.dataset.country || '').toLowerCase();
+          const count = locationCounts[country] || 0;
+          region.style.opacity = count > 0 ? '0.95' : '0.18';
+          region.setAttribute('aria-label', `${country.toUpperCase()}: ${count} nodes`);
         });
       }
       if (sourceEl) sourceEl.textContent = 'NEZHA V2 // LIVE';
