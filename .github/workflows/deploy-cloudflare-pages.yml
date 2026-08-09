@@ -247,28 +247,51 @@ jobs:
           SERVERS_FILE="$(mktemp)"
           HEADERS="$(mktemp)"
           trap 'rm -f "${AI_USAGE_FILE}" "${SERVERS_FILE}" "${HEADERS}"' EXIT
-          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
-            "${PRODUCTION_URL}/api/ai-usage" > "${AI_USAGE_FILE}"
-          jq -e '
-            (.totalTokens7d | type == "number") and
-            (.estimatedCost7d | type == "number") and
-            (.tools | type == "array") and
-            (.byMachine.local.tokens7d | type == "number") and
-            (.byMachine.local.costUsd7d | type == "number") and
-            (.byMachine.hermes.tokens7d | type == "number") and
-            (.byMachine.hermes.costUsd7d | type == "number") and
-            (.periods["1d"].machines.local.agents | type == "array") and
-            (.periods["7d"].machines.hermes.models | type == "array") and
-            (.periods["30d"].totalTokens | type == "number")
-          ' "${AI_USAGE_FILE}" > /dev/null
-          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
-            "${PRODUCTION_URL}/api/servers" > "${SERVERS_FILE}"
-          jq -e '
-            (.total | type == "number") and
-            (.online | type == "number") and
-            (.servers | type == "array" and length > 0) and
-            (all(.servers[]; .online | type == "boolean"))
-          ' "${SERVERS_FILE}" > /dev/null
+          wait_for_contract() {
+            local url="$1"
+            local output_file="$2"
+            local contract="$3"
+            local label="$4"
+
+            for attempt in $(seq 1 12); do
+              if curl --fail --silent --show-error --location --retry 2 --retry-all-errors \
+                  "${url}" > "${output_file}" &&
+                jq -e "${contract}" "${output_file}" > /dev/null; then
+                return 0
+              fi
+
+              if [ "${attempt}" -eq 12 ]; then
+                echo "${label} contract did not propagate after ${attempt} attempts" >&2
+                jq . "${output_file}" >&2 || true
+                return 1
+              fi
+
+              sleep 5
+            done
+          }
+
+          wait_for_contract \
+            "${PRODUCTION_URL}/api/ai-usage" \
+            "${AI_USAGE_FILE}" \
+            '(.totalTokens7d | type == "number") and
+             (.estimatedCost7d | type == "number") and
+             (.tools | type == "array") and
+             (.byMachine.local.tokens7d | type == "number") and
+             (.byMachine.local.costUsd7d | type == "number") and
+             (.byMachine.hermes.tokens7d | type == "number") and
+             (.byMachine.hermes.costUsd7d | type == "number") and
+             (.periods["1d"].machines.local.agents | type == "array") and
+             (.periods["7d"].machines.hermes.models | type == "array") and
+             (.periods["30d"].totalTokens | type == "number")' \
+            "AI usage API"
+          wait_for_contract \
+            "${PRODUCTION_URL}/api/servers" \
+            "${SERVERS_FILE}" \
+            '(.total | type == "number") and
+             (.online | type == "number") and
+             (.servers | type == "array" and length > 0) and
+             (all(.servers[]; .online | type == "boolean"))' \
+            "Servers API"
           STATUS="$(curl --silent --dump-header "${HEADERS}" --output /dev/null \
             --write-out '%{http_code}' \
             "${PRODUCTION_URL}/api/private/infrastructure")"
