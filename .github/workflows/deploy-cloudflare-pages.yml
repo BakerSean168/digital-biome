@@ -282,7 +282,14 @@ jobs:
              (.byMachine.hermes.costUsd7d | type == "number") and
              (.periods["1d"].machines.local.agents | type == "array") and
              (.periods["7d"].machines.hermes.models | type == "array") and
-             (.periods["30d"].totalTokens | type == "number")' \
+             (.periods["30d"].totalTokens | type == "number") and
+             (.periods.all.totalTokens | type == "number") and
+             (.periods.all.totalCostUsd | type == "number") and
+             (.periods.all.machines.local.agents | type == "array") and
+             (.periods.all.machines.hermes.models | type == "array") and
+             (.periods.all.coverage.startDate | type == "string") and
+             (.periods.all.coverage.endDate | type == "string") and
+             (.periods.all.coverage.activeDays | type == "number")' \
             "AI usage API"
           wait_for_contract \
             "${PRODUCTION_URL}/api/servers" \

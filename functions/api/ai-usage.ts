@@ -31,6 +31,12 @@ export interface AiUsagePeriod {
   totalTokens: number;
   totalCostUsd: number;
   totalCostRmb: number;
+  coverage?: {
+    startDate: string | null;
+    endDate: string | null;
+    calendarDays: number;
+    activeDays: number;
+  };
   machines: {
     local: AiMachineUsage;
     hermes: AiMachineUsage;
@@ -50,7 +56,7 @@ export interface AiUsageSummaryResponse {
     local: { tokens7d: number; costUsd7d: number; pct: number };
     hermes: { tokens7d: number; costUsd7d: number; pct: number };
   };
-  periods: Record<'1d' | '7d' | '30d', AiUsagePeriod>;
+  periods: Record<'1d' | '7d' | '30d' | 'all', AiUsagePeriod>;
 }
 
 export interface AiUsageEnv extends Env {
@@ -115,7 +121,17 @@ function normalizePeriodMachine(value: unknown, id: 'local' | 'hermes'): AiMachi
   };
 }
 
-function normalizePeriod(value: unknown): AiUsagePeriod | null {
+function normalizeCoverage(value: unknown): AiUsagePeriod['coverage'] | null {
+  if (!isRecord(value)) return null;
+  const calendarDays = finiteNumber(value.calendarDays);
+  const activeDays = finiteNumber(value.activeDays);
+  const startDate = value.startDate === null || typeof value.startDate === 'string' ? value.startDate : undefined;
+  const endDate = value.endDate === null || typeof value.endDate === 'string' ? value.endDate : undefined;
+  if (calendarDays === null || activeDays === null || startDate === undefined || endDate === undefined) return null;
+  return { startDate, endDate, calendarDays, activeDays };
+}
+
+function normalizePeriod(value: unknown, requireCoverage = false): AiUsagePeriod | null {
   if (!isRecord(value) || !isRecord(value.machines)) return null;
   const days = finiteNumber(value.days);
   const totalTokens = finiteNumber(value.totalTokens);
@@ -123,8 +139,12 @@ function normalizePeriod(value: unknown): AiUsagePeriod | null {
   const totalCostRmb = finiteNumber(value.totalCostRmb);
   const local = normalizePeriodMachine(value.machines.local, 'local');
   const hermes = normalizePeriodMachine(value.machines.hermes, 'hermes');
-  if (days === null || totalTokens === null || totalCostUsd === null || totalCostRmb === null || !local || !hermes) return null;
-  return { days, totalTokens, totalCostUsd, totalCostRmb, machines: { local, hermes } };
+  const coverage = value.coverage === undefined ? undefined : normalizeCoverage(value.coverage);
+  if (
+    days === null || totalTokens === null || totalCostUsd === null || totalCostRmb === null
+    || !local || !hermes || coverage === null || (requireCoverage && !coverage)
+  ) return null;
+  return { days, totalTokens, totalCostUsd, totalCostRmb, ...(coverage ? { coverage } : {}), machines: { local, hermes } };
 }
 
 function normalizeTool(value: unknown, index: number): AiToolUsageItem | null {
@@ -178,7 +198,8 @@ function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
   const period1d = normalizePeriod(sourcePeriods['1d']);
   const period7d = normalizePeriod(sourcePeriods['7d']);
   const period30d = normalizePeriod(sourcePeriods['30d']);
-  if (tools.some((tool) => tool === null) || !local || !hermes || !period1d || !period7d || !period30d) return null;
+  const periodAll = normalizePeriod(sourcePeriods.all, true);
+  if (tools.some((tool) => tool === null) || !local || !hermes || !period1d || !period7d || !period30d || !periodAll) return null;
 
   return {
     totalTokens7d,
@@ -190,7 +211,7 @@ function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
     deviceCount: finiteNumber(value.deviceCount) ?? 2,
     tools: tools as AiToolUsageItem[],
     byMachine: { local, hermes },
-    periods: { '1d': period1d, '7d': period7d, '30d': period30d },
+    periods: { '1d': period1d, '7d': period7d, '30d': period30d, all: periodAll },
   };
 }
 
