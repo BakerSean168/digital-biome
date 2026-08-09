@@ -254,7 +254,7 @@ jobs:
             (.estimatedCost7d | type == "number") and
             (.tools | type == "array") and
             (.byMachine.local.tokens7d | type == "number") and
-            (.byMachine.oracle2.tokens7d | type == "number")
+            (.byMachine.hermes.tokens7d | type == "number")
           ' "${AI_USAGE_FILE}" > /dev/null
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
             "${PRODUCTION_URL}/api/servers" > "${SERVERS_FILE}"

@@ -40,7 +40,7 @@ test('AI usage maps the current seven-day Hub contract with the read-only key', 
       tools: [{ id: 'codex', name: 'Codex', vendor: 'openai', tokens7d: 650400, sharePct: 79.7 }],
       byMachine: {
         local: { tokens7d: 700000, pct: 85.8 },
-        oracle2: { tokens7d: 116100, pct: 14.2 },
+        hermes: { tokens7d: 116100, pct: 14.2 },
       },
     });
   }, async () => {
@@ -52,7 +52,7 @@ test('AI usage maps the current seven-day Hub contract with the read-only key', 
     assert.equal(response.status, 200);
     assert.equal(payload.totalTokens7d, 816100);
     assert.equal(payload.tools[0].tokens7d, 650400);
-    assert.deepEqual(payload.byMachine.oracle2, { tokens7d: 116100, pct: 14.2 });
+    assert.deepEqual(payload.byMachine.hermes, { tokens7d: 116100, pct: 14.2 });
   });
 });
 
@@ -90,7 +90,7 @@ test('AI usage accepts an empty current-contract ledger', async () => {
     tools: [],
     byMachine: {
       local: { tokens7d: 0, pct: 0 },
-      oracle2: { tokens7d: 0, pct: 0 },
+      hermes: { tokens7d: 0, pct: 0 },
     },
   }), async () => {
     const response = await getAiUsage({

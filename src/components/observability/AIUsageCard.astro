@@ -75,7 +75,7 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
 </template>
 
 <!-- Modal / Dialog for AI Usage details -->
-<dialog id="ai-detail-dialog" class="bg-card border border-border p-6 rounded-sm text-foreground max-w-lg w-full backdrop:bg-black/70 font-mono">
+<dialog id="ai-detail-dialog" class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-border p-5 sm:p-6 rounded-sm text-foreground max-w-lg w-[calc(100%-2rem)] backdrop:bg-black/70 font-mono">
   <div class="flex items-center justify-between pb-4 mb-4 border-b border-border">
     <div class="flex items-center gap-2 text-sm font-bold text-primary">
       <Cpu size={16} />
@@ -88,17 +88,17 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
 
   <div class="flex flex-col gap-4 text-xs">
     <p class="text-muted-foreground leading-relaxed">
-      中央 Hub 位于 Oracle 2 VPS，实时汇总 Local (Mac/PC) 与 Oracle 2 VPS 的多端 AI CLI 用量。
+      官方 Token Monitor Hub 位于 Hermes，汇总 Local (forest) 与 Hermes Headless Agent 的最近 7 天用量。
     </p>
 
     <div class="grid grid-cols-2 gap-3 p-3 bg-background border border-border">
       <div>
-        <div class="text-[10px] text-muted-foreground uppercase mb-1">Local Machine</div>
+        <div class="text-[10px] text-muted-foreground uppercase mb-1">Local · forest</div>
         <div class="text-sm font-bold text-foreground" id="ai-dialog-local">--</div>
       </div>
       <div>
-        <div class="text-[10px] text-muted-foreground uppercase mb-1">Oracle 2 VPS</div>
-        <div class="text-sm font-bold text-primary" id="ai-dialog-oracle">--</div>
+        <div class="text-[10px] text-muted-foreground uppercase mb-1">Hermes Server</div>
+        <div class="text-sm font-bold text-primary" id="ai-dialog-hermes">--</div>
       </div>
     </div>
 
@@ -149,7 +149,7 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
       const costRmbEl = document.getElementById('ai-cost-rmb');
       const updatedAtEl = document.getElementById('ai-updated-at');
       const dialogLocalEl = document.getElementById('ai-dialog-local');
-      const dialogOracleEl = document.getElementById('ai-dialog-oracle');
+      const dialogHermesEl = document.getElementById('ai-dialog-hermes');
 
       card?.setAttribute('aria-busy', 'false');
       if (badge) {
@@ -180,7 +180,7 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
         const template = document.getElementById('ai-tool-row-template') as HTMLTemplateElement | null;
         toolsListEl.replaceChildren();
         toolsListEl.className = 'flex flex-col gap-2 my-4';
-        data.tools.slice(0, 5).forEach((tool: any) => {
+        data.tools.slice(0, 3).forEach((tool: any) => {
           const fragment = template?.content.cloneNode(true) as DocumentFragment | undefined;
           if (!fragment) return;
           const share = Math.min(100, Math.max(0, Number(tool.sharePct) || 0));
@@ -199,8 +199,8 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
       if (dialogLocalEl && data.byMachine?.local) {
         dialogLocalEl.textContent = `${formatTokens(data.byMachine.local.tokens7d)} tokens (${data.byMachine.local.pct}%)`;
       }
-      if (dialogOracleEl && data.byMachine?.oracle2) {
-        dialogOracleEl.textContent = `${formatTokens(data.byMachine.oracle2.tokens7d)} tokens (${data.byMachine.oracle2.pct}%)`;
+      if (dialogHermesEl && data.byMachine?.hermes) {
+        dialogHermesEl.textContent = `${formatTokens(data.byMachine.hermes.tokens7d)} tokens (${data.byMachine.hermes.pct}%)`;
       }
     } catch {
       markUnavailable();

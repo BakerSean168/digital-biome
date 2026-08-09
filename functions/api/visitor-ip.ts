@@ -13,6 +13,12 @@ interface VisitorIPResponse {
     datacenter: boolean;
     abuse: boolean;
   };
+  edge: {
+    colo: string;
+    timezone: string;
+    httpProtocol: string;
+    tlsVersion: string;
+  };
   timestamp: string;
 }
 
@@ -65,6 +71,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       tor: false,
       datacenter: false,
       abuse: false,
+    },
+    edge: {
+      colo: typeof cf.colo === 'string' ? cf.colo : 'LOCAL',
+      timezone: typeof cf.timezone === 'string' ? cf.timezone : 'Unknown',
+      httpProtocol: typeof cf.httpProtocol === 'string' ? cf.httpProtocol : 'Unknown',
+      tlsVersion: typeof cf.tlsVersion === 'string' ? cf.tlsVersion : 'Unknown',
     },
     timestamp: new Date().toISOString(),
   };
