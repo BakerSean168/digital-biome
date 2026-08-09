@@ -35,17 +35,25 @@ function numberOrZero(value: unknown): number {
 
 function mapServer(value: unknown, index: number): ServerItem | null {
   if (!isRecord(value)) return null;
-  const status = isRecord(value.status) ? value.status : null;
+  const legacyStatus = isRecord(value.status) ? value.status : null;
+  const liveState = isRecord(value.state) ? value.state : null;
+  const telemetry = legacyStatus ?? liveState;
   const host = isRecord(value.host) ? value.host : null;
-  const online = status && typeof status.online === 'boolean'
-    ? status.online
+  const geoip = isRecord(value.geoip) ? value.geoip : null;
+  const hasStateField = Object.prototype.hasOwnProperty.call(value, 'state');
+  const online = legacyStatus && typeof legacyStatus.online === 'boolean'
+    ? legacyStatus.online
     : typeof value.online === 'boolean'
       ? value.online
-      : null;
+      : hasStateField
+        ? liveState !== null
+        : null;
   if (online === null) return null;
 
-  const memUsed = status ? numberOrZero(status.mem_used) : 0;
-  const memTotal = status ? numberOrZero(status.mem_total) : 0;
+  const memUsed = telemetry ? numberOrZero(telemetry.mem_used) : 0;
+  const memTotal = telemetry
+    ? numberOrZero(telemetry.mem_total) || (host ? numberOrZero(host.mem_total) : 0)
+    : 0;
   const id = typeof value.id === 'number' ? value.id : index + 1;
 
   return {
@@ -55,7 +63,9 @@ function mapServer(value: unknown, index: number): ServerItem | null {
       : host && typeof host.name === 'string'
         ? host.name
         : `Server #${id}`,
-    location: typeof value.country_code === 'string'
+    location: geoip && typeof geoip.country_code === 'string'
+      ? geoip.country_code
+      : typeof value.country_code === 'string'
       ? value.country_code
       : typeof value.location === 'string'
         ? value.location
@@ -66,10 +76,10 @@ function mapServer(value: unknown, index: number): ServerItem | null {
         ? value.platform
         : 'VPS',
     online,
-    cpu: Math.round(status ? numberOrZero(status.cpu) : numberOrZero(value.cpu)),
+    cpu: Math.round(telemetry ? numberOrZero(telemetry.cpu) : numberOrZero(value.cpu)),
     ram: Math.round(memTotal > 0 ? (memUsed / memTotal) * 100 : numberOrZero(value.ram)),
-    upSpeed: `${((status ? numberOrZero(status.net_out_speed) : numberOrZero(value.up_speed)) / 1024 / 1024).toFixed(1)} Mbps`,
-    downSpeed: `${((status ? numberOrZero(status.net_in_speed) : numberOrZero(value.down_speed)) / 1024 / 1024).toFixed(1)} Mbps`,
+    upSpeed: `${((telemetry ? numberOrZero(telemetry.net_out_speed) : numberOrZero(value.up_speed)) / 1024 / 1024).toFixed(1)} Mbps`,
+    downSpeed: `${((telemetry ? numberOrZero(telemetry.net_in_speed) : numberOrZero(value.down_speed)) / 1024 / 1024).toFixed(1)} Mbps`,
   };
 }
 
