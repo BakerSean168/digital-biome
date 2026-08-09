@@ -132,6 +132,50 @@ test('server monitoring maps a successful Nezha response with authoritative onli
   });
 });
 
+test('server monitoring maps the live Nezha state and host payload', async () => {
+  await withMockFetch(async () => Response.json({
+    success: true,
+    data: [{
+      id: 13,
+      name: 'Azure-HK panel host',
+      host: { platform: 'debian', mem_total: 2048 },
+      state: { cpu: 4.4, mem_used: 1024, net_out_speed: 1048576, net_in_speed: 524288 },
+      geoip: { country_code: 'HK' },
+      last_active: '2026-08-09T02:10:53.101565878Z',
+    }],
+  }), async () => {
+    const response = await getServers({ env: { NEZHA_PAT: 'scoped-pat' } } as any);
+    const payload = await response.json() as any;
+
+    assert.equal(response.status, 200);
+    assert.equal(payload.online, 1);
+    assert.deepEqual(payload.servers[0], {
+      id: 13,
+      name: 'Azure-HK panel host',
+      location: 'HK',
+      provider: 'debian',
+      online: true,
+      cpu: 4,
+      ram: 50,
+      upSpeed: '1.0 Mbps',
+      downSpeed: '0.5 Mbps',
+    });
+  });
+});
+
+test('server monitoring treats an explicit null Nezha state as offline', async () => {
+  await withMockFetch(async () => Response.json({
+    success: true,
+    data: [{ id: 9, name: 'offline-node', host: { platform: 'ubuntu' }, state: null }],
+  }), async () => {
+    const response = await getServers({ env: { NEZHA_PAT: 'scoped-pat' } } as any);
+    const payload = await response.json() as any;
+    assert.equal(response.status, 200);
+    assert.equal(payload.online, 0);
+    assert.equal(payload.servers[0].online, false);
+  });
+});
+
 test('server monitoring rejects an HTTP 200 Nezha business error', async () => {
   await withMockFetch(async () => Response.json({ error: 'ApiErrorUnauthorized' }), async () => {
     const response = await getServers({ env: { NEZHA_PAT: 'invalid-pat' } } as any);

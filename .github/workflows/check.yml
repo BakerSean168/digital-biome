@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'edge/**'
+      - 'functions/**'
       - 'scripts/**'
       - 'tsconfig.json'
       - 'package.json'
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - 'src/**'
+      - 'edge/**'
+      - 'functions/**'
       - 'scripts/**'
       - 'tsconfig.json'
       - 'package.json'
@@ -71,6 +75,11 @@ jobs:
 
       - name: Check Pages Functions
         run: pnpm check:edge
+
+      - name: Test Pages Functions and utilities
+        run: |
+          pnpm test:edge
+          pnpm test:unit
 
       - name: Test infrastructure contracts
         run: pnpm test:infrastructure
