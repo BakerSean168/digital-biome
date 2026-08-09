@@ -21,8 +21,8 @@ function shanghaiDateKey(date) {
   return `${value.year}-${value.month}-${value.day}`;
 }
 
-function sevenDayKeys(now = new Date()) {
-  return new Set(Array.from({ length: 7 }, (_, index) => (
+function periodDateKeys(dayCount, now = new Date()) {
+  return new Set(Array.from({ length: dayCount }, (_, index) => (
     shanghaiDateKey(new Date(now.getTime() - (index * 86_400_000)))
   )));
 }
@@ -35,15 +35,46 @@ function pct(value, total) {
   return total > 0 ? Math.round((value / total) * 1000) / 10 : 0;
 }
 
-function calculateSummary(database, now = new Date()) {
-  const records = database && typeof database.devices === 'object'
-    ? Object.values(database.devices)
-    : [];
-  const acceptedDates = sevenDayKeys(now);
-  const toolTotals = new Map();
-  const machineTotals = { local: 0, hermes: 0 };
-  let totalTokens7d = 0;
-  let estimatedCost7d = 0;
+function roundCost(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function usageValue(value) {
+  return {
+    tokens: numeric(typeof value === 'number' ? value : value?.tokens),
+    costUsd: numeric(typeof value === 'number' ? 0 : value?.cost),
+  };
+}
+
+function addBreakdown(target, values) {
+  if (!values || typeof values !== 'object') return;
+  for (const [id, rawUsage] of Object.entries(values)) {
+    const usage = usageValue(rawUsage);
+    const current = target.get(id) || { tokens: 0, costUsd: 0 };
+    current.tokens += usage.tokens;
+    current.costUsd += usage.costUsd;
+    target.set(id, current);
+  }
+}
+
+function rankedBreakdown(values, totalTokens, labels = {}) {
+  return [...values.entries()]
+    .map(([id, usage]) => ({
+      id,
+      name: labels[id] || id,
+      tokens: usage.tokens,
+      costUsd: roundCost(usage.costUsd),
+      sharePct: pct(usage.tokens, totalTokens),
+    }))
+    .sort((left, right) => right.tokens - left.tokens);
+}
+
+function calculatePeriod(records, dayCount, now) {
+  const acceptedDates = periodDateKeys(dayCount, now);
+  const machines = {
+    local: { id: 'local', name: 'Local · forest', tokens: 0, costUsd: 0, agents: new Map(), models: new Map() },
+    hermes: { id: 'hermes', name: 'Hermes · Oracle 2', tokens: 0, costUsd: 0, agents: new Map(), models: new Map() },
+  };
 
   for (const record of records) {
     const deviceId = String(record?.deviceId || '').toLowerCase();
@@ -53,43 +84,88 @@ function calculateSummary(database, now = new Date()) {
     for (const day of days) {
       if (!acceptedDates.has(String(day?.date || ''))) continue;
       const tokens = numeric(day.tokens);
-      totalTokens7d += tokens;
-      estimatedCost7d += numeric(day.cost);
-      machineTotals[machine] += tokens;
-
-      const clients = day?.perClient && typeof day.perClient === 'object' ? day.perClient : {};
-      for (const [client, usage] of Object.entries(clients)) {
-        const clientTokens = numeric(typeof usage === 'number' ? usage : usage?.tokens);
-        toolTotals.set(client, (toolTotals.get(client) || 0) + clientTokens);
-      }
+      machines[machine].tokens += tokens;
+      machines[machine].costUsd += numeric(day.cost);
+      addBreakdown(machines[machine].agents, day.perClient);
+      addBreakdown(machines[machine].models, day.perModel);
     }
   }
 
-  const tools = [...toolTotals.entries()]
-    .map(([id, tokens]) => ({
-      id,
-      name: TOOL_LABELS[id] || id,
-      vendor: id,
-      tokens7d: tokens,
-      sharePct: pct(tokens, totalTokens7d),
-      status: 'running',
-      costMode: 'api',
-    }))
-    .sort((left, right) => right.tokens7d - left.tokens7d);
+  const totalTokens = machines.local.tokens + machines.hermes.tokens;
+  const totalCostUsd = machines.local.costUsd + machines.hermes.costUsd;
+  const normalizeMachine = (machine) => ({
+    id: machine.id,
+    name: machine.name,
+    tokens: machine.tokens,
+    costUsd: roundCost(machine.costUsd),
+    sharePct: pct(machine.tokens, totalTokens),
+    agents: rankedBreakdown(machine.agents, machine.tokens, TOOL_LABELS),
+    models: rankedBreakdown(machine.models, machine.tokens),
+  });
 
   return {
-    totalTokens7d,
-    estimatedCost7d: Math.round(estimatedCost7d * 100) / 100,
-    estimatedCostRmb7d: Math.round(estimatedCost7d * 6.83 * 100) / 100,
+    days: dayCount,
+    totalTokens,
+    totalCostUsd: roundCost(totalCostUsd),
+    totalCostRmb: roundCost(totalCostUsd * 6.83),
+    machines: {
+      local: normalizeMachine(machines.local),
+      hermes: normalizeMachine(machines.hermes),
+    },
+  };
+}
+
+function calculateSummary(database, now = new Date()) {
+  const records = database && typeof database.devices === 'object'
+    ? Object.values(database.devices)
+    : [];
+  const periods = {
+    '1d': calculatePeriod(records, 1, now),
+    '7d': calculatePeriod(records, 7, now),
+    '30d': calculatePeriod(records, 30, now),
+  };
+  const current = periods['7d'];
+  const toolTotals = new Map();
+  for (const machine of Object.values(current.machines)) {
+    for (const item of machine.agents) {
+      const usage = toolTotals.get(item.id) || { tokens: 0, costUsd: 0 };
+      usage.tokens += item.tokens;
+      usage.costUsd += item.costUsd;
+      toolTotals.set(item.id, usage);
+    }
+  }
+  const tools = rankedBreakdown(toolTotals, current.totalTokens, TOOL_LABELS).map((item) => ({
+    id: item.id,
+    name: item.name,
+    vendor: item.id,
+    tokens7d: item.tokens,
+    sharePct: item.sharePct,
+    status: 'running',
+    costMode: 'api',
+  }));
+
+  return {
+    totalTokens7d: current.totalTokens,
+    estimatedCost7d: current.totalCostUsd,
+    estimatedCostRmb7d: current.totalCostRmb,
     currency: 'USD',
     updatedAt: database.savedAt || new Date().toISOString(),
     source: 'official-token-monitor',
     deviceCount: records.length,
     tools,
     byMachine: {
-      local: { tokens7d: machineTotals.local, pct: pct(machineTotals.local, totalTokens7d) },
-      hermes: { tokens7d: machineTotals.hermes, pct: pct(machineTotals.hermes, totalTokens7d) },
+      local: {
+        tokens7d: current.machines.local.tokens,
+        costUsd7d: current.machines.local.costUsd,
+        pct: current.machines.local.sharePct,
+      },
+      hermes: {
+        tokens7d: current.machines.hermes.tokens,
+        costUsd7d: current.machines.hermes.costUsd,
+        pct: current.machines.hermes.sharePct,
+      },
     },
+    periods,
   };
 }
 
@@ -135,7 +211,7 @@ function createServer({ readKey, dataFile }) {
   });
 }
 
-module.exports = { calculateSummary, createServer, sevenDayKeys };
+module.exports = { calculateSummary, createServer, periodDateKeys };
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 8900);

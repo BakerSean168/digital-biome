@@ -1,10 +1,8 @@
 ---
-import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
-
+import { Cpu, ArrowRight, Laptop, Server, SlidersHorizontal } from '@lucide/astro';
 ---
 
 <article class="group relative h-full bg-card/40 border border-border p-5 sm:p-6 flex flex-col hover:border-primary/50 transition-colors duration-200" id="ai-usage-card" data-observability-card="ai-usage" aria-busy="true">
-  <!-- Header -->
   <div>
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
@@ -17,195 +15,322 @@ import { Cpu, Sparkles, ArrowRight } from '@lucide/astro';
       </div>
     </div>
 
-    <!-- Main Value & Cost side-by-side -->
-    <div class="flex items-baseline justify-between mt-1 mb-2">
+    <div class="flex items-end justify-between gap-4 mb-4 font-mono">
       <div>
-        <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-bold font-mono tracking-tight text-foreground" id="ai-total-tokens">--</span>
-        </div>
-        <div class="text-[11px] font-mono text-muted-foreground" id="ai-tokens-subtitle">
-          tokens · 过去 7 天
-        </div>
+        <div class="text-3xl font-bold tracking-tight text-foreground" id="ai-total-tokens">--</div>
+        <div class="text-[10px] uppercase tracking-wider text-muted-foreground">Total tokens · 7D</div>
       </div>
-      
-      <div class="text-right font-mono">
-        <div class="text-lg font-bold text-primary" id="ai-cost-usd">--</div>
-        <div class="text-[10px] text-muted-foreground" id="ai-cost-rmb">等待计费数据</div>
+      <div class="text-right">
+        <div class="text-base font-bold text-primary" id="ai-total-cost">--</div>
+        <div class="text-[10px] uppercase text-muted-foreground">Estimated cost</div>
       </div>
     </div>
 
-    <!-- AI Tools Breakdown -->
-    <div class="flex flex-col gap-2 my-4" id="ai-tools-list" aria-live="polite">
-      <div class="border border-dashed border-border px-3 py-5 font-mono text-[11px] text-muted-foreground">
-        [ AWAITING_USAGE_LEDGER ] 正在连接 Token Hub
-      </div>
+    <div class="grid sm:grid-cols-2 gap-2.5 my-3" aria-live="polite">
+      <section class="p-3 bg-background/70 border border-border/80" data-main-machine="local">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <Laptop size={13} class="text-primary shrink-0" />
+            <div class="font-mono min-w-0">
+              <div class="text-[10px] uppercase tracking-widest text-muted-foreground">Local</div>
+              <div class="text-[9px] text-muted-foreground/70 truncate">forest</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-mono font-bold text-primary" data-machine-share>--%</span>
+        </div>
+        <div class="font-mono text-lg font-bold text-foreground" data-machine-tokens>--</div>
+        <div class="font-mono text-[10px] text-muted-foreground" data-machine-cost>等待计费数据</div>
+        <div class="mt-2 h-1 bg-border/40 overflow-hidden"><div class="h-full bg-primary" data-machine-bar style="width:0%"></div></div>
+      </section>
+
+      <section class="p-3 bg-background/70 border border-border/80" data-main-machine="hermes">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <Server size={13} class="text-primary shrink-0" />
+            <div class="font-mono min-w-0">
+              <div class="text-[10px] uppercase tracking-widest text-muted-foreground">Hermes</div>
+              <div class="text-[9px] text-muted-foreground/70 truncate">Oracle 2</div>
+            </div>
+          </div>
+          <span class="text-[10px] font-mono font-bold text-primary" data-machine-share>--%</span>
+        </div>
+        <div class="font-mono text-lg font-bold text-foreground" data-machine-tokens>--</div>
+        <div class="font-mono text-[10px] text-muted-foreground" data-machine-cost>等待计费数据</div>
+        <div class="mt-2 h-1 bg-border/40 overflow-hidden"><div class="h-full bg-primary" data-machine-bar style="width:0%"></div></div>
+      </section>
     </div>
   </div>
 
-  <!-- Footer Info & Details Modal trigger -->
   <div class="mt-auto pt-3 border-t border-border/60 flex items-center justify-between font-mono text-[11px]">
     <span class="text-muted-foreground" id="ai-updated-at">尚未同步</span>
-    <button 
-      type="button" 
-      class="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
-      onclick="document.getElementById('ai-detail-dialog')?.showModal()"
-    >
+    <button type="button" id="ai-detail-trigger" class="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer">
       <span>查看详情</span>
       <ArrowRight size={12} />
     </button>
   </div>
 </article>
 
-<template id="ai-tool-row-template">
-  <div class="p-3 bg-background/60 border border-border/80 rounded-sm flex flex-col gap-2">
-    <div class="flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2 min-w-0">
-        <Sparkles size={13} class="text-primary shrink-0" aria-hidden="true" />
-        <span class="text-xs font-mono font-medium text-foreground truncate" data-tool-name></span>
-      </div>
-      <div class="flex items-center gap-2 font-mono text-xs shrink-0">
-        <span class="text-foreground font-bold" data-tool-tokens></span>
-        <span class="text-[9px] uppercase px-1.5 py-0.5 border border-primary/20 bg-primary/10 text-primary rounded-sm" data-tool-status></span>
-      </div>
-    </div>
-    <div class="w-full h-1 bg-border/40 overflow-hidden">
-      <div class="h-full bg-primary transition-[width] duration-500" data-tool-share></div>
-    </div>
-  </div>
-</template>
-
-<!-- Modal / Dialog for AI Usage details -->
-<dialog id="ai-detail-dialog" class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-border p-5 sm:p-6 rounded-sm text-foreground max-w-lg w-[calc(100%-2rem)] backdrop:bg-black/70 font-mono">
+<dialog id="ai-detail-dialog" class="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border border-border p-5 sm:p-6 rounded-sm text-foreground max-w-5xl w-[calc(100%-2rem)] backdrop:bg-black/70 font-mono">
   <div class="flex items-center justify-between pb-4 mb-4 border-b border-border">
     <div class="flex items-center gap-2 text-sm font-bold text-primary">
       <Cpu size={16} />
-      <span>[ AI Token Observatory Hub ]</span>
+      <span>[ AI_USAGE_LEDGER ]</span>
     </div>
     <form method="dialog">
       <button class="text-muted-foreground hover:text-foreground text-xs uppercase cursor-pointer">[ CLOSE ]</button>
     </form>
   </div>
 
-  <div class="flex flex-col gap-4 text-xs">
-    <p class="text-muted-foreground leading-relaxed">
-      官方 Token Monitor Hub 位于 Hermes，汇总 Local (forest) 与 Hermes Headless Agent 的最近 7 天用量。
-    </p>
-
-    <div class="grid grid-cols-2 gap-3 p-3 bg-background border border-border">
-      <div>
-        <div class="text-[10px] text-muted-foreground uppercase mb-1">Local · forest</div>
-        <div class="text-sm font-bold text-foreground" id="ai-dialog-local">--</div>
-      </div>
-      <div>
-        <div class="text-[10px] text-muted-foreground uppercase mb-1">Hermes Server</div>
-        <div class="text-sm font-bold text-primary" id="ai-dialog-hermes">--</div>
-      </div>
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+    <div class="flex flex-wrap items-center gap-1" role="group" aria-label="时间范围">
+      <span class="text-[9px] uppercase tracking-widest text-muted-foreground mr-1">Window</span>
+      <button type="button" data-ai-period="1d" class="px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer">1D · 今日</button>
+      <button type="button" data-ai-period="7d" class="px-2.5 py-1 border border-primary/50 bg-primary/10 text-[10px] text-primary cursor-pointer">7D · 过去 7 天</button>
+      <button type="button" data-ai-period="30d" class="px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer">30D · 过去 30 天</button>
     </div>
-
-    <div class="p-3 bg-background border border-border flex flex-col gap-2">
-      <div class="text-[10px] text-muted-foreground uppercase">// Privacy & Schema Guarantee</div>
-      <div class="text-[11px] text-muted-foreground leading-normal">
-        本系统仅同步 Usage Ledger 统计元数据（Tokens / Model / Machine / Timestamp），绝不同步任何代码、Prompt 或 Session 对话内容。
-      </div>
+    <div class="flex flex-wrap items-center gap-1" role="group" aria-label="统计维度">
+      <SlidersHorizontal size={12} class="text-muted-foreground mr-1" />
+      <button type="button" data-ai-dimension="agents" class="px-2.5 py-1 border border-primary/50 bg-primary/10 text-[10px] text-primary cursor-pointer">[ AGENT ]</button>
+      <button type="button" data-ai-dimension="models" class="px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer">[ MODEL ]</button>
     </div>
   </div>
+
+  <div class="grid grid-cols-3 border border-border bg-background/70 mb-4">
+    <div class="p-3 border-r border-border">
+      <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Combined Usage</div>
+      <div class="mt-1 text-sm font-bold text-foreground" id="ai-detail-total-tokens">--</div>
+    </div>
+    <div class="p-3 border-r border-border">
+      <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Estimated Cost</div>
+      <div class="mt-1 text-sm font-bold text-primary" id="ai-detail-total-cost">--</div>
+    </div>
+    <div class="p-3">
+      <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Active Entries</div>
+      <div class="mt-1 text-sm font-bold text-foreground" id="ai-detail-active-count">--</div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-3" id="ai-detail-machine-grid">
+    <section class="border border-border bg-background/40" data-detail-machine="local">
+      <header class="p-3 border-b border-border flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <Laptop size={14} class="text-primary" />
+          <div>
+            <div class="text-xs font-bold text-foreground">LOCAL · FOREST</div>
+            <div class="text-[9px] text-muted-foreground">Desktop Token Monitor</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs font-bold text-foreground" data-detail-machine-tokens>--</div>
+          <div class="text-[9px] text-primary" data-detail-machine-meta>--</div>
+        </div>
+      </header>
+      <div class="p-2 flex flex-col gap-1.5" data-detail-ranking></div>
+    </section>
+
+    <section class="border border-border bg-background/40" data-detail-machine="hermes">
+      <header class="p-3 border-b border-border flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <Server size={14} class="text-primary" />
+          <div>
+            <div class="text-xs font-bold text-foreground">HERMES · ORACLE 2</div>
+            <div class="text-[9px] text-muted-foreground">Headless Token Monitor</div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs font-bold text-foreground" data-detail-machine-tokens>--</div>
+          <div class="text-[9px] text-primary" data-detail-machine-meta>--</div>
+        </div>
+      </header>
+      <div class="p-2 flex flex-col gap-1.5" data-detail-ranking></div>
+    </section>
+  </div>
+
+  <p class="mt-4 text-[9px] leading-relaxed text-muted-foreground">
+    // SOURCE: 官方 Token Monitor 按设备日历史。这里展示实际 tokens 与估算成本，不代表订阅套餐的剩余额度；不上传代码、Prompt 或会话正文。
+  </p>
 </dialog>
 
+<template id="ai-ranking-row-template">
+  <div class="grid grid-cols-[2rem_minmax(0,1fr)_auto] gap-2 items-center p-2 bg-card/50 border border-border/70">
+    <span class="text-[9px] text-muted-foreground" data-rank></span>
+    <div class="min-w-0">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-[10px] font-bold text-foreground truncate" data-name></span>
+        <span class="text-[9px] text-muted-foreground shrink-0" data-share></span>
+      </div>
+      <div class="mt-1 h-0.5 bg-border/40 overflow-hidden"><div class="h-full bg-primary" data-bar></div></div>
+    </div>
+    <div class="text-right shrink-0">
+      <div class="text-[10px] font-bold text-foreground" data-tokens></div>
+      <div class="text-[9px] text-muted-foreground" data-cost></div>
+    </div>
+  </div>
+</template>
+
 <script>
-  function formatTokens(val: number): string {
-    if (!val) return '0';
-    if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-    if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
-    return val.toString();
+  type PeriodKey = '1d' | '7d' | '30d';
+  type DimensionKey = 'agents' | 'models';
+
+  let aiUsageData: any = null;
+  let selectedPeriod: PeriodKey = '7d';
+  let selectedDimension: DimensionKey = 'agents';
+
+  function formatTokens(value: number): string {
+    if (!value) return '0';
+    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+    return value.toLocaleString();
   }
 
-  async function fetchAiUsage() {
-    const card = document.getElementById('ai-usage-card');
-    const badge = document.getElementById('ai-source-badge');
-    const toolsListEl = document.getElementById('ai-tools-list');
+  function formatCost(value: number): string {
+    return `$${Number(value || 0).toFixed(2)}`;
+  }
 
-    const markUnavailable = () => {
-      card?.setAttribute('aria-busy', 'false');
-      if (badge) {
-        badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-mono font-bold tracking-wider rounded-sm';
-        badge.textContent = 'HUB 不可用';
-      }
-      if (toolsListEl) {
-        toolsListEl.textContent = '[ HUB_UNAVAILABLE ] 暂时无法读取用量账本';
-        toolsListEl.className = 'my-4 border border-dashed border-amber-500/30 px-3 py-5 font-mono text-[11px] text-amber-300';
-      }
-    };
+  function activeButtonClasses(active: boolean): string {
+    return active
+      ? 'px-2.5 py-1 border border-primary/50 bg-primary/10 text-[10px] text-primary cursor-pointer'
+      : 'px-2.5 py-1 border border-border text-[10px] text-muted-foreground hover:border-primary/50 cursor-pointer';
+  }
 
-    try {
-      const res = await fetch('/api/ai-usage');
-      if (!res.ok) {
-        markUnavailable();
+  function renderMainSummary(): void {
+    const period = aiUsageData?.periods?.['7d'];
+    if (!period) return;
+    const total = document.getElementById('ai-total-tokens');
+    const cost = document.getElementById('ai-total-cost');
+    if (total) total.textContent = formatTokens(period.totalTokens);
+    if (cost) cost.textContent = formatCost(period.totalCostUsd);
+
+    (['local', 'hermes'] as const).forEach((id) => {
+      const machine = period.machines?.[id];
+      const panel = document.querySelector<HTMLElement>(`[data-main-machine="${id}"]`);
+      if (!machine || !panel) return;
+      const share = Math.min(100, Math.max(0, Number(machine.sharePct) || 0));
+      const tokens = panel.querySelector('[data-machine-tokens]');
+      const costEl = panel.querySelector('[data-machine-cost]');
+      const shareEl = panel.querySelector('[data-machine-share]');
+      const bar = panel.querySelector<HTMLElement>('[data-machine-bar]');
+      if (tokens) tokens.textContent = `${formatTokens(machine.tokens)} tokens`;
+      if (costEl) costEl.textContent = `${formatCost(machine.costUsd)} · 7D`;
+      if (shareEl) shareEl.textContent = `${Number(machine.sharePct).toFixed(1)}%`;
+      if (bar) bar.style.width = `${share}%`;
+    });
+  }
+
+  function renderDetail(): void {
+    const period = aiUsageData?.periods?.[selectedPeriod];
+    if (!period) return;
+    const totalTokens = document.getElementById('ai-detail-total-tokens');
+    const totalCost = document.getElementById('ai-detail-total-cost');
+    const activeCount = document.getElementById('ai-detail-active-count');
+    const entries = ['local', 'hermes'].flatMap((id) => period.machines?.[id]?.[selectedDimension] || []);
+    if (totalTokens) totalTokens.textContent = `${formatTokens(period.totalTokens)} tokens`;
+    if (totalCost) totalCost.textContent = `${formatCost(period.totalCostUsd)} · ¥${Number(period.totalCostRmb).toFixed(2)}`;
+    if (activeCount) activeCount.textContent = `${entries.filter((item: any) => Number(item.tokens) > 0).length} ${selectedDimension === 'agents' ? 'agents' : 'models'}`;
+
+    document.querySelectorAll<HTMLElement>('[data-ai-period]').forEach((button) => {
+      const active = button.dataset.aiPeriod === selectedPeriod;
+      button.className = activeButtonClasses(active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    document.querySelectorAll<HTMLElement>('[data-ai-dimension]').forEach((button) => {
+      const active = button.dataset.aiDimension === selectedDimension;
+      button.className = activeButtonClasses(active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+
+    (['local', 'hermes'] as const).forEach((id) => {
+      const machine = period.machines?.[id];
+      const panel = document.querySelector<HTMLElement>(`[data-detail-machine="${id}"]`);
+      if (!machine || !panel) return;
+      const tokens = panel.querySelector('[data-detail-machine-tokens]');
+      const meta = panel.querySelector('[data-detail-machine-meta]');
+      const ranking = panel.querySelector('[data-detail-ranking]');
+      if (tokens) tokens.textContent = `${formatTokens(machine.tokens)} tokens`;
+      if (meta) meta.textContent = `${formatCost(machine.costUsd)} · ${Number(machine.sharePct).toFixed(1)}%`;
+      if (!ranking) return;
+      ranking.replaceChildren();
+      const rows = Array.isArray(machine[selectedDimension]) ? machine[selectedDimension] : [];
+      if (rows.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'p-4 border border-dashed border-border text-[10px] text-muted-foreground';
+        empty.textContent = '[ NO_USAGE_IN_WINDOW ]';
+        ranking.append(empty);
         return;
       }
-      const data = await res.json();
-      
-      const totalEl = document.getElementById('ai-total-tokens');
-      const costUsdEl = document.getElementById('ai-cost-usd');
-      const costRmbEl = document.getElementById('ai-cost-rmb');
-      const updatedAtEl = document.getElementById('ai-updated-at');
-      const dialogLocalEl = document.getElementById('ai-dialog-local');
-      const dialogHermesEl = document.getElementById('ai-dialog-hermes');
+      const template = document.getElementById('ai-ranking-row-template') as HTMLTemplateElement | null;
+      rows.forEach((item: any, index: number) => {
+        const fragment = template?.content.cloneNode(true) as DocumentFragment | undefined;
+        if (!fragment) return;
+        const rank = fragment.querySelector('[data-rank]');
+        const name = fragment.querySelector('[data-name]');
+        const share = fragment.querySelector('[data-share]');
+        const tokensEl = fragment.querySelector('[data-tokens]');
+        const costEl = fragment.querySelector('[data-cost]');
+        const bar = fragment.querySelector<HTMLElement>('[data-bar]');
+        if (rank) rank.textContent = String(index + 1).padStart(2, '0');
+        if (name) name.textContent = String(item.name || item.id || 'Unknown');
+        if (share) share.textContent = `${Number(item.sharePct || 0).toFixed(1)}%`;
+        if (tokensEl) tokensEl.textContent = formatTokens(Number(item.tokens) || 0);
+        if (costEl) costEl.textContent = formatCost(Number(item.costUsd) || 0);
+        if (bar) bar.style.width = `${Math.min(100, Math.max(0, Number(item.sharePct) || 0))}%`;
+        ranking.append(fragment);
+      });
+    });
+  }
 
+  function markUnavailable(): void {
+    const card = document.getElementById('ai-usage-card');
+    const badge = document.getElementById('ai-source-badge');
+    card?.setAttribute('aria-busy', 'false');
+    if (badge) {
+      badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] font-mono font-bold tracking-wider rounded-sm';
+      badge.textContent = 'HUB 不可用';
+    }
+  }
+
+  async function fetchAiUsage(): Promise<void> {
+    const card = document.getElementById('ai-usage-card');
+    const badge = document.getElementById('ai-source-badge');
+    try {
+      const response = await fetch('/api/ai-usage');
+      if (!response.ok) throw new Error('AI usage unavailable');
+      aiUsageData = await response.json();
+      if (!aiUsageData?.periods?.['7d']) throw new Error('AI usage contract unsupported');
       card?.setAttribute('aria-busy', 'false');
       if (badge) {
         badge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary text-[10px] font-mono font-bold tracking-wider rounded-sm';
-        badge.textContent = 'HUB 在线';
+        badge.textContent = '2 SOURCES';
       }
-
-      if (totalEl && (data.totalTokens7d || data.todayTokens)) {
-        const val = data.totalTokens7d || data.todayTokens || 0;
-        totalEl.textContent = formatTokens(val);
+      const updatedAt = document.getElementById('ai-updated-at');
+      if (updatedAt && aiUsageData.updatedAt) {
+        const date = new Date(aiUsageData.updatedAt);
+        updatedAt.textContent = `更新于 ${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
       }
-      if (costUsdEl && data.estimatedCost7d !== undefined) {
-        costUsdEl.textContent = `~$${Number(data.estimatedCost7d).toFixed(2)}`;
-      }
-      if (costRmbEl && data.estimatedCostRmb7d !== undefined) {
-        costRmbEl.textContent = `≈ ¥${Number(data.estimatedCostRmb7d).toFixed(2)}`;
-      }
-      if (updatedAtEl && data.updatedAt) {
-        const d = new Date(data.updatedAt);
-        const mm = (d.getMonth() + 1).toString().padStart(2, '0');
-        const dd = d.getDate().toString().padStart(2, '0');
-        const hh = d.getHours().toString().padStart(2, '0');
-        const min = d.getMinutes().toString().padStart(2, '0');
-        updatedAtEl.textContent = `更新于 ${mm}/${dd} ${hh}:${min}`;
-      }
-
-      if (toolsListEl && Array.isArray(data.tools) && data.tools.length > 0) {
-        const template = document.getElementById('ai-tool-row-template') as HTMLTemplateElement | null;
-        toolsListEl.replaceChildren();
-        toolsListEl.className = 'flex flex-col gap-2 my-4';
-        data.tools.slice(0, 3).forEach((tool: any) => {
-          const fragment = template?.content.cloneNode(true) as DocumentFragment | undefined;
-          if (!fragment) return;
-          const share = Math.min(100, Math.max(0, Number(tool.sharePct) || 0));
-          const name = fragment.querySelector('[data-tool-name]');
-          const tokens = fragment.querySelector('[data-tool-tokens]');
-          const status = fragment.querySelector('[data-tool-status]');
-          const bar = fragment.querySelector('[data-tool-share]') as HTMLElement | null;
-          if (name) name.textContent = String(tool.name || 'Unknown model');
-          if (tokens) tokens.textContent = formatTokens(Number(tool.tokens7d) || 0);
-          if (status) status.textContent = String(tool.status || 'running');
-          if (bar) bar.style.width = `${share}%`;
-          toolsListEl.append(fragment);
-        });
-      }
-
-      if (dialogLocalEl && data.byMachine?.local) {
-        dialogLocalEl.textContent = `${formatTokens(data.byMachine.local.tokens7d)} tokens (${data.byMachine.local.pct}%)`;
-      }
-      if (dialogHermesEl && data.byMachine?.hermes) {
-        dialogHermesEl.textContent = `${formatTokens(data.byMachine.hermes.tokens7d)} tokens (${data.byMachine.hermes.pct}%)`;
-      }
+      renderMainSummary();
+      renderDetail();
     } catch {
       markUnavailable();
     }
   }
+
+  document.getElementById('ai-detail-trigger')?.addEventListener('click', () => {
+    renderDetail();
+    (document.getElementById('ai-detail-dialog') as HTMLDialogElement | null)?.showModal();
+  });
+  document.querySelectorAll<HTMLElement>('[data-ai-period]').forEach((button) => {
+    button.addEventListener('click', () => {
+      selectedPeriod = button.dataset.aiPeriod as PeriodKey;
+      renderDetail();
+    });
+  });
+  document.querySelectorAll<HTMLElement>('[data-ai-dimension]').forEach((button) => {
+    button.addEventListener('click', () => {
+      selectedDimension = button.dataset.aiDimension as DimensionKey;
+      renderDetail();
+    });
+  });
 
   fetchAiUsage();
 </script>

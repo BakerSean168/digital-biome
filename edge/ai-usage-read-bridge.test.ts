@@ -12,14 +12,22 @@ test('official Token Monitor history is aggregated for Local and Hermes over sev
       forest: {
         deviceId: 'forest',
         history: { daily: [
-          { date: '2026-08-09', tokens: 100, cost: 1, perClient: { codex: { tokens: 100 } } },
+          {
+            date: '2026-08-09', tokens: 100, cost: 1,
+            perClient: { codex: { tokens: 80, cost: 0.8 }, workbuddy: { tokens: 20, cost: 0.2 } },
+            perModel: { 'gpt-5.6-sol': { tokens: 100, cost: 1 } },
+          },
           { date: '2026-08-02', tokens: 999, cost: 9, perClient: { codex: { tokens: 999 } } },
         ] },
       },
       hermes: {
         deviceId: 'hermes',
         history: { daily: [
-          { date: '2026-08-08', tokens: 50, cost: 0.5, perClient: { hermes: { tokens: 50 } } },
+          {
+            date: '2026-08-08', tokens: 50, cost: 0.5,
+            perClient: { hermes: { tokens: 50, cost: 0.5 } },
+            perModel: { 'deepseek-v4-flash': { tokens: 50, cost: 0.5 } },
+          },
         ] },
       },
     },
@@ -28,11 +36,21 @@ test('official Token Monitor history is aggregated for Local and Hermes over sev
   assert.equal(summary.totalTokens7d, 150);
   assert.equal(summary.estimatedCost7d, 1.5);
   assert.deepEqual(summary.byMachine, {
-    local: { tokens7d: 100, pct: 66.7 },
-    hermes: { tokens7d: 50, pct: 33.3 },
+    local: { tokens7d: 100, costUsd7d: 1, pct: 66.7 },
+    hermes: { tokens7d: 50, costUsd7d: 0.5, pct: 33.3 },
   });
   assert.deepEqual(summary.tools.map((tool: any) => [tool.name, tool.tokens7d]), [
-    ['Codex', 100],
+    ['Codex', 80],
     ['Hermes Agent', 50],
+    ['WorkBuddy', 20],
   ]);
+  assert.deepEqual(summary.periods['7d'].machines.local.agents.map((item: any) => [item.name, item.tokens, item.costUsd]), [
+    ['Codex', 80, 0.8],
+    ['WorkBuddy', 20, 0.2],
+  ]);
+  assert.deepEqual(summary.periods['7d'].machines.hermes.models.map((item: any) => [item.name, item.tokens]), [
+    ['deepseek-v4-flash', 50],
+  ]);
+  assert.equal(summary.periods['1d'].machines.hermes.tokens, 0);
+  assert.equal(summary.periods['30d'].totalTokens, 1149);
 });

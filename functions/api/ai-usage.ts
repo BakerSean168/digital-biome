@@ -8,17 +8,49 @@ export interface AiToolUsageItem {
   costMode: 'subscription' | 'api';
 }
 
+export interface AiUsageBreakdownItem {
+  id: string;
+  name: string;
+  tokens: number;
+  costUsd: number;
+  sharePct: number;
+}
+
+export interface AiMachineUsage {
+  id: 'local' | 'hermes';
+  name: string;
+  tokens: number;
+  costUsd: number;
+  sharePct: number;
+  agents: AiUsageBreakdownItem[];
+  models: AiUsageBreakdownItem[];
+}
+
+export interface AiUsagePeriod {
+  days: number;
+  totalTokens: number;
+  totalCostUsd: number;
+  totalCostRmb: number;
+  machines: {
+    local: AiMachineUsage;
+    hermes: AiMachineUsage;
+  };
+}
+
 export interface AiUsageSummaryResponse {
   totalTokens7d: number;
   estimatedCost7d: number;
   estimatedCostRmb7d: number;
   currency: string;
   updatedAt: string;
+  source: 'official-token-monitor';
+  deviceCount: number;
   tools: AiToolUsageItem[];
   byMachine: {
-    local: { tokens7d: number; pct: number };
-    hermes: { tokens7d: number; pct: number };
+    local: { tokens7d: number; costUsd7d: number; pct: number };
+    hermes: { tokens7d: number; costUsd7d: number; pct: number };
   };
+  periods: Record<'1d' | '7d' | '30d', AiUsagePeriod>;
 }
 
 export interface AiUsageEnv extends Env {
@@ -36,11 +68,63 @@ function finiteNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-function machineUsage(value: unknown): { tokens7d: number; pct: number } | null {
+function machineUsage(value: unknown): { tokens7d: number; costUsd7d: number; pct: number } | null {
   if (!isRecord(value)) return null;
   const tokens7d = finiteNumber(value.tokens7d);
+  const costUsd7d = finiteNumber(value.costUsd7d);
   const pct = finiteNumber(value.pct);
-  return tokens7d === null || pct === null ? null : { tokens7d, pct };
+  return tokens7d === null || costUsd7d === null || pct === null ? null : { tokens7d, costUsd7d, pct };
+}
+
+function normalizeBreakdown(value: unknown): AiUsageBreakdownItem[] | null {
+  if (!Array.isArray(value)) return null;
+  const items = value.map((item, index): AiUsageBreakdownItem | null => {
+    if (!isRecord(item)) return null;
+    const tokens = finiteNumber(item.tokens);
+    const costUsd = finiteNumber(item.costUsd);
+    const sharePct = finiteNumber(item.sharePct);
+    if (tokens === null || costUsd === null || sharePct === null) return null;
+    const name = typeof item.name === 'string' && item.name.trim() ? item.name : `Usage ${index + 1}`;
+    return {
+      id: typeof item.id === 'string' && item.id ? item.id : name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name,
+      tokens,
+      costUsd,
+      sharePct,
+    };
+  });
+  return items.some((item) => item === null) ? null : items as AiUsageBreakdownItem[];
+}
+
+function normalizePeriodMachine(value: unknown, id: 'local' | 'hermes'): AiMachineUsage | null {
+  if (!isRecord(value)) return null;
+  const tokens = finiteNumber(value.tokens);
+  const costUsd = finiteNumber(value.costUsd);
+  const sharePct = finiteNumber(value.sharePct);
+  const agents = normalizeBreakdown(value.agents);
+  const models = normalizeBreakdown(value.models);
+  if (tokens === null || costUsd === null || sharePct === null || !agents || !models) return null;
+  return {
+    id,
+    name: typeof value.name === 'string' ? value.name : id,
+    tokens,
+    costUsd,
+    sharePct,
+    agents,
+    models,
+  };
+}
+
+function normalizePeriod(value: unknown): AiUsagePeriod | null {
+  if (!isRecord(value) || !isRecord(value.machines)) return null;
+  const days = finiteNumber(value.days);
+  const totalTokens = finiteNumber(value.totalTokens);
+  const totalCostUsd = finiteNumber(value.totalCostUsd);
+  const totalCostRmb = finiteNumber(value.totalCostRmb);
+  const local = normalizePeriodMachine(value.machines.local, 'local');
+  const hermes = normalizePeriodMachine(value.machines.hermes, 'hermes');
+  if (days === null || totalTokens === null || totalCostUsd === null || totalCostRmb === null || !local || !hermes) return null;
+  return { days, totalTokens, totalCostUsd, totalCostRmb, machines: { local, hermes } };
 }
 
 function normalizeTool(value: unknown, index: number): AiToolUsageItem | null {
@@ -77,6 +161,7 @@ function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
     : isRecord(value.machines)
       ? value.machines
       : null;
+  const sourcePeriods = isRecord(value.periods) ? value.periods : null;
 
   if (
     totalTokens7d === null
@@ -84,12 +169,16 @@ function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
     || estimatedCostRmb7d === null
     || !sourceTools
     || !sourceMachines
+    || !sourcePeriods
   ) return null;
 
   const tools = sourceTools.map(normalizeTool);
   const local = machineUsage(sourceMachines.local);
   const hermes = machineUsage(sourceMachines.hermes);
-  if (tools.some((tool) => tool === null) || !local || !hermes) return null;
+  const period1d = normalizePeriod(sourcePeriods['1d']);
+  const period7d = normalizePeriod(sourcePeriods['7d']);
+  const period30d = normalizePeriod(sourcePeriods['30d']);
+  if (tools.some((tool) => tool === null) || !local || !hermes || !period1d || !period7d || !period30d) return null;
 
   return {
     totalTokens7d,
@@ -97,8 +186,11 @@ function normalizePayload(value: unknown): AiUsageSummaryResponse | null {
     estimatedCostRmb7d,
     currency: typeof value.currency === 'string' ? value.currency : 'USD',
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : new Date().toISOString(),
+    source: 'official-token-monitor',
+    deviceCount: finiteNumber(value.deviceCount) ?? 2,
     tools: tools as AiToolUsageItem[],
     byMachine: { local, hermes },
+    periods: { '1d': period1d, '7d': period7d, '30d': period30d },
   };
 }
 
