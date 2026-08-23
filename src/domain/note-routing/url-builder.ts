@@ -24,6 +24,7 @@ export function buildKnowledgeNoteHref(noteId: string): string {
  *   tool    -> /tools/<asset_id>
  *   host    -> /infrastructure/<asset_id>
  *   network -> /infrastructure/<asset_id>
+ *   project -> /projects/<asset_id>
  */
 export function buildAssetHref(asset: { asset_id?: string; asset_type?: AssetType }): string {
   if (!asset.asset_id || !asset.asset_type) {
@@ -36,6 +37,10 @@ export function buildAssetHref(asset: { asset_id?: string; asset_type?: AssetTyp
 
   if (asset.asset_type === 'tool') {
     return `/tools/${asset.asset_id}`;
+  }
+
+  if (asset.asset_type === 'project') {
+    return `/projects/${asset.asset_id}`;
   }
 
   return `/infrastructure/${asset.asset_id}`;

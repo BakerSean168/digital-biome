@@ -60,7 +60,7 @@ const notes = defineCollection({
       label: z.string(),
       url: optionalString(),
       private_ref: optionalString(),
-      kind: z.enum(['app', 'admin', 'repo', 'repository', 'docs', 'monitor', 'panel', 'ssh', 'web', 'service', 'vm', 'other']).default('other'),
+      kind: z.enum(['app', 'admin', 'repo', 'repository', 'showcase', 'docs', 'monitor', 'panel', 'ssh', 'web', 'service', 'vm', 'other']).default('other'),
       description: optionalString(),
       visibility: z.enum(['public', 'private', 'internal']).nullable().optional(),
     })).nullable().optional(),

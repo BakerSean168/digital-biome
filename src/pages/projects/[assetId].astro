@@ -1,0 +1,25 @@
+---
+import { getEntry, render } from 'astro:content';
+import AssetDetailView from '../../components/assets/AssetDetailView.astro';
+import { getAssetsByType } from '../../utils/notes';
+import type { AssetNoteEntry } from '../../types/notes';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  return getAssetsByType('project').map(entry => ({
+    params: { assetId: entry.data.asset_id },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: AssetNoteEntry;
+}
+
+const { entry } = Astro.props;
+const realEntry = await getEntry('notes', entry.id);
+const { Content } = realEntry ? await render(realEntry) : await render(entry);
+---
+
+<AssetDetailView entry={entry} Content={Content} relatedAssets={[]} subTopology={[]} />

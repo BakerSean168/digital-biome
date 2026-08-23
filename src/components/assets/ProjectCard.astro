@@ -8,8 +8,9 @@ interface Props {
 const { asset } = Astro.props;
 const currentPath = Astro.url.pathname;
 const isProtectedLink = (link: AssetLink) => link.visibility === 'internal' || link.visibility === 'private';
-const primaryLink = asset.links.find(link => link.kind === 'app') ?? asset.links[0];
-const repoLink = asset.links.find(link => link.kind === 'repo');
+const primaryLink = asset.links.find(link => link.kind === 'app' || link.kind === 'web');
+const showcaseLink = asset.links.find(link => link.kind === 'showcase');
+const repoLink = asset.links.find(link => link.kind === 'repo' || link.kind === 'repository');
 const docsLink = asset.links.find(link => link.kind === 'docs');
 const hostname = (() => {
   if (!primaryLink?.url) {
@@ -97,17 +98,27 @@ const roleMeta = asset.assetRole === 'product'
         rel="noopener noreferrer"
         class="inline-flex items-center border border-primary/40 px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase text-primary transition-colors hover:bg-primary/10 hover:border-primary"
       >
-        [ LAUNCH ]
+        [ LIVE ]
       </a>
     )}
     {primaryLink && isProtectedLink(primaryLink) && primaryLink.private_ref && (
       <a
         href={`/login?next=${encodeURIComponent(currentPath)}`}
         data-private-link={primaryLink.private_ref}
-        data-private-unlocked-label="[ LAUNCH ]"
+        data-private-unlocked-label="[ LIVE ]"
         class="inline-flex items-center border border-primary/40 px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase text-primary transition-colors hover:bg-primary/10 hover:border-primary"
       >
         <span data-private-link-label>[ ACCESS_REQUIRED ]</span>
+      </a>
+    )}
+    {showcaseLink?.url && (
+      <a
+        href={showcaseLink.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center border border-border px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
+      >
+        [ PROJECT PAGE ]
       </a>
     )}
     {repoLink?.url && (
@@ -117,10 +128,10 @@ const roleMeta = asset.assetRole === 'product'
         rel="noopener noreferrer"
         class="inline-flex items-center border border-border px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
       >
-        [ REPO ]
+        [ GITHUB ]
       </a>
     )}
-    {!repoLink?.url && docsLink?.url && (
+    {!repoLink?.url && !showcaseLink?.url && docsLink?.url && (
       <a
         href={docsLink.url}
         target="_blank"

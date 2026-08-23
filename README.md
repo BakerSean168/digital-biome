@@ -1,92 +1,132 @@
 # Digital Biome
 
-个人知识生态站点：Dashboard（启动页）+ Notes（笔记）+ Resume（简历）
+> **Personal digital garden, project portfolio, and living infrastructure map.**
 
-基于 Obsidian vault 构建，支持层级标签、双链 `[[wikilink]]`、反向链接。
+<p align="left">
+  <a href="https://bakersean.top"><strong>Live Site</strong></a> ·
+  <a href="https://bakersean168.github.io/digital-biome/"><strong>Project Page</strong></a> ·
+  <a href="./docs/architecture.md"><strong>Architecture</strong></a> ·
+  <a href="https://github.com/BakerSean168/thought-forest"><strong>Thought Forest</strong></a>
+</p>
 
-## 快速开始
+Digital Biome 是我的个人数字空间：它把 **知识库、项目作品集、个人履历、数字资产与基础设施可视化** 放在同一个站点里。内容并不是手工复制到网页，而是由 Thought Forest 作为知识真值源，经同步、脱敏、索引和构建流程投影到公开网站。
+
+它既是一个 Astro 网站，也是一个关于“如何把个人知识与工程实践组织成长期可维护数字资产”的工程项目。
+
+## What lives here
+
+- **Knowledge garden** — Obsidian / Thought Forest 笔记、标签、wikilink、反向链接与全文搜索。
+- **Project portfolio** — 以产品问题、核心闭环和工程亮点展示项目，并同时连接 GitHub、项目介绍页和生产环境。
+- **About / Resume** — 个人介绍、GitHub 活动、履历与持续学习轨迹。
+- **Infrastructure atlas** — 对公开资产、主机、网络和服务关系进行可视化，同时保留 private/internal 边界。
+- **Observability** — 把个人长期运行的服务与数字资产状态汇总到可浏览页面。
+
+## Content architecture
+
+```mermaid
+flowchart LR
+    A[Thought Forest / Obsidian] --> B[Knowledge index]
+    B --> C[Public projection + redaction]
+    C --> D[Astro content/data]
+    D --> E[Notes / Projects / Assets]
+    E --> F[Static build + Pagefind]
+    F --> G[Cloudflare Pages]
+```
+
+The repository pins Thought Forest as a Git submodule for reproducible builds. During development, content is regenerated through the same indexing/sync pipeline used by CI rather than edited inside generated `src/data` output.
+
+## Project showcase model
+
+The `/dev` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three different destinations with distinct responsibilities:
+
+1. **Live** — the real production application.
+2. **Project Page** — a lightweight GitHub Pages introduction focused on product story and engineering highlights.
+3. **GitHub** — source code, documentation, history and engineering evidence.
+
+This keeps deployed services, source repositories and portfolio presentation separate instead of treating them as the same asset.
+
+## Tech stack
+
+- **Framework:** Astro 5
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS 4
+- **Search:** Pagefind
+- **Content source:** Obsidian + Thought Forest
+- **Deployment:** Cloudflare Pages + Pages Functions
+- **Access boundary:** Cloudflare Access for protected surfaces
+- **Automation:** GitHub Actions + Wrangler
+
+## Quick start
+
+### Prerequisites
+
+- Node.js 22+
+- pnpm 10+
+- Git with submodule support
+
+### Local development
 
 ```bash
-git submodule update --init --recursive # 初始化私有笔记子模块
-pnpm install --frozen-lockfile          # 安装依赖
-pnpm sync                              # 生成公开内容投影和静态索引
-pnpm dev:only                          # 启动开发服务器 (localhost:4321)
-pnpm check                             # Astro/TypeScript 检查
-pnpm build:only                        # 使用已同步内容验证生产构建
+git clone --recurse-submodules https://github.com/BakerSean168/digital-biome.git
+cd digital-biome
+pnpm install
+cp .env.example .env
+pnpm dev
 ```
 
-## 架构
+Useful commands:
 
-见 [docs/architecture.md](docs/architecture.md)
-
-## 项目结构
-
+```bash
+pnpm sync               # rebuild Thought Forest indexes and sync content
+pnpm check              # Astro type/content checks
+pnpm check:edge         # Pages Functions typecheck
+pnpm test:unit
+pnpm test:edge
+pnpm test:infrastructure
+pnpm build              # sync + Astro + Pagefind + postbuild
 ```
+
+## Repository structure
+
+```text
 src/
-├── pages/             # Astro 路由（Dashboard、Notes、Infrastructure 等）
-├── layouts/           # Base/Dashboard/Notes 页面壳
-├── components/        # common、dashboard、notes、assets UI
-├── content/config.ts  # Astro Content Collection schema
-├── data/              # 同步后的 Markdown、索引和站点数据
-├── domain/            # Note ID、路由、可见性与 wikilink 规则
-├── repositories/      # 静态索引查询隔离层
-├── view-models/       # 页面展示模型
-├── utils/             # Remark 与通用工具
-├── types/             # TypeScript 类型
-└── styles/            # 全局样式与 Tailwind 入口
+├── pages/              Astro routes
+├── components/         project, asset, note and dashboard UI
+├── data/               generated public content/index projection
+├── domain/             note routing and foundation rules
+├── repositories/       asset / knowledge index access
+└── view-models/        presentation adapters
 
-edge/                  # Access JWT、私有 payload 与 private_ref 规则
-functions/             # Cloudflare Pages Functions
-scripts/sync/          # Vault 同步、脱敏和索引生成
-thought-forest/        # 私有 Obsidian vault Git Submodule
-public/_routes.json    # Functions 调用范围
-docs/                  # 架构、开发、部署与运维文档
+functions/              Cloudflare Pages Functions
+scripts/                sync, index, deployment and validation tooling
+thought-forest/         pinned knowledge-source submodule
+docs/                   architecture and operations documentation
 ```
 
-## 内容管理
+## Production & deployment
 
-笔记来自私有 `thought-forest` 子模块，经同步、过滤和脱敏后写入
-`src/data/obsidian/`，索引写入 `src/data/indexes/`。完整流程见
-[笔记同步与公开投影](docs/notes-sync-process.md)。
+The live site is **[bakersean.top](https://bakersean.top)** and is deployed on Cloudflare Pages.
 
-GitHub 贡献图使用已提交的 `src/data/github-contributions.json` 快照，构建过程不会
-联网改写源码。需要更新时显式运行 `pnpm refresh:github-contributions`，检查差异后
-与普通源码一起提交。
+Production deployment includes a deliberate public/private boundary: public static content is generated during build, while protected `/api/private/*` capabilities are handled by Pages Functions and Cloudflare Access. The deployment workflow uses explicit production approval and Wrangler direct upload rather than letting an implicit Git integration become the source of truth.
 
-## 部署
+Read:
 
-生产环境使用 Cloudflare Pages + Pages Functions。`/api/private/*` 由 Cloudflare
-Access 保护，Functions 会再次验证 Access JWT；私有基础设施值只存放在加密的
-`PRIVATE_INFRASTRUCTURE_JSON` secret 中，不进入静态 HTML 或 Pagefind 索引。
+- [`docs/architecture.md`](./docs/architecture.md) — current system architecture.
+- [`docs/cloudflare-deployment.md`](./docs/cloudflare-deployment.md) — Cloudflare deployment contract.
+- [`docs/development-deployment-operations.md`](./docs/development-deployment-operations.md) — development and production operations.
+- [`docs/asset-architecture.md`](./docs/asset-architecture.md) — asset model and visibility boundary.
 
-```bash
-pnpm deploy:cloudflare
-```
+## Relationship with Thought Forest
 
-Cloudflare Git 自动构建当前已关闭：私有 `thought-forest` 子模块无法在 Pages
-Git 克隆阶段取得凭据。生产发布由 GitHub Actions 使用只读 GitHub App 短期令牌
-检出两个仓库，经 `production` Environment 审批后通过 Wrangler 直接部署。
-日常操作见 [开发、部署与运维手册](docs/development-deployment-operations.md)，
-控制面配置见 [Cloudflare Pages 与 Access](docs/cloudflare-deployment.md)。
+Thought Forest owns the canonical knowledge and asset metadata; Digital Biome owns the public presentation and runtime behavior.
 
-## 技术栈
+That separation is intentional:
 
-| 层级 | 技术 |
-|------|------|
-| 框架 | Astro 5.x |
-| 语言 | TypeScript |
-| 样式 | Tailwind CSS v4 |
-| 图标 | Lucide Icons |
-| 包管理 | pnpm |
-| 部署 | Cloudflare Pages + Access |
+- knowledge remains usable from Obsidian even without the website;
+- the website can rebuild from a pinned knowledge revision;
+- private/internal asset metadata can stay out of public output;
+- project cards can evolve without duplicating project facts in frontend code.
 
-## 文档
+## Repository status & license
 
-- [功能路线图](ROADMAP.md)
-- [架构设计](docs/architecture.md)
-- [开发、部署与运维手册](docs/development-deployment-operations.md)
-- [笔记同步与公开投影](docs/notes-sync-process.md)
-- [Cloudflare Pages、Functions 与 Access](docs/cloudflare-deployment.md)
-- [ADR-0001：私有 Vault 与 Pages 直接部署](docs/adr/0001-private-vault-direct-pages-deployment.md)
-- [资产架构设计](docs/asset-architecture.md)
-- [基础设施展示页信息架构与视觉方案](docs/infrastructure-showcase-design.md)
+Digital Biome is a **public source repository**, but this repository currently does **not** include an open-source license. Public visibility alone does not grant permission to copy, modify, or redistribute the code; copyright remains with the repository owner unless a license is added later.
