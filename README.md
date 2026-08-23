@@ -3,23 +3,27 @@
 > **Personal digital garden, project portfolio, and living infrastructure map.**
 
 <p align="left">
+  <strong>Language:</strong> English · <a href="./docs/zh-CN/README.md">Simplified Chinese</a>
+</p>
+
+<p align="left">
   <a href="https://bakersean.top"><strong>Live Site</strong></a> ·
   <a href="https://bakersean168.github.io/digital-biome/"><strong>Project Page</strong></a> ·
   <a href="./docs/architecture.md"><strong>Architecture</strong></a> ·
   <a href="https://github.com/BakerSean168/thought-forest"><strong>Thought Forest</strong></a>
 </p>
 
-Digital Biome 是我的个人数字空间：它把 **知识库、项目作品集、个人履历、数字资产与基础设施可视化** 放在同一个站点里。内容并不是手工复制到网页，而是由 Thought Forest 作为知识真值源，经同步、脱敏、索引和构建流程投影到公开网站。
+Digital Biome is my personal digital space. It brings together a knowledge garden, project portfolio, resume, digital assets, and infrastructure visualization in one site. Content is not manually copied into the frontend: Thought Forest acts as the canonical knowledge source, and a synchronization, redaction, indexing, and build pipeline projects the public subset onto the web.
 
-它既是一个 Astro 网站，也是一个关于“如何把个人知识与工程实践组织成长期可维护数字资产”的工程项目。
+It is both an Astro website and an engineering project about turning personal knowledge and technical practice into long-lived, maintainable digital assets.
 
 ## What lives here
 
-- **Knowledge garden** — Obsidian / Thought Forest 笔记、标签、wikilink、反向链接与全文搜索。
-- **Project portfolio** — 以产品问题、核心闭环和工程亮点展示项目，并同时连接 GitHub、项目介绍页和生产环境。
-- **About / Resume** — 个人介绍、GitHub 活动、履历与持续学习轨迹。
-- **Infrastructure atlas** — 对公开资产、主机、网络和服务关系进行可视化，同时保留 private/internal 边界。
-- **Observability** — 把个人长期运行的服务与数字资产状态汇总到可浏览页面。
+- **Knowledge garden** — Obsidian / Thought Forest notes, tags, wikilinks, backlinks, and full-text search.
+- **Project portfolio** — projects are presented through the problem they solve, their product loop, and engineering highlights, with direct links to GitHub, the project page, and the live product.
+- **About / Resume** — personal profile, GitHub activity, resume, and continuous learning history.
+- **Infrastructure atlas** — visualization of public assets, hosts, networks, and service relationships while preserving private/internal boundaries.
+- **Observability** — a browsable view of long-running personal services and digital assets.
 
 ## Content architecture
 
@@ -33,17 +37,17 @@ flowchart LR
     F --> G[Cloudflare Pages]
 ```
 
-The repository pins Thought Forest as a Git submodule for reproducible builds. During development, content is regenerated through the same indexing/sync pipeline used by CI rather than edited inside generated `src/data` output.
+The repository pins Thought Forest as a Git submodule for reproducible builds. During development, content is regenerated through the same indexing and synchronization pipeline used by CI rather than edited inside generated `src/data` output.
 
 ## Project showcase model
 
-The `/dev` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three different destinations with distinct responsibilities:
+The `/dev` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three destinations with distinct responsibilities:
 
 1. **Live** — the real production application.
 2. **Project Page** — a lightweight GitHub Pages introduction focused on product story and engineering highlights.
-3. **GitHub** — source code, documentation, history and engineering evidence.
+3. **GitHub** — source code, documentation, history, and engineering evidence.
 
-This keeps deployed services, source repositories and portfolio presentation separate instead of treating them as the same asset.
+This keeps deployed services, source repositories, and portfolio presentation separate instead of treating them as the same asset.
 
 ## Tech stack
 
@@ -129,4 +133,4 @@ That separation is intentional:
 
 ## Repository status & license
 
-Digital Biome is a **public source repository**, but this repository currently does **not** include an open-source license. Public visibility alone does not grant permission to copy, modify, or redistribute the code; copyright remains with the repository owner unless a license is added later.
+Digital Biome is a **public source repository**, but it currently does **not** include an open-source license. Public visibility alone does not grant permission to copy, modify, or redistribute the code; copyright remains with the repository owner unless a license is added later.
