@@ -97,6 +97,18 @@ export function getHomepageAssets(section: HomepageSection): AssetCard[] {
   return sortByOrderThenTitle(featured);
 }
 
+/** Get public project assets explicitly selected for the project showcase. */
+export function getProjectShowcaseAssets(): AssetCard[] {
+  const assets = getPublicAssets();
+  return sortByOrderThenTitle(
+    assets
+      .filter(asset => asset.data.asset_type === 'project'
+        && asset.data.homepage?.featured
+        && asset.data.homepage?.section === 'projects')
+      .map(toAssetCard)
+  );
+}
+
 /** Get service display groups (operations vs projects). */
 export function getServiceDisplayGroups(): {
   operations: AssetCard[];

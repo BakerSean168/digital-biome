@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import AssetSection from '../../components/assets/AssetSection.astro';
-import { getServiceDisplayGroups } from '../../utils/notes';
+import { getProjectShowcaseAssets } from '../../utils/notes';
 
-const { projects } = getServiceDisplayGroups();
+const projects = getProjectShowcaseAssets();
 ---
 
 <BaseLayout title="DEV" description="Projects & Development">
@@ -17,7 +17,7 @@ const { projects } = getServiceDisplayGroups();
         <span class="inline-block w-3 h-6 bg-primary/70 animate-[pulse_1s_step-end_infinite]"></span>
       </h1>
       <p class="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground font-mono">
-        // INDEX OF ALL ACTIVE AND ARCHIVED DEVELOPMENT PROJECTS.
+        // SELECTED PRODUCT PROJECTS WITH SOURCE, SHOWCASE AND LIVE LINKS.
       </p>
     </div>
 
