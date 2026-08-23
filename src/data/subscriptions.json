@@ -1,7 +1,7 @@
 {
   "currency": "USD",
   "exchangeRateRmb": 6.83,
-  "updatedAt": "2026-08-09T01:53:04.108Z",
+  "updatedAt": "2026-08-23T05:55:41.611Z",
   "subscriptions": [
     {
       "id": "subscription-chatgpt-team",
@@ -16,6 +16,20 @@
       "status": "active",
       "icon": "chatgpt",
       "notes": "每月 17 号扣款，AU$25/2人，个人平摊 AU$12.50，享 24 个月优惠"
+    },
+    {
+      "id": "subscription-opencode-go",
+      "name": "OpenCode Go",
+      "vendor": "OpenCode",
+      "cost": 10,
+      "originalCost": 10,
+      "originalCurrency": "USD",
+      "currency": "USD",
+      "cycle": "monthly",
+      "nextBillingDate": "2026-09-10",
+      "status": "active",
+      "icon": "code",
+      "notes": "首月 5 美元，后续 10 美元/月；以 CNY 收款"
     },
     {
       "id": "subscription-bakersean-top-domain",

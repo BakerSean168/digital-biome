@@ -23,7 +23,7 @@ export interface AssetNoteData {
   asset_id: string;
   asset_type: AssetType;
   visibility: Visibility;
-  status?: 'active' | 'planned' | 'archived' | 'deprecated';
+  status?: 'active' | 'planned' | 'archived' | 'deprecated' | 'decommissioning' | 'retired';
   asset_role?: AssetRole;
   host_asset_id?: string;
   parent_asset_id?: string;

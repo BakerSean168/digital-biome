@@ -52,7 +52,7 @@ export interface Note {
   rating?: number;
   platform?: string;
   pricing?: 'free' | 'freemium' | 'paid' | 'subscription';
-  status?: 'active' | 'planned' | 'archived' | 'deprecated' | 'decommissioning';
+  status?: 'active' | 'planned' | 'archived' | 'deprecated' | 'decommissioning' | 'retired';
   lastModified?: Date;
   isBookmark: boolean;
   categories: string[];

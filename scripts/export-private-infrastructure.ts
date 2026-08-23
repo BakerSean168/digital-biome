@@ -85,12 +85,14 @@ export function buildPrivateInfrastructurePayload(assets: UpstreamAssetItem[]) {
       links[privateRef] = link.url.trim();
       if (link.kind === 'ssh') {
         const ip = extractSshHostnameIp(link.url);
-        if (!ip) {
-          throw new Error(`${asset.assetId} has a protected SSH link without an IPv4 hostname.`);
+        // Stable SSH hostnames (for example Tailscale MagicDNS) are valid
+        // protected links. Only legacy showcase hosts require an exported
+        // IPv4 compatibility value; that requirement is enforced below.
+        if (ip) {
+          const ips = sshIpsByAsset.get(asset.assetId) ?? new Set<string>();
+          ips.add(ip);
+          sshIpsByAsset.set(asset.assetId, ips);
         }
-        const ips = sshIpsByAsset.get(asset.assetId) ?? new Set<string>();
-        ips.add(ip);
-        sshIpsByAsset.set(asset.assetId, ips);
       }
     }
   }

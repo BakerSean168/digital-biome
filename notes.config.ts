@@ -41,8 +41,15 @@ export const notesConfig = {
      */
     configPath: vaultPath('config'),
 
-    /** 二进制附件与媒体资源目录 (attachments/images) */
-    mediaPath: vaultPath('attachments/images'),
+    /**
+     * 二进制附件与媒体资源目录。
+     * Thought Forest 已将原始附件迁移到 sources/attachments；保留旧路径作为
+     * 兼容回退，便于旧 checkout / 历史 submodule 仍可构建。
+     */
+    mediaPath: [
+      vaultPath('sources/attachments'),
+      vaultPath('attachments/images'),
+    ],
 
     /** 博客文章目录 (thought-forest/blogs) */
     blogsPath: vaultPath('blogs'),

@@ -97,6 +97,14 @@ test('private payload uses stable asset refs and one explicit SSH IP per showcas
   );
   assert.equal(payload.links['svc-sub-store.links.admin'], EXPECTED_ENDPOINTS['svc-sub-store']);
   assert.ok(!('portal.home' in payload.links), 'Heuristic portal.home alias must not be emitted.');
+  assert.equal(
+    payload.links['host-gcp-iowa-c3d-development-vps.links.ssh'],
+    'ssh://dev@gcp-dev-01.taile92a8e.ts.net:22',
+  );
+  assert.ok(
+    !('host-gcp-iowa-c3d-development-vps.ip' in payload.values),
+    'Stable MagicDNS SSH links must not be coerced into IPv4 compatibility values.',
+  );
 
   for (const assetId of SHOWCASE_HOSTS) {
     const asset = findAsset(assets, assetId);

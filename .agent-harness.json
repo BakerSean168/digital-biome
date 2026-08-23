@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "id": "digital-biome",
+  "match": {
+    "repoNames": ["digital-biome"]
+  },
+  "packs": ["common-coding"],
+  "sharedMcpProfile": "common",
+  "instructions": [
+    {
+      "scope": "project",
+      "path": "${PROJECT_ROOT}/AGENTS.md",
+      "required": true
+    }
+  ]
+}

@@ -34,7 +34,7 @@ const notes = defineCollection({
     rating: optionalNumber(),
     platform: optionalString(),
     pricing: z.enum(['free', 'freemium', 'paid', 'subscription']).nullable().optional(),
-    status: z.enum(['active', 'planned', 'archived', 'deprecated', 'decommissioning']).nullable().optional(),
+    status: z.enum(['active', 'planned', 'archived', 'deprecated', 'decommissioning', 'retired']).nullable().optional(),
     aliases: optionalStringArray(),
     category: optionalString(),
     asset_id: optionalString(),
