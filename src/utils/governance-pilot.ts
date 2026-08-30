@@ -6,5 +6,5 @@
  * behavior on main.
  */
 export function normalizeGovernancePilotLabel(value: string): string {
-  return value.trim().toUpperCase();
+  return value.trim().toLowerCase();
 }
