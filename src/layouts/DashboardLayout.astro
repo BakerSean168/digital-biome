@@ -9,7 +9,7 @@ interface Props {
 const { title, description = '个人知识生态网站' } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description} bodyClass="dashboard-body" showHeader={false} showFooter={false}>
+<BaseLayout title={title} description={description} bodyClass="dashboard-body" showHeader={false}>
   <main class="dashboard-main">
     <slot />
   </main>
