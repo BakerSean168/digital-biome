@@ -33,12 +33,10 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",
     "@lucide/astro": "^0.575.0",
-    "@pagefind/default-ui": "^1.4.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.2.1",
     "astro": "^5.16.9",
     "jose": "^6.2.3",
-    "mdast": "^3.0.0",
     "tailwindcss": "^4.2.1",
     "undici": "^7.22.0",
     "unified": "^11.0.5",
