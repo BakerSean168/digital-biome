@@ -11,6 +11,8 @@ on:
       - 'tsconfig.json'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'thought-forest'
+      - '.github/workflows/check.yml'
   pull_request:
     branches: [main]
     paths:
@@ -21,6 +23,8 @@ on:
       - 'tsconfig.json'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'thought-forest'
+      - '.github/workflows/check.yml'
 
 concurrency:
   group: type-check-${{ github.ref }}
