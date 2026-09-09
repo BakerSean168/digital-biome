@@ -13,6 +13,15 @@ type NotesPageStrings = {
   uncategorized: string;
 };
 
+type NotesListObserver = {
+  observe(target: Element): void;
+};
+
+export interface NotesListDependencies {
+  loadCatalog?: () => Promise<NoteCatalogItem[]>;
+  createObserver?: (onIntersect: (isIntersecting: boolean) => void) => NotesListObserver;
+}
+
 function getPageStrings(page: HTMLElement): NotesPageStrings {
   const raw = page.dataset.notesI18n;
   if (!raw) {
@@ -80,7 +89,7 @@ function parseInitialTags(searchParams: URLSearchParams): string[] {
     .filter(Boolean))];
 }
 
-export function initializeNotesList(): void {
+export function initializeNotesList(dependencies: NotesListDependencies = {}): void {
   const page = document.getElementById('notes-page');
   const list = document.getElementById('notes-list');
   const empty = document.getElementById('empty-msg');
@@ -105,6 +114,10 @@ export function initializeNotesList(): void {
   let showingFilteredResults = false;
   let loadingMore = false;
   let catalogStatus: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
+  let viewGeneration = 0;
+
+  const nextViewGeneration = () => ++viewGeneration;
+  const isCurrentView = (generation: number) => generation === viewGeneration;
 
   const updateCount = () => {
     const template = showingFilteredResults ? strings.searchCount : strings.totalCount;
@@ -189,25 +202,29 @@ export function initializeNotesList(): void {
     updateSentinel();
   };
 
-  const loadCatalog = createNotesCatalogLoader();
+  const loadCatalog = dependencies.loadCatalog ?? createNotesCatalogLoader();
 
-  const ensureCatalog = async (): Promise<NoteCatalogItem[]> => {
+  const ensureCatalog = async (generation: number): Promise<NoteCatalogItem[]> => {
     if (catalog) return catalog;
-    catalogStatus = 'loading';
+    if (isCurrentView(generation)) catalogStatus = 'loading';
     try {
       const notes = await loadCatalog();
-      catalog = notes;
-      catalogStatus = 'ready';
+      if (isCurrentView(generation)) {
+        catalog = notes;
+        catalogStatus = 'ready';
+      }
       return notes;
     } catch (error) {
-      catalogStatus = 'error';
+      if (isCurrentView(generation)) catalogStatus = 'error';
       throw error;
     }
   };
 
   const applyFilters = async () => {
+    const generation = nextViewGeneration();
     const query = titleInput.value.trim();
-    const filtered = query.length > 0 || activeTags.length > 0;
+    const tags = [...activeTags];
+    const filtered = query.length > 0 || tags.length > 0;
     clearCatalogError();
     if (!filtered && !catalog) {
       showingFilteredResults = false;
@@ -217,24 +234,29 @@ export function initializeNotesList(): void {
     }
 
     try {
-      const allNotes = await ensureCatalog();
-      const notes = filterNoteCatalog(allNotes, titleInput.value, activeTags);
+      const allNotes = await ensureCatalog(generation);
+      if (!isCurrentView(generation)) return;
+      const notes = filterNoteCatalog(allNotes, query, tags);
       renderNotes(notes, filtered);
     } catch {
-      showCatalogError(filtered);
+      if (isCurrentView(generation)) showCatalogError(filtered);
     }
   };
 
   const loadMore = async () => {
     if (loadingMore || !hasMore()) return;
+    const generation = nextViewGeneration();
+    const query = titleInput.value.trim();
+    const tags = [...activeTags];
+    const filtered = query.length > 0 || tags.length > 0;
     loadingMore = true;
     clearCatalogError();
     try {
       if (!catalog) {
-        const allNotes = await ensureCatalog();
-        const filtered = titleInput.value.trim().length > 0 || activeTags.length > 0;
+        const allNotes = await ensureCatalog(generation);
+        if (!isCurrentView(generation)) return;
         if (filtered) {
-          renderNotes(filterNoteCatalog(allNotes, titleInput.value, activeTags), true);
+          renderNotes(filterNoteCatalog(allNotes, query, tags), true);
           return;
         }
 
@@ -248,24 +270,33 @@ export function initializeNotesList(): void {
         return;
       }
 
-      const nextBatch = getNextNoteBatch(currentNotes, displayCount);
+      if (filtered) {
+        renderNotes(filterNoteCatalog(catalog, query, tags), true);
+        return;
+      }
+      currentNotes = catalog;
+      showingFilteredResults = false;
+      const nextBatch = getNextNoteBatch(catalog, displayCount);
       appendNotes(nextBatch);
       displayCount += nextBatch.length;
       updateCount();
       updateSentinel();
     } catch {
-      const filtered = titleInput.value.trim().length > 0 || activeTags.length > 0;
-      showCatalogError(filtered);
+      if (isCurrentView(generation)) showCatalogError(filtered);
     } finally {
       loadingMore = false;
     }
   };
 
-  const observer = typeof IntersectionObserver === 'undefined'
-    ? null
-    : new IntersectionObserver(entries => {
-      if (entries[0]?.isIntersecting) void loadMore();
-    }, { rootMargin: '200px' });
+  const observer = dependencies.createObserver
+    ? dependencies.createObserver(isIntersecting => {
+      if (isIntersecting) void loadMore();
+    })
+    : typeof IntersectionObserver === 'undefined'
+      ? null
+      : new IntersectionObserver(entries => {
+        if (entries[0]?.isIntersecting) void loadMore();
+      }, { rootMargin: '200px' });
 
   list.addEventListener('click', event => {
     const target = event.target instanceof Element

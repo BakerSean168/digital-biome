@@ -4,6 +4,7 @@ import {
   filterDiscoverAssetResults,
   parseDiscoverAssetResults,
   readDiscoverAssetResults,
+  toDiscoverResult,
   type DiscoverAssetResult,
 } from './discover';
 import { searchPagefind } from './pagefind';
@@ -31,6 +32,17 @@ test('parses escaped asset data and ignores malformed entries', () => {
   const serialized = JSON.stringify([asset, { id: 'invalid' }]).replace(/</g, '\\u003c');
   assert.deepEqual(parseDiscoverAssetResults(serialized), [asset]);
   assert.deepEqual(parseDiscoverAssetResults('{malformed'), []);
+});
+
+test('normalizes Pagefind excerpt markup into safe readable text', () => {
+  const result = toDiscoverResult({
+    url: '/tools/astro',
+    excerpt: '<mark>Astro</mark> toolkit',
+    meta: {},
+  });
+
+  assert.equal(result.description, 'Astro toolkit');
+  assert.doesNotMatch(result.description, /<[^>]+>/);
 });
 
 test('keeps matching asset fallback results when Pagefind is unavailable', async () => {

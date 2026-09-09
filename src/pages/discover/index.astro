@@ -60,7 +60,7 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
 </BaseLayout>
 
 <script>
-  import { createLatestRequest } from '../../browser/latest-request';
+  import { createSearchIntentScheduler, type SearchIntent } from '../../browser/search-intent';
   import { filterDiscoverAssetResults, readDiscoverAssetResults, toDiscoverResult, type DiscoverItem, type DiscoverScope } from '../../browser/discover';
   import { loadPagefind, searchPagefind } from '../../browser/pagefind';
 
@@ -76,7 +76,12 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
   const countEl = document.getElementById('discover-count');
   const emptyEl = document.getElementById('discover-empty');
   const statusEl = document.getElementById('discover-search-status');
-  const latestSearch = createLatestRequest();
+  const searchIntents = createSearchIntentScheduler(150, undefined, () => {
+    resultsEl?.replaceChildren();
+    if (countEl) countEl.textContent = '';
+    emptyEl?.classList.add('hidden');
+    setSearchStatus();
+  });
   const runtimeUrl = new URL(window.location.href);
   const initialQuery = runtimeUrl.searchParams.get('q') || '';
   const initialScope = normalizeScope(runtimeUrl.searchParams.get('scope'));
@@ -165,10 +170,8 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
     statusEl.classList.toggle('hidden', !message);
   }
 
-  async function filterResults(): Promise<void> {
-    const request = latestSearch.start();
-    const query = (queryInput?.value || '').trim().toLowerCase();
-    const scope = normalizeScope(scopeInput?.value || 'all');
+  async function filterResults(intent: SearchIntent, scope: DiscoverScope): Promise<void> {
+    const query = intent.query.trim().toLowerCase();
     if (scopeInput) scopeInput.value = scope;
     updateUrl(query, scope);
 
@@ -184,7 +187,7 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
     }
 
     const outcome = await searchPagefind(loadPagefind, query);
-    if (!request.isCurrent()) return;
+    if (!intent.token.isCurrent()) return;
 
     if (outcome.status === 'success' || outcome.status === 'partial' || outcome.status === 'zero-match') {
       const formatted = outcome.results
@@ -201,18 +204,12 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
     render(filterDiscoverAssetResults(assetResults, query, scope));
   }
 
-  let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
-
-  function handleInput(): void {
-    if (debounceTimeout !== undefined) clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      void filterResults();
-    }, 150);
+  function scheduleFilter(): void {
+    const scope = normalizeScope(scopeInput?.value || 'all');
+    searchIntents.schedule(queryInput?.value || '', intent => void filterResults(intent, scope));
   }
 
-  queryInput?.addEventListener('input', handleInput);
-  scopeInput?.addEventListener('change', () => {
-    void filterResults();
-  });
-  void filterResults();
+  queryInput?.addEventListener('input', scheduleFilter);
+  scopeInput?.addEventListener('change', scheduleFilter);
+  void filterResults(searchIntents.start(initialQuery), initialScope);
 </script>

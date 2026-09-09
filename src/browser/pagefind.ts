@@ -89,7 +89,7 @@ export function normalizePagefindResult(value: unknown): PagefindResultData | nu
 export async function hydratePagefindResultsWithStatus(
   results: readonly PagefindSearchResult[],
 ): Promise<PagefindHydrationOutcome> {
-  const settled = await Promise.allSettled(results.map(result => result.data()));
+  const settled = await Promise.allSettled(results.map(result => Promise.resolve().then(() => result.data())));
   const hydrated: PagefindResultData[] = [];
   let failedCount = 0;
 

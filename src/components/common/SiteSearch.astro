@@ -54,9 +54,10 @@
 </style>
 
 <script>
-  import { createLatestRequest } from '../../browser/latest-request';
+  import { createSearchIntentScheduler, type SearchIntent } from '../../browser/search-intent';
   import { loadPagefind, searchPagefind, type PagefindSearchStatus } from '../../browser/pagefind';
   import type { PagefindResultData } from '../../browser/pagefind';
+  import { stripMarkupToText } from '../../browser/strip-markup';
 
   type CommandResult = {
     type: 'cmd';
@@ -95,16 +96,19 @@
   const resultsContainer = document.getElementById('cmd-results');
   const loadingIndicator = document.getElementById('cmd-loading');
   const statusElement = document.getElementById('cmd-search-status');
-  const latestSearch = createLatestRequest();
-
   let selectedIndex = 0;
   let currentResults: PaletteResult[] = [];
   let searchStatus: PagefindSearchStatus = 'success';
-  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-
-  function stripMarkup(value: string): string {
-    return value.replace(/<[^>]*>?/gm, '');
-  }
+  let searchPending = false;
+  const searchIntents = createSearchIntentScheduler(200, undefined, () => {
+    searchPending = true;
+    selectedIndex = 0;
+    currentResults = [];
+    loadingIndicator?.classList.add('hidden');
+    resultsContainer?.replaceChildren();
+    searchStatus = 'success';
+    renderSearchStatus();
+  });
 
   function toSearchResult(item: PagefindResultData): SearchResult {
     const fallbackTitle = item.url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
@@ -112,7 +116,7 @@
       type: 'search',
       label: 'DOC',
       title: item.meta.title || fallbackTitle,
-      desc: stripMarkup(item.excerpt),
+      desc: stripMarkupToText(item.excerpt),
       href: item.url,
     };
   }
@@ -237,12 +241,13 @@
   }
 
   function executeItem(index: number): void {
+    if (searchPending) return;
     const item = currentResults[index];
     if (item) window.location.href = item.href;
   }
 
-  async function handleSearch(query: string): Promise<void> {
-    const request = latestSearch.start();
+  async function handleSearch(intent: SearchIntent): Promise<void> {
+    const { query, token } = intent;
     loadingIndicator?.classList.remove('hidden');
 
     const lowerQuery = query.toLowerCase().trim();
@@ -261,14 +266,15 @@
 
     if (lowerQuery && !lowerQuery.startsWith('/')) {
       const outcome = await searchPagefind(loadPagefind, lowerQuery, 8);
-      if (!request.isCurrent()) return;
+      if (!token.isCurrent()) return;
       searchStatus = outcome.status;
       results.push(...outcome.results.map(toSearchResult));
     }
 
-    if (!request.isCurrent()) return;
+    if (!token.isCurrent()) return;
     currentResults = results;
     selectedIndex = 0;
+    searchPending = false;
     loadingIndicator?.classList.add('hidden');
     renderResults();
   }
@@ -281,11 +287,19 @@
     if (cmdInput) {
       cmdInput.value = '';
       cmdInput.focus();
-      void handleSearch('');
+      void handleSearch(searchIntents.start(''));
     }
   }
 
   function closeModal(): void {
+    searchIntents.invalidate();
+    searchPending = false;
+    currentResults = [];
+    selectedIndex = 0;
+    loadingIndicator?.classList.add('hidden');
+    resultsContainer?.replaceChildren();
+    searchStatus = 'success';
+    renderSearchStatus();
     if (!searchModal) return;
     searchModal.classList.add('hidden');
     searchModal.setAttribute('aria-hidden', 'true');
@@ -304,10 +318,7 @@
 
   cmdInput?.addEventListener('input', event => {
     const target = event.target as HTMLInputElement;
-    if (debounceTimer !== undefined) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      void handleSearch(target.value);
-    }, 200);
+    searchIntents.schedule(target.value, intent => void handleSearch(intent));
   });
 
   document.addEventListener('keydown', event => {

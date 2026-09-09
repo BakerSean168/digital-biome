@@ -1,4 +1,5 @@
 import type { PagefindResultData } from './pagefind';
+import { stripMarkupToText } from './strip-markup';
 
 export type DiscoverScope = 'all' | 'assets' | 'notes';
 
@@ -99,7 +100,7 @@ export function toDiscoverResult(item: PagefindResultData): DiscoverItem {
     kind: label,
     label,
     title: item.meta.title || fallbackTitle,
-    description: item.excerpt,
+    description: stripMarkupToText(item.excerpt),
     tags: [],
     href: item.url,
   };

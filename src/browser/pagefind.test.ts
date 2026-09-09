@@ -146,3 +146,36 @@ test('reports partial Pagefind results instead of discarding valid data', async 
   assert.deepEqual(outcome.results, [{ url: '/notes/valid', excerpt: 'valid', meta: {} }]);
   assert.equal(outcome.failedCount, 1);
 });
+
+test('keeps synchronous and asynchronous hydration faults per Pagefind result', async () => {
+  const outcome = await searchPagefind(async () => ({
+    init: async () => undefined,
+    search: async () => ({
+      results: [
+        { data: () => { throw new Error('first unavailable'); } },
+        { data: () => new Promise(resolve => setTimeout(() => resolve({ url: '/notes/slow', meta: {}, excerpt: 'slow' }), 5)) },
+        { data: () => { throw new Error('middle unavailable'); } },
+        result({ url: '/notes/fast', meta: {}, excerpt: 'fast' }),
+        {} as PagefindSearchResult,
+      ],
+    }),
+  }), 'mixed');
+
+  assert.equal(outcome.status, 'partial');
+  assert.deepEqual(outcome.results, [
+    { url: '/notes/slow', meta: {}, excerpt: 'slow' },
+    { url: '/notes/fast', meta: {}, excerpt: 'fast' },
+  ]);
+  assert.equal(outcome.failedCount, 3);
+});
+
+test('reports hydration failure when every synchronous hydration fails', async () => {
+  const outcome = await searchPagefind(async () => ({
+    init: async () => undefined,
+    search: async () => ({ results: [{ data: () => { throw new Error('sync unavailable'); } }, {} as PagefindSearchResult] }),
+  }), 'missing');
+
+  assert.equal(outcome.status, 'hydration-failed');
+  assert.deepEqual(outcome.results, []);
+  assert.equal(outcome.failedCount, 2);
+});
