@@ -22,7 +22,7 @@ const {
   currentSlug = '',
   showSidebar = false,
   showToc = true,
-} = Astro.props;
+}: Props = Astro.props;
 
 const hasToc = showToc && headings.length > 0;
 ---
@@ -92,7 +92,7 @@ const hasToc = showToc && headings.length > 0;
     if (el) {
       let iterations = 0;
       const interval = setInterval(() => {
-        el.textContent = text.split('').map((letter, index) => {
+        el.textContent = text.split('').map((_letter, index) => {
           if (index < iterations) {
             return text[index];
           }

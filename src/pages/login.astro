@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { ArrowRight, Github, KeyRound, ShieldCheck } from '@lucide/astro';
+import { ArrowRight, GitBranch, KeyRound, ShieldCheck } from '@lucide/astro';
 
 export const prerender = true;
 ---
@@ -30,7 +30,7 @@ export const prerender = true;
           <div class="border-b border-border/50 pb-3 sm:border-r sm:border-b-0 sm:pb-0 sm:pr-4">
             <dt class="text-muted-foreground">IDENTITY_PROVIDER</dt>
             <dd class="mt-1 flex items-center gap-2 text-foreground">
-              <Github size={13} class="text-primary" />
+              <GitBranch size={13} class="text-primary" />
               GitHub
             </dd>
           </div>
@@ -48,7 +48,7 @@ export const prerender = true;
           href="/api/private/enter"
           class="mt-7 flex h-11 w-full items-center justify-center gap-2 rounded-sm border border-primary bg-primary font-mono text-xs font-bold tracking-widest text-background transition-colors hover:bg-transparent hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <Github size={15} />
+          <GitBranch size={15} />
           <span>[ CONTINUE_WITH_GITHUB ]</span>
           <ArrowRight size={14} />
         </a>

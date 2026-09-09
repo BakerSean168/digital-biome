@@ -23,7 +23,6 @@ import { fileURLToPath } from 'node:url';
 import {
   ASSET_NOTE_PREFIX,
   NOTE_ID_PREFIX,
-  GIT_TS_MARKER,
 } from '../../src/domain/foundation/constants';
 import { toNoteId } from '../../src/domain/foundation/note-id';
 import { inferVisibility } from '../../src/domain/foundation/visibility';

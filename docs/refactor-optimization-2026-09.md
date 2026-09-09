@@ -287,6 +287,33 @@ PR CI 在锁定 vault SHA 完成 `pnpm sync` 后执行 `verify:full`。
 - 浏览器功能：Notes initial list、load more、q、tag、Pagefind SiteSearch、Discover fallback；
 - ForgeFlow exact implementation/review revisions、provider cleanup、worktree retirement、project lease release。
 
+### 6.1 DB-OPT-104 integrated evidence
+
+在集成 `f5538e3`、`00e6f91`、`12ba850` 后，2026-09-09 的本地完整门禁结果如下。尺寸均来自同一次 production build；KiB 按 1024 字节计算。
+
+| 项目 | 结果 |
+|---|---|
+| `pnpm verify:full` | PASS；端到端耗时 2:03.43，峰值 RSS 约 2.66 GiB |
+| server-side/static build | 3512 个页面；无独立 server test suite |
+| `pnpm test:edge` | 19/19 |
+| `pnpm test:unit` | 21/21，包含 `src/browser/pagefind.test.ts` 的 5 个 Pagefind adapter tests |
+| `pnpm test:infrastructure` | 3/3 |
+| `pnpm check` | 127 files；0 errors / 0 warnings / 0 hints |
+| Astro build | PASS；41.70 s，峰值 RSS 约 2.88 GiB |
+| Pagefind | PASS；3512 pages、45220 words；30.397 s |
+| leak scan | PASS；检查 130 个敏感值 |
+
+| 页面 | raw HTML | gzip HTML | budget (raw / gzip) |
+|---|---:|---:|---:|
+| `/notes` | 47.2 KiB | 9.2 KiB | 200 / 60 KiB |
+| `/about` | 355.1 KiB | 21.1 KiB | 400 / 50 KiB |
+| `/discover` | 23.7 KiB | 7.4 KiB | 64 / 20 KiB |
+| `/tools` | 633.8 KiB | 34.7 KiB | 700 / 48 KiB |
+
+构建产物中的 JavaScript 总量为 198.3 KiB，CSS 总量为 175.9 KiB。`/data/notes-catalog.json` 为 1260.7 KiB；它由 Astro build 生成，不出现在 `/notes/index.html`，仅在搜索、标签筛选或继续加载时由浏览器请求并缓存。首屏静态 HTML 保留 12 条真实公开笔记。
+
+Notes 的首屏、lazy catalog/filter contract、Pagefind adapter normalization/cache、Discover 的 asset fallback 由 focused tests 与静态产物检查覆盖；真实浏览器交互仍应在部署预览中做一次冒烟验证。当前 sandbox 未安装 Git LFS，因此本地门禁使用同 SHA 的已填充 Thought Forest checkout 配合 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 覆盖；CI 仍通过 pinned submodule 的标准 `pnpm sync` 执行。
+
 ## 7. ForgeFlow real-project acceptance
 
 本计划刻意适合作为 ForgeFlow v1.4.0 的真实项目验证：
