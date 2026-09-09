@@ -31,10 +31,15 @@ test('starts the first catalog-backed batch after the SSR boundary', () => {
 });
 
 test('rejects HTTP, malformed JSON, and malformed catalog payloads', async () => {
+  let requestInit: RequestInit | undefined;
   await assert.rejects(
-    fetchNotesCatalog(async () => ({ ok: false, status: 503, json: async () => [] }) as Response),
+    fetchNotesCatalog(async (_input, init) => {
+      requestInit = init;
+      return { ok: false, status: 503, json: async () => [] } as Response;
+    }),
     /503/,
   );
+  assert.deepEqual(requestInit, { cache: 'no-store' });
   await assert.rejects(
     fetchNotesCatalog(async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('invalid JSON'); } }) as unknown as Response),
     /invalid JSON/,

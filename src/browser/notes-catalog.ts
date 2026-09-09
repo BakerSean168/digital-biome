@@ -36,7 +36,9 @@ export function parseNoteCatalogPayload(payload: unknown): NoteCatalogItem[] {
 export async function fetchNotesCatalog(
   fetcher: typeof fetch = fetch,
 ): Promise<NoteCatalogItem[]> {
-  const response = await fetcher('/data/notes-catalog.json');
+  const response = await fetcher('/data/notes-catalog.json', {
+    cache: 'no-store',
+  });
   if (!response.ok) throw new Error(`Notes catalog request failed: ${response.status}`);
   return parseNoteCatalogPayload(await response.json());
 }

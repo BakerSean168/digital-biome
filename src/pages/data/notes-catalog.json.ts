@@ -11,7 +11,7 @@ export const GET: APIRoute = async () => {
   return new Response(JSON.stringify(catalog), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': 'public, max-age=3600, must-revalidate',
     },
   });
 };

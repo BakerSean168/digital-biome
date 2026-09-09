@@ -19,6 +19,19 @@ const PAGE_BUDGETS: readonly PageBudget[] = [
   { route: '/tools', file: 'tools/index.html', rawKiB: 700, gzipKiB: 48 },
 ];
 
+type AssetBudget = {
+  label: string;
+  file?: string;
+  extension?: string;
+  maxKiB: number;
+};
+
+const ASSET_BUDGETS: readonly AssetBudget[] = [
+  { label: 'dist JavaScript', extension: '.js', maxKiB: 250 },
+  { label: 'dist CSS', extension: '.css', maxKiB: 220 },
+  { label: 'notes catalog', file: 'data/notes-catalog.json', maxKiB: 1400 },
+];
+
 function collectFiles(directory: string): string[] {
   if (!fs.existsSync(directory)) return [];
 
@@ -64,17 +77,34 @@ function assertPageBudgets(): void {
   }
 }
 
-function reportAssetTotals(): void {
+function assertAssetBudgets(): void {
   const files = collectFiles(DIST_DIR);
-  const totals = new Map<string, number>([['.js', 0], ['.css', 0]]);
+  const failures: string[] = [];
 
-  for (const filePath of files) {
-    const extension = path.extname(filePath);
-    if (totals.has(extension)) totals.set(extension, totals.get(extension)! + fs.statSync(filePath).size);
+  for (const budget of ASSET_BUDGETS) {
+    const assetPath = budget.file ? path.join(DIST_DIR, budget.file) : null;
+    const bytes = assetPath
+      ? fs.existsSync(assetPath)
+        ? fs.statSync(assetPath).size
+        : null
+      : files
+        .filter(filePath => path.extname(filePath) === budget.extension)
+        .reduce((total, filePath) => total + fs.statSync(filePath).size, 0);
+    const label = budget.label;
+    const limit = budget.maxKiB * KIB;
+    if (bytes === null) {
+      failures.push(`${label}: missing ${assetPath}`);
+      continue;
+    }
+
+    const status = bytes <= limit ? 'PASS' : 'FAIL';
+    console.log(`${label}: ${formatKiB(bytes)} / ${budget.maxKiB} KiB [${status}]`);
+    if (bytes > limit) failures.push(`${label} exceeds ${budget.maxKiB} KiB`);
   }
 
-  console.log(`dist JS: ${formatKiB(totals.get('.js') || 0)}`);
-  console.log(`dist CSS: ${formatKiB(totals.get('.css') || 0)}`);
+  if (failures.length > 0) {
+    throw new Error(`Asset performance budgets failed:\n- ${failures.join('\n- ')}`);
+  }
 }
 
 function reportNotesCatalog(): void {
@@ -96,6 +126,6 @@ if (!fs.existsSync(DIST_DIR)) {
 }
 
 assertPageBudgets();
-reportAssetTotals();
+assertAssetBudgets();
 reportNotesCatalog();
 console.log('Performance budget check passed.');
