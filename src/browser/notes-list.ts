@@ -222,6 +222,7 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
 
   const applyFilters = async () => {
     const generation = nextViewGeneration();
+    loadingMore = false;
     const query = titleInput.value.trim();
     const tags = [...activeTags];
     const filtered = query.length > 0 || tags.length > 0;
@@ -284,7 +285,7 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
     } catch {
       if (isCurrentView(generation)) showCatalogError(filtered);
     } finally {
-      loadingMore = false;
+      if (isCurrentView(generation)) loadingMore = false;
     }
   };
 
