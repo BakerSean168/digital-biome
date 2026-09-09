@@ -42,7 +42,7 @@ test('rejects HTTP, malformed JSON, and malformed catalog payloads', async () =>
   assert.throws(() => parseNoteCatalogPayload([note(1), { id: 'broken' }]), /malformed/);
 });
 
-test('shares one catalog request and retries after a failure', async () => {
+test('deferred catalog orchestration is lazy, single-flight, and retryable', async () => {
   let requestCount = 0;
   const fetcher = async () => {
     requestCount += 1;
@@ -50,9 +50,11 @@ test('shares one catalog request and retries after a failure', async () => {
     return { ok: true, status: 200, json: async () => [note(1)] } as Response;
   };
   const loadCatalog = createNotesCatalogLoader(fetcher);
+  assert.equal(requestCount, 0);
 
   const firstRequest = loadCatalog();
   const secondRequest = loadCatalog();
+  assert.equal(requestCount, 1);
   assert.strictEqual(firstRequest, secondRequest);
   await assert.rejects(firstRequest, /network unavailable/);
   assert.deepEqual(await loadCatalog(), [note(1)]);

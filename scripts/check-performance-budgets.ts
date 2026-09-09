@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { assertNotesCatalogBoundary, INITIAL_NOTE_CARD_COUNT } from './notes-catalog-boundary';
 
 type PageBudget = {
   route: string;
@@ -84,11 +85,10 @@ function reportNotesCatalog(): void {
   }
 
   const notesHtml = fs.readFileSync(notesPath, 'utf8');
-  if (notesHtml.includes('notes-catalog.json')) {
-    throw new Error('The notes catalog is present in /notes HTML instead of being lazy-loaded.');
-  }
+  const catalogPayload: unknown = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+  assertNotesCatalogBoundary(notesHtml, catalogPayload);
 
-  console.log(`notes catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; absent from /notes HTML)`);
+  console.log(`notes catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_NOTE_CARD_COUNT} SSR cards)`);
 }
 
 if (!fs.existsSync(DIST_DIR)) {
