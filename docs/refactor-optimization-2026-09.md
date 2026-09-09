@@ -329,7 +329,7 @@ pnpm verify:full
 
 结果为 PASS：`pnpm check` 为 137 files、0 errors / 0 warnings / 0 hints；edge 19/19、unit 33/33、infrastructure 6/6。`pnpm check:performance` 也为 PASS：`/notes` 47.8 KiB raw / 9.4 KiB gzip、catalog 1260.7 KiB、12 条 SSR cards，dist JavaScript 201.0 KiB、CSS 176.3 KiB。该静态门禁按生成 HTML 中的 card IDs 对照 catalog 前 12 项，并拒绝 deferred IDs、catalog filename 和 catalog data island；浏览器 DOM/IntersectionObserver 的真实交互仍未在本地 preview 中执行。
 
-在这次 build 生成的 `dist` 上，随后单独执行的 Pagefind v1.4.0 local run 记录为 3512 pages、45220 words、29.887 s。该数字只代表此 local run；GitHub Actions 对 exact commit `052e950139c246ce1b044744e23f80df43fcc7ee` 的独立记录仍是 45219 words，二者不视为同一次测量。
+在这次 build 生成的 `dist` 上，随后单独执行的 Pagefind v1.4.0 local run 记录为 3512 pages、45220 words、29.887 s。该数字只代表此 local run。GitHub Actions 当前 R2 `check` run `34324080681`（exact code commit `073ffb0382a0c5271fe39b5710a54dcff7bd49c7`）记录为 3512 pages、45219 words、23.667 s；同一 run 的 performance budget 为 PASS，`/notes` 为 47.8 / 9.4 KiB、catalog 为 1260.7 KiB、12 条 SSR cards。GitHub Actions 对 exact commit `052e950139c246ce1b044744e23f80df43fcc7ee` 的历史独立记录也是 45219 words。上述 local 与 GitHub 数字保留各自 run/source provenance，不视为同一次测量。
 
 ## 7. ForgeFlow real-project acceptance
 
