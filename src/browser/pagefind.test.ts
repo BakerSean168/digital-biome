@@ -3,7 +3,9 @@ import test from 'node:test';
 import {
   createPagefindAdapter,
   hydratePagefindResults,
+  hydratePagefindResultsWithStatus,
   normalizePagefindResult,
+  searchPagefind,
   type PagefindRuntime,
   type PagefindSearchResult,
 } from './pagefind';
@@ -94,4 +96,53 @@ test('caches Pagefind initialization failures', async () => {
   assert.equal(await firstLoad, null);
   assert.equal(await secondLoad, null);
   assert.equal(initCount, 1);
+});
+
+test('keeps valid hydrated results when one Pagefind result rejects', async () => {
+  const outcome = await hydratePagefindResultsWithStatus([
+    result({ url: '/notes/valid', meta: {}, excerpt: 'valid' }),
+    { data: async () => { throw new Error('result unavailable'); } },
+  ]);
+
+  assert.deepEqual(outcome.results, [{ url: '/notes/valid', excerpt: 'valid', meta: {} }]);
+  assert.equal(outcome.failedCount, 1);
+});
+
+test('distinguishes unavailable, query failure, hydration failure, and zero matches', async () => {
+  const unavailable = await searchPagefind(async () => null, 'missing');
+  assert.equal(unavailable.status, 'unavailable');
+
+  const queryFailed = await searchPagefind(async () => ({
+    init: async () => undefined,
+    search: async () => { throw new Error('query unavailable'); },
+  }), 'missing');
+  assert.equal(queryFailed.status, 'query-failed');
+
+  const hydrationFailed = await searchPagefind(async () => ({
+    init: async () => undefined,
+    search: async () => ({ results: [{ data: async () => { throw new Error('data unavailable'); } }] }),
+  }), 'missing');
+  assert.equal(hydrationFailed.status, 'hydration-failed');
+
+  const zeroMatch = await searchPagefind(async () => ({
+    init: async () => undefined,
+    search: async () => ({ results: [] }),
+  }), 'missing');
+  assert.equal(zeroMatch.status, 'zero-match');
+});
+
+test('reports partial Pagefind results instead of discarding valid data', async () => {
+  const outcome = await searchPagefind(async () => ({
+    init: async () => undefined,
+    search: async () => ({
+      results: [
+        result({ url: '/notes/valid', meta: {}, excerpt: 'valid' }),
+        { data: async () => { throw new Error('data unavailable'); } },
+      ],
+    }),
+  }), 'valid');
+
+  assert.equal(outcome.status, 'partial');
+  assert.deepEqual(outcome.results, [{ url: '/notes/valid', excerpt: 'valid', meta: {} }]);
+  assert.equal(outcome.failedCount, 1);
 });

@@ -52,9 +52,7 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
       <div id="discover-empty" class="hidden border border-dashed border-border bg-card/40 px-6 py-10 text-sm font-mono text-muted-foreground">
         没有匹配结果，试试更短的关键词，或者切换到“全部”范围。
       </div>
-      <div id="discover-dev-warning" class="hidden border border-amber-500/20 bg-amber-500/5 p-6 text-sm font-mono text-amber-500 mt-4">
-        ⚠️ 开发环境下未检测到 Pagefind 索引，目前仅展示资产数据。如需验证完整的知识笔记搜索，请先执行 <code>pnpm build</code> 进行打包。
-      </div>
+      <div id="discover-search-status" class="hidden border border-amber-500/20 bg-amber-500/5 p-6 text-sm font-mono text-amber-500 mt-4" role="status" aria-live="polite"></div>
     </section>
   </main>
 
@@ -62,102 +60,23 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
 </BaseLayout>
 
 <script>
-  import { hydratePagefindResults, loadPagefind, type PagefindResultData } from '../../browser/pagefind';
-
-  type DiscoverScope = 'all' | 'assets' | 'notes';
-
-  interface DiscoverItem {
-    id: string;
-    scope: DiscoverScope;
-    kind: string;
-    label: string;
-    title: string;
-    description: string;
-    tags: string[];
-    href: string;
-  }
-
-  interface AssetResult extends DiscoverItem {
-    scope: 'assets';
-  }
-
-  function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null;
-  }
-
-  function isStringArray(value: unknown): value is string[] {
-    return Array.isArray(value) && value.every(entry => typeof entry === 'string');
-  }
-
-  function isAssetResult(value: unknown): value is AssetResult {
-    return isRecord(value)
-      && typeof value.id === 'string'
-      && value.scope === 'assets'
-      && typeof value.kind === 'string'
-      && typeof value.label === 'string'
-      && typeof value.title === 'string'
-      && typeof value.description === 'string'
-      && isStringArray(value.tags)
-      && typeof value.href === 'string';
-  }
-
-  function readAssetResults(): AssetResult[] {
-    const dataIsland = document.getElementById('discover-asset-data');
-    const serialized = dataIsland?.textContent;
-    if (!serialized) return [];
-
-    try {
-      const parsed: unknown = JSON.parse(serialized);
-      return Array.isArray(parsed) ? parsed.filter(isAssetResult) : [];
-    } catch (error) {
-      console.error('Unable to read Discover asset data.', error);
-      return [];
-    }
-  }
+  import { createLatestRequest } from '../../browser/latest-request';
+  import { filterDiscoverAssetResults, readDiscoverAssetResults, toDiscoverResult, type DiscoverItem, type DiscoverScope } from '../../browser/discover';
+  import { loadPagefind, searchPagefind } from '../../browser/pagefind';
 
   function normalizeScope(value: string | null): DiscoverScope {
     if (value === 'assets' || value === 'notes') return value;
     return 'all';
   }
 
-  function toDiscoverResult(item: PagefindResultData): DiscoverItem {
-    let scope: DiscoverScope = 'notes';
-    let label = 'note';
-
-    if (item.url.includes('/services/')) {
-      scope = 'assets';
-      label = 'service';
-    } else if (item.url.includes('/tools/')) {
-      scope = 'assets';
-      label = 'tool';
-    } else if (item.url.includes('/infrastructure/')) {
-      scope = 'assets';
-      label = 'host';
-    } else if (item.url.includes('/projects/')) {
-      scope = 'assets';
-      label = 'project';
-    }
-
-    const fallbackTitle = item.url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
-    return {
-      id: item.url,
-      scope,
-      kind: label,
-      label,
-      title: item.meta.title || fallbackTitle,
-      description: item.excerpt,
-      tags: [],
-      href: item.url,
-    };
-  }
-
-  const assetResults = readAssetResults();
+  const assetResults = readDiscoverAssetResults(document.getElementById('discover-asset-data'));
   const queryInput = document.getElementById('discover-query') as HTMLInputElement | null;
   const scopeInput = document.getElementById('discover-scope') as HTMLSelectElement | null;
   const resultsEl = document.getElementById('discover-results');
   const countEl = document.getElementById('discover-count');
   const emptyEl = document.getElementById('discover-empty');
-  const devWarningEl = document.getElementById('discover-dev-warning');
+  const statusEl = document.getElementById('discover-search-status');
+  const latestSearch = createLatestRequest();
   const runtimeUrl = new URL(window.location.href);
   const initialQuery = runtimeUrl.searchParams.get('q') || '';
   const initialScope = normalizeScope(runtimeUrl.searchParams.get('scope'));
@@ -240,14 +159,21 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
     window.history.replaceState({}, '', url);
   }
 
+  function setSearchStatus(message?: string): void {
+    if (!statusEl) return;
+    statusEl.textContent = message || '';
+    statusEl.classList.toggle('hidden', !message);
+  }
+
   async function filterResults(): Promise<void> {
+    const request = latestSearch.start();
     const query = (queryInput?.value || '').trim().toLowerCase();
     const scope = normalizeScope(scopeInput?.value || 'all');
     if (scopeInput) scopeInput.value = scope;
     updateUrl(query, scope);
 
     if (!query) {
-      devWarningEl?.classList.add('hidden');
+      setSearchStatus();
       if (scope === 'notes') {
         render([]);
         if (countEl) countEl.textContent = '请输入关键词开始搜索 2400+ 篇知识笔记...';
@@ -257,31 +183,22 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
       return;
     }
 
-    const pagefind = await loadPagefind();
-    if (pagefind) {
-      devWarningEl?.classList.add('hidden');
-      try {
-        const search = await pagefind.search(query);
-        const hydratedResults = await hydratePagefindResults(search.results);
-        const formatted = hydratedResults
-          .map(toDiscoverResult)
-          .filter(item => scope === 'all' || item.scope === scope);
-        render(formatted);
-        return;
-      } catch (error) {
-        console.error('Error querying Pagefind:', error);
-      }
+    const outcome = await searchPagefind(loadPagefind, query);
+    if (!request.isCurrent()) return;
+
+    if (outcome.status === 'success' || outcome.status === 'partial' || outcome.status === 'zero-match') {
+      const formatted = outcome.results
+        .map(toDiscoverResult)
+        .filter(item => scope === 'all' || item.scope === scope);
+      render(formatted);
+      setSearchStatus(outcome.status === 'partial' ? '部分全文搜索结果暂时无法加载。' : undefined);
+      return;
     }
 
-    devWarningEl?.classList.remove('hidden');
-    const filteredAssets = assetResults.filter(item => {
-      const matchesScope = scope === 'all' || item.scope === scope;
-      const haystack = [item.title, item.description, item.id, ...item.tags]
-        .join(' ')
-        .toLowerCase();
-      return matchesScope && haystack.includes(query);
-    });
-    render(filteredAssets);
+    setSearchStatus(outcome.status === 'unavailable'
+      ? '全文索引暂时不可用，当前显示匹配的资产结果。'
+      : '全文搜索暂时失败，当前显示匹配的资产结果。');
+    render(filterDiscoverAssetResults(assetResults, query, scope));
   }
 
   let debounceTimeout: ReturnType<typeof setTimeout> | undefined;

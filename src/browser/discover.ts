@@ -1,0 +1,106 @@
+import type { PagefindResultData } from './pagefind';
+
+export type DiscoverScope = 'all' | 'assets' | 'notes';
+
+export interface DiscoverItem {
+  id: string;
+  scope: DiscoverScope;
+  kind: string;
+  label: string;
+  title: string;
+  description: string;
+  tags: string[];
+  href: string;
+}
+
+export interface DiscoverAssetResult extends DiscoverItem {
+  scope: 'assets';
+}
+
+export interface DiscoverDataIsland {
+  readonly textContent: string | null;
+  readonly content?: Readonly<{ textContent: string | null }>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(entry => typeof entry === 'string');
+}
+
+function isAssetResult(value: unknown): value is DiscoverAssetResult {
+  return isRecord(value)
+    && typeof value.id === 'string'
+    && value.scope === 'assets'
+    && typeof value.kind === 'string'
+    && typeof value.label === 'string'
+    && typeof value.title === 'string'
+    && typeof value.description === 'string'
+    && isStringArray(value.tags)
+    && typeof value.href === 'string';
+}
+
+export function parseDiscoverAssetResults(serialized: string | null): DiscoverAssetResult[] {
+  if (!serialized) return [];
+
+  try {
+    const parsed: unknown = JSON.parse(serialized);
+    return Array.isArray(parsed) ? parsed.filter(isAssetResult) : [];
+  } catch (error) {
+    console.error('Unable to read Discover asset data.', error);
+    return [];
+  }
+}
+
+export function readDiscoverAssetResults(island: DiscoverDataIsland | null): DiscoverAssetResult[] {
+  const serialized = island?.content?.textContent ?? island?.textContent ?? null;
+  return parseDiscoverAssetResults(serialized);
+}
+
+export function filterDiscoverAssetResults(
+  assetResults: readonly DiscoverAssetResult[],
+  query: string,
+  scope: DiscoverScope,
+): DiscoverAssetResult[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  return assetResults.filter(item => {
+    const matchesScope = scope === 'all' || item.scope === scope;
+    const haystack = [item.title, item.description, item.id, ...item.tags]
+      .join(' ')
+      .toLowerCase();
+    return matchesScope && haystack.includes(normalizedQuery);
+  });
+}
+
+export function toDiscoverResult(item: PagefindResultData): DiscoverItem {
+  let scope: DiscoverScope = 'notes';
+  let label = 'note';
+
+  if (item.url.includes('/services/')) {
+    scope = 'assets';
+    label = 'service';
+  } else if (item.url.includes('/tools/')) {
+    scope = 'assets';
+    label = 'tool';
+  } else if (item.url.includes('/infrastructure/')) {
+    scope = 'assets';
+    label = 'host';
+  } else if (item.url.includes('/projects/')) {
+    scope = 'assets';
+    label = 'project';
+  }
+
+  const fallbackTitle = item.url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
+  return {
+    id: item.url,
+    scope,
+    kind: label,
+    label,
+    title: item.meta.title || fallbackTitle,
+    description: item.excerpt,
+    tags: [],
+    href: item.url,
+  };
+}

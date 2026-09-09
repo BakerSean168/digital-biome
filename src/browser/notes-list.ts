@@ -1,4 +1,8 @@
 import {
+  createNotesCatalogLoader,
+  getNextNoteBatch,
+} from './notes-catalog';
+import {
   filterNoteCatalog,
   type NoteCatalogItem,
 } from '../view-models/note-list-item';
@@ -8,8 +12,6 @@ type NotesPageStrings = {
   searchCount: string;
   uncategorized: string;
 };
-
-const BATCH_SIZE = 12;
 
 function getPageStrings(page: HTMLElement): NotesPageStrings {
   const raw = page.dataset.notesI18n;
@@ -89,7 +91,9 @@ export function initializeNotesList(): void {
   const tagContainer = document.getElementById('tag-container');
   const tagWrapper = document.getElementById('tag-input-wrapper');
   const sentinel = document.getElementById('load-more-sentinel');
-  if (!page || !list || !empty || !count || !titleInput || !tagInput || !tagContainer || !sentinel) return;
+  const catalogError = document.getElementById('catalog-error');
+  const retryCatalog = document.getElementById('retry-catalog');
+  if (!page || !list || !empty || !count || !titleInput || !tagInput || !tagContainer || !sentinel || !catalogError) return;
 
   const strings = getPageStrings(page);
   const totalCount = Number(page.dataset.totalCount || 0);
@@ -98,9 +102,9 @@ export function initializeNotesList(): void {
   let currentNotes: NoteCatalogItem[] = [];
   let displayCount = initialCards;
   let catalog: NoteCatalogItem[] | null = null;
-  let catalogRequest: Promise<NoteCatalogItem[]> | null = null;
   let showingFilteredResults = false;
   let loadingMore = false;
+  let catalogStatus: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
 
   const updateCount = () => {
     const template = showingFilteredResults ? strings.searchCount : strings.totalCount;
@@ -116,6 +120,26 @@ export function initializeNotesList(): void {
   const updateSentinel = () => {
     if (!hasMore()) sentinel.classList.add('hidden');
     else sentinel.classList.remove('hidden');
+  };
+
+  const clearCatalogError = () => {
+    if (catalogStatus === 'error') catalogStatus = 'idle';
+    catalogError.classList.add('hidden');
+  };
+
+  const showCatalogError = (clearCards: boolean) => {
+    catalogStatus = 'error';
+    catalogError.classList.remove('hidden');
+    sentinel.classList.add('hidden');
+    if (clearCards) {
+      currentNotes = [];
+      displayCount = 0;
+      showingFilteredResults = true;
+      list.replaceChildren();
+      list.classList.add('hidden');
+      empty.classList.add('hidden');
+    }
+    updateCount();
   };
 
   const renderTags = () => {
@@ -158,37 +182,33 @@ export function initializeNotesList(): void {
 
     list.classList.remove('hidden');
     empty.classList.add('hidden');
-    const initialBatch = notes.slice(0, BATCH_SIZE);
+    const initialBatch = getNextNoteBatch(notes, 0);
     appendNotes(initialBatch);
     displayCount = initialBatch.length;
     updateCount();
     updateSentinel();
   };
 
-  const ensureCatalog = (): Promise<NoteCatalogItem[]> => {
-    if (catalog) return Promise.resolve(catalog);
-    if (!catalogRequest) {
-      catalogRequest = fetch('/data/notes-catalog.json')
-        .then(response => {
-          if (!response.ok) throw new Error(`Notes catalog request failed: ${response.status}`);
-          return response.json() as Promise<unknown>;
-        })
-        .then(payload => {
-          if (!Array.isArray(payload)) throw new Error('Notes catalog response was not an array');
-          catalog = payload as NoteCatalogItem[];
-          return catalog;
-        })
-        .catch(error => {
-          catalogRequest = null;
-          throw error;
-        });
+  const loadCatalog = createNotesCatalogLoader();
+
+  const ensureCatalog = async (): Promise<NoteCatalogItem[]> => {
+    if (catalog) return catalog;
+    catalogStatus = 'loading';
+    try {
+      const notes = await loadCatalog();
+      catalog = notes;
+      catalogStatus = 'ready';
+      return notes;
+    } catch (error) {
+      catalogStatus = 'error';
+      throw error;
     }
-    return catalogRequest;
   };
 
   const applyFilters = async () => {
     const query = titleInput.value.trim();
     const filtered = query.length > 0 || activeTags.length > 0;
+    clearCatalogError();
     if (!filtered && !catalog) {
       showingFilteredResults = false;
       updateCount();
@@ -201,26 +221,41 @@ export function initializeNotesList(): void {
       const notes = filterNoteCatalog(allNotes, titleInput.value, activeTags);
       renderNotes(notes, filtered);
     } catch {
-      updateCount();
+      showCatalogError(filtered);
     }
   };
 
   const loadMore = async () => {
     if (loadingMore || !hasMore()) return;
     loadingMore = true;
+    clearCatalogError();
     try {
       if (!catalog) {
         const allNotes = await ensureCatalog();
         const filtered = titleInput.value.trim().length > 0 || activeTags.length > 0;
-        renderNotes(filterNoteCatalog(allNotes, titleInput.value, activeTags), filtered);
+        if (filtered) {
+          renderNotes(filterNoteCatalog(allNotes, titleInput.value, activeTags), true);
+          return;
+        }
+
+        currentNotes = allNotes;
+        showingFilteredResults = false;
+        const nextBatch = getNextNoteBatch(allNotes, displayCount);
+        appendNotes(nextBatch);
+        displayCount += nextBatch.length;
+        updateCount();
+        updateSentinel();
         return;
       }
 
-      const nextBatch = currentNotes.slice(displayCount, displayCount + BATCH_SIZE);
+      const nextBatch = getNextNoteBatch(currentNotes, displayCount);
       appendNotes(nextBatch);
       displayCount += nextBatch.length;
       updateCount();
       updateSentinel();
+    } catch {
+      const filtered = titleInput.value.trim().length > 0 || activeTags.length > 0;
+      showCatalogError(filtered);
     } finally {
       loadingMore = false;
     }
@@ -258,6 +293,11 @@ export function initializeNotesList(): void {
   });
 
   titleInput.addEventListener('input', () => void applyFilters());
+  retryCatalog?.addEventListener('click', () => {
+    const filtered = titleInput.value.trim().length > 0 || activeTags.length > 0;
+    if (filtered) void applyFilters();
+    else void loadMore();
+  });
   clearButton?.addEventListener('click', () => {
     titleInput.value = '';
     tagInput.value = '';

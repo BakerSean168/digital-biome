@@ -24,6 +24,25 @@ export interface PagefindAdapter {
   readonly hydrate: (results: readonly PagefindSearchResult[]) => Promise<PagefindResultData[]>;
 }
 
+export type PagefindSearchStatus =
+  | 'unavailable'
+  | 'query-failed'
+  | 'hydration-failed'
+  | 'success'
+  | 'partial'
+  | 'zero-match';
+
+export interface PagefindHydrationOutcome {
+  readonly results: PagefindResultData[];
+  readonly failedCount: number;
+}
+
+export interface PagefindSearchOutcome extends PagefindHydrationOutcome {
+  readonly status: PagefindSearchStatus;
+}
+
+export type PagefindLoader = () => Promise<PagefindRuntime | null>;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -67,14 +86,60 @@ export function normalizePagefindResult(value: unknown): PagefindResultData | nu
   };
 }
 
+export async function hydratePagefindResultsWithStatus(
+  results: readonly PagefindSearchResult[],
+): Promise<PagefindHydrationOutcome> {
+  const settled = await Promise.allSettled(results.map(result => result.data()));
+  const hydrated: PagefindResultData[] = [];
+  let failedCount = 0;
+
+  settled.forEach(result => {
+    if (result.status === 'rejected') {
+      failedCount += 1;
+      return;
+    }
+    const normalized = normalizePagefindResult(result.value);
+    if (normalized) hydrated.push(normalized);
+    else failedCount += 1;
+  });
+
+  return { results: hydrated, failedCount };
+}
+
 export async function hydratePagefindResults(
   results: readonly PagefindSearchResult[],
 ): Promise<PagefindResultData[]> {
-  const hydrated = await Promise.all(results.map(result => result.data()));
-  return hydrated.flatMap(value => {
-    const normalized = normalizePagefindResult(value);
-    return normalized ? [normalized] : [];
-  });
+  return (await hydratePagefindResultsWithStatus(results)).results;
+}
+
+export async function searchPagefind(
+  load: PagefindLoader,
+  query: string,
+  limit?: number,
+): Promise<PagefindSearchOutcome> {
+  let pagefind: PagefindRuntime | null;
+  try {
+    pagefind = await load();
+  } catch (error) {
+    console.warn('Full-text search is temporarily unavailable.', error);
+    return { status: 'unavailable', results: [], failedCount: 0 };
+  }
+
+  if (!pagefind) return { status: 'unavailable', results: [], failedCount: 0 };
+
+  try {
+    const search = await pagefind.search(query);
+    const results = limit === undefined ? search.results : search.results.slice(0, limit);
+    const hydration = await hydratePagefindResultsWithStatus(results);
+    let status: PagefindSearchStatus = 'success';
+    if (hydration.failedCount > 0 && hydration.results.length === 0) status = 'hydration-failed';
+    else if (hydration.failedCount > 0) status = 'partial';
+    else if (hydration.results.length === 0) status = 'zero-match';
+    return { ...hydration, status };
+  } catch (error) {
+    console.error('Full-text search query failed.', error);
+    return { status: 'query-failed', results: [], failedCount: 0 };
+  }
 }
 
 export function createPagefindAdapter(importer: PagefindImporter = importPagefind): PagefindAdapter {

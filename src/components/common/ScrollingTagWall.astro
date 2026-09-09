@@ -41,7 +41,7 @@ const lanes = Array.from({ length: 8 }, (_, laneIndex) =>
           </div>
           <div class="flex gap-8 shrink-0" aria-hidden="true">
             {laneTags.map(tag => (
-              <span data-count={`[${tag.count}]`} class="tag-node pointer-events-none">{tag.leafName}</span>
+              <span data-count={`[${tag.count}]`} class="tag-node pointer-events-none" aria-hidden="true" tabindex="-1">{tag.leafName}</span>
             ))}
           </div>
         </div>
@@ -98,6 +98,14 @@ const lanes = Array.from({ length: 8 }, (_, laneIndex) =>
     opacity: 0.9;
   }
 
+  .tag-node:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+    border-color: var(--primary);
+    color: var(--text-main);
+    opacity: 1;
+  }
+
   @keyframes marquee-left {
     0% { transform: translate3d(0, 0, 0); }
     100% { transform: translate3d(-50%, 0, 0); }
@@ -117,7 +125,9 @@ const lanes = Array.from({ length: 8 }, (_, laneIndex) =>
   }
 
   .marquee-lane:has(.tag-node:hover) .animate-marquee-left,
-  .marquee-lane:has(.tag-node:hover) .animate-marquee-right {
+  .marquee-lane:has(.tag-node:hover) .animate-marquee-right,
+  .marquee-lane:focus-within .animate-marquee-left,
+  .marquee-lane:focus-within .animate-marquee-right {
     animation-play-state: paused;
   }
 
