@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SignalTitle from '../../components/common/SignalTitle.astro';
 import { getPublicAssets, getAssetHref } from '../../utils/notes';
+import { serializeDiscoverAssetResults } from '../../browser/discover';
 
 const assetEntries = getPublicAssets();
 
@@ -16,7 +17,7 @@ const assetResults = assetEntries.map(entry => ({
   href: getAssetHref(entry.data),
 }));
 
-const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
+const assetResultsJson = serializeDiscoverAssetResults(assetResults);
 ---
 
 <BaseLayout title="Discover" description="[ GLOBAL_INDEX ] 全域高亮索引">
@@ -191,8 +192,8 @@ const assetResultsJson = JSON.stringify(assetResults).replace(/</g, '\\u003c');
 
     if (outcome.status === 'success' || outcome.status === 'partial' || outcome.status === 'zero-match') {
       const formatted = outcome.results
-        .map(toDiscoverResult)
-        .filter(item => scope === 'all' || item.scope === scope);
+        .map(item => toDiscoverResult(item, assetResults))
+        .filter((item): item is DiscoverItem => item !== null && (scope === 'all' || item.scope === scope));
       render(formatted);
       setSearchStatus(outcome.status === 'partial' ? '部分全文搜索结果暂时无法加载。' : undefined);
       return;

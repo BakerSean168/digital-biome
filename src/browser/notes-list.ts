@@ -107,6 +107,7 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
   const strings = getPageStrings(page);
   const totalCount = Number(page.dataset.totalCount || 0);
   const initialCards = Number(page.dataset.initialCount || 0);
+  const initialCardElements = Array.from(list.children);
   let activeTags = parseInitialTags(new URL(window.location.href).searchParams);
   let currentNotes: NoteCatalogItem[] = [];
   let displayCount = initialCards;
@@ -133,6 +134,17 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
   const updateSentinel = () => {
     if (!hasMore()) sentinel.classList.add('hidden');
     else sentinel.classList.remove('hidden');
+  };
+
+  const restoreInitialCards = () => {
+    currentNotes = [];
+    displayCount = initialCards;
+    showingFilteredResults = false;
+    list.replaceChildren(...initialCardElements);
+    list.classList.remove('hidden');
+    empty.classList.add('hidden');
+    updateCount();
+    updateSentinel();
   };
 
   const clearCatalogError = () => {
@@ -228,9 +240,7 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
     const filtered = query.length > 0 || tags.length > 0;
     clearCatalogError();
     if (!filtered && !catalog) {
-      showingFilteredResults = false;
-      updateCount();
-      updateSentinel();
+      restoreInitialCards();
       return;
     }
 

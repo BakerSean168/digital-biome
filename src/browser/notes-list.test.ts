@@ -326,6 +326,47 @@ test('clearing filters supersedes a pending catalog rejection without stale erro
   }
 });
 
+test('restores SSR cards after catalog rejection then clear and allows observer retry', async () => {
+  const environment = createEnvironment();
+  const firstRequest = deferred<NoteCatalogItem[]>();
+  const secondRequest = deferred<NoteCatalogItem[]>();
+  let requestCount = 0;
+  const restore = installEnvironment(environment.document);
+  try {
+    initializeNotesList({
+      loadCatalog: () => {
+        requestCount += 1;
+        return requestCount === 1 ? firstRequest.promise : secondRequest.promise;
+      },
+      createObserver: callback => {
+        environment.triggerIntersection = callback;
+        return { observe: () => {} };
+      },
+    });
+    environment.elements['title-search'].value = 'query';
+    environment.elements['title-search'].dispatch('input');
+    firstRequest.reject(new Error('catalog unavailable'));
+    await assert.rejects(firstRequest.promise);
+    await settleMicrotasks();
+    assert.equal(environment.elements['notes-list'].children.length, 0);
+    assert.equal(environment.elements['catalog-error'].classList.contains('hidden'), false);
+
+    environment.elements['clear-filters'].dispatch('click');
+    assert.equal(environment.elements['notes-list'].children.length, 12);
+    assert.equal(environment.elements['result-count'].textContent, 'TOTAL 24 / 12');
+    assert.equal(environment.elements['catalog-error'].classList.contains('hidden'), true);
+    assert.equal(environment.elements['empty-msg'].classList.contains('hidden'), true);
+
+    environment.triggerIntersection(true);
+    assert.equal(requestCount, 2);
+    secondRequest.resolve(Array.from({ length: 24 }, (_, index) => note(index)));
+    await settle(secondRequest.promise);
+    assert.equal(environment.elements['notes-list'].children.length, 24);
+  } finally {
+    restore();
+  }
+});
+
 test('keeps the latest query and tag filter when deferred requests resolve out of order', async () => {
   const environment = createEnvironment();
   const queryRequest = deferred<NoteCatalogItem[]>();

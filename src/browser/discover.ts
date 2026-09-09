@@ -23,6 +23,12 @@ export interface DiscoverDataIsland {
   readonly content?: Readonly<{ textContent: string | null }>;
 }
 
+const DISCOVER_DATA_PREFIX = 'discover-json-v1:';
+
+export function serializeDiscoverAssetResults(results: readonly unknown[]): string {
+  return `${DISCOVER_DATA_PREFIX}${encodeURIComponent(JSON.stringify(results))}`;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -47,7 +53,10 @@ export function parseDiscoverAssetResults(serialized: string | null): DiscoverAs
   if (!serialized) return [];
 
   try {
-    const parsed: unknown = JSON.parse(serialized);
+    const source = serialized.startsWith(DISCOVER_DATA_PREFIX)
+      ? decodeURIComponent(serialized.slice(DISCOVER_DATA_PREFIX.length))
+      : serialized;
+    const parsed: unknown = JSON.parse(source);
     return Array.isArray(parsed) ? parsed.filter(isAssetResult) : [];
   } catch (error) {
     console.error('Unable to read Discover asset data.', error);
@@ -75,33 +84,36 @@ export function filterDiscoverAssetResults(
   });
 }
 
-export function toDiscoverResult(item: PagefindResultData): DiscoverItem {
-  let scope: DiscoverScope = 'notes';
-  let label = 'note';
-
-  if (item.url.includes('/services/')) {
-    scope = 'assets';
-    label = 'service';
-  } else if (item.url.includes('/tools/')) {
-    scope = 'assets';
-    label = 'tool';
-  } else if (item.url.includes('/infrastructure/')) {
-    scope = 'assets';
-    label = 'host';
-  } else if (item.url.includes('/projects/')) {
-    scope = 'assets';
-    label = 'project';
+export function normalizeDiscoverHref(href: string): string {
+  try {
+    const url = new URL(href, 'https://discover.invalid');
+    const path = url.pathname.replace(/\/+$/, '');
+    return path || '/';
+  } catch {
+    return href.split(/[?#]/, 1)[0].replace(/\/+$/, '') || '/';
   }
+}
 
-  const fallbackTitle = item.url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
+export function toDiscoverResult(
+  item: PagefindResultData,
+  assetResults: readonly DiscoverAssetResult[] = [],
+): DiscoverItem | null {
+  const normalizedHref = normalizeDiscoverHref(item.url);
+  const asset = assetResults.find(result => normalizeDiscoverHref(result.href) === normalizedHref);
+  const isNote = normalizedHref.startsWith('/notes/');
+  if (!asset && !isNote) return null;
+
+  const label = asset?.label || 'note';
+  const scope: DiscoverScope = asset ? 'assets' : 'notes';
+  const fallbackTitle = normalizedHref.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
   return {
     id: item.url,
     scope,
-    kind: label,
+    kind: asset?.kind || label,
     label,
-    title: item.meta.title || fallbackTitle,
+    title: item.meta.title || asset?.title || fallbackTitle,
     description: stripMarkupToText(item.excerpt),
-    tags: [],
+    tags: asset?.tags || [],
     href: item.url,
   };
 }
