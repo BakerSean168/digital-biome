@@ -81,6 +81,24 @@ per-item SVG/tooltip 结构重新进入页面。
 4. pruning 后必须通过 SiteSearch real Pagefind 与 Discover E2E；
 5. 将 total dist JS/CSS budget 改成对“实际保留 runtime surface”有意义的预算。
 
+**当前实施证据：**
+
+- source/runtime 引用扫描确认 custom adapter 只加载 `/pagefind/pagefind.js`；生成 HTML 中出现的
+  `pagefind-ui` 仅来自一篇知识笔记正文，不是 asset reference；
+- `pagefind.js` 自身不引用 `pagefind-ui.js`、`pagefind-modular-ui.js` 或 `pagefind-highlight.js`；
+- production build 生成 Pagefind 后删除 5 个无 owner artifact，共 **161.1 KiB**；
+- 保留 `pagefind.js`、`pagefind-entry.json`、`wasm.unknown.pagefind` 与语言 index metadata，并用
+  fail-closed runtime-surface gate 固化；
+- pruning 后真实 Chromium SiteSearch Pagefind DOC 搜索继续通过，完整 focused E2E **6/6**；
+- total dist JavaScript **209.5 → 69.7 KiB (-66.7%)**，预算收紧至 **100 KiB**；CSS
+  **179.5 → 157.9 KiB (-12.0%)**，预算收紧至 **190 KiB**；
+- 该变化缩小部署 artifact 与无 owner surface；由于旧 UI bundle 本来不在页面请求链，不能把
+  161.1 KiB 误报为首屏网络节省。
+
+Tools E2E 在 pruning 验证中暴露一次测试竞态：IntersectionObserver 可能先于测试点击 load-more button
+加载完整 catalog。测试已改为在 navigation 前监听 catalog response，并通过 sentinel 触发真实 lazy-load
+契约；产品实现无需修改。
+
 ## 5. 暂不做
 
 - 不因为 `BiomeTree.astro`、`InfrastructureShowcase.astro` 文件长就机械拆分；

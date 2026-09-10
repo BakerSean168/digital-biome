@@ -12,8 +12,8 @@
     "dev": "pnpm sync && astro dev",
     "dev:only": "astro dev",
     "dev:pull": "git submodule update --remote --merge && pnpm sync && astro dev",
-    "build": "pnpm sync && astro build && pagefind --site dist && tsx scripts/postbuild.ts",
-    "build:only": "astro build && pagefind --site dist && tsx scripts/postbuild.ts",
+    "build": "pnpm sync && astro build && pagefind --site dist && pnpm prune:pagefind && tsx scripts/postbuild.ts",
+    "build:only": "astro build && pagefind --site dist && pnpm prune:pagefind && tsx scripts/postbuild.ts",
     "check": "astro check",
     "check:edge": "tsc -p functions/tsconfig.json --noEmit",
     "test:edge": "tsx --test 'edge/**/*.test.ts'",
@@ -32,7 +32,8 @@
     "refresh:github-contributions": "node scripts/bootstrap-github-cache.js",
     "pull-notes": "git submodule update --remote --merge",
     "astro": "astro",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",
