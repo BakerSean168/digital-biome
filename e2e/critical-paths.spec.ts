@@ -89,14 +89,15 @@ test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category
   expect(html).not.toContain('data-tools-catalog');
   expect(html).not.toMatch(/\sonerror=/);
 
-  await page.goto('/tools/');
-  await expect(page.locator('[data-bookmark-card]')).toHaveCount(16);
   const fullCatalogResponse = page.waitForResponse(response =>
     response.url().endsWith('/data/tools-catalog.json') && response.ok(),
   );
-  await page.locator('#bookmark-load-more').click();
+  await page.goto('/tools/');
+  await expect(page.locator('[data-bookmark-card]')).toHaveCount(16);
+  await page.locator('#bookmark-load-more-sentinel').scrollIntoViewIfNeeded();
   await fullCatalogResponse;
   await expect(page.locator('[data-bookmark-card]')).toHaveCount(totalAssignments);
+
 
   const group = catalog.find(entry => entry.bookmarks.length > 0);
   expect(group).toBeTruthy();

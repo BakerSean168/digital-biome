@@ -3,6 +3,7 @@ import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { assertNotesCatalogBoundary, INITIAL_NOTE_CARD_COUNT } from './notes-catalog-boundary';
 import { assertAboutMarkupBoundary } from './about-markup-boundary';
+import { assertPagefindRuntimeSurface } from './pagefind-runtime-surface';
 import { assertToolsCatalogBoundary } from './tools-catalog-boundary';
 import { INITIAL_TOOL_CARD_COUNT } from '../src/view-models/tools-catalog';
 
@@ -32,8 +33,8 @@ type AssetBudget = {
 };
 
 const ASSET_BUDGETS: readonly AssetBudget[] = [
-  { label: 'dist JavaScript', extension: '.js', maxKiB: 250 },
-  { label: 'dist CSS', extension: '.css', maxKiB: 220 },
+  { label: 'dist JavaScript', extension: '.js', maxKiB: 100 },
+  { label: 'dist CSS', extension: '.css', maxKiB: 190 },
   { label: 'notes catalog', file: 'data/notes-catalog.json', maxKiB: 1400 },
   { label: 'tools catalog', file: 'data/tools-catalog.json', maxKiB: 80, gzipKiB: 24 },
 ];
@@ -176,6 +177,7 @@ if (!fs.existsSync(DIST_DIR)) {
 
 assertPageBudgets();
 assertAssetBudgets();
+assertPagefindRuntimeSurface(path.join(DIST_DIR, 'pagefind'));
 assertAboutMarkup();
 reportNotesCatalog();
 reportToolsCatalog();

@@ -77,15 +77,6 @@
   --cyber-grid-color: rgba(139, 154, 70, 0.05);
 
   /* Pagefind overrides */
-  --pagefind-ui-scale: 1;
-  --pagefind-ui-primary: var(--primary);
-  --pagefind-ui-text: var(--text-main);
-  --pagefind-ui-background: var(--card);
-  --pagefind-ui-border: var(--border-color);
-  --pagefind-ui-tag: var(--bg-secondary);
-  --pagefind-ui-border-width: 1px;
-  --pagefind-ui-border-radius: var(--radius-md);
-  --pagefind-ui-font: inherit;
 }
 
 html.dark {
