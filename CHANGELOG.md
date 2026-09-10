@@ -19,6 +19,22 @@ artifact measurements, not synthetic browser timing claims.
 - Notes list pages no longer render empty graph/outline columns; note detail pages expose an explicit
   back-to-Notes route, and title decoration now preserves frontmatter-derived text through DOM
   `textContent` rather than `innerHTML`.
+- `/tools` now renders only 16 real bookmark cards into the initial HTML and lazy-loads the complete
+  public catalog from `/data/tools-catalog.json` for search, category filtering, or continued browsing.
+  The catalog is schema-validated, single-flight/retryable, and shares the existing bookmark repository
+  as its publication authority.
+- Bookmark favicon fallback no longer relies on inline `onerror` code or raw custom-icon HTML; static
+  and deferred cards use DOM event handling and text-only fallbacks.
+
+
+### Performance
+
+DB-P2-201 was measured against the same 19-category / 180-assignment content set before and after
+implementation. `/tools` raw HTML fell from 633.96 KiB to 63.46 KiB (-90.0%); gzip HTML fell from
+34.21 KiB to 8.19 KiB (-76.1%). The deferred tools catalog is 47.75 KiB raw / 14.75 KiB gzip. The
+BookmarkGrid client chunk grew from 4.28 KiB raw / 1.57 KiB gzip to 10.65 KiB / 3.76 KiB to own
+lazy loading, filtering, keyboard navigation, safe dynamic DOM construction, and recovery behavior.
+The initial HTML + grid JavaScript raw footprint still falls by about 88.4%.
 
 ## [0.1.0] - 2026-09-10
 

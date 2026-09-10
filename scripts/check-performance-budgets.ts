@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { assertNotesCatalogBoundary, INITIAL_NOTE_CARD_COUNT } from './notes-catalog-boundary';
+import { assertToolsCatalogBoundary } from './tools-catalog-boundary';
+import { INITIAL_TOOL_CARD_COUNT } from '../src/view-models/tools-catalog';
 
 type PageBudget = {
   route: string;
@@ -16,7 +18,7 @@ const PAGE_BUDGETS: readonly PageBudget[] = [
   { route: '/notes', file: 'notes/index.html', rawKiB: 200, gzipKiB: 60 },
   { route: '/about', file: 'about/index.html', rawKiB: 400, gzipKiB: 50 },
   { route: '/discover', file: 'discover/index.html', rawKiB: 64, gzipKiB: 20 },
-  { route: '/tools', file: 'tools/index.html', rawKiB: 700, gzipKiB: 48 },
+  { route: '/tools', file: 'tools/index.html', rawKiB: 96, gzipKiB: 16 },
 ];
 
 type AssetBudget = {
@@ -24,12 +26,14 @@ type AssetBudget = {
   file?: string;
   extension?: string;
   maxKiB: number;
+  gzipKiB?: number;
 };
 
 const ASSET_BUDGETS: readonly AssetBudget[] = [
   { label: 'dist JavaScript', extension: '.js', maxKiB: 250 },
   { label: 'dist CSS', extension: '.css', maxKiB: 220 },
   { label: 'notes catalog', file: 'data/notes-catalog.json', maxKiB: 1400 },
+  { label: 'tools catalog', file: 'data/tools-catalog.json', maxKiB: 80, gzipKiB: 24 },
 ];
 
 function collectFiles(directory: string): string[] {
@@ -98,8 +102,19 @@ function assertAssetBudgets(): void {
     }
 
     const status = bytes <= limit ? 'PASS' : 'FAIL';
-    console.log(`${label}: ${formatKiB(bytes)} / ${budget.maxKiB} KiB [${status}]`);
+    const gzipBytes = assetPath && budget.gzipKiB !== undefined
+      ? gzipSync(fs.readFileSync(assetPath)).byteLength
+      : null;
+    const gzipLimit = budget.gzipKiB === undefined ? null : budget.gzipKiB * KIB;
+    const gzipStatus = gzipBytes === null || gzipLimit === null || gzipBytes <= gzipLimit ? 'PASS' : 'FAIL';
+    const gzipReport = gzipBytes === null || budget.gzipKiB === undefined
+      ? ''
+      : `, gzip ${formatKiB(gzipBytes)} / ${budget.gzipKiB} KiB [${gzipStatus}]`;
+    console.log(`${label}: raw ${formatKiB(bytes)} / ${budget.maxKiB} KiB [${status}]${gzipReport}`);
     if (bytes > limit) failures.push(`${label} exceeds ${budget.maxKiB} KiB`);
+    if (gzipBytes !== null && gzipLimit !== null && gzipBytes > gzipLimit) {
+      failures.push(`${label} gzip exceeds ${budget.gzipKiB} KiB`);
+    }
   }
 
   if (failures.length > 0) {
@@ -121,6 +136,21 @@ function reportNotesCatalog(): void {
   console.log(`notes catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_NOTE_CARD_COUNT} SSR cards)`);
 }
 
+
+function reportToolsCatalog(): void {
+  const catalogPath = path.join(DIST_DIR, 'data', 'tools-catalog.json');
+  const toolsPath = path.join(DIST_DIR, 'tools', 'index.html');
+  if (!fs.existsSync(catalogPath) || !fs.existsSync(toolsPath)) {
+    throw new Error('Tools catalog or /tools HTML is missing from dist.');
+  }
+
+  const toolsHtml = fs.readFileSync(toolsPath, 'utf8');
+  const catalogPayload: unknown = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+  assertToolsCatalogBoundary(toolsHtml, catalogPayload);
+
+  console.log(`tools catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_TOOL_CARD_COUNT} SSR cards)`);
+}
+
 if (!fs.existsSync(DIST_DIR)) {
   throw new Error('dist/ is missing. Run pnpm build:only before checking performance budgets.');
 }
@@ -128,4 +158,5 @@ if (!fs.existsSync(DIST_DIR)) {
 assertPageBudgets();
 assertAssetBudgets();
 reportNotesCatalog();
+reportToolsCatalog();
 console.log('Performance budget check passed.');
