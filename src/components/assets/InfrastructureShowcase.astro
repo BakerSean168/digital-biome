@@ -1,5 +1,4 @@
 ---
-import type { AssetCard } from '../../types/notes';
 import type { ResolvedTopologyNode } from '../../utils/infrastructure';
 import { Shield, Activity, Lock, ExternalLink, Cpu, Globe, Server, Lightbulb } from '@lucide/astro';
 
@@ -7,7 +6,6 @@ interface Props {
   title: string;
   description: string;
   resolvedNodes: Record<string, ResolvedTopologyNode>;
-  featuredAssets: AssetCard[];
   heroFacts: string[];
   locale?: 'zh' | 'en';
 }
@@ -16,7 +14,6 @@ const {
   title,
   description,
   resolvedNodes,
-  featuredAssets,
   locale = 'zh',
 } = Astro.props;
 

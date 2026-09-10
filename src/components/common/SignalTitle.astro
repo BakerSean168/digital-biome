@@ -3,9 +3,10 @@ interface Props {
   title: string;
   class?: string;
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span';
+  subtitle?: string;
 }
 
-const { title, class: className = '', as: Tag = 'h1' } = Astro.props;
+const { title, class: className = '', as: Tag = 'h1' }: Props = Astro.props;
 ---
 
 <Tag class={`signal-decode relative inline-block ${className}`} data-text={title}>
@@ -22,7 +23,7 @@ const { title, class: className = '', as: Tag = 'h1' } = Astro.props;
     let iterations = 0;
     
     const interval = setInterval(() => {
-      el.textContent = target.split('').map((letter, index) => {
+      el.textContent = target.split('').map((_letter, index) => {
         if (index < iterations) {
           return target[index];
         }

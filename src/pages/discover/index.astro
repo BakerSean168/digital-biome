@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SignalTitle from '../../components/common/SignalTitle.astro';
 import { getPublicAssets, getAssetHref } from '../../utils/notes';
+import { serializeDiscoverAssetResults } from '../../browser/discover';
 
 const assetEntries = getPublicAssets();
 
@@ -16,8 +17,7 @@ const assetResults = assetEntries.map(entry => ({
   href: getAssetHref(entry.data),
 }));
 
-const initialQuery = Astro.url.searchParams.get('q') || '';
-const initialScope = Astro.url.searchParams.get('scope') || 'all';
+const assetResultsJson = serializeDiscoverAssetResults(assetResults);
 ---
 
 <BaseLayout title="Discover" description="[ GLOBAL_INDEX ] 全域高亮索引">
@@ -33,7 +33,6 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
         <input
           id="discover-query"
           type="search"
-          value={initialQuery}
           placeholder="Query the biome... (e.g. Astro, PVE, 领域驱动)"
           class="w-full border border-border bg-background px-4 py-3 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary/50"
         />
@@ -41,9 +40,9 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
           id="discover-scope"
           class="border border-border bg-background px-4 py-3 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary/50"
         >
-          <option value="all" selected={initialScope === 'all'}>全部</option>
-          <option value="assets" selected={initialScope === 'assets'}>仅资产</option>
-          <option value="notes" selected={initialScope === 'notes'}>仅笔记</option>
+          <option value="all" selected>全部</option>
+          <option value="assets">仅资产</option>
+          <option value="notes">仅笔记</option>
         </select>
       </div>
     </section>
@@ -54,46 +53,48 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
       <div id="discover-empty" class="hidden border border-dashed border-border bg-card/40 px-6 py-10 text-sm font-mono text-muted-foreground">
         没有匹配结果，试试更短的关键词，或者切换到“全部”范围。
       </div>
-      <div id="discover-dev-warning" class="hidden border border-amber-500/20 bg-amber-500/5 p-6 text-sm font-mono text-amber-500 mt-4">
-        ⚠️ 开发环境下未检测到 Pagefind 索引，目前仅展示资产数据。如需验证完整的知识笔记搜索，请先执行 <code>pnpm build</code> 进行打包。
-      </div>
+      <div id="discover-search-status" class="hidden border border-amber-500/20 bg-amber-500/5 p-6 text-sm font-mono text-amber-500 mt-4" role="status" aria-live="polite"></div>
     </section>
   </main>
+
+  <template id="discover-asset-data" set:html={assetResultsJson}></template>
 </BaseLayout>
 
-<script define:vars={{ assetResults, initialQuery, initialScope }}>
-  const queryInput = document.getElementById('discover-query');
-  const scopeInput = document.getElementById('discover-scope');
+<script>
+  import { createSearchIntentScheduler, type SearchIntent } from '../../browser/search-intent';
+  import { filterDiscoverAssetResults, readDiscoverAssetResults, toDiscoverResult, type DiscoverItem, type DiscoverScope } from '../../browser/discover';
+  import { loadPagefind, searchPagefind } from '../../browser/pagefind';
+
+  function normalizeScope(value: string | null): DiscoverScope {
+    if (value === 'assets' || value === 'notes') return value;
+    return 'all';
+  }
+
+  const assetResults = readDiscoverAssetResults(document.getElementById('discover-asset-data'));
+  const queryInput = document.getElementById('discover-query') as HTMLInputElement | null;
+  const scopeInput = document.getElementById('discover-scope') as HTMLSelectElement | null;
   const resultsEl = document.getElementById('discover-results');
   const countEl = document.getElementById('discover-count');
   const emptyEl = document.getElementById('discover-empty');
-  const devWarningEl = document.getElementById('discover-dev-warning');
+  const statusEl = document.getElementById('discover-search-status');
+  const searchIntents = createSearchIntentScheduler(150, undefined, () => {
+    resultsEl?.replaceChildren();
+    if (countEl) countEl.textContent = '';
+    emptyEl?.classList.add('hidden');
+    setSearchStatus();
+  });
+  const runtimeUrl = new URL(window.location.href);
+  const initialQuery = runtimeUrl.searchParams.get('q') || '';
+  const initialScope = normalizeScope(runtimeUrl.searchParams.get('scope'));
 
-  let pagefind = null;
+  if (queryInput) queryInput.value = initialQuery;
+  if (scopeInput) scopeInput.value = initialScope;
 
-  async function loadPagefind() {
-    if (pagefind) return pagefind;
-    try {
-      // @ts-ignore
-      pagefind = await import('/pagefind/pagefind.js');
-      // @ts-ignore
-      await pagefind.init();
-      devWarningEl?.classList.add('hidden');
-      return pagefind;
-    } catch (e) {
-      console.warn('Pagefind is not available in dev mode.', e);
-      if (queryInput?.value.trim()) {
-        devWarningEl?.classList.remove('hidden');
-      }
-      return null;
-    }
-  }
-
-  function render(items) {
+  function render(items: readonly DiscoverItem[]): void {
     if (!resultsEl || !countEl || !emptyEl) return;
 
     countEl.textContent = `共 ${items.length} 条结果`;
-    resultsEl.innerHTML = '';
+    resultsEl.replaceChildren();
 
     if (items.length === 0) {
       emptyEl.classList.remove('hidden');
@@ -107,28 +108,49 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
       const card = document.createElement('a');
       card.href = item.href;
       card.className = 'group border border-border bg-transparent p-5 transition-all duration-300 hover:border-primary/40 hover:bg-card/40';
-      card.innerHTML = `
-        <div class="mb-3 flex items-center gap-2">
-          <span class="border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-mono tracking-widest text-primary">${item.label}</span>
-          <span class="text-[10px] font-mono text-muted-foreground tracking-widest">[ ${item.scope.toUpperCase()} ]</span>
-        </div>
-        <h2 class="text-xl font-serif text-foreground group-hover:text-primary transition-colors">${item.title}</h2>
-        <p class="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground font-mono">${item.description || '[ EMPTY_SLOT ]'}</p>
-        <div class="mt-4 flex flex-wrap gap-2">
-          ${(item.tags || []).slice(0, 4).map(tag => `<span class="border border-border bg-transparent px-2 py-0.5 text-[10px] font-mono text-muted-foreground">#${tag.includes('/') ? tag.split('/').pop() : tag}</span>`).join('')}
-        </div>
-      `;
+
+      const header = document.createElement('div');
+      header.className = 'mb-3 flex items-center gap-2';
+
+      const label = document.createElement('span');
+      label.className = 'border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-mono tracking-widest text-primary';
+      label.textContent = item.label;
+      header.appendChild(label);
+
+      const scope = document.createElement('span');
+      scope.className = 'text-[10px] font-mono text-muted-foreground tracking-widest';
+      scope.textContent = `[ ${item.scope.toUpperCase()} ]`;
+      header.appendChild(scope);
+      card.appendChild(header);
+
+      const title = document.createElement('h2');
+      title.className = 'text-xl font-serif text-foreground group-hover:text-primary transition-colors';
+      title.textContent = item.title;
+      card.appendChild(title);
+
+      const description = document.createElement('p');
+      description.className = 'mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground font-mono';
+      description.textContent = item.description || '[ EMPTY_SLOT ]';
+      card.appendChild(description);
+
+      const tags = document.createElement('div');
+      tags.className = 'mt-4 flex flex-wrap gap-2';
+      item.tags.slice(0, 4).forEach(tag => {
+        const tagElement = document.createElement('span');
+        tagElement.className = 'border border-border bg-transparent px-2 py-0.5 text-[10px] font-mono text-muted-foreground';
+        const displayTag = tag.includes('/') ? tag.split('/').pop() || tag : tag;
+        tagElement.textContent = `#${displayTag}`;
+        tags.appendChild(tagElement);
+      });
+      card.appendChild(tags);
+
       fragment.appendChild(card);
     });
 
     resultsEl.appendChild(fragment);
   }
 
-  async function filterResults() {
-    const query = (queryInput?.value || '').trim().toLowerCase();
-    const scope = scopeInput?.value || 'all';
-
-    // 1. Update URL search params
+  function updateUrl(query: string, scope: DiscoverScope): void {
     const url = new URL(window.location.href);
     if (query) {
       url.searchParams.set('q', query);
@@ -141,104 +163,54 @@ const initialScope = Astro.url.searchParams.get('scope') || 'all';
       url.searchParams.delete('scope');
     }
     window.history.replaceState({}, '', url);
+  }
 
-    // 2. Query empty state
+  function setSearchStatus(message?: string): void {
+    if (!statusEl) return;
+    statusEl.textContent = message || '';
+    statusEl.classList.toggle('hidden', !message);
+  }
+
+  async function filterResults(intent: SearchIntent, scope: DiscoverScope): Promise<void> {
+    const query = intent.query.trim().toLowerCase();
+    if (scopeInput) scopeInput.value = scope;
+    updateUrl(query, scope);
+
     if (!query) {
-      devWarningEl?.classList.add('hidden');
+      setSearchStatus();
       if (scope === 'notes') {
         render([]);
         if (countEl) countEl.textContent = '请输入关键词开始搜索 2400+ 篇知识笔记...';
       } else {
-        // Show assets when empty query
-        const filteredAssets = assetResults.filter(item => {
-          return scope === 'all' || item.scope === scope;
-        });
-        render(filteredAssets);
+        render(assetResults.filter(item => scope === 'all' || item.scope === scope));
       }
       return;
     }
 
-    // 3. Try searching notes and assets via Pagefind
-    const pf = await loadPagefind();
-    if (pf) {
-      devWarningEl?.classList.add('hidden');
-      try {
-        const search = await pf.search(query);
-        const rawResults = await Promise.all(search.results.map(r => r.data()));
-        
-        const formatted = rawResults.map(item => {
-          const itemUrl = item.url;
-          let itemScope = 'notes';
-          let label = 'note';
-          
-          if (itemUrl.includes('/services/')) {
-            itemScope = 'assets';
-            label = 'service';
-          } else if (itemUrl.includes('/tools/')) {
-            itemScope = 'assets';
-            label = 'tool';
-          } else if (itemUrl.includes('/infrastructure/')) {
-            itemScope = 'assets';
-            label = 'host';
-          }
-          
-          // Use Pagefind's excerpt
-          const description = item.excerpt || '';
-          const title = item.meta?.title || itemUrl.split('/').pop()?.replace(/-/g, ' ') || 'Untitled';
-          
-          return {
-            id: itemUrl,
-            scope: itemScope,
-            kind: label,
-            label: label,
-            title: title,
-            description: description,
-            tags: [],
-            href: itemUrl,
-          };
-        });
+    const outcome = await searchPagefind(loadPagefind, query);
+    if (!intent.token.isCurrent()) return;
 
-        const filtered = formatted.filter(item => {
-          if (scope === 'all') return true;
-          return item.scope === scope;
-        });
-
-        render(filtered);
-        return;
-      } catch (err) {
-        console.error('Error querying Pagefind:', err);
-      }
+    if (outcome.status === 'success' || outcome.status === 'partial' || outcome.status === 'zero-match') {
+      const formatted = outcome.results
+        .map(item => toDiscoverResult(item, assetResults))
+        .filter((item): item is DiscoverItem => item !== null && (scope === 'all' || item.scope === scope));
+      render(formatted);
+      setSearchStatus(outcome.status === 'partial' ? '部分全文搜索结果暂时无法加载。' : undefined);
+      return;
     }
 
-    // 4. Fallback search (only searches assets in memory)
-    devWarningEl?.classList.remove('hidden');
-    const filteredAssets = assetResults.filter(item => {
-      const matchesScope = scope === 'all' || item.scope === scope;
-      const haystack = [item.title, item.description, item.id, ...(item.tags || [])]
-        .join(' ')
-        .toLowerCase();
-      const matchesQuery = haystack.includes(query);
-      return matchesScope && matchesQuery;
-    });
-
-    render(filteredAssets);
+    setSearchStatus(outcome.status === 'unavailable'
+      ? '全文索引暂时不可用，当前显示匹配的资产结果。'
+      : '全文搜索暂时失败，当前显示匹配的资产结果。');
+    render(filterDiscoverAssetResults(assetResults, query, scope));
   }
 
-  // Debounce helper
-  let debounceTimeout = null;
-  function handleInput() {
-    if (debounceTimeout) clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      filterResults();
-    }, 150);
+  function scheduleFilter(): void {
+    const scope = normalizeScope(scopeInput?.value || 'all');
+    searchIntents.schedule(queryInput?.value || '', intent => void filterResults(intent, scope));
   }
 
-  queryInput?.addEventListener('input', handleInput);
-  scopeInput?.addEventListener('change', filterResults);
-
-  // Initial load
-  if (queryInput && initialQuery) {
-    queryInput.value = initialQuery;
-  }
-  filterResults();
+  queryInput?.addEventListener('input', scheduleFilter);
+  scopeInput?.addEventListener('change', scheduleFilter);
+  void filterResults(searchIntents.start(initialQuery), initialScope);
 </script>

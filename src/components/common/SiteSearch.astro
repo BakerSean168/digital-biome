@@ -12,7 +12,6 @@
       aria-modal="true"
       aria-label="Command Palette"
     >
-      <!-- Input Area -->
       <div class="relative flex items-center border-b border-border/50 px-4 py-4">
         <span class="text-primary/70 font-mono mr-3">&gt;</span>
         <input 
@@ -28,12 +27,10 @@
         </div>
       </div>
       
-      <!-- Results Area -->
+      <div id="cmd-search-status" class="hidden px-4 py-2 text-xs font-mono text-amber-500" role="status" aria-live="polite"></div>
       <div id="cmd-results" class="max-h-[60vh] overflow-y-auto p-2 scrollbar-hide">
-        <!-- JS will populate results here -->
       </div>
       
-      <!-- Footer -->
       <div class="border-t border-border/50 px-4 py-2 bg-muted/10 text-[10px] text-muted-foreground font-mono flex justify-between">
         <span class="flex gap-4">
           <span><kbd class="border border-border/50 rounded px-1 text-[9px] mr-1">ESC</kbd>CLOSE</span>
@@ -57,7 +54,31 @@
 </style>
 
 <script>
-  const ROUTES = [
+  import { createSearchIntentScheduler, type SearchIntent } from '../../browser/search-intent';
+  import { loadPagefind, searchPagefind, type PagefindSearchStatus } from '../../browser/pagefind';
+  import type { PagefindResultData } from '../../browser/pagefind';
+  import { stripMarkupToText } from '../../browser/strip-markup';
+
+  type CommandResult = {
+    type: 'cmd';
+    label: string;
+    title: string;
+    desc: string;
+    href: string;
+    alias?: readonly string[];
+  };
+
+  type SearchResult = {
+    type: 'search';
+    label: string;
+    title: string;
+    desc: string;
+    href: string;
+  };
+
+  type PaletteResult = CommandResult | SearchResult;
+
+  const ROUTES: readonly CommandResult[] = [
     { type: 'cmd', label: 'NAV', title: '首页 / Home', desc: 'Return to Digital Biome root', href: '/' },
     { type: 'cmd', label: 'NAV', title: '博客文章 / Blog', desc: 'Blog posts and engineering logs', href: '/blog', alias: ['/blog', 'blog', 'posts'] },
     { type: 'cmd', label: 'NAV', title: '友链网络 / Friends', desc: 'Friend links and community nodes', href: '/friends', alias: ['/friends', 'friends', 'links'] },
@@ -69,40 +90,62 @@
     { type: 'cmd', label: 'NAV', title: '关于宿主 / About', desc: 'Author profile', href: '/about', alias: ['/about', 'user'] },
   ];
 
-  let pagefindInstance: any = null;
   const searchModal = document.getElementById('search-modal');
   const searchTriggers = document.querySelectorAll('.search-trigger');
-  const cmdInput = document.getElementById('cmd-input') as HTMLInputElement;
+  const cmdInput = document.getElementById('cmd-input') as HTMLInputElement | null;
   const resultsContainer = document.getElementById('cmd-results');
   const loadingIndicator = document.getElementById('cmd-loading');
-  
+  const statusElement = document.getElementById('cmd-search-status');
   let selectedIndex = 0;
-  let currentResults: any[] = [];
+  let currentResults: PaletteResult[] = [];
+  let searchStatus: PagefindSearchStatus = 'success';
+  let searchPending = false;
+  const searchIntents = createSearchIntentScheduler(200, undefined, () => {
+    searchPending = true;
+    selectedIndex = 0;
+    currentResults = [];
+    loadingIndicator?.classList.add('hidden');
+    resultsContainer?.replaceChildren();
+    searchStatus = 'success';
+    renderSearchStatus();
+  });
 
-  async function loadPagefind() {
-    if (pagefindInstance) return pagefindInstance;
-    try {
-      // Bypass Vite's static analysis of public directory imports by using runtime Function compilation
-      // @ts-ignore
-      pagefindInstance = await new Function('return import("/pagefind/pagefind.js")')();
-      await pagefindInstance.init();
-      return pagefindInstance;
-    } catch (e) {
-      console.warn('Pagefind is not available in dev mode.', e);
-      return null;
-    }
+  function toSearchResult(item: PagefindResultData): SearchResult {
+    const fallbackTitle = item.url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
+    return {
+      type: 'search',
+      label: 'DOC',
+      title: item.meta.title || fallbackTitle,
+      desc: stripMarkupToText(item.excerpt),
+      href: item.url,
+    };
   }
 
-  function renderResults() {
+  function renderSearchStatus(): void {
+    if (!statusElement) return;
+    const messages: Partial<Record<PagefindSearchStatus, string>> = {
+      unavailable: '全文索引暂时不可用，仍可使用导航命令。',
+      'query-failed': '全文搜索暂时失败，请稍后重试。',
+      'hydration-failed': '搜索结果暂时无法加载，请稍后重试。',
+      partial: '部分搜索结果暂时无法加载。',
+    };
+    const message = messages[searchStatus] || '';
+    statusElement.textContent = message;
+    statusElement.classList.toggle('hidden', !message);
+  }
+
+  function renderResults(): void {
     if (!resultsContainer) return;
-    resultsContainer.innerHTML = '';
-    
+    resultsContainer.replaceChildren();
+
     if (currentResults.length === 0) {
-      resultsContainer.innerHTML = `
-        <div class="px-4 py-8 text-center font-mono text-xs text-muted-foreground">
-          SYS.WARN: NO_MATCH_FOUND
-        </div>
-      `;
+      const empty = document.createElement('div');
+      empty.className = 'px-4 py-8 text-center font-mono text-xs text-muted-foreground';
+      empty.textContent = searchStatus === 'zero-match' || searchStatus === 'success'
+        ? 'SYS.WARN: NO_MATCH_FOUND'
+        : 'SYS.WARN: SEARCH_UNAVAILABLE';
+      resultsContainer.appendChild(empty);
+      renderSearchStatus();
       return;
     }
 
@@ -114,26 +157,38 @@
         isSelected ? 'border-primary bg-primary/10' : 'border-transparent hover:bg-card-hover/50'
       }`;
       el.dataset.index = index.toString();
-      
+
       const leftCol = document.createElement('div');
       leftCol.className = 'flex items-center gap-3 min-w-0';
-      leftCol.innerHTML = `
-        <span class="shrink-0 text-[9px] font-mono tracking-widest border border-border/50 px-1.5 py-0.5 rounded-sm ${item.type === 'cmd' ? 'text-primary border-primary/30 bg-primary/5' : 'text-muted-foreground'}">
-          [ ${item.label} ]
-        </span>
-        <div class="min-w-0 flex flex-col">
-          <span class="font-mono text-sm truncate transition-colors ${isSelected ? 'text-primary' : 'text-foreground'}">${item.title}</span>
-          ${item.desc ? `<span class="font-mono text-[10px] text-muted-foreground truncate mt-0.5">${item.desc}</span>` : ''}
-        </div>
-      `;
-      
+
+      const badge = document.createElement('span');
+      badge.className = `shrink-0 text-[9px] font-mono tracking-widest border border-border/50 px-1.5 py-0.5 rounded-sm ${item.type === 'cmd' ? 'text-primary border-primary/30 bg-primary/5' : 'text-muted-foreground'}`;
+      badge.textContent = `[ ${item.label} ]`;
+      leftCol.appendChild(badge);
+
+      const titleCol = document.createElement('div');
+      titleCol.className = 'min-w-0 flex flex-col';
+
+      const title = document.createElement('span');
+      title.className = `font-mono text-sm truncate transition-colors ${isSelected ? 'text-primary' : 'text-foreground'}`;
+      title.textContent = item.title;
+      titleCol.appendChild(title);
+
+      if (item.desc) {
+        const description = document.createElement('span');
+        description.className = 'font-mono text-[10px] text-muted-foreground truncate mt-0.5';
+        description.textContent = item.desc;
+        titleCol.appendChild(description);
+      }
+
+      leftCol.appendChild(titleCol);
+      el.appendChild(leftCol);
+
       const rightCol = document.createElement('div');
       rightCol.className = `shrink-0 font-mono text-[10px] text-primary transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`;
       rightCol.textContent = '↵ EXECUTE';
-      
-      el.appendChild(leftCol);
       el.appendChild(rightCol);
-      
+
       el.addEventListener('mouseenter', () => {
         selectedIndex = index;
         updateSelection();
@@ -141,30 +196,29 @@
       el.addEventListener('click', () => {
         executeItem(index);
       });
-      
+
       fragment.appendChild(el);
     });
-    
+
     resultsContainer.appendChild(fragment);
-    
-    // Auto scroll to selection
+    renderSearchStatus();
+
     const selectedEl = resultsContainer.children[selectedIndex];
-    if (selectedEl) {
-      selectedEl.scrollIntoView({ block: 'nearest' });
-    }
+    if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
   }
 
-  function updateSelection() {
+  function updateSelection(): void {
     if (!resultsContainer) return;
     Array.from(resultsContainer.children).forEach((child, index) => {
-      const el = child as HTMLElement;
+      if (!(child instanceof HTMLElement)) return;
+      const el = child;
       if (index === selectedIndex) {
         el.classList.add('border-primary', 'bg-primary/10');
         el.classList.remove('border-transparent', 'hover:bg-card-hover/50');
-        const rightCol = el.lastElementChild as HTMLElement;
+        const rightCol = el.lastElementChild;
         if (rightCol) rightCol.classList.add('opacity-100');
         if (rightCol) rightCol.classList.remove('opacity-0', 'group-hover:opacity-100');
-        
+
         const titleSpan = el.querySelector('.text-foreground, .text-primary');
         if (titleSpan) {
           titleSpan.classList.add('text-primary');
@@ -173,10 +227,10 @@
       } else {
         el.classList.remove('border-primary', 'bg-primary/10');
         el.classList.add('border-transparent', 'hover:bg-card-hover/50');
-        const rightCol = el.lastElementChild as HTMLElement;
+        const rightCol = el.lastElementChild;
         if (rightCol) rightCol.classList.remove('opacity-100');
         if (rightCol) rightCol.classList.add('opacity-0', 'group-hover:opacity-100');
-        
+
         const titleSpan = el.querySelector('.text-foreground, .text-primary');
         if (titleSpan) {
           titleSpan.classList.remove('text-primary');
@@ -186,60 +240,46 @@
     });
   }
 
-  function executeItem(index: number) {
+  function executeItem(index: number): void {
+    if (searchPending) return;
     const item = currentResults[index];
-    if (item && item.href) {
-      window.location.href = item.href;
-    }
+    if (item) window.location.href = item.href;
   }
 
-  let debounceTimer: any = null;
-
-  async function handleSearch(query: string) {
+  async function handleSearch(intent: SearchIntent): Promise<void> {
+    const { query, token } = intent;
     loadingIndicator?.classList.remove('hidden');
-    
+
     const lowerQuery = query.toLowerCase().trim();
-    let results: any[] = [];
-    
-    // 1. Filter local routes/commands
+    const results: PaletteResult[] = [];
+    searchStatus = 'success';
+
     if (lowerQuery) {
-      const cmdMatches = ROUTES.filter(r => {
-        return r.title.toLowerCase().includes(lowerQuery) || 
-               (r.alias && r.alias.some(a => a.includes(lowerQuery)));
+      const commandMatches = ROUTES.filter(route => {
+        return route.title.toLowerCase().includes(lowerQuery)
+          || route.alias?.some(alias => alias.includes(lowerQuery));
       });
-      results.push(...cmdMatches);
+      results.push(...commandMatches);
     } else {
       results.push(...ROUTES);
     }
-    
-    // 2. Pagefind search
+
     if (lowerQuery && !lowerQuery.startsWith('/')) {
-      const pf = await loadPagefind();
-      if (pf) {
-        try {
-          const search = await pf.search(lowerQuery);
-          const rawResults = await Promise.all(search.results.slice(0, 8).map((r: any) => r.data()));
-          const pfResults = rawResults.map(item => ({
-            type: 'search',
-            label: 'DOC',
-            title: item.meta?.title || item.url.split('/').pop()?.replace(/-/g, ' ') || 'Untitled',
-            desc: item.excerpt ? item.excerpt.replace(/<[^>]*>?/gm, '') : '',
-            href: item.url
-          }));
-          results.push(...pfResults);
-        } catch (e) {
-          console.error(e);
-        }
-      }
+      const outcome = await searchPagefind(loadPagefind, lowerQuery, 8);
+      if (!token.isCurrent()) return;
+      searchStatus = outcome.status;
+      results.push(...outcome.results.map(toSearchResult));
     }
-    
+
+    if (!token.isCurrent()) return;
     currentResults = results;
     selectedIndex = 0;
+    searchPending = false;
     loadingIndicator?.classList.add('hidden');
     renderResults();
   }
 
-  function openModal() {
+  function openModal(): void {
     if (!searchModal) return;
     searchModal.classList.remove('hidden');
     searchModal.setAttribute('aria-hidden', 'false');
@@ -247,70 +287,73 @@
     if (cmdInput) {
       cmdInput.value = '';
       cmdInput.focus();
-      handleSearch('');
+      void handleSearch(searchIntents.start(''));
     }
   }
 
-  function closeModal() {
+  function closeModal(): void {
+    searchIntents.invalidate();
+    searchPending = false;
+    currentResults = [];
+    selectedIndex = 0;
+    loadingIndicator?.classList.add('hidden');
+    resultsContainer?.replaceChildren();
+    searchStatus = 'success';
+    renderSearchStatus();
     if (!searchModal) return;
     searchModal.classList.add('hidden');
     searchModal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
 
-  // Bind Events
   searchTriggers.forEach(trigger => {
     trigger.addEventListener('click', openModal);
   });
 
-  searchModal?.addEventListener('click', (e) => {
-    if (e.target === searchModal || e.target === searchModal.firstElementChild) {
+  searchModal?.addEventListener('click', event => {
+    if (event.target === searchModal || event.target === searchModal.firstElementChild) {
       closeModal();
     }
   });
 
-  cmdInput?.addEventListener('input', (e) => {
-    const target = e.target as HTMLInputElement;
-    const val = target.value;
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      handleSearch(val);
-    }, 200);
+  cmdInput?.addEventListener('input', event => {
+    const target = event.target as HTMLInputElement;
+    searchIntents.schedule(target.value, intent => void handleSearch(intent));
   });
 
-  document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault();
+  document.addEventListener('keydown', event => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault();
       if (searchModal?.classList.contains('hidden')) {
         openModal();
       } else {
         closeModal();
       }
     }
-    
+
     if (searchModal?.classList.contains('hidden')) return;
-    
-    if (e.key === 'Escape') {
-      e.preventDefault();
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
       closeModal();
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
       if (selectedIndex < currentResults.length - 1) {
         selectedIndex++;
         updateSelection();
-        const selectedEl = resultsContainer?.children[selectedIndex] as HTMLElement;
+        const selectedEl = resultsContainer?.children[selectedIndex];
         if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
       }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
       if (selectedIndex > 0) {
         selectedIndex--;
         updateSelection();
-        const selectedEl = resultsContainer?.children[selectedIndex] as HTMLElement;
+        const selectedEl = resultsContainer?.children[selectedIndex];
         if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
       }
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
       executeItem(selectedIndex);
     }
   });

@@ -287,6 +287,50 @@ PR CI 在锁定 vault SHA 完成 `pnpm sync` 后执行 `verify:full`。
 - 浏览器功能：Notes initial list、load more、q、tag、Pagefind SiteSearch、Discover fallback；
 - ForgeFlow exact implementation/review revisions、provider cleanup、worktree retirement、project lease release。
 
+### 6.1 DB-OPT-104 integrated evidence
+
+在集成 `f5538e3`、`00e6f91`、`12ba850` 后，2026-09-09 的本地完整门禁结果如下。尺寸均来自同一次 production build；KiB 按 1024 字节计算。下表的 Pagefind 数字是该本地 run 的结果，不代表 GitHub Actions 的独立 run。
+
+| 项目 | 结果 |
+|---|---|
+| `pnpm verify:full` | PASS；端到端耗时 2:03.43，峰值 RSS 约 2.66 GiB |
+| server-side/static build | 3512 个页面；无独立 server test suite |
+| `pnpm test:edge` | 19/19 |
+| `pnpm test:unit` | 21/21，包含 `src/browser/pagefind.test.ts` 的 5 个 Pagefind adapter tests |
+| `pnpm test:infrastructure` | 3/3 |
+| `pnpm check` | 127 files；0 errors / 0 warnings / 0 hints |
+| Astro build | PASS；41.70 s，峰值 RSS 约 2.88 GiB |
+| Pagefind | PASS；本地 override run：3512 pages、45220 words；30.397 s |
+| leak scan | PASS；检查 130 个敏感值 |
+
+GitHub Actions 的独立 `check` run 对 exact commit `052e950139c246ce1b044744e23f80df43fcc7ee` 记录为 3512 pages、45219 words；这与上述本地 override run 的 45220 words 保留为两个有明确 provenance 的测量，不做数值抹平。
+
+| 页面 | raw HTML | gzip HTML | budget (raw / gzip) |
+|---|---:|---:|---:|
+| `/notes` | 47.2 KiB | 9.2 KiB | 200 / 60 KiB |
+| `/about` | 355.1 KiB | 21.1 KiB | 400 / 50 KiB |
+| `/discover` | 23.7 KiB | 7.4 KiB | 64 / 20 KiB |
+| `/tools` | 633.8 KiB | 34.7 KiB | 700 / 48 KiB |
+
+构建产物中的 JavaScript 总量为 198.3 KiB，CSS 总量为 175.9 KiB。`/data/notes-catalog.json` 为 1260.7 KiB；它由 Astro build 生成，不出现在 `/notes/index.html`，仅在搜索、标签筛选或继续加载时由浏览器请求并缓存。首屏静态 HTML 保留 12 条真实公开笔记。
+
+Notes 的首屏、lazy catalog/filter contract（包括 extracted deferred loader orchestration）、Pagefind adapter normalization/cache、Discover 的 asset fallback 由 focused tests 与静态产物检查覆盖；真实浏览器交互仍应在部署预览中做一次冒烟验证。当前 sandbox 未安装 Git LFS，因此本地门禁使用同 SHA 的已填充 Thought Forest checkout 配合 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 覆盖；CI 仍通过 pinned submodule 的标准 `pnpm sync` 执行。
+
+### 6.2 R2 gate-hardening evidence
+
+R2 的本地 final run 使用以下同 SHA vault override：
+
+```bash
+NO_COLOR=1 \
+NOTES_VAULT_ROOT=/home/dev/projects/digital-biome/thought-forest \
+NOTES_UPSTREAM_GENERATED=/home/dev/projects/digital-biome/thought-forest/generated \
+pnpm verify:full
+```
+
+结果为 PASS：`pnpm check` 为 137 files、0 errors / 0 warnings / 0 hints；edge 19/19、unit 33/33、infrastructure 6/6。`pnpm check:performance` 也为 PASS：`/notes` 47.8 KiB raw / 9.4 KiB gzip、catalog 1260.7 KiB、12 条 SSR cards，dist JavaScript 201.0 KiB、CSS 176.3 KiB。该静态门禁按生成 HTML 中的 card IDs 对照 catalog 前 12 项，并拒绝 deferred IDs、catalog filename 和 catalog data island；浏览器 DOM/IntersectionObserver 的真实交互仍未在本地 preview 中执行。
+
+在这次 build 生成的 `dist` 上，随后单独执行的 Pagefind v1.4.0 local run 记录为 3512 pages、45220 words、29.887 s。该数字只代表此 local run。GitHub Actions 当前 R2 `check` run `34324080681`（exact code commit `073ffb0382a0c5271fe39b5710a54dcff7bd49c7`）记录为 3512 pages、45219 words、23.667 s；同一 run 的 performance budget 为 PASS，`/notes` 为 47.8 / 9.4 KiB、catalog 为 1260.7 KiB、12 条 SSR cards。GitHub Actions 对 exact commit `052e950139c246ce1b044744e23f80df43fcc7ee` 的历史独立记录也是 45219 words。上述 local 与 GitHub 数字保留各自 run/source provenance，不视为同一次测量。
+
 ## 7. ForgeFlow real-project acceptance
 
 本计划刻意适合作为 ForgeFlow v1.4.0 的真实项目验证：

@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SignalTitle from '../../components/common/SignalTitle.astro';
-import { Github, BookMarked, ArrowRight, Terminal } from '@lucide/astro';
+import { GitBranch, BookMarked, ArrowRight } from '@lucide/astro';
 import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../constants';
 import { getAllNoteTags, getRecentNotesWithDate } from '../../utils/notes';
 import { formatTimeAgo } from '../../utils/date';
@@ -17,6 +17,7 @@ const filteredTags = Array.from(allTagsMap.entries())
     return !lowerTag.startsWith('status/') && !lowerTag.startsWith('type/');
   })
   .sort((a, b) => b[1] - a[1]);
+const representativeTags = filteredTags.slice(0, 80);
 
 const recentNotes = await getRecentNotesWithDate(3);
 const recentReads = recentNotes.map(item => ({
@@ -32,7 +33,7 @@ const recentReads = recentNotes.map(item => ({
   <!-- Row 1: Full-Viewport Hero with Background Scrolling Tag Wall -->
   <section class="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent group/hero-section">
     <!-- Background Scrolling Tag Wall -->
-    <ScrollingTagWall tags={filteredTags} lang="zh" />
+    <ScrollingTagWall tags={representativeTags} lang="zh" />
     
     <!-- Foreground Centered Hero Content -->
     <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center gap-6 px-6">
@@ -90,7 +91,7 @@ const recentReads = recentNotes.map(item => ({
             <h3 class="text-sm font-mono tracking-widest text-muted-foreground hidden sm:block">GITHUB_ACTIVITY</h3>
             <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
               <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline-sm !font-mono !text-[11px] !rounded-none">
-                [ GITHUB ] <Github size={14} />
+                [ GITHUB ] <GitBranch size={14} />
               </a>
             </div>
           </div>

@@ -4,7 +4,7 @@ Auto-generated from all feature plans. Last updated: 2026-03-01
 
 ## Active Technologies
 
-- TypeScript 5.9.x + Astro 5.x, @astrojs/netlify
+- TypeScript 5.9.x + Astro 5.x, Cloudflare Pages + Pages Functions
 - Tailwind CSS v4 (via `@tailwindcss/vite`, CSS-first config, no `tailwind.config.*`)
 - Lucide Icons (via `@lucide/astro`)
 
@@ -12,33 +12,32 @@ Auto-generated from all feature plans. Last updated: 2026-03-01
 
 ```text
 src/
-├── components/          # Astro 组件
-│   ├── common/          # 公共组件（Header, Footer, ThemeIcon, SiteSearch）
-│   ├── dashboard/       # 首页 Dashboard 组件
-│   ├── resume/          # 个人简历组件
-│   └── notes/           # 笔记组件（NotesSidebar, TableOfContents, Backlinks）
-├── content/             # 内容集合（Astro Content Collections）
-│   ├── notes/obsidian/  # Obsidian 同步笔记（.gitignored，由 pnpm sync 生成）
-│   └── meta/            # 元数据（简历等）
-├── layouts/             # 页面布局
-│   ├── BaseLayout.astro # 唯一的 <html> 壳，所有 layout 必须嵌套它
-│   ├── DashboardLayout.astro
-│   └── NotesLayout.astro
-├── pages/               # 页面路由
-│   ├── index.astro      # Dashboard (/)
-│   ├── about/           # 关于页 + 简历
-│   └── notes/           # 笔记列表 + 详情
-├── styles/
-│   └── global.css       # 全局样式 + Tailwind 入口 + CSS 变量（Design Tokens）
-└── utils/               # 工具函数 / Remark 插件
+├── components/          # Astro components
+│   ├── assets/          # Infrastructure and asset views
+│   ├── common/          # Header, footer, search, and shared UI
+│   ├── dashboard/       # Dashboard components
+│   └── notes/           # Notes navigation and reading views
+├── data/                # Generated public projection and indexes (gitignored)
+├── domain/              # Routing and visibility rules
+├── layouts/             # Base, dashboard, and notes layouts
+├── pages/               # Static Astro routes
+├── repositories/        # Content, asset, and index access
+├── styles/              # Global CSS and design tokens
+├── types/               # Shared content and asset types
+├── utils/               # Sync, date, infrastructure, and Markdown helpers
+└── view-models/         # Browser and page presentation models
+
+functions/               # Cloudflare Pages Functions
+scripts/                 # Sync, validation, and build tooling
+thought-forest/          # Pinned private knowledge-source submodule
 ```
 
 ## Commands & Development Specifications
 
-- **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步与favicons处理。
-- **不要在开发时使用 `pnpm build`**：开发过程中不要使用 `pnpm build`。因为这会触发耗时且不需要的笔记全量打包与处理。开发环境自带热更新，在 `dev:only` 模式下直接预览即可。
-- **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm astro check` 进行代码准确性和 TypeScript 类型诊断。
-- **提交前运行 build:only 测试**：在提交代码前，必须使用 `pnpm build:only` 对纯前端逻辑进行构建测试，确保没有任何编译阻碍。
+- **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步。
+- **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm check` 进行 Astro、内容和 TypeScript 诊断。
+- **可复用验证门禁**：`pnpm verify` 运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
+- **提交前运行完整门禁**：同步 pinned Thought Forest 后运行 `pnpm verify:full`；仅需构建时可使用 `pnpm build:only`。
 
 ## Context Workflow
 
@@ -86,11 +85,13 @@ src/
 
 ## Recent Changes
 
-- 001-project-core: Added TypeScript 5.9.x + Astro 5.x, @astrojs/netlify
+- 站点部署已对齐 Cloudflare Pages + Pages Functions，私有接口由 Cloudflare Access 保护
 - Tailwind CSS v4 集成，global.css 添加 @import "tailwindcss"
 - Lucide Icons (@lucide/astro) 集成
 - Layout 架构优化：BaseLayout 作为唯一 HTML 壳，DashboardLayout 嵌套 BaseLayout
-- 笔记系统重构：wiki -> notes，支持层级标签，修复同步脚本标签丢失问题
+- 笔记列表首屏只渲染 12 条，完整 catalog 延迟加载；About 标签墙使用有界代表性标签
+- SiteSearch 与 Discover 共用 typed Pagefind browser adapter
+- `pnpm verify` / `pnpm verify:full` 覆盖诊断、测试、生产构建、泄漏扫描和性能预算
 
 <!-- MANUAL ADDITIONS START -->
 ## 笔记仓库配置
@@ -100,14 +101,19 @@ src/
 ```ts
 export const notesConfig = {
   vault: {
-    path: 'thought-forest/z',  // Obsidian vault 路径（submodule）
-    assets: 'thought-forest/assets',
+    notesPath: 'thought-forest/z',
+    assetNotesPath: 'thought-forest/assets',
+    configPath: 'thought-forest/config',
+    mediaPath: ['thought-forest/sources/attachments', 'thought-forest/attachments/images'],
     include: ['**/*.md'],
-    exclude: ['**/.git/**', '**/node_modules/**', '**/.obsidian/**'],
+    exclude: ['**/.git/**', '**/node_modules/**', '**/.obsidian/**', '**/.trash/**'],
   },
   output: {
-    notes: 'src/content/notes/obsidian',  // 同步输出目录
+    notes: 'src/data/obsidian',
     assets: 'public/vault-assets',
+  },
+  upstream: {
+    generatedPath: 'thought-forest/generated',
   },
 };
 ```

@@ -22,7 +22,7 @@ interface Props {
   entry: AssetNoteEntry;
 }
 
-const { entry } = Astro.props;
+const { entry }: Props = Astro.props;
 
 const noteId = entry.id; // e.g. "obsidian/assets/hosts/aliyun-chengdu-dailyuse-vps"
 const realEntry = await getEntry('notes', noteId);

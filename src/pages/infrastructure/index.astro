@@ -2,12 +2,10 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import InfrastructureShowcase from '../../components/assets/InfrastructureShowcase.astro';
 import {
-  featuredInfrastructureAssetIds,
   getInfrastructureDataset,
   getTopologyFactCounts,
   getTopologyFlows,
   homelabFlowIds,
-  pickAssetCardsByIds,
   publicFleetFlowIds,
 } from '../../utils/infrastructure';
 
@@ -16,8 +14,6 @@ const fleetFlows = getTopologyFlows(publicFleetFlowIds);
 const homelabFlows = getTopologyFlows(homelabFlowIds);
 const fleetFacts = getTopologyFactCounts(fleetFlows);
 const homelabFacts = getTopologyFactCounts(homelabFlows);
-const featuredAssets = pickAssetCardsByIds(assetCards, featuredInfrastructureAssetIds);
-
 const heroFacts = [
   '4 个公网区域：成都、香港、日本、韩国',
   `${fleetFacts.flowCount} 条公网链路，覆盖控制面、业务面、代理面与展示面`,
@@ -33,7 +29,6 @@ const heroFacts = [
       title="数字基础设施拓扑"
       description="涵盖控制平面、业务节点、区域代理与家庭实验室架构的全景视角。"
       heroFacts={heroFacts}
-      featuredAssets={featuredAssets}
       resolvedNodes={resolvedNodes}
       locale="zh"
     />
