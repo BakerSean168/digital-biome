@@ -14,6 +14,9 @@ artifact measurements, not synthetic browser timing claims.
 - Replaced Digital Biome's duplicate line-oriented frontmatter scanners with one shared full-YAML adapter.
   This fixes quoted boolean publication flags such as `private: "true"`, which the old scanner could
   incorrectly treat as public. A postbuild contract now rejects any protected knowledge note route in `dist`.
+- Protected knowledge-note routes are now emitted into the production `_routes.json` at build time and
+  handled by a generic non-cacheable 404 Pages Function. This prevents an older cached static asset from
+  reviving content after a note is made private, while public Notes remain on the static path.
 
 ### Changed
 
