@@ -7,6 +7,8 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-10
+
 ### Added
 
 - Phase 2 restores focused regression coverage for Cloudflare Access/private handlers, note routing,
@@ -43,6 +45,15 @@ implementation. `/tools` raw HTML fell from 633.96 KiB to 63.46 KiB (-90.0%); gz
 BookmarkGrid client chunk grew from 4.28 KiB raw / 1.57 KiB gzip to 10.65 KiB / 3.76 KiB to own
 lazy loading, filtering, keyboard navigation, safe dynamic DOM construction, and recovery behavior.
 The initial HTML + grid JavaScript raw footprint still falls by about 88.4%.
+
+### Validation
+
+- Final Phase 2 implementation merged through PRs #62-#65; all exact-head GitHub checks passed.
+- Final local gates: edge 32/32, unit 109/109, infrastructure 36/36, Playwright Chromium 5/5.
+- Production artifact gates retain the private-data leak scan and hard HTML/JS/CSS/catalog budgets.
+- Current-vault authority contracts: 720 tag entries with zero drift and 82 asset entries with zero
+  generic metadata drift after reconciliation (down from 40/82 drift before the derived-index fix).
+- Legacy PRs #46-#48 were closed after their valid work was migrated; rejected portions were not revived.
 
 ## [0.1.0] - 2026-09-10
 

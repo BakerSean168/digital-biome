@@ -1,6 +1,6 @@
 # Digital Biome 系统性工程与性能优化 — Phase 2（2026-09）
 
-> 状态：实施中
+> 状态：已完成 / v0.2.0 release record
 >
 > 稳定基线：`v0.1.0` / `a5563ec`
 >
@@ -245,3 +245,17 @@ Phase 2 收口时必须同时满足：
 - 所有被迁移/取代的旧 PR、branch、worktree 清理；
 - exact-main Cloudflare production build/deploy/smoke 成功；
 - 由该 exact main 创建 `v0.2.0`，不在 tag 后继续塞“Phase 2 顺手修复”。
+
+## 7. Phase 2 finalization — v0.2.0
+
+Phase 2 的实现边界在 PR #62-#65 收口：
+
+- #62：regression safety、依赖清理、Notes UX、安全 title、metadata authority + publication redaction；
+- #63：Tools catalog boundary 与硬性能预算；
+- #64：Playwright Chromium production E2E，并修复 E2E 首次发现的 Notes clear/URL 与 SiteSearch timer bug；
+- #65：tag/asset derived index 从 reconciled notes snapshot 派生，asset metadata drift 40/82 → 0/82。
+
+最终发布契约：edge **32/32**、unit **109/109**、infrastructure **36/36**、Chromium E2E **5/5**；
+`/tools` 在同一份 19-category / 180-assignment 数据上由 **633.96 → 63.46 KiB raw**，
+gzip **34.21 → 8.19 KiB**。旧 #46/#47/#48 已在有效内容迁移后关闭。Phase 2 后续发现的新优化
+必须进入下一独立 phase/version，不继续扩张 `v0.2.0`。
