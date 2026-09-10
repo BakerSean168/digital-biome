@@ -34,6 +34,12 @@ const { title, description, tags, created, updated } = entry.data;
   currentSlug={slug}
 >
   <header class="mb-8 pb-4 border-b border-border">
+    <a
+      href="/notes"
+      class="mb-4 inline-flex items-center gap-2 font-mono text-xs tracking-widest text-muted-foreground transition-colors hover:text-primary"
+    >
+      ← [ BACK_TO_NOTES ]
+    </a>
     <h1 class="text-3xl font-bold mb-2 text-foreground">{title}</h1>
     {description && <p class="text-muted-foreground m-0">{description}</p>}
   </header>
