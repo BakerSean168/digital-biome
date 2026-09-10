@@ -67,3 +67,6 @@ public/vault-assets/
 # Pagefind local dev index
 public/pagefind/
 
+
+# Wrangler local runtime state
+.wrangler/

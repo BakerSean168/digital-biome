@@ -7,6 +7,10 @@ const packageJson = JSON.parse(readFileSync(fileURLToPath(new URL('../package.js
   scripts: Record<string, string>;
 };
 const workflow = readFileSync(fileURLToPath(new URL('../.github/workflows/check.yml', import.meta.url)), 'utf8');
+const deployWorkflow = readFileSync(
+  fileURLToPath(new URL('../.github/workflows/deploy-cloudflare-pages.yml', import.meta.url)),
+  'utf8',
+);
 
 test('verification discovers nested edge and infrastructure tests', () => {
   assert.equal(packageJson.scripts['test:edge'], "tsx --test 'edge/**/*.test.ts'");
@@ -18,4 +22,9 @@ test('the required check workflow runs for every pull request to main', () => {
   assert.ok(pullRequestBlock);
   assert.match(pullRequestBlock, /branches: \[main\]/);
   assert.doesNotMatch(pullRequestBlock, /paths:/);
+});
+
+
+test('production server telemetry does not require a Nezha PAT', () => {
+  assert.doesNotMatch(deployWorkflow, /NEZHA_PAT/);
 });

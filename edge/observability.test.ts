@@ -17,6 +17,55 @@ async function withMockFetch(
   }
 }
 
+class MockWebSocket extends EventTarget {
+  readonly url: string;
+  closeCount = 0;
+
+  constructor(url: string | URL, script: (socket: MockWebSocket) => void) {
+    super();
+    this.url = String(url);
+    queueMicrotask(() => script(this));
+  }
+
+  emitJson(value: unknown): void {
+    this.dispatchEvent(new MessageEvent('message', { data: JSON.stringify(value) }));
+  }
+
+  emitData(value: unknown): void {
+    this.dispatchEvent(new MessageEvent('message', { data: value }));
+  }
+
+  emitError(): void {
+    this.dispatchEvent(new Event('error'));
+  }
+
+  emitClose(): void {
+    this.dispatchEvent(new Event('close'));
+  }
+
+  close(): void {
+    this.closeCount += 1;
+  }
+}
+
+async function withMockWebSocket(
+  script: (socket: MockWebSocket) => void,
+  callback: () => Promise<void>,
+): Promise<void> {
+  const originalWebSocket = globalThis.WebSocket;
+  class TestWebSocket extends MockWebSocket {
+    constructor(url: string | URL) {
+      super(url, script);
+    }
+  }
+  globalThis.WebSocket = TestWebSocket as unknown as typeof WebSocket;
+  try {
+    await callback();
+  } finally {
+    globalThis.WebSocket = originalWebSocket;
+  }
+}
+
 function aiPeriod(days: number, localTokens: number, hermesTokens: number, coverage?: {
   startDate: string | null;
   endDate: string | null;
@@ -50,12 +99,6 @@ test('AI usage reports missing configuration instead of returning sample telemet
   const response = await getAiUsage({ env: {} } as any);
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), { error: 'AI usage telemetry is not configured.' });
-});
-
-test('server monitoring reports missing credentials instead of marking sample hosts online', async () => {
-  const response = await getServers({ env: {} } as any);
-  assert.equal(response.status, 503);
-  assert.deepEqual(await response.json(), { error: 'Server telemetry is not configured.' });
 });
 
 test('AI usage maps the current seven-day Hub contract with the read-only key', async () => {
@@ -151,21 +194,22 @@ test('AI usage accepts an empty current-contract ledger', async () => {
   });
 });
 
-test('server monitoring maps a successful Nezha response with authoritative online state', async () => {
-  await withMockFetch(async (_input, init) => {
-    assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer scoped-pat');
-    return Response.json({
-      success: true,
-      data: [{
+test('server monitoring consumes the public Nezha v2 server stream without credentials', async () => {
+  await withMockWebSocket((socket) => {
+    assert.equal(socket.url, 'wss://nezha.example.test/api/v1/ws/server');
+    socket.emitJson({
+      now: 1_789_000_000,
+      online: 1,
+      servers: [{
         id: 7,
         name: 'Oracle Osaka',
         country_code: 'JP',
-        host: { platform: 'debian' },
-        status: { online: true, cpu: 12, mem_used: 512, mem_total: 1024, net_out_speed: 1048576, net_in_speed: 2097152 },
+        host: { platform: 'debian', mem_total: 1024 },
+        state: { cpu: 12, mem_used: 512, net_out_speed: 1048576, net_in_speed: 2097152 },
       }],
     });
   }, async () => {
-    const response = await getServers({ env: { NEZHA_PAT: 'scoped-pat' } } as any);
+    const response = await getServers({ env: { NEZHA_BASE_URL: 'https://nezha.example.test/' } } as any);
     const payload = await response.json() as any;
     assert.equal(response.status, 200);
     assert.equal(payload.online, 1);
@@ -183,43 +227,15 @@ test('server monitoring maps a successful Nezha response with authoritative onli
   });
 });
 
-test('server monitoring maps the live Nezha state and host payload', async () => {
-  await withMockFetch(async () => Response.json({
-    success: true,
-    data: [{
-      id: 13,
-      name: 'Azure-HK panel host',
-      host: { platform: 'debian', mem_total: 2048 },
-      state: { cpu: 4.4, mem_used: 1024, net_out_speed: 1048576, net_in_speed: 524288 },
-      geoip: { country_code: 'HK' },
-      last_active: '2026-08-09T02:10:53.101565878Z',
-    }],
-  }), async () => {
-    const response = await getServers({ env: { NEZHA_PAT: 'scoped-pat' } } as any);
-    const payload = await response.json() as any;
-
-    assert.equal(response.status, 200);
-    assert.equal(payload.online, 1);
-    assert.deepEqual(payload.servers[0], {
-      id: 13,
-      name: 'Azure-HK panel host',
-      location: 'HK',
-      provider: 'debian',
-      online: true,
-      cpu: 4,
-      ram: 50,
-      upSpeed: '1.0 Mbps',
-      downSpeed: '0.5 Mbps',
+test('server monitoring maps explicit null public Nezha state as offline', async () => {
+  await withMockWebSocket((socket) => {
+    socket.emitJson({
+      now: 1_789_000_000,
+      online: 0,
+      servers: [{ id: 9, name: 'offline-node', host: { platform: 'ubuntu' }, state: null }],
     });
-  });
-});
-
-test('server monitoring treats an explicit null Nezha state as offline', async () => {
-  await withMockFetch(async () => Response.json({
-    success: true,
-    data: [{ id: 9, name: 'offline-node', host: { platform: 'ubuntu' }, state: null }],
-  }), async () => {
-    const response = await getServers({ env: { NEZHA_PAT: 'scoped-pat' } } as any);
+  }, async () => {
+    const response = await getServers({ env: {} } as any);
     const payload = await response.json() as any;
     assert.equal(response.status, 200);
     assert.equal(payload.online, 0);
@@ -227,19 +243,56 @@ test('server monitoring treats an explicit null Nezha state as offline', async (
   });
 });
 
-test('server monitoring rejects an HTTP 200 Nezha business error', async () => {
-  await withMockFetch(async () => Response.json({ error: 'ApiErrorUnauthorized' }), async () => {
-    const response = await getServers({ env: { NEZHA_PAT: 'invalid-pat' } } as any);
+test('server monitoring accepts an ArrayBuffer public stream frame', async () => {
+  await withMockWebSocket((socket) => {
+    const encoded = new TextEncoder().encode(JSON.stringify({
+      now: 1_789_000_000,
+      online: 1,
+      servers: [{
+        id: 13,
+        name: 'Azure-HK panel host',
+        host: { platform: 'debian', mem_total: 2048 },
+        state: { cpu: 4.4, mem_used: 1024, net_out_speed: 1048576, net_in_speed: 524288 },
+        country_code: 'HK',
+      }],
+    }));
+    socket.emitData(encoded.buffer);
+  }, async () => {
+    const response = await getServers({ env: {} } as any);
+    const payload = await response.json() as any;
+    assert.equal(response.status, 200);
+    assert.equal(payload.servers[0].location, 'HK');
+    assert.equal(payload.servers[0].ram, 50);
+  });
+});
+
+test('server monitoring rejects an empty public Nezha snapshot', async () => {
+  await withMockWebSocket((socket) => {
+    socket.emitJson({ now: 1_789_000_000, online: 0, servers: [] });
+  }, async () => {
+    const response = await getServers({ env: {} } as any);
     assert.equal(response.status, 502);
-    assert.deepEqual(await response.json(), { error: 'Nezha rejected the request.' });
+    assert.deepEqual(await response.json(), { error: 'Nezha telemetry is unreachable.' });
   });
 });
 
 test('server monitoring rejects telemetry without an authoritative online field', async () => {
-  await withMockFetch(async () => Response.json({ success: true, data: [{ id: 1, name: 'Unknown state' }] }), async () => {
-    const response = await getServers({ env: { NEZHA_PAT: 'scoped-pat' } } as any);
+  await withMockWebSocket((socket) => {
+    socket.emitJson({ now: 1_789_000_000, online: 1, servers: [{ id: 1, name: 'Unknown state' }] });
+  }, async () => {
+    const response = await getServers({ env: {} } as any);
     assert.equal(response.status, 502);
     assert.deepEqual(await response.json(), { error: 'Nezha returned unsupported server telemetry.' });
+  });
+});
+
+test('server monitoring fails closed when the public Nezha stream errors', async () => {
+  await withMockWebSocket((socket) => {
+    socket.emitError();
+  }, async () => {
+    const response = await getServers({ env: {} } as any);
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: 'Nezha telemetry is unreachable.' });
   });
 });
 
