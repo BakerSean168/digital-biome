@@ -5,6 +5,7 @@ import { buildSourceLayout } from './sync/config';
 import { redactIPv4Addresses } from './sync/markdown-transform';
 import { loadProtectedInfrastructureUrls } from './sync/privacy';
 import { checkPrivateRouteBoundary } from './private-route-boundary';
+import { writeFunctionRouteManifest } from './private-function-routes';
 
 const FULL_IPV4 = /(?<![\d.])(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?![\d.])/g;
 const EXACT_IPV4 = /^(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
@@ -127,6 +128,8 @@ try {
   assertNoPrivateDataInBuild();
   const privateRouteResult = checkPrivateRouteBoundary();
   console.log(`Private route boundary passed (${privateRouteResult.protectedKnowledgeNotes} protected knowledge notes checked).`);
+  const functionRoutes = writeFunctionRouteManifest();
+  console.log(`Protected route runtime guard emitted (${functionRoutes.include.length - 1} knowledge-note routes).`);
 
   const source = path.join(process.cwd(), 'dist', 'pagefind');
   const destination = path.join(process.cwd(), 'public', 'pagefind');
