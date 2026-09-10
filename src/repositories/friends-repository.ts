@@ -5,6 +5,7 @@
  */
 
 import { getAllNoteEntries } from './knowledge-index-loader';
+import type { NoteIndexEntry } from '../types/knowledge-index';
 import { VISIBILITY_PRIVATE } from '../domain/constants';
 
 export interface FriendLink {
@@ -16,14 +17,19 @@ export interface FriendLink {
   tags: string[];
 }
 
+function hasUrl(entry: NoteIndexEntry): entry is NoteIndexEntry & { url: string } {
+  return typeof entry.url === 'string' && entry.url.length > 0;
+}
+
 export function getFriendLinks(): FriendLink[] {
   const entries = getAllNoteEntries();
 
   return entries
-    .filter(entry => {
-      if (entry.draft || entry.private || entry.visibility === VISIBILITY_PRIVATE) return false;      if (!entry.url) return false;
+    .filter((entry) => {
+      if (entry.draft || entry.private || entry.visibility === VISIBILITY_PRIVATE) return false;
+      if (!entry.url) return false;
 
-      const tags = (entry.tags || []).map(t => t.toLowerCase());
+      const tags = (entry.tags || []).map((t) => t.toLowerCase());
       const isFriendLink =
         tags.includes('type/friend-link') ||
         tags.includes('media/friend-link') ||
@@ -33,12 +39,13 @@ export function getFriendLinks(): FriendLink[] {
 
       return isFriendLink;
     })
-    .map(entry => {
-      // Find avatar from frontmatter icon / avatar / icon properties or fallback to favicon
-      const avatar = entry.icon || (entry as any).avatar || undefined;
+    .filter(hasUrl)
+    .map((entry) => {
+      // The public index exposes icon as the friend-avatar surface.
+      const avatar = entry.icon;
       return {
         title: entry.title || entry.id.split('/').pop() || 'Untitled',
-        url: entry.url!,
+        url: entry.url,
         avatar,
         description: entry.description,
         slug: entry.id,

@@ -1,8 +1,8 @@
 # Digital Biome 系统性工程重构 — Phase 4（2026-09）
 
-> 状态：P4-101 已发布候选 / v0.3.1；P4-201 待实施
+> 状态：P4-101 已发布 / v0.3.1；P4-201 实施完成，待 PR/CI
 >
-> 稳定基线：`v0.3.0` / `de9e661`
+> 稳定基线：`v0.3.1` / `c302ac9`
 
 ## 1. 明确遗留范围
 
@@ -64,6 +64,7 @@ artifact hygiene。Phase 4 只处理此前明确推迟的两项工程债务：
 
 P4-101 通过 PR #71 合入 main。由于它修复了 `v0.3.0` 上实际可访问的 protected route，先以
 `v0.3.1` patch 独立发布；DB-P4-201 不与该隐私修复捆绑。
+
 ## v0.3.1 release blocker #2 — stale edge asset revocation
 
 The first production deploy correctly removed the protected note from the new static artifact, but the canonical
@@ -80,3 +81,51 @@ limit.
 
 Local workerd verification deliberately restored a stale static fixture underneath one protected route. Both
 slash and non-slash requests still returned 404 with no stale marker, while `/notes/` remained 200.
+
+## 4. DB-P4-201 — lint / format engineering contract
+
+### Baseline audit
+
+Phase 4 does not introduce a repository-wide formatter rewrite. Initial Prettier inspection found **170**
+existing code/config files that would be rewritten, so a one-shot format commit would create a large
+non-semantic diff. Biome recommended linting across the stable TS/JS/CJS/MJS surface initially reported
+**23 errors / 59 warnings / 33 infos** across 138 files.
+
+Implementation converges that surface to **0 errors / 0 warnings** and expands lint ownership to 141 files.
+Test files explicitly relax only `noExplicitAny` and `noNonNullAssertion` for fixture/mocking ergonomics;
+production code keeps the recommended rules. Info-only style migrations are not elevated to blockers.
+
+Linting also exposed a third line-oriented YAML parser in `build-subscriptions.ts`. It now consumes the same
+full-YAML adapter as other local Markdown consumers. The six-subscription normalized payload hash before/after
+remains identical when `updatedAt` is excluded.
+
+### Incremental formatting ratchet
+
+Prettier 3 + the official Astro plugin owns formatting syntax, while Biome formatting remains disabled because
+full Astro support is not the stable boundary used by this repository. The final local ratchet observes **206** code/config targets: **131** untouched legacy files remain temporarily
+grandfathered by SHA-256 content hash, and **75** targets are already formatted or new.
+
+The gate is intentionally monotonic:
+
+- unchanged legacy bytes may keep existing style;
+- once a legacy file changes, it must pass Prettier and its baseline entry must be removed;
+- every new/non-baseline target must pass Prettier immediately;
+- stale baseline entries fail so deleted/renamed files cannot leave debt records behind;
+- `pnpm verify` starts with `pnpm quality`, which runs zero-warning Biome lint plus the format ratchet.
+
+This allows formatting debt to shrink with normal feature work instead of hiding architectural changes inside a
+170-file rewrite.
+
+### P4-201 final local evidence
+
+- Biome lint: **144 files / 0 errors / 0 warnings**;
+- format ratchet: **206 targets = 75 formatted + 131 unchanged legacy**;
+- Astro check: **181 files / 0 diagnostics**;
+- edge: **33/33**; unit: **113/113**; infrastructure: **53/53**;
+- subscription normalized payload: **6 entries**, stable hash identical before/after parser convergence;
+- production build: **3511 pages**, Pagefind **3511 pages**;
+- private infrastructure scan: **130 values PASS**; protected-route boundary/runtime manifest: **16 routes PASS**;
+- existing performance budgets: PASS; focused Chromium E2E: **6/6**.
+
+P4-201 is an engineering-quality contract, not a mass style rewrite. Release/version closure happens only after
+its exact-head PR gate and final main production deployment succeed.

@@ -5,6 +5,7 @@
  */
 
 import type { Bookmark, Category } from '../types/notes';
+import type { NoteIndexEntry } from '../types/knowledge-index';
 import { getAllNoteEntries, getNoteEntryByIdFromIndex } from './knowledge-index-loader';
 import { extractCategories } from '../view-models/bookmark-item';
 import { VISIBILITY_PRIVATE, CONFIG_RESOURCE_TYPES_SLUG } from '../domain/constants';
@@ -23,9 +24,13 @@ const HOMEPAGE_FEATURED_BOOKMARK_SLUGS = [
 function getResourceTypesFromIndex(): string[] {
   const configNote = getNoteEntryByIdFromIndex(CONFIG_RESOURCE_TYPES_SLUG);
   if (configNote?.tags) {
-    return configNote.tags.map(t => t.toLowerCase());
+    return configNote.tags.map((t) => t.toLowerCase());
   }
   return [];
+}
+
+function hasUrl(entry: NoteIndexEntry): entry is NoteIndexEntry & { url: string } {
+  return typeof entry.url === 'string' && entry.url.length > 0;
 }
 
 /** Get all bookmarks (notes with url + website/resource tags). */
@@ -34,22 +39,24 @@ export function getBookmarks(): Bookmark[] {
   const resourceTypes = getResourceTypesFromIndex();
 
   return entries
-    .filter(entry => {
+    .filter((entry) => {
       if (entry.draft || entry.private || entry.visibility === VISIBILITY_PRIVATE) return false;
       if (entry.isAsset) return false;
 
       const tags = entry.tags || [];
-      const hasWebsite = tags.some(tag => tag.toLowerCase() === 'website');
-      const hasResource = tags.some(tag => tag.toLowerCase() === 'resource');
+      const hasWebsite = tags.some((tag) => tag.toLowerCase() === 'website');
+      const hasResource = tags.some((tag) => tag.toLowerCase() === 'resource');
 
-      const isLegacy = entry.url && tags.some(tag => tag === 'type/resource');
-      const isNew = entry.url && hasWebsite && hasResource && extractCategories(tags, resourceTypes).length > 0;
+      const isLegacy = entry.url && tags.some((tag) => tag === 'type/resource');
+      const isNew =
+        entry.url && hasWebsite && hasResource && extractCategories(tags, resourceTypes).length > 0;
 
       return isLegacy || isNew;
     })
-    .map(entry => ({
+    .filter(hasUrl)
+    .map((entry) => ({
       title: entry.title,
-      url: entry.url!,
+      url: entry.url,
       description: entry.description,
       categories: extractCategories(entry.tags || [], resourceTypes),
       icon: entry.icon,
@@ -64,10 +71,10 @@ export function getCategories(): Category[] {
   const categoryMap = new Map<string, number>();
 
   entries
-    .filter(e => !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE && !e.isAsset)
-    .forEach(entry => {
+    .filter((e) => !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE && !e.isAsset)
+    .forEach((entry) => {
       const cats = extractCategories(entry.tags || [], resourceTypes);
-      cats.forEach(cat => {
+      cats.forEach((cat) => {
         categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
       });
     });
@@ -86,12 +93,11 @@ export function getBookmarksByCategory(): Map<string, Bookmark[]> {
   const bookmarks = getBookmarks();
   const categoryMap = new Map<string, Bookmark[]>();
 
-  bookmarks.forEach(bookmark => {
-    bookmark.categories.forEach(category => {
-      if (!categoryMap.has(category)) {
-        categoryMap.set(category, []);
-      }
-      categoryMap.get(category)!.push(bookmark);
+  bookmarks.forEach((bookmark) => {
+    bookmark.categories.forEach((category) => {
+      const existing = categoryMap.get(category);
+      if (existing) existing.push(bookmark);
+      else categoryMap.set(category, [bookmark]);
     });
   });
 
@@ -102,10 +108,10 @@ export function getBookmarksByCategory(): Map<string, Bookmark[]> {
 export function getHomepageFeaturedBookmarks(): Bookmark[] {
   const bookmarks = getBookmarks();
   const bookmarkMap = new Map(
-    bookmarks.map(bookmark => [bookmark.slug.split('/').pop()?.toLowerCase(), bookmark] as const)
+    bookmarks.map((bookmark) => [bookmark.slug.split('/').pop()?.toLowerCase(), bookmark] as const),
   );
 
-  return HOMEPAGE_FEATURED_BOOKMARK_SLUGS
-    .map(slug => bookmarkMap.get(slug))
-    .filter((bookmark): bookmark is Bookmark => Boolean(bookmark));
+  return HOMEPAGE_FEATURED_BOOKMARK_SLUGS.map((slug) => bookmarkMap.get(slug)).filter(
+    (bookmark): bookmark is Bookmark => Boolean(bookmark),
+  );
 }

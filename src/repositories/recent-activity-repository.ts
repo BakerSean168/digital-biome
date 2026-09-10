@@ -17,16 +17,17 @@ const NOTES_PATH = OBSIDIAN_NOTES_DIR;
 
 /** Get public knowledge note IDs from the index (no collection scan). */
 function getPublicNoteIds(): string[] {
-  return getPublicKnowledgeNoteEntriesFromIndex().map(e => e.id);
+  return getPublicKnowledgeNoteEntriesFromIndex().map((e) => e.id);
 }
 
 export function getGitLastModified(filePath: string): Date | null {
   try {
-    const result = execFileSync(
-      'git',
-      ['log', '-1', '--format=%ct', '--', filePath],
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
-    ).toString().trim();
+    const result = execFileSync('git', ['log', '-1', '--format=%ct', '--', filePath], {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+      .toString()
+      .trim();
 
     return result ? new Date(parseInt(result, 10) * 1000) : null;
   } catch {
@@ -44,7 +45,7 @@ function getGitLastModifiedMap(basePath: string): Map<string, Date> {
     const output = execFileSync(
       'git',
       ['log', '--format=' + GIT_TS_MARKER + '%ct', '--name-only', '--', basePath],
-      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
     ).toString();
 
     const fileToDate = new Map<string, Date>();
@@ -87,7 +88,7 @@ function getFileLastModified(filePath: string): Date | null {
 
 function getNoteLastModified(
   note: NoteCollectionEntry,
-  modifiedMap: Map<string, Date>
+  modifiedMap: Map<string, Date>,
 ): Date | null {
   const relPath = noteIdToRelativePath(note.id);
   const filePath = `${NOTES_PATH}/${relPath}.md`;
@@ -106,7 +107,7 @@ export async function getRecentNotes(limit: number = 5): Promise<NoteCollectionE
   const modifiedMap = getGitLastModifiedMap(NOTES_PATH);
 
   return notes
-    .map(note => ({ note, lastModified: getNoteLastModified(note, modifiedMap) }))
+    .map((note) => ({ note, lastModified: getNoteLastModified(note, modifiedMap) }))
     .filter(({ lastModified }) => lastModified !== null)
     .sort((a, b) => (b.lastModified?.getTime() ?? 0) - (a.lastModified?.getTime() ?? 0))
     .slice(0, limit)
@@ -120,8 +121,11 @@ export async function getRecentNotesWithDate(limit: number = 5): Promise<NoteWit
   const modifiedMap = getGitLastModifiedMap(NOTES_PATH);
 
   return notes
-    .map(note => ({ note, lastModified: getNoteLastModified(note, modifiedMap) }))
-    .filter((item): item is { note: NoteCollectionEntry; lastModified: Date } => item.lastModified !== null)
+    .map((note) => ({ note, lastModified: getNoteLastModified(note, modifiedMap) }))
+    .filter(
+      (item): item is { note: NoteCollectionEntry; lastModified: Date } =>
+        item.lastModified !== null,
+    )
     .sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
     .slice(0, limit)
     .map(({ note, lastModified }) => ({ note, date: lastModified }));
@@ -130,7 +134,9 @@ export async function getRecentNotesWithDate(limit: number = 5): Promise<NoteWit
 /** Get most recently created notes (by frontmatter `created` field). Pure index operation. */
 export function getNewCreatedNotes(limit: number = 5): NoteIndexEntry[] {
   return getPublicKnowledgeNoteEntriesFromIndex()
-    .filter(e => e.created != null)
-    .sort((a, b) => new Date(b.created!).getTime() - new Date(a.created!).getTime())
+    .filter(
+      (entry): entry is NoteIndexEntry & { created: string } => typeof entry.created === 'string',
+    )
+    .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())
     .slice(0, limit);
 }

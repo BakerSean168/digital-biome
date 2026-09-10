@@ -1,4 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { hasAsciiControlCharacters } from './text-safety';
 
 const ACCESS_JWT_HEADER = 'Cf-Access-Jwt-Assertion';
 const ACCESS_DOMAIN_SUFFIX = '.cloudflareaccess.com';
@@ -76,7 +77,7 @@ export function getSafeNextPath(value: string | null, fallback = '/'): string {
     !value.startsWith('/') ||
     value.startsWith('//') ||
     value.includes('\\') ||
-    /[\u0000-\u001f\u007f]/.test(value)
+    hasAsciiControlCharacters(value)
   ) {
     return fallback;
   }

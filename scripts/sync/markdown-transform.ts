@@ -7,7 +7,8 @@
 import path from 'path';
 
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico|tiff?)$/i;
-const FULL_IPV4 = /(?<![\d.])(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)(?![\d.])/g;
+const FULL_IPV4 =
+  /(?<![\d.])(25[0-5]|2[0-4]\d|1?\d?\d)\.(25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)\.(?:25[0-5]|2[0-4]\d|1?\d?\d)(?![\d.])/g;
 
 /** Public DNS / documentation addresses that may remain in educational notes. */
 const PUBLIC_SAFE_IPV4 = new Set([
@@ -62,7 +63,7 @@ export function rewriteImagePaths(content: string, assetsUrlPrefix: string): str
       const filename = path.basename(imgPath);
       const alt = filename.replace(/\.[^.]+$/, '');
       return `![${alt}](${assetsUrlPrefix}/${encodeURIComponent(filename)})`;
-    }
+    },
   );
 
   // 2. Standard markdown images
@@ -80,7 +81,7 @@ export function rewriteImagePaths(content: string, assetsUrlPrefix: string): str
         return _match;
       }
       return `![${alt}](${assetsUrlPrefix}/${encodeURIComponent(filename)})`;
-    }
+    },
   );
 
   return content;
@@ -102,7 +103,7 @@ export function rewriteVaultNoteLinks(content: string): string {
 
       const slug = vaultNoteMatch[1];
       return `[${text}](${encodeURI(`/notes/obsidian/${slug}`)})`;
-    }
+    },
   );
 }
 
@@ -119,7 +120,7 @@ export function quoteYamlSpecialValues(frontmatter: string): string {
       // Already quoted — skip
       if (rest.startsWith('"') || rest.startsWith("'")) return _match;
       return `${key}: "${_special}${rest.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
-    }
+    },
   );
 }
 
@@ -130,13 +131,16 @@ export function quoteYamlSpecialValues(frontmatter: string): string {
 export function detectYamlRisks(frontmatter: string, filename: string): string[] {
   const warnings: string[] = [];
   const riskyPattern = /^(\w[\w_-]*):\s+(@|`|:)(.*)$/gm;
-  let match: RegExpExecArray | null;
-  while ((match = riskyPattern.exec(frontmatter)) !== null) {
+  while (true) {
+    const match = riskyPattern.exec(frontmatter);
+    if (match === null) break;
     const key = match[1];
     const rest = match[3];
     // Skip if already quoted
     if (rest.startsWith('"') || rest.startsWith("'")) continue;
-    warnings.push(`${filename}: field "${key}" starts with special YAML character — may cause parse failures in consumers`);
+    warnings.push(
+      `${filename}: field "${key}" starts with special YAML character — may cause parse failures in consumers`,
+    );
   }
   return warnings;
 }
@@ -147,8 +151,8 @@ export function detectYamlRisks(frontmatter: string, filename: string): string[]
 export function normalizeFrontmatterIndentation(frontmatter: string): string {
   const lines = frontmatter.split('\n');
   const indents = lines
-    .filter(line => line.trim() !== '')
-    .map(line => line.match(/^ */)?.[0].length ?? 0);
+    .filter((line) => line.trim() !== '')
+    .map((line) => line.match(/^ */)?.[0].length ?? 0);
 
   const minIndent = indents.length > 0 ? Math.min(...indents) : 0;
   if (minIndent === 0) {
@@ -156,7 +160,7 @@ export function normalizeFrontmatterIndentation(frontmatter: string): string {
   }
 
   return lines
-    .map(line => {
+    .map((line) => {
       if (line.trim() === '') return line;
       return line.slice(minIndent);
     })
@@ -204,7 +208,7 @@ export function processContent(
       const yamlLines: string[] = [];
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (line === '' || /^[\w"'\/].*:/.test(line) || /^- /.test(line)) {
+        if (line === '' || /^[\w"'/].*:/.test(line) || /^- /.test(line)) {
           yamlLines.push(lines[i]);
         } else {
           break;
@@ -242,10 +246,7 @@ export function processContent(
   let rewritten = rewriteVaultNoteLinks(rewriteImagePaths(processed, assetsUrlPrefix));
   if (options.redactNetworkIdentifiers) rewritten = redactIPv4Addresses(rewritten);
   if (options.protectedInfrastructureUrls) {
-    rewritten = redactProtectedInfrastructureUrls(
-      rewritten,
-      options.protectedInfrastructureUrls,
-    );
+    rewritten = redactProtectedInfrastructureUrls(rewritten, options.protectedInfrastructureUrls);
   }
   return rewritten;
 }

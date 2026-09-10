@@ -7,11 +7,15 @@ class FakeClassList {
   private readonly values = new Set<string>();
 
   add(...names: string[]): void {
-    names.forEach(name => this.values.add(name));
+    names.forEach((name) => {
+      this.values.add(name);
+    });
   }
 
   remove(...names: string[]): void {
-    names.forEach(name => this.values.delete(name));
+    names.forEach((name) => {
+      this.values.delete(name);
+    });
   }
 
   toggle(name: string, force?: boolean): boolean {
@@ -39,7 +43,7 @@ class FakeElement {
   value = '';
 
   get textContent(): string {
-    return this.ownText + this.children.map(child => child.textContent).join('');
+    return this.ownText + this.children.map((child) => child.textContent).join('');
   }
 
   set textContent(value: string) {
@@ -58,12 +62,16 @@ class FakeElement {
   }
 
   append(...children: FakeElement[]): void {
-    children.forEach(child => this.appendChild(child));
+    children.forEach((child) => {
+      this.appendChild(child);
+    });
   }
 
   replaceChildren(...children: FakeElement[]): void {
     this.children.length = 0;
-    children.forEach(child => this.appendChild(child));
+    children.forEach((child) => {
+      this.appendChild(child);
+    });
   }
 
   addEventListener(type: string, listener: FakeListener): void {
@@ -74,12 +82,14 @@ class FakeElement {
 
   dispatch(type: string, event: Record<string, unknown> = {}): void {
     const listeners = this.listeners.get(type) || [];
-    listeners.forEach(listener => listener({
-      target: this,
-      preventDefault: () => {},
-      stopPropagation: () => {},
-      ...event,
-    }));
+    listeners.forEach((listener) => {
+      listener({
+        target: this,
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        ...event,
+      });
+    });
   }
 
   focus(): void {}
@@ -109,7 +119,11 @@ class FakeDocument {
   }
 }
 
-function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (reason: unknown) => void } {
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason: unknown) => void;
+} {
   let resolve!: (value: T) => void;
   let reject!: (reason: unknown) => void;
   const promise = new Promise<T>((resolveValue, rejectValue) => {
@@ -150,7 +164,10 @@ function createEnvironment(): {
     'catalog-error',
     'retry-catalog',
   ];
-  const elements = Object.fromEntries(ids.map(id => [id, new FakeElement()])) as Record<string, FakeElement>;
+  const elements = Object.fromEntries(ids.map((id) => [id, new FakeElement()])) as Record<
+    string,
+    FakeElement
+  >;
   elements['notes-page'].dataset.totalCount = '24';
   elements['notes-page'].dataset.initialCount = '12';
   elements['notes-page'].dataset.notesI18n = JSON.stringify({
@@ -216,7 +233,7 @@ test('initializes Notes lazily and appends one cached batch through Intersection
         requestCount += 1;
         return request.promise;
       },
-      createObserver: callback => {
+      createObserver: (callback) => {
         environment.triggerIntersection = callback;
         return { observe: () => {} };
       },
@@ -254,7 +271,7 @@ test('handles load-more rejection without corrupting SSR cards and retries succe
         requestCount += 1;
         return requestCount === 1 ? firstRequest.promise : secondRequest.promise;
       },
-      createObserver: callback => {
+      createObserver: (callback) => {
         environment.triggerIntersection = callback;
         return { observe: () => {} };
       },
@@ -286,7 +303,7 @@ test('clearing filters supersedes a pending catalog resolution and preserves SSR
   try {
     initializeNotesList({
       loadCatalog: () => request.promise,
-      createObserver: callback => {
+      createObserver: (callback) => {
         environment.triggerIntersection = callback;
         return { observe: () => {} };
       },
@@ -314,7 +331,7 @@ test('clearing filters supersedes a pending catalog rejection without stale erro
   try {
     initializeNotesList({
       loadCatalog: () => request.promise,
-      createObserver: callback => {
+      createObserver: (callback) => {
         environment.triggerIntersection = callback;
         return { observe: () => {} };
       },
@@ -346,7 +363,7 @@ test('restores SSR cards after catalog rejection then clear and allows observer 
         requestCount += 1;
         return requestCount === 1 ? firstRequest.promise : secondRequest.promise;
       },
-      createObserver: callback => {
+      createObserver: (callback) => {
         environment.triggerIntersection = callback;
         return { observe: () => {} };
       },
@@ -387,7 +404,7 @@ test('keeps the latest query and tag filter when deferred requests resolve out o
         requestCount += 1;
         return requestCount === 1 ? queryRequest.promise : tagRequest.promise;
       },
-      createObserver: callback => {
+      createObserver: (callback) => {
         environment.triggerIntersection = callback;
         return { observe: () => {} };
       },

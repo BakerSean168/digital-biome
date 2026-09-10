@@ -2,16 +2,12 @@
  * Asset card view-model — transforms note entries into AssetCard for rendering.
  */
 
-import type {
-  AssetCard,
-  AssetRole,
-  NoteCollectionEntry,
-} from '../types/notes';
+import type { AssetCard, AssetRole, AssetNoteEntry, NoteCollectionEntry } from '../types/notes';
 import { buildAssetHref } from '../domain/note-routing';
 
 /** Infer asset role from tags and homepage config when not explicitly set. */
 export function inferAssetRole(
-  note: Pick<NoteCollectionEntry['data'], 'asset_role' | 'asset_type' | 'homepage' | 'tags'>
+  note: Pick<NoteCollectionEntry['data'], 'asset_role' | 'asset_type' | 'homepage' | 'tags'>,
 ): AssetRole | undefined {
   if (note.asset_role) return note.asset_role;
 
@@ -27,10 +23,10 @@ export function inferAssetRole(
 }
 
 /** Transform a note entry into an AssetCard view-model. */
-export function toAssetCard(note: NoteCollectionEntry): AssetCard {
+export function toAssetCard(note: AssetNoteEntry): AssetCard {
   return {
-    assetId: note.data.asset_id!,
-    assetType: note.data.asset_type!,
+    assetId: note.data.asset_id,
+    assetType: note.data.asset_type,
     assetRole: inferAssetRole(note.data),
     title: note.data.title,
     description: note.data.description,

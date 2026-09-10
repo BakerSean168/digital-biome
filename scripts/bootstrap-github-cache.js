@@ -13,42 +13,44 @@ async function bootstrap() {
     console.log(`Fetching contributions for ${username}...`);
     const res = await fetch(url, {
       headers: { 'User-Agent': 'digital-biome-contribution-snapshot' },
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     const data = await res.text();
-    
+
     // Parse days
     const tdRegex = /<td([^>]*class="[^"]*ContributionCalendar-day[^"]*"[^>]*)>/g;
-    let match;
     const daysMap = {};
     const daysList = [];
-    
-    while ((match = tdRegex.exec(data)) !== null) {
+
+    while (true) {
+      const match = tdRegex.exec(data);
+      if (match === null) break;
       const attrs = match[1];
       const dateMatch = attrs.match(/data-date="([^"]+)"/);
       const levelMatch = attrs.match(/data-level="([^"]+)"/);
       const idMatch = attrs.match(/id="([^"]+)"/);
-      
+
       if (dateMatch && levelMatch && idMatch) {
         const id = idMatch[1];
         const day = {
           date: dateMatch[1],
           level: parseInt(levelMatch[1], 10),
-          tooltip: ''
+          tooltip: '',
         };
         daysMap[id] = day;
         daysList.push(day);
       }
     }
-    
+
     // Parse tooltips
     const tooltipRegex = /<tool-tip[^>]*for="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/g;
-    let ttMatch;
     let ttCount = 0;
-    while ((ttMatch = tooltipRegex.exec(data)) !== null) {
+    while (true) {
+      const ttMatch = tooltipRegex.exec(data);
+      if (ttMatch === null) break;
       const forId = ttMatch[1];
       const text = ttMatch[2].trim();
       if (daysMap[forId]) {
@@ -56,29 +58,38 @@ async function bootstrap() {
         ttCount++;
       }
     }
-    
+
     // Sort chronologically
     daysList.sort((a, b) => a.date.localeCompare(b.date));
-    
+
     if (daysList.length === 0) {
-      throw new Error("No contribution days parsed from HTML. GitHub structure might have changed.");
+      throw new Error(
+        'No contribution days parsed from HTML. GitHub structure might have changed.',
+      );
     }
-    
+
     console.log(`Successfully parsed ${daysList.length} days and matched ${ttCount} tooltips.`);
-    
+
     // Write to src/data/github-contributions.json
     const dataDir = path.join(__dirname, '../src/data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    
+
     const cachePath = path.join(dataDir, 'github-contributions.json');
-    fs.writeFileSync(cachePath, `${JSON.stringify({
-      username,
-      updatedAt: new Date().toISOString(),
-      contributions: daysList
-    }, null, 2)}\n`);
-    
+    fs.writeFileSync(
+      cachePath,
+      `${JSON.stringify(
+        {
+          username,
+          updatedAt: new Date().toISOString(),
+          contributions: daysList,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
     console.log(`Cache written to ${cachePath}`);
   } catch (error) {
     console.error('Bootstrap failed:', error);

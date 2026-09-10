@@ -7,6 +7,21 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+### Added
+
+- Phase 4 adds Biome recommended linting for TypeScript/JavaScript with warnings promoted to CI failures.
+- Prettier with the official Astro plugin is enforced through an incremental format ratchet: untouched legacy
+  formatting debt is content-hash frozen, while every new or changed code/config file must pass Prettier.
+
+### Changed
+
+- The subscription snapshot builder now consumes the shared full-YAML frontmatter adapter instead of retaining
+  a third line-oriented parser; the six-subscription normalized output is byte-semantic-equivalent aside from
+  the generated timestamp.
+- Existing lint findings were resolved without mass formatting: suspicious callback returns, assignment-in-
+  expression loops, control-character validation, unsafe global isNaN calls, production any casts, and avoidable
+  non-null assertions were replaced with explicit typed control flow.
+
 ## [0.3.1] - 2026-09-10
 
 ### Fixed
@@ -23,7 +38,6 @@ artifact measurements, not synthetic browser timing claims.
 - `build-indexes` and the static note catalog fallback now share explicit YAML parsing semantics while
   preserving Thought Forest as canonical metadata authority and keeping asset nested metadata on its existing
   upstream enrich path. Malformed YAML now fails closed instead of silently projecting partial metadata.
-
 
 ## [0.3.0] - 2026-09-10
 
@@ -96,7 +110,6 @@ UI files were already unreferenced by the rendered site.
 - The production deploy verifier now regenerates Digital Biome's gitignored derived indexes from the
   already hash-verified pinned Vault before running infrastructure contracts in a fresh checkout.
 
-
 ### Performance
 
 DB-P2-201 was measured against the same 19-category / 180-assignment content set before and after
@@ -152,14 +165,14 @@ The initial HTML + grid JavaScript raw footprint still falls by about 88.4%.
 The Phase 1 baseline was measured before implementation, and the final candidate was measured from
 one production build of the integrated branch. KiB uses 1024 bytes.
 
-| Artifact | Before | v0.1.0 | Change |
-| --- | ---: | ---: | ---: |
-| `/notes` raw HTML | 1089.4 KiB | 47.8 KiB | -95.6% |
-| `/notes` gzip HTML | 286.6 KiB | 9.4 KiB | -96.7% |
-| `/about` raw HTML | 779.5 KiB | 358.1 KiB | -54.1% |
-| `/about` gzip HTML | 31.4 KiB | 21.3 KiB | -32.2% |
-| dist JavaScript | 187.9 KiB | 202.8 KiB | +7.9% (bounded to 250 KiB) |
-| dist CSS | 176.2 KiB | 176.3 KiB | ~0% (bounded to 220 KiB) |
+| Artifact           |     Before |    v0.1.0 |                     Change |
+| ------------------ | ---------: | --------: | -------------------------: |
+| `/notes` raw HTML  | 1089.4 KiB |  47.8 KiB |                     -95.6% |
+| `/notes` gzip HTML |  286.6 KiB |   9.4 KiB |                     -96.7% |
+| `/about` raw HTML  |  779.5 KiB | 358.1 KiB |                     -54.1% |
+| `/about` gzip HTML |   31.4 KiB |  21.3 KiB |                     -32.2% |
+| dist JavaScript    |  187.9 KiB | 202.8 KiB | +7.9% (bounded to 250 KiB) |
+| dist CSS           |  176.2 KiB | 176.3 KiB |   ~0% (bounded to 220 KiB) |
 
 The final Notes catalog is 1260.6 KiB, but it is deferred rather than embedded in the initial Notes
 HTML and is bounded to 1400 KiB. The final build produced 3512 pages; Pagefind indexed 3512 pages and

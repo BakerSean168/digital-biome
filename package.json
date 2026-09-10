@@ -20,7 +20,7 @@
     "test:unit": "tsx --test 'src/**/*.test.ts'",
     "test:infrastructure": "tsx --test 'scripts/**/*.test.ts'",
     "check:performance": "tsx scripts/check-performance-budgets.ts",
-    "verify": "pnpm check && pnpm check:edge && pnpm test:edge && pnpm test:unit && pnpm test:infrastructure",
+    "verify": "pnpm quality && pnpm check && pnpm check:edge && pnpm test:edge && pnpm test:unit && pnpm test:infrastructure",
     "verify:full": "pnpm verify && pnpm build:only && pnpm check:performance",
     "export:private": "tsx scripts/export-private-infrastructure.ts",
     "deploy:cloudflare": "pnpm build && wrangler pages deploy dist --project-name digital-biome --branch main",
@@ -33,7 +33,10 @@
     "pull-notes": "git submodule update --remote --merge",
     "astro": "astro",
     "test:e2e": "playwright test",
-    "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts"
+    "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts",
+    "lint": "biome lint --diagnostic-level=warn --error-on-warnings .",
+    "format:check": "tsx scripts/check-format-ratchet.ts",
+    "quality": "pnpm lint && pnpm format:check"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",
@@ -49,11 +52,14 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@biomejs/biome": "2.5.13",
     "@cloudflare/workers-types": "^5.20260717.1",
     "@playwright/test": "^1.63.0",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.0.0",
     "pagefind": "^1.4.0",
+    "prettier": "3.9.6",
+    "prettier-plugin-astro": "1.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.111.0",

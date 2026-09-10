@@ -1,3 +1,4 @@
+import { hasAsciiControlCharacters } from './text-safety';
 const PRIVATE_KEY_PATTERN = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 const ALLOWED_LINK_PROTOCOLS = new Set(['http:', 'https:', 'ssh:']);
 
@@ -28,7 +29,11 @@ function parseStringRecord(value: unknown, validateLink: boolean): Record<string
     }
 
     const normalizedValue = rawValue.trim();
-    if (!normalizedValue || normalizedValue.length > 2048 || /[\u0000-\u001f\u007f]/.test(normalizedValue)) {
+    if (
+      !normalizedValue ||
+      normalizedValue.length > 2048 ||
+      hasAsciiControlCharacters(normalizedValue)
+    ) {
       throw new PrivateInfrastructureConfigError();
     }
 

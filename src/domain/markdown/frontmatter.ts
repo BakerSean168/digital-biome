@@ -76,14 +76,19 @@ export function frontmatterString(value: unknown): string | undefined {
 
 export function frontmatterStringArray(value: unknown): string[] {
   const values = Array.isArray(value) ? value : value == null ? [] : [value];
-  return values
-    .map(frontmatterString)
-    .filter((item): item is string => Boolean(item));
+  return values.map(frontmatterString).filter((item): item is string => Boolean(item));
 }
 
 export function frontmatterBoolean(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
   return typeof value === 'string' && value.trim().toLowerCase() === 'true';
+}
+
+export function frontmatterNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== 'string' || value.trim() === '') return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 export function frontmatterRecord(value: unknown): FrontmatterRecord | undefined {
