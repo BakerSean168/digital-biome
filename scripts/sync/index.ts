@@ -19,8 +19,10 @@ import { cleanStaleFiles } from './stale-cleaner';
 import { createStats, printSyncReport } from './sync-report';
 import { buildIndexes } from './build-indexes';
 import { mergeAssetIndex } from './merge-asset-index';
+import { reconcileNoteIndex } from './reconcile-note-index';
 import { copyUpstreamLinkGraph } from './copy-upstream-indexes';
 import { loadProtectedInfrastructureUrls } from './privacy';
+import { clearAstroContentCache } from './astro-content-cache';
 
 export interface RunSyncOptions {
   /** Enable favicon caching (default: false) */
@@ -171,10 +173,18 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
     notesConfig.upstream.generatedPath,
     'knowledge-index'
   );
+  // Reconcile route-oriented local note entries with metadata parsed by Thought Forest's
+  // full YAML parser. Route/filePath, dates and stricter local visibility remain local-owned.
+  reconcileNoteIndex(upstreamKnowledgeIndexDir, indexDir, protectedInfrastructureUrls);
+
   mergeAssetIndex(upstreamKnowledgeIndexDir, indexDir);
 
   // Replace local link-graph.json with upstream
   copyUpstreamLinkGraph(upstreamKnowledgeIndexDir, indexDir);
+
+  if (clearAstroContentCache()) {
+    console.log('  [sync] Cleared generated Astro content cache');
+  }
 
   return printSyncReport(stats);
 }

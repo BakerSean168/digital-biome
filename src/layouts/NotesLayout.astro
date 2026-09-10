@@ -25,12 +25,20 @@ const {
 }: Props = Astro.props;
 
 const hasToc = showToc && headings.length > 0;
+const showContext = Boolean(currentSlug);
+const showOutline = showContext && showToc;
+const gridCols = showContext
+  ? showOutline
+    ? 'lg:grid-cols-[20%_55%_25%]'
+    : 'lg:grid-cols-[20%_minmax(0,1fr)]'
+  : 'lg:grid-cols-1';
 ---
 
 <BaseLayout title={title} description={description} bodyClass="bg-background text-foreground">
-  <div class="max-w-[1600px] mx-auto min-h-[calc(100vh-120px)] grid gap-8 px-4 sm:px-6 lg:px-12 grid-cols-1 lg:grid-cols-[20%_55%_25%] relative pt-24 pb-32">
+  <div class={`max-w-[1600px] mx-auto min-h-[calc(100vh-120px)] grid gap-8 px-4 sm:px-6 lg:px-12 grid-cols-1 ${gridCols} relative pt-24 pb-32`}>
     
     <!-- Left Column: Upstream & Downstream -->
+    {showContext && (
     <aside class="hidden lg:flex flex-col py-10 sticky top-[100px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar gap-8">
       <div>
         <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">上游脉络</div>
@@ -47,6 +55,7 @@ const hasToc = showToc && headings.length > 0;
         </div>
       )}
     </aside>
+    )}
 
     <!-- Middle Column: The Core -->
     <main class="py-10 min-w-0 w-full mx-auto relative">      
@@ -56,6 +65,7 @@ const hasToc = showToc && headings.length > 0;
     </main>
 
     <!-- Right Column: Table of Contents / Outline -->
+    {showOutline && (
     <aside class="hidden lg:flex flex-col py-10 sticky top-[100px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto pl-8 custom-scrollbar">
       <div class="text-xs font-mono tracking-widest text-text-muted mb-6 border-b border-border/50 pb-2 text-right">大纲</div>
       {hasToc && <TableOfContents headings={headings} />}
@@ -64,11 +74,12 @@ const hasToc = showToc && headings.length > 0;
       <div class="mt-8 opacity-80">
         <div class="text-[10px] font-mono mb-3 text-right text-text-muted">图谱动态</div>
         <div class="flex flex-wrap gap-2 justify-end">
-          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full hover:border-primary/50 transition-colors cursor-pointer text-text-muted">#wabi-sabi</span>
-          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full hover:border-primary/50 transition-colors cursor-pointer text-text-muted">#architecture</span>
+          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full select-none text-text-muted">#wabi-sabi</span>
+          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full select-none text-text-muted">#architecture</span>
         </div>
       </div>
     </aside>
+    )}
   </div>
   <WikilinkPreview />
 </BaseLayout>
@@ -81,14 +92,20 @@ const hasToc = showToc && headings.length > 0;
     const text = h1.textContent || '';
     h1.classList.add('signal-decode', 'relative', 'inline-block');
     h1.setAttribute('data-text', text);
-    h1.innerHTML = `
-      <span class="opacity-0 pointer-events-none">${text}</span>
-      <span class="absolute inset-0 whitespace-nowrap font-mono tracking-widest text-muted-foreground signal-text" aria-hidden="true">${text}</span>
-    `;
+    const accessibleText = document.createElement('span');
+    accessibleText.className = 'opacity-0 pointer-events-none';
+    accessibleText.textContent = text;
+
+    const visualText = document.createElement('span');
+    visualText.className = 'absolute inset-0 whitespace-nowrap font-mono tracking-widest text-muted-foreground signal-text';
+    visualText.setAttribute('aria-hidden', 'true');
+    visualText.textContent = text;
+
+    h1.replaceChildren(accessibleText, visualText);
     
     // Scramble effect
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
-    const el = h1.querySelector('.signal-text') as HTMLElement;
+    const el = visualText;
     if (el) {
       let iterations = 0;
       const interval = setInterval(() => {

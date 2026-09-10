@@ -5,6 +5,21 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [Unreleased]
+
+### Added
+
+- Phase 2 restores focused regression coverage for Cloudflare Access/private handlers, note routing,
+  wikilink parsing, Markdown transforms, visibility, and asset-card projection.
+
+### Changed
+
+- Removed the unused `mdast` runtime stub and `@pagefind/default-ui`; type-only mdast imports remain
+  backed by `@types/mdast`, and Pagefind continues to use the custom typed adapter.
+- Notes list pages no longer render empty graph/outline columns; note detail pages expose an explicit
+  back-to-Notes route, and title decoration now preserves frontmatter-derived text through DOM
+  `textContent` rather than `innerHTML`.
+
 ## [0.1.0] - 2026-09-10
 
 ### Added
