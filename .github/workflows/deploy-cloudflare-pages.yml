@@ -156,6 +156,10 @@ jobs:
           pnpm build:upstream-indexes
           ACTUAL_ASSET_INDEX_SHA256="$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
           test "${ACTUAL_ASSET_INDEX_SHA256}" = "${EXPECTED_ASSET_INDEX_SHA256}"
+          # Infrastructure contracts include generated Digital Biome indexes. A deploy job
+          # starts from a fresh checkout, so regenerate those indexes from the already
+          # verified pinned Vault before executing the contracts.
+          pnpm sync:content
           pnpm test:infrastructure
 
       - name: Validate production observability credentials
