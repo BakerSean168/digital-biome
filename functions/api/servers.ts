@@ -20,7 +20,6 @@ export interface ServerMonitorResponse {
 
 export interface ObservabilityEnv extends Env {
   NEZHA_BASE_URL?: string;
-  NEZHA_PAT?: string;
 }
 
 type JsonRecord = Record<string, unknown>;
@@ -83,35 +82,100 @@ function mapServer(value: unknown, index: number): ServerItem | null {
   };
 }
 
-export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
-  const nezhaUrl = context.env.NEZHA_BASE_URL || 'https://nezha.bakersean.top';
-  const nezhaPat = context.env.NEZHA_PAT;
+type NezhaPublicSnapshot = {
+  servers: unknown[];
+};
 
-  if (!nezhaUrl || !nezhaPat) {
-    return Response.json({ error: 'Server telemetry is not configured.' }, { status: 503 });
+function parsePublicSnapshot(value: unknown): NezhaPublicSnapshot {
+  if (!isRecord(value) || !Array.isArray(value.servers) || value.servers.length === 0) {
+    throw new Error('Nezha returned no public server telemetry.');
   }
+  return { servers: value.servers };
+}
+
+function readWebSocketMessage(data: unknown): string {
+  if (typeof data === 'string') return data;
+  if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
+  if (ArrayBuffer.isView(data)) {
+    return new TextDecoder().decode(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+  }
+  throw new Error('Nezha returned an unsupported WebSocket message.');
+}
+
+async function readNezhaPublicSnapshot(
+  baseUrl: string,
+  timeoutMs = 5_000,
+): Promise<NezhaPublicSnapshot> {
+  const streamUrl = new URL('/api/v1/ws/server', baseUrl);
+  streamUrl.protocol = streamUrl.protocol === 'http:' ? 'ws:' : 'wss:';
+
+  return await new Promise<NezhaPublicSnapshot>((resolve, reject) => {
+    const socket = new WebSocket(streamUrl.toString());
+    let settled = false;
+
+    const onMessage = (event: MessageEvent) => {
+      try {
+        const body = JSON.parse(readWebSocketMessage(event.data)) as unknown;
+        finish({ value: parsePublicSnapshot(body) });
+      } catch (error) {
+        finish({ error: error instanceof Error ? error : new Error('Invalid Nezha snapshot.') });
+      }
+    };
+    const onError = () => {
+      finish({ error: new Error('Nezha public server stream is unreachable.') });
+    };
+    const onClose = () => {
+      if (!settled) finish({ error: new Error('Nezha public server stream closed early.') });
+    };
+
+    const finish = (result: { value: NezhaPublicSnapshot } | { error: Error }) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      socket.removeEventListener('message', onMessage);
+      socket.removeEventListener('error', onError);
+      socket.removeEventListener('close', onClose);
+      try {
+        socket.close(1000, 'snapshot received');
+      } catch {
+        // Closing is best-effort after the first snapshot or a connection failure.
+      }
+      if ('value' in result) resolve(result.value);
+      else reject(result.error);
+    };
+
+    const timer = setTimeout(() => {
+      finish({ error: new Error('Nezha public server stream timed out.') });
+    }, timeoutMs);
+
+    socket.addEventListener('message', onMessage);
+    socket.addEventListener('error', onError);
+    socket.addEventListener('close', onClose);
+  });
+}
+
+async function readCachedResponse(request: Request): Promise<Response | null> {
+  if (request.method !== 'GET') return null;
+  const edgeCache = (caches as unknown as { default: Cache }).default;
+  return (await edgeCache.match(new Request(request.url, { method: 'GET' }))) ?? null;
+}
+
+function cacheResponse(context: EventContext<ObservabilityEnv, string, unknown>, response: Response): void {
+  if (context.request.method !== 'GET') return;
+  const key = new Request(context.request.url, { method: 'GET' });
+  const edgeCache = (caches as unknown as { default: Cache }).default;
+  context.waitUntil(edgeCache.put(key, response.clone()));
+}
+
+export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
+  const cached = context.request ? await readCachedResponse(context.request) : null;
+  if (cached) return cached;
+
+  const nezhaUrl = context.env.NEZHA_BASE_URL || 'https://nezha.bakersean.top';
 
   try {
-    const response = await fetch(`${nezhaUrl.replace(/\/$/, '')}/api/v1/server`, {
-      headers: {
-        'Authorization': `Bearer ${nezhaPat.replace(/^Bearer\s+/i, '')}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return Response.json({ error: 'Nezha rejected the request.' }, { status: 502 });
-    }
-
-    const body = await response.json() as unknown;
-    if (!isRecord(body) || body.success !== true || !Array.isArray(body.data)) {
-      return Response.json({ error: 'Nezha rejected the request.' }, { status: 502 });
-    }
-    if (body.data.length === 0) {
-      return Response.json({ error: 'Nezha returned no server telemetry.' }, { status: 502 });
-    }
-
-    const mappedServers = body.data.map(mapServer);
+    const snapshot = await readNezhaPublicSnapshot(nezhaUrl);
+    const mappedServers = snapshot.servers.map(mapServer);
     if (mappedServers.some((server) => server === null)) {
       return Response.json({ error: 'Nezha returned unsupported server telemetry.' }, { status: 502 });
     }
@@ -126,13 +190,15 @@ export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
       servers,
     };
 
-    return Response.json(payload, {
+    const response = Response.json(payload, {
       status: 200,
       headers: {
-        'Cache-Control': 'public, max-age=10, s-maxage=15',
+        'Cache-Control': 'public, max-age=10, s-maxage=30',
         'Access-Control-Allow-Origin': '*',
       },
     });
+    if (context.request) cacheResponse(context, response);
+    return response;
   } catch {
     return Response.json({ error: 'Nezha telemetry is unreachable.' }, { status: 502 });
   }

@@ -388,3 +388,9 @@ and infrastructure tests 6/6. Local artifact smoke confirmed all critical static
 
 Phase 1 is closed at repository version `0.1.0`. Follow-up architecture work belongs to a separate
 Phase 2 plan so that new optimization scope cannot retroactively blur this release boundary.
+
+During the v0.1.0 production closure, the public `/api/servers` smoke exposed a stale Nezha PAT.
+Before tagging the release, server telemetry was moved to Nezha v2's guest-filtered public server
+stream and the generated response was placed behind a short Cloudflare edge cache. This removes the
+long-lived dashboard credential from the Pages deployment while preserving the existing public card
+contract; the release remains gated on the exact-main production smoke after this repair.

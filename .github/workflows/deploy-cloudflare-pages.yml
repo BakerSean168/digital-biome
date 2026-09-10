@@ -163,12 +163,10 @@ jobs:
         env:
           AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
           AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
-          NEZHA_PAT: ${{ secrets.NEZHA_PAT }}
         run: |
           set -euo pipefail
           test -n "${AI_USAGE_HUB_URL}"
           test -n "${AI_USAGE_HUB_READ_KEY}"
-          test -n "${NEZHA_PAT}"
 
       - name: Generate and update encrypted Pages bindings
         shell: bash
@@ -177,7 +175,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
           AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
-          NEZHA_PAT: ${{ secrets.NEZHA_PAT }}
         run: |
           set -euo pipefail
           PAYLOAD_FILE="${RUNNER_TEMP}/private-infrastructure.json"
@@ -187,8 +184,6 @@ jobs:
           printf '%s' "${AI_USAGE_HUB_URL}" | pnpm exec wrangler pages secret put AI_USAGE_HUB_URL \
             --project-name digital-biome
           printf '%s' "${AI_USAGE_HUB_READ_KEY}" | pnpm exec wrangler pages secret put AI_USAGE_HUB_READ_KEY \
-            --project-name digital-biome
-          printf '%s' "${NEZHA_PAT}" | pnpm exec wrangler pages secret put NEZHA_PAT \
             --project-name digital-biome
 
       - name: Deploy reviewed artifact and Pages Functions

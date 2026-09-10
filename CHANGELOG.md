@@ -32,6 +32,8 @@ artifact measurements, not synthetic browser timing claims.
   substring classification.
 - PR verification now includes the production build, Pagefind generation, private-data leak scan,
   and performance budgets before merge.
+- Public server telemetry now consumes Nezha v2's anonymous `/api/v1/ws/server` stream behind a short
+  Cloudflare edge cache instead of retaining a long-lived dashboard PAT in the deployment.
 - `AGENTS.md` and touched implementation details were aligned with the current Cloudflare Pages,
   Thought Forest, and verification topology.
 
