@@ -1,6 +1,6 @@
 # Digital Biome 系统性工程与性能优化 — Phase 3（2026-09）
 
-> 状态：实施中
+> 状态：已完成 / v0.3.0 release record
 >
 > 稳定基线：`v0.2.0` / `b04e50b`
 >
@@ -105,3 +105,28 @@ Tools E2E 在 pruning 验证中暴露一次测试竞态：IntersectionObserver �
 - 不把 `/about/tags` 改成 JS-only catalog；
 - 不为了降低 total JS 数字删除 Pagefind 运行时真正会动态加载的文件；
 - 不在 markup batch 顺手改视觉设计系统。
+
+## 6. Phase 3 finalization — v0.3.0
+
+Phase 3 scope 在两个独立批次收口：
+
+- PR #68：About/tag directory SSR markup density，完整内容不降级为 JS shell；
+- PR #69：Pagefind generated runtime surface pruning，并修正 Tools E2E 的 observer/click 竞态。
+
+最终实现 gate：edge **32/32**、unit **109/109**、infrastructure **42/42**、Chromium E2E **6/6**。
+Production artifact 生成 **3512 pages**，Pagefind 索引 **3512 pages / 45176 words**，private leak scan
+**130 values** 通过。
+
+最终主要指标：
+
+| Artifact | v0.2.0 | v0.3.0 candidate | Change |
+|---|---:|---:|---:|
+| `/about` raw HTML | 358.15 KiB | 147.40 KiB | -58.8% |
+| `/about/tags` raw HTML | 651.27 KiB | 125.13 KiB | -80.8% |
+| `/about` DOM elements | 2660 | 1176 | -55.8% |
+| `/about/tags` DOM elements | 4277 | 1478 | -65.4% |
+| total dist JavaScript | 209.5 KiB | 69.7 KiB | -66.7% |
+| total dist CSS | 179.5 KiB | 157.9 KiB | -12.0% |
+
+其中 Pagefind 161.1 KiB 是 generated/deployment artifact surface 的削减，不宣称为首屏网络节省。
+`v0.3.0` 之后的新优化进入下一独立 phase，不继续扩张本轮。

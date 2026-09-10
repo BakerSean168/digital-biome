@@ -7,6 +7,8 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-10
+
 ### Added
 
 - Phase 3 adds structural build gates for About markup density so the full tag directory and contribution
@@ -35,6 +37,15 @@ Pagefind generated-artifact pruning removes 161.1 KiB of unused files from each 
 JavaScript falls from 209.5 KiB to 69.7 KiB (-66.7%) and CSS from 179.5 KiB to 157.9 KiB (-12.0%). This is an
 artifact/deployment-surface reduction, not a claim that initial page transfer was 161.1 KiB smaller: those default
 UI files were already unreferenced by the rendered site.
+
+### Validation
+
+- Phase 3 implementation merged through PRs #68-#69 with exact-head GitHub checks passing before merge.
+- Final local implementation gates: edge 32/32, unit 109/109, infrastructure 42/42, Playwright Chromium 6/6.
+- Production build generated 3512 pages; Pagefind indexed 3512 pages / 45176 words; the 130-value private
+  infrastructure leak scan passed.
+- Hard budgets now enforce `/about` <= 200/32 KiB raw/gzip, `/about/tags` <= 220/24 KiB, total generated
+  JavaScript <= 100 KiB, and CSS <= 190 KiB.
 
 ## [0.2.0] - 2026-09-10
 
