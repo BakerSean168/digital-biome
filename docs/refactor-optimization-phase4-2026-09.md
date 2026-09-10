@@ -1,6 +1,6 @@
 # Digital Biome 系统性工程重构 — Phase 4（2026-09）
 
-> 状态：P4-101 已发布 / v0.3.1；P4-201 实施完成，待 PR/CI
+> 状态：已完成 / v0.4.0 release record
 >
 > 稳定基线：`v0.3.1` / `c302ac9`
 
@@ -129,3 +129,25 @@ This allows formatting debt to shrink with normal feature work instead of hiding
 
 P4-201 is an engineering-quality contract, not a mass style rewrite. Release/version closure happens only after
 its exact-head PR gate and final main production deployment succeed.
+
+## 5. Phase 4 finalization — v0.4.0
+
+Phase 4 closes the two explicit engineering debts carried from the original refactor audit:
+
+- P4-101 / PR #71 + release blocker PR #73: one full-YAML adapter replaces duplicate local line scanners;
+  quoted private flags fail closed, protected routes are absent from static/Pagefind output, and generated Pages
+  runtime tombstones immediately revoke stale cached protected assets. This security correction shipped first as
+  `v0.3.1`.
+- P4-201 / PR #74: Biome owns the stable TS/JS lint surface with zero warnings, Prettier + the official Astro
+  plugin owns formatting, and a SHA-256 ratchet lets the remaining 131 legacy formatting files converge only
+  when touched instead of creating a repository-wide style rewrite. The final subscription-specific line YAML
+  parser also moved onto the shared full-YAML adapter with unchanged normalized output.
+
+Final P4-201 implementation evidence before release closure: Biome **144 files / 0 warnings**, format ratchet
+**206 targets = 75 formatted + 131 grandfathered**, Astro **181 files / 0 diagnostics**, edge **33/33**, unit
+**113/113**, infrastructure **53/53**, production build **3511 pages**, private leak scan **130 values PASS**,
+protected-route manifest **16 routes PASS**, performance budgets PASS, Chromium **6/6**.
+
+After `v0.4.0`, the original explicit refactor backlog no longer contains an unimplemented mandatory item.
+Large components or future performance work require fresh evidence and a new phase; they are not inherited
+completion debt from Phase 1-4.

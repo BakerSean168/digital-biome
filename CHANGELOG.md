@@ -7,6 +7,8 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-10
+
 ### Added
 
 - Phase 4 adds Biome recommended linting for TypeScript/JavaScript with warnings promoted to CI failures.
