@@ -7,6 +7,8 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-10
+
 ### Fixed
 
 - Replaced Digital Biome's duplicate line-oriented frontmatter scanners with one shared full-YAML adapter.

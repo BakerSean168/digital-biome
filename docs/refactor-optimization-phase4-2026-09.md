@@ -1,6 +1,6 @@
 # Digital Biome 系统性工程重构 — Phase 4（2026-09）
 
-> 状态：实施中
+> 状态：P4-101 已发布候选 / v0.3.1；P4-201 待实施
 >
 > 稳定基线：`v0.3.0` / `de9e661`
 
@@ -59,3 +59,8 @@ artifact hygiene。Phase 4 只处理此前明确推迟的两项工程债务：
 
 由于 `v0.3.0` 生产环境已实际暴露该 protected route，P4-101 不等待后续 lint/format 工作，先作为
 `v0.3.1` privacy patch 发布。Phase 4 的剩余 DB-P4-201 之后从该安全基线继续。
+
+## 3. P4-101 patch closure — v0.3.1
+
+P4-101 通过 PR #71 合入 main。由于它修复了 `v0.3.0` 上实际可访问的 protected route，先以
+`v0.3.1` patch 独立发布；DB-P4-201 不与该隐私修复捆绑。
