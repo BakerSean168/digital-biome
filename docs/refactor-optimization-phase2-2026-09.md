@@ -152,7 +152,11 @@ production-build E2E 路径，避免“纯函数全绿但 DOM wiring 断掉”�
   产生瞬时 duplicate-id 误报；清理后 `astro check` 153 files / 0 error / 0 warning / 0 hint。
 
 本次没有直接删除 local scanner：它仍负责 route/filePath、ISO date normalization、site-only fields、
-blogs，以及更严格的 asset publication policy。后续只有在这些 owner 都有替代契约后才继续缩减。
+blogs，以及更严格的 asset publication policy；但它不再拥有最终 canonical metadata。reconcile 后会从最终
+`notes-index` 重建 `tag-index` 与 `asset-index`，再只对 asset-specific nested fields 做 enrich。current-vault
+contract 已验证 tag drift **0/720**，asset generic metadata drift 从 **40/82 → 0/82**。因此 DB-P2-101
+的 authority convergence 已完成；后续若继续删 scanner，只能作为独立低收益 cleanup，而不是 Phase 2
+发布阻塞项。
 
 ### Batch C — Remaining payload boundary
 

@@ -20,6 +20,7 @@ import { createStats, printSyncReport } from './sync-report';
 import { buildIndexes } from './build-indexes';
 import { mergeAssetIndex } from './merge-asset-index';
 import { reconcileNoteIndex } from './reconcile-note-index';
+import { rebuildDerivedIndexes } from './rebuild-derived-indexes';
 import { copyUpstreamLinkGraph } from './copy-upstream-indexes';
 import { loadProtectedInfrastructureUrls } from './privacy';
 import { clearAstroContentCache } from './astro-content-cache';
@@ -176,6 +177,7 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   // Reconcile route-oriented local note entries with metadata parsed by Thought Forest's
   // full YAML parser. Route/filePath, dates and stricter local visibility remain local-owned.
   reconcileNoteIndex(upstreamKnowledgeIndexDir, indexDir, protectedInfrastructureUrls);
+  rebuildDerivedIndexes(indexDir);
 
   mergeAssetIndex(upstreamKnowledgeIndexDir, indexDir);
 

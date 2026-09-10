@@ -31,6 +31,8 @@ artifact measurements, not synthetic browser timing claims.
   URL state synchronized, so clearing filters remains stable across refresh/navigation.
 - Search intent scheduling now wraps browser timer methods instead of storing unbound host functions, fixing
   the production `TypeError: Illegal invocation` that prevented SiteSearch results from rendering.
+- Tag and asset indexes are now rebuilt from the final reconciled Notes snapshot before asset-specific
+  enrichment, eliminating the split where 40 of 82 asset entries still carried pre-reconciliation metadata.
 
 
 ### Performance

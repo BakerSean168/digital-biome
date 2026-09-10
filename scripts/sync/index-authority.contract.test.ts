@@ -72,3 +72,37 @@ test('Digital Biome may make upstream-public assets stricter but never widens th
     assert.equal(canonical.visibility, 'public', `${sourcePath}: local publication widened upstream visibility`);
   }
 });
+
+
+test('derived tag and asset indexes stay aligned with the reconciled notes snapshot', () => {
+  const notes = JSON.parse(fs.readFileSync(localPath, 'utf8')).entries as LocalNote[];
+  const tags = JSON.parse(
+    fs.readFileSync(path.resolve('src/data/indexes/tag-index.json'), 'utf8'),
+  ).tags as Array<{ tag: string; count: number }>;
+  const assets = JSON.parse(
+    fs.readFileSync(path.resolve('src/data/indexes/asset-index.json'), 'utf8'),
+  ).entries as Array<LocalNote & { isAsset: boolean }>;
+
+  const expectedTagCounts = new Map<string, number>();
+  for (const note of notes) {
+    if (note.visibility !== 'public') continue;
+    for (const tag of note.tags) {
+      expectedTagCounts.set(tag, (expectedTagCounts.get(tag) ?? 0) + 1);
+    }
+  }
+  assert.deepEqual(
+    new Map(tags.map(entry => [entry.tag, entry.count])),
+    expectedTagCounts,
+    'tag-index must derive from final reconciled public notes',
+  );
+
+  const notesById = new Map(notes.map(note => [note.id, note]));
+  const metadataFields = ['title', 'description', 'tags', 'aliases', 'type', 'status', 'visibility'] as const;
+  for (const asset of assets) {
+    const note = notesById.get(asset.id);
+    assert.ok(note, `${asset.id}: asset must exist in notes-index`);
+    for (const field of metadataFields) {
+      assert.deepEqual(asset[field], note[field], `${asset.id}: ${field} drift`);
+    }
+  }
+});
