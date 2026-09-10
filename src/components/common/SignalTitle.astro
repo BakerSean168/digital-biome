@@ -10,7 +10,7 @@ const { title, class: className = '', as: Tag = 'h1' }: Props = Astro.props;
 ---
 
 <Tag class={`signal-decode relative inline-block ${className}`} data-text={title}>
-  <span class="opacity-0 pointer-events-none">{title}</span>
+  <span class="opacity-0 pointer-events-none" aria-hidden="true">{title}</span>
   <span class="absolute inset-0 whitespace-nowrap font-mono tracking-widest text-muted-foreground signal-text" aria-hidden="true">{title}</span>
 </Tag>
 

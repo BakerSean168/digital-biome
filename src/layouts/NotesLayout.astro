@@ -94,6 +94,7 @@ const gridCols = showContext
     h1.setAttribute('data-text', text);
     const accessibleText = document.createElement('span');
     accessibleText.className = 'opacity-0 pointer-events-none';
+    accessibleText.setAttribute('aria-hidden', 'true');
     accessibleText.textContent = text;
 
     const visualText = document.createElement('span');
