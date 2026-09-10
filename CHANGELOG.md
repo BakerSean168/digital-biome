@@ -35,6 +35,8 @@ artifact measurements, not synthetic browser timing claims.
   the production `TypeError: Illegal invocation` that prevented SiteSearch results from rendering.
 - Tag and asset indexes are now rebuilt from the final reconciled Notes snapshot before asset-specific
   enrichment, eliminating the split where 40 of 82 asset entries still carried pre-reconciliation metadata.
+- The production deploy verifier now regenerates Digital Biome's gitignored derived indexes from the
+  already hash-verified pinned Vault before running infrastructure contracts in a fresh checkout.
 
 
 ### Performance

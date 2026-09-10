@@ -259,3 +259,9 @@ Phase 2 的实现边界在 PR #62-#65 收口：
 `/tools` 在同一份 19-category / 180-assignment 数据上由 **633.96 → 63.46 KiB raw**，
 gzip **34.21 → 8.19 KiB**。旧 #46/#47/#48 已在有效内容迁移后关闭。Phase 2 后续发现的新优化
 必须进入下一独立 phase/version，不继续扩张 `v0.2.0`。
+
+发布门禁首次执行还捕获到一个 deployment-only ordering bug：fresh deploy checkout 只重建了 Thought
+Forest upstream index，却在生成 `src/data/indexes/*` 前执行了新增 authority contracts，导致 ENOENT。
+发布流程已固定为“重建 pinned upstream → 校验 asset-index hash → `sync:content` 生成 Digital Biome
+indexes → infrastructure contracts”，并新增 workflow regression test；该修复属于 v0.2.0 发布阻塞闭环，
+不扩张产品重构范围。
