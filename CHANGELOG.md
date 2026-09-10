@@ -7,6 +7,19 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+### Fixed
+
+- Replaced Digital Biome's duplicate line-oriented frontmatter scanners with one shared full-YAML adapter.
+  This fixes quoted boolean publication flags such as `private: "true"`, which the old scanner could
+  incorrectly treat as public. A postbuild contract now rejects any protected knowledge note route in `dist`.
+
+### Changed
+
+- `build-indexes` and the static note catalog fallback now share explicit YAML parsing semantics while
+  preserving Thought Forest as canonical metadata authority and keeping asset nested metadata on its existing
+  upstream enrich path. Malformed YAML now fails closed instead of silently projecting partial metadata.
+
+
 ## [0.3.0] - 2026-09-10
 
 ### Added

@@ -9,16 +9,17 @@
  *
  * Runs after `pnpm sync` has copied markdown to `src/data/obsidian/`.
  *
- * Imports pure logic from `src/domain/foundation/` — this script runs as
- * plain tsx outside Astro's module resolution, so it must NOT import from
- * `types/notes.ts` or any module that transitively depends on `astro:content`.
+ * Runs as plain tsx outside Astro's module resolution. Route/link primitives
+ * come from the foundation layer, while YAML syntax is delegated to the shared
+ * `src/domain/markdown/frontmatter.ts` adapter. It must not depend on
+ * `astro:content`.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// ── Foundation imports (zero external dependencies) ──
+// ── Build-safe domain imports ──
 
 import {
   ASSET_NOTE_PREFIX,
@@ -27,69 +28,21 @@ import {
 import { toNoteId } from '../../src/domain/foundation/note-id';
 import { inferVisibility } from '../../src/domain/foundation/visibility';
 import { parseWikilinks } from '../../src/domain/foundation/wikilink-parser';
+import {
+  frontmatterBoolean,
+  frontmatterString,
+  frontmatterStringArray,
+  parseMarkdownFrontmatter,
+  type FrontmatterRecord,
+} from '../../src/domain/markdown/frontmatter';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
-// ── Frontmatter parser (mirrors static-note-catalog.ts logic) ──
-// NOTE: The foundation layer only needs extractFrontmatter (raw text).
-// This script needs the full parseFrontmatter (structured object), so
-// we keep it here. If this grows, consider extracting to a shared module.
-
-function extractFrontmatter(text: string): string | null {
-  if (!text.startsWith('---')) return null;
-  const lines = text.split('\n');
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') return lines.slice(1, i).join('\n');
-  }
-  return null;
-}
-
-function extractBody(text: string): string {
-  if (!text.startsWith('---')) return text;
-  const lines = text.split('\n');
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') return lines.slice(i + 1).join('\n');
-  }
-  return text;
-}
-
-function parseBooleanish(v: string | undefined): boolean {
-  if (!v) return false;
-  return v.trim().toLowerCase() === 'true';
-}
-
-function parseInlineList(v: string): string[] {
-  const value = v.trim();
-  if (!value.startsWith('[') || !value.endsWith(']')) {
-    const item = value.replace(/^['"]|['"]$/g, '').trim();
-    return item ? [item] : [];
-  }
-  const inner = value.slice(1, -1).trim();
-  if (!inner) return [];
-  const items: string[] = [];
-  let current = '';
-  let quote: '"' | "'" | null = null;
-  for (const ch of inner) {
-    if (quote) {
-      current += ch;
-      if (ch === quote) quote = null;
-      continue;
-    }
-    if (ch === '"' || ch === "'") { quote = ch; current += ch; continue; }
-    if (ch === ',') {
-      const item = current.trim().replace(/^['"]|['"]$/g, '');
-      if (item) items.push(item);
-      current = '';
-      continue;
-    }
-    current += ch;
-  }
-  const tail = current.trim().replace(/^['"]|['"]$/g, '');
-  if (tail) items.push(tail);
-  return items;
-}
+// ── Local publication projection ──
+// YAML syntax is owned by the shared full-YAML adapter. This script only
+// projects fields that Digital Biome needs for route/publication/index work.
 
 interface RawFrontmatter {
   title?: string;
@@ -111,74 +64,30 @@ interface RawFrontmatter {
   host_asset_id?: string;
   parent_asset_id?: string;
   status?: string;
-  homepage?: Record<string, unknown>;
-  monitor?: Record<string, unknown>;
-  links?: Array<Record<string, unknown>>;
 }
 
-function parseFrontmatter(fm: string): RawFrontmatter {
-  const result: RawFrontmatter = {
-    tags: [],
-    draft: false,
-    private: false,
-    type: 'note',
-    aliases: [],
+function projectLocalFrontmatter(data: FrontmatterRecord): RawFrontmatter {
+  return {
+    title: frontmatterString(data.title),
+    description: frontmatterString(data.description),
+    tags: frontmatterStringArray(data.tags),
+    created: frontmatterString(data.created),
+    updated: frontmatterString(data.updated),
+    draft: frontmatterBoolean(data.draft),
+    private: frontmatterBoolean(data.private),
+    visibility: frontmatterString(data.visibility),
+    type: frontmatterString(data.type) ?? 'note',
+    url: frontmatterString(data.url),
+    icon: frontmatterString(data.icon),
+    category: frontmatterString(data.category),
+    aliases: frontmatterStringArray(data.aliases),
+    asset_id: frontmatterString(data.asset_id),
+    asset_type: frontmatterString(data.asset_type),
+    asset_role: frontmatterString(data.asset_role),
+    host_asset_id: frontmatterString(data.host_asset_id),
+    parent_asset_id: frontmatterString(data.parent_asset_id),
+    status: frontmatterString(data.status),
   };
-
-  const lines = fm.split('\n');
-  let currentKey: string | null = null;
-
-  for (const rawLine of lines) {
-    const line = rawLine.trimEnd();
-
-    // Continuation of a list key
-    if (currentKey && line.trimStart().startsWith('- ')) {
-      const item = line.trimStart().slice(2).trim().replace(/^['"]|['"]$/g, '');
-      if (item) {
-        if (currentKey === 'tags') result.tags.push(item);
-        else if (currentKey === 'aliases') result.aliases.push(item);
-      }
-      continue;
-    }
-
-    currentKey = null;
-    const match = line.match(/^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$/);
-    if (!match) continue;
-
-    const [, key, rawValue] = match;
-    const value = rawValue.trim();
-
-    switch (key) {
-      case 'title': result.title = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'description': result.description = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'tags':
-        if (!value) { currentKey = 'tags'; }
-        else { result.tags = parseInlineList(value); }
-        break;
-      case 'created': result.created = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'updated': result.updated = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'draft': result.draft = parseBooleanish(value); break;
-      case 'private': result.private = parseBooleanish(value); break;
-      case 'visibility': result.visibility = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'type': result.type = value.replace(/^['"]|['"]$/g, '') || 'note'; break;
-      case 'url': result.url = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'icon': result.icon = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'category': result.category = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'aliases':
-        if (!value) { currentKey = 'aliases'; }
-        else { result.aliases = parseInlineList(value); }
-        break;
-      case 'asset_id': result.asset_id = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'asset_type': result.asset_type = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'asset_role': result.asset_role = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'host_asset_id': result.host_asset_id = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'parent_asset_id': result.parent_asset_id = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      case 'status': result.status = value.replace(/^['"]|['"]$/g, '') || undefined; break;
-      default: break;
-    }
-  }
-
-  return result;
 }
 
 // ── Markdown link parser (unique to build-indexes) ──
@@ -245,12 +154,12 @@ function processNoteFile(filePath: string, notesRoot: string): ProcessedNote {
   const raw = fs.readFileSync(filePath, 'utf-8');
   const relativePath = path.relative(notesRoot, filePath).replace(/\\/g, '/');
   const id = toNoteId(relativePath);
-  const fmText = extractFrontmatter(raw);
-  const fm = fmText ? parseFrontmatter(fmText) : { tags: [], draft: false, private: false, type: 'note', aliases: [] };
-  if (relativePath.startsWith('blogs/') && (!fmText || !/^type:\s*.+$/m.test(fmText))) {
+  const parsed = parseMarkdownFrontmatter(raw, relativePath);
+  const fm = projectLocalFrontmatter(parsed.data);
+  if (relativePath.startsWith('blogs/') && !frontmatterString(parsed.data.type)) {
     fm.type = 'blog';
   }
-  const body = extractBody(raw);
+  const body = parsed.body;
 
   const isAsset = id.startsWith(ASSET_NOTE_PREFIX);
   const visibility = inferVisibility({
@@ -339,9 +248,6 @@ export function buildIndexes(notesRoot?: string): void {
     asset_role: n.fm.asset_role as any,
     host_asset_id: n.fm.host_asset_id,
     parent_asset_id: n.fm.parent_asset_id,
-    homepage: n.fm.homepage as any,
-    monitor: n.fm.monitor as any,
-    links: n.fm.links as any,
     status: n.fm.status,
     filePath: n.filePath,
   }));

@@ -4,8 +4,7 @@
  *
  * Digital Biome still owns the publication set, route/filePath identity,
  * stricter asset visibility policy, normalized ISO dates, and site-specific
- * fields. Thought Forest owns metadata that its gray-matter based parser can
- * represent more faithfully than the local line scanner.
+ * fields. Thought Forest owns canonical published metadata from its full-YAML index.
  */
 
 import fs from 'node:fs';
