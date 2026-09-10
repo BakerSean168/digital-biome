@@ -5,9 +5,10 @@ import { ExternalLink } from '@lucide/astro';
 interface Props {
   name: string;
   bookmarks: Bookmark[];
+  totalCount?: number;
 }
 
-const { name, bookmarks } = Astro.props;
+const { name, bookmarks, totalCount = bookmarks.length } = Astro.props;
 ---
 
 <div class="bookmark-category-container mb-6 w-full">
@@ -16,7 +17,7 @@ const { name, bookmarks } = Astro.props;
       [ {name} ]
     </h3>
     <div class="px-3 py-1 bg-primary/10 text-primary text-[10px] border border-primary/20 rounded-none font-medium category-count-badge select-none">
-      <span class="category-visible-count font-bold">{bookmarks.length}</span> / {bookmarks.length} UNITS
+      <span class="category-visible-count font-bold">{bookmarks.length}</span> / {totalCount} UNITS
     </div>
   </div>
   
@@ -30,11 +31,14 @@ const { name, bookmarks } = Astro.props;
       }
 
       const localIconUrl = `/favicons/${domain}.png`;
-      const fallbackIconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      const fallbackIconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
+      const fallbackLetter = bookmark.title.charAt(0).toUpperCase() || '?';
 
       return (
         <div 
           class="bookmark-card-item relative group/card flex flex-col w-full"
+          data-bookmark-card
+          data-bookmark-slug={bookmark.slug}
           data-title={bookmark.title}
           data-description={bookmark.description || ''}
           data-categories={JSON.stringify(bookmark.categories)}
@@ -52,16 +56,15 @@ const { name, bookmarks } = Astro.props;
 
             <!-- Favicon Box -->
             <div class="favicon-box w-10 h-10 border border-border flex items-center justify-center bg-background text-foreground shrink-0 rounded-none overflow-hidden relative group-hover:border-primary/30 transition-colors">
-              {bookmark.icon
-                ? <Fragment set:html={bookmark.icon} />
-                : <img
-                    src={localIconUrl}
-                    alt={`${bookmark.title} favicon`}
-                    class="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-110"
-                    loading="lazy"
-                    onerror={`this.onerror=null; if(!this.getAttribute('data-second-fallback')){ this.setAttribute('data-second-fallback','true'); this.src='${fallbackIconUrl}'; } else { const p = this.parentNode; p.innerHTML = '<div class="w-full h-full text-primary bg-primary/10 flex items-center justify-center font-mono font-bold text-xs select-none">[${bookmark.title.charAt(0).toUpperCase()}]</div>'; }`}
-                  />
-              }
+              <img
+                src={localIconUrl}
+                alt={`${bookmark.title} favicon`}
+                class="w-5 h-5 object-contain transition-transform duration-200 group-hover:scale-110"
+                loading="lazy"
+                data-bookmark-favicon
+                data-fallback-url={fallbackIconUrl}
+                data-fallback-letter={fallbackLetter}
+              />
             </div>
 
             <!-- Text Details -->
@@ -88,32 +91,3 @@ const { name, bookmarks } = Astro.props;
     })}
   </div>
 </div>
-
-<style>
-  /* Explicit CSS styles for keyboard active state */
-  .bookmark-card-item.kb-active > a.card-anchor {
-    border-color: var(--primary) !important;
-    background-color: rgba(139, 154, 70, 0.08) !important;
-    box-shadow: 0 0 15px rgba(139, 154, 70, 0.25), inset 0 0 0 1px var(--primary) !important;
-  }
-
-  .bookmark-card-item.kb-active .kb-cursor-indicator {
-    opacity: 1 !important;
-    visibility: visible !important;
-    left: -0.5rem !important;
-  }
-
-  .bookmark-card-item.kb-active span.card-title {
-    color: var(--primary) !important;
-  }
-
-  .bookmark-card-item.kb-active .favicon-box {
-    border-color: rgba(139, 154, 70, 0.5) !important;
-  }
-
-  .bookmark-card-item.kb-active .diagnostic-tooltip {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0) translateX(-50%) !important;
-  }
-</style>

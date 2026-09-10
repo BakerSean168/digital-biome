@@ -52,7 +52,7 @@ Phase 1 最终 production artifact 的关键指标：
 - asset-card view model。
 
 这些路径在 Phase 1 后仍是现役事实源。测试已选择性迁入 Phase 2，而不是继续让旧 PR 漂浮。
-迁入后 `pnpm verify` 当前结果为：edge **32/32**、unit **105/105**、infrastructure **24/24**。
+Foundation 合并前 `pnpm verify` 结果为：edge **32/32**、unit **105/105**、infrastructure **31/31**。
 
 ### P1 — 索引生成仍有“双 YAML 解释”
 
@@ -75,9 +75,9 @@ Markdown 使用自维护 line scanner 重新解析 frontmatter。之后又通过
 
 ### P1 — `/tools` 初始数据边界仍过大
 
-`BookmarkGrid.astro` 在 build-time 将全部 155 个 bookmarks / 11 categories 展开成完整卡片 DOM，
-客户端过滤只是隐藏已有节点。因此访问 `/tools` 即支付 634.0 KiB raw HTML，即使用户只看首屏或只
-搜索一个类别。
+`BookmarkGrid.astro` 在 Phase 1 基线中会把当时的完整 bookmarks/categories 展开成卡片 DOM；
+客户端过滤只是隐藏已有节点。因此访问 `/tools` 即支付约 634 KiB raw HTML，即使用户只看首屏或只
+搜索一个类别。到 DB-P2-201 实施时，同一份当前内容已增长到 19 categories / 180 category assignments。
 
 目标与 Notes Phase 1 相同：首屏保留真实可访问内容，完整 catalog 延迟加载，并且只有一个公开
 数据 authority。
@@ -171,11 +171,28 @@ build-time public bookmarks
 **Acceptance**：
 
 - 初始 HTML 保留真实可访问 bookmarks，不变成空 JS shell；
-- 完整 155-item catalog 不内联；
+- 完整当前 catalog 不内联；
 - search/category URL state 与 keyboard navigation 保持；
 - public/private filtering 复用现有 bookmark repository authority；
-- `/tools` raw HTML 从 634 KiB 降到目标 **< 300 KiB**，gzip **< 30 KiB**；
+- `/tools` raw HTML 预算收紧到 **< 96 KiB**，gzip **< 16 KiB**；
 - catalog 有 schema validation、single-flight/retry 与 performance budget。
+
+
+**当前实施证据（同一份 19-category / 180-assignment catalog A/B）：**
+
+| Artifact | Before | DB-P2-201 | Change |
+|---|---:|---:|---:|
+| `/tools` raw HTML | 633.96 KiB | 63.46 KiB | -90.0% |
+| `/tools` gzip HTML | 34.21 KiB | 8.19 KiB | -76.1% |
+| BookmarkGrid JS raw | 4.28 KiB | 10.65 KiB | +149.0% |
+| BookmarkGrid JS gzip | 1.57 KiB | 3.76 KiB | +139.3% |
+| deferred tools catalog raw | — | 47.75 KiB | lazy |
+| deferred tools catalog gzip | — | 14.75 KiB | lazy |
+
+首屏 SSR 保留 16 张真实链接卡片；完整 catalog 不嵌入 HTML，只在 sentinel、搜索或 category intent
+出现后加载。即使计入增长后的 BookmarkGrid JS，初始 HTML + grid JS raw footprint 仍下降约 88.4%。
+catalog 本身设置 80 KiB raw / 24 KiB gzip budget，`/tools` HTML 设置 96 / 16 KiB budget，并通过
+结构 gate 固化“恰好 16 张 SSR cards + 完整 catalog 不回流 HTML”。
 
 ### Batch D — Browser acceptance
 
