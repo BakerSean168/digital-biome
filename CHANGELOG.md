@@ -11,6 +11,8 @@ artifact measurements, not synthetic browser timing claims.
 
 - Phase 2 restores focused regression coverage for Cloudflare Access/private handlers, note routing,
   wikilink parsing, Markdown transforms, visibility, and asset-card projection.
+- Focused Playwright Chromium E2E now exercises the production-built Notes lazy catalog and URL filters,
+  SiteSearch Pagefind integration, Discover's asset fallback, and the Tools lazy catalog/category state.
 
 ### Changed
 
@@ -25,6 +27,10 @@ artifact measurements, not synthetic browser timing claims.
   as its publication authority.
 - Bookmark favicon fallback no longer relies on inline `onerror` code or raw custom-icon HTML; static
   and deferred cards use DOM event handling and text-only fallbacks.
+- Notes now exposes a visible clear-filter action whenever query/tag filters are active and keeps `q`/`tag`
+  URL state synchronized, so clearing filters remains stable across refresh/navigation.
+- Search intent scheduling now wraps browser timer methods instead of storing unbound host functions, fixing
+  the production `TypeError: Illegal invocation` that prevented SiteSearch results from rendering.
 
 
 ### Performance

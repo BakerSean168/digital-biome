@@ -31,7 +31,8 @@
     "build:indexes": "tsx scripts/sync/build-indexes.ts",
     "refresh:github-contributions": "node scripts/bootstrap-github-cache.js",
     "pull-notes": "git submodule update --remote --merge",
-    "astro": "astro"
+    "astro": "astro",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",
@@ -48,6 +49,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@cloudflare/workers-types": "^5.20260717.1",
+    "@playwright/test": "^1.63.0",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.0.0",
     "pagefind": "^1.4.0",

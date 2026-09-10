@@ -8,6 +8,8 @@ on:
       - 'edge/**'
       - 'functions/**'
       - 'scripts/**'
+      - 'e2e/**'
+      - 'playwright.config.ts'
       - 'tsconfig.json'
       - 'package.json'
       - 'pnpm-lock.yaml'
@@ -68,3 +70,9 @@ jobs:
 
       - name: Run verification and production build gates
         run: pnpm verify:full
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run focused browser E2E
+        run: pnpm test:e2e

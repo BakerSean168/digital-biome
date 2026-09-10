@@ -208,6 +208,20 @@ catalog 本身设置 80 KiB raw / 24 KiB gzip budget，`/tools` HTML 设置 96 /
 
 CI 使用 production build + local preview，Chromium 单浏览器即可。失败保留 trace，不默认录制视频。
 
+**当前实施证据：**
+
+- Playwright `1.63.0` + managed Chromium，production `dist` 由 `astro preview` 提供；
+- 5 条 focused E2E 全部 PASS：Notes SSR→lazy load、Notes q/tag 初始化→clear、SiteSearch Pagefind、
+  Discover Pagefind-unavailable fallback、Tools 16 SSR→full catalog→category URL state；
+- 第一轮 E2E 实际捕获并修复两个此前 unit/HTTP smoke 没暴露的问题：
+  1. Notes 过滤有结果时 `CLEAR_FILTERS` 位于隐藏 empty-state，导致没有可见清除入口，且 clear 后 URL
+     仍残留 q/tag；现在 filter action 始终可见并同步清理 URL state；
+  2. `createSearchIntentScheduler` 把 browser `setTimeout/clearTimeout` 保存为未绑定 host method，production
+     bundle 在 SiteSearch 输入时抛 `TypeError: Illegal invocation`；改为 receiver-safe wrapper 后真实
+     Pagefind DOC 结果恢复。
+- GitHub `check.yml` 在 `verify:full` 完成后安装 managed Chromium 并执行 `pnpm test:e2e`；
+  `e2e/**` 与 `playwright.config.ts` 也进入 main push path trigger。
+
 ## 5. 明确不做
 
 - 不因为 `InfrastructureShowcase.astro` / `BiomeTree.astro` / `BookmarkGrid.astro` 行数大就机械拆文件；
