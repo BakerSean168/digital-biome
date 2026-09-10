@@ -1,6 +1,6 @@
 # Digital Biome 系统性工程与性能优化计划（2026-09）
 
-> 状态：实施前基线 / ForgeFlow real-project acceptance candidate
+> 状态：Phase 1 已完成 / v0.1.0 release record
 >
 > 基线主仓库：`7a49535`
 >
@@ -362,3 +362,29 @@ one root Plan
 3. 最终 main/PR gate 全绿；
 4. 没有为了性能破坏 private-data boundary；
 5. ForgeFlow 自动完成 provider cleanup、worktree retirement 与 lease release。
+
+## 8. Phase 1 finalization — v0.1.0
+
+Phase 1 was finalized on 2026-09-10. The integrated implementation head `8a2ea333` was merged by
+PR #59 as `f6f7fc0`. The merge commit passed the repository Type Check workflow and the production
+workflow independently rebuilt the pinned public artifact successfully.
+
+Final artifact measurements from the accepted integrated build:
+
+| Artifact | Baseline | Final | Delta |
+|---|---:|---:|---:|
+| `/notes` raw | 1089.4 KiB | 47.8 KiB | -95.6% |
+| `/notes` gzip | 286.6 KiB | 9.4 KiB | -96.7% |
+| `/about` raw | 779.5 KiB | 358.1 KiB | -54.1% |
+| `/about` gzip | 31.4 KiB | 21.3 KiB | -32.2% |
+| dist JavaScript | 187.9 KiB | 202.8 KiB | +7.9%, budgeted |
+| dist CSS | 176.2 KiB | 176.3 KiB | effectively flat |
+
+The full Notes catalog is 1260.6 KiB and is intentionally deferred behind browser interaction rather
+than embedded in initial HTML. The accepted build produced 3512 pages, Pagefind indexed 45219 words,
+and the private-data leak gate checked 130 sensitive values. Edge tests were 19/19, unit tests 47/47,
+and infrastructure tests 6/6. Local artifact smoke confirmed all critical static routes/assets return
+200 and the Notes page contains exactly 12 SSR cards.
+
+Phase 1 is closed at repository version `0.1.0`. Follow-up architecture work belongs to a separate
+Phase 2 plan so that new optimization scope cannot retroactively blur this release boundary.
