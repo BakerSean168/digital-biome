@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { assertNotesCatalogBoundary, INITIAL_NOTE_CARD_COUNT } from './notes-catalog-boundary';
+import { assertAboutMarkupBoundary } from './about-markup-boundary';
 import { assertToolsCatalogBoundary } from './tools-catalog-boundary';
 import { INITIAL_TOOL_CARD_COUNT } from '../src/view-models/tools-catalog';
 
@@ -16,7 +17,8 @@ const DIST_DIR = path.resolve('dist');
 const KIB = 1024;
 const PAGE_BUDGETS: readonly PageBudget[] = [
   { route: '/notes', file: 'notes/index.html', rawKiB: 200, gzipKiB: 60 },
-  { route: '/about', file: 'about/index.html', rawKiB: 400, gzipKiB: 50 },
+  { route: '/about', file: 'about/index.html', rawKiB: 200, gzipKiB: 32 },
+  { route: '/about/tags', file: 'about/tags/index.html', rawKiB: 220, gzipKiB: 24 },
   { route: '/discover', file: 'discover/index.html', rawKiB: 64, gzipKiB: 20 },
   { route: '/tools', file: 'tools/index.html', rawKiB: 96, gzipKiB: 16 },
 ];
@@ -122,6 +124,23 @@ function assertAssetBudgets(): void {
   }
 }
 
+function assertAboutMarkup(): void {
+  const aboutPath = path.join(DIST_DIR, 'about', 'index.html');
+  const tagsPath = path.join(DIST_DIR, 'about', 'tags', 'index.html');
+  const contributionsPath = path.resolve('src/data/github-contributions.json');
+  if (!fs.existsSync(aboutPath) || !fs.existsSync(tagsPath) || !fs.existsSync(contributionsPath)) {
+    throw new Error('About markup boundary inputs are missing.');
+  }
+  const contributionPayload = JSON.parse(fs.readFileSync(contributionsPath, 'utf8')) as { contributions?: unknown[] };
+  const contributionDays = Array.isArray(contributionPayload.contributions) ? contributionPayload.contributions.length : 0;
+  assertAboutMarkupBoundary(
+    fs.readFileSync(aboutPath, 'utf8'),
+    fs.readFileSync(tagsPath, 'utf8'),
+    { contributionDays },
+  );
+  console.log(`about markup: ${contributionDays} compact contribution cells; tag directory remains full SSR`);
+}
+
 function reportNotesCatalog(): void {
   const catalogPath = path.join(DIST_DIR, 'data', 'notes-catalog.json');
   const notesPath = path.join(DIST_DIR, 'notes', 'index.html');
@@ -157,6 +176,7 @@ if (!fs.existsSync(DIST_DIR)) {
 
 assertPageBudgets();
 assertAssetBudgets();
+assertAboutMarkup();
 reportNotesCatalog();
 reportToolsCatalog();
 console.log('Performance budget check passed.');

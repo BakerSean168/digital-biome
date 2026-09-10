@@ -7,6 +7,26 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+### Added
+
+- Phase 3 adds structural build gates for About markup density so the full tag directory and contribution
+  heatmap cannot regress to per-item SVG/tooltip subtrees.
+
+### Changed
+
+- `/about/tags` keeps the complete SSR tag directory but replaces one Lucide SVG per tag and long repeated
+  utility-class payloads with compact semantic links and component-scoped CSS.
+- The GitHub contribution heatmap on `/about` now renders one compact SSR cell per day and projects the
+  hover tooltip from `data-tooltip`, instead of repeating a tooltip DOM subtree for every contribution day.
+
+### Performance
+
+Phase 3 markup-density measurements use the same committed tag/contribution snapshot before and after the
+change. `/about` raw HTML fell from 358.15 KiB to 147.40 KiB (-58.8%) and DOM elements from 2660 to 1176
+(-55.8%); gzip fell from 20.76 KiB to 18.75 KiB (-9.6%). `/about/tags` raw HTML fell from 651.27 KiB to
+125.13 KiB (-80.8%), DOM elements from 4277 to 1478 (-65.4%), and gzip from 15.80 KiB to 12.31 KiB
+(-22.1%). The full 700-tag SSR directory remains present, while SVG count on that page fell from 703 to 3.
+
 ## [0.2.0] - 2026-09-10
 
 ### Added
