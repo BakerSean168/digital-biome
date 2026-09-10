@@ -120,6 +120,22 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
   const nextViewGeneration = () => ++viewGeneration;
   const isCurrentView = (generation: number) => generation === viewGeneration;
 
+  const hasActiveFilters = () => titleInput.value.trim().length > 0 || activeTags.length > 0;
+
+  const syncUrl = () => {
+    const url = new URL(window.location.href);
+    const query = titleInput.value.trim();
+    if (query) url.searchParams.set('q', query);
+    else url.searchParams.delete('q');
+    url.searchParams.delete('tag');
+    activeTags.forEach(tag => url.searchParams.append('tag', tag));
+    window.history.replaceState({}, '', url);
+  };
+
+  const updateClearFilters = () => {
+    clearButton?.classList.toggle('hidden', !hasActiveFilters());
+  };
+
   const updateCount = () => {
     const template = showingFilteredResults ? strings.searchCount : strings.totalCount;
     count.textContent = template
@@ -238,6 +254,8 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
     const query = titleInput.value.trim();
     const tags = [...activeTags];
     const filtered = query.length > 0 || tags.length > 0;
+    syncUrl();
+    updateClearFilters();
     clearCatalogError();
     if (!filtered && !catalog) {
       restoreInitialCards();
@@ -369,6 +387,7 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
   const searchParams = new URL(window.location.href).searchParams;
   titleInput.value = searchParams.get('q') || '';
   renderTags();
+  updateClearFilters();
   currentNotes = [];
   updateCount();
   updateSentinel();

@@ -175,7 +175,15 @@ function installEnvironment(document: FakeDocument): () => void {
   const previousDocument = globalObject.document;
   const previousWindow = globalObject.window;
   globalObject.document = document;
-  globalObject.window = { location: { href: 'https://example.test/notes' } };
+  const fakeWindow = {
+    location: { href: 'https://example.test/notes' },
+    history: {
+      replaceState(_state: unknown, _unused: string, url?: string | URL | null) {
+        if (url !== undefined && url !== null) fakeWindow.location.href = String(url);
+      },
+    },
+  };
+  globalObject.window = fakeWindow;
   return () => {
     if (previousDocument === undefined) delete globalObject.document;
     else globalObject.document = previousDocument;

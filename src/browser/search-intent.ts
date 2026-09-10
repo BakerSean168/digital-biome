@@ -19,8 +19,10 @@ export interface SearchIntentScheduler {
 export function createSearchIntentScheduler(
   delay: number,
   timers: SearchIntentTimers = {
-    setTimeout: globalThis.setTimeout,
-    clearTimeout: globalThis.clearTimeout,
+    // Browser timer methods require their global receiver in some runtimes/bundles.
+    // Wrapping them preserves the receiver instead of passing an unbound host method.
+    setTimeout: (callback, timeout) => globalThis.setTimeout(callback, timeout),
+    clearTimeout: handle => globalThis.clearTimeout(handle),
   },
   onIntent?: (intent: SearchIntent) => void,
 ): SearchIntentScheduler {

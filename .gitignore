@@ -70,3 +70,7 @@ public/pagefind/
 
 # Wrangler local runtime state
 .wrangler/
+
+# Playwright E2E artifacts
+playwright-report/
+test-results/
