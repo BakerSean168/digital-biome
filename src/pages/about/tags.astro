@@ -1,20 +1,15 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { Tag } from '@lucide/astro';
 import { SITE_NAME } from '../../constants';
 import { getAllNoteTags } from '../../utils/notes';
 
-// Fetch all tags
 const allTagsMap = getAllNoteTags();
-
-// Filter and sort tags
 const filteredTags = Array.from(allTagsMap.entries())
   .filter(([tag]) => {
     const lowerTag = tag.toLowerCase();
     return !lowerTag.startsWith('status/') && !lowerTag.startsWith('type/');
   })
-  .sort((a, b) => b[1] - a[1]); // Sort by count descending
-
+  .sort((a, b) => b[1] - a[1]);
 ---
 
 <BaseLayout title={`标签墙 | ${SITE_NAME}`} description="所有笔记标签">
@@ -25,12 +20,11 @@ const filteredTags = Array.from(allTagsMap.entries())
     </div>
 
     <div class="rounded-2xl bg-card border border-border p-6 sm:p-10 shadow-sm">
-      <div class="flex flex-wrap justify-center gap-3 md:gap-4">
+      <div class="tag-directory" data-tag-directory data-tag-count={filteredTags.length}>
         {filteredTags.map(([tag, count]) => (
-          <a href={`/notes?tag=${encodeURIComponent(tag)}`} class="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background-secondary border border-border text-sm text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all">
-            <Tag size={14} class="text-primary opacity-80 group-hover:opacity-100 transition-opacity" />
-            <span>{tag}</span>
-            <span class="text-xs text-muted-foreground bg-background px-1.5 py-0.5 rounded-md group-hover:bg-primary/10 transition-colors">{count}</span>
+          <a href={`/notes?tag=${encodeURIComponent(tag)}`} class="tag-chip">
+            {tag}
+            <span class="tag-chip-count">{count}</span>
           </a>
         ))}
         {filteredTags.length === 0 && (
@@ -40,3 +34,67 @@ const filteredTags = Array.from(allTagsMap.entries())
     </div>
   </main>
 </BaseLayout>
+
+<style>
+  .tag-directory {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
+    background: var(--bg-secondary);
+    color: var(--text-main);
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .tag-chip::before {
+    content: '#';
+    color: var(--primary);
+    opacity: 0.8;
+    transition: opacity 180ms ease;
+  }
+
+  .tag-chip:hover,
+  .tag-chip:focus-visible {
+    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+    background: color-mix(in srgb, var(--primary) 5%, var(--bg-secondary));
+  }
+
+  .tag-chip:hover::before,
+  .tag-chip:focus-visible::before {
+    opacity: 1;
+  }
+
+  .tag-chip:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .tag-chip-count {
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    transition: background-color 180ms ease;
+  }
+
+  .tag-chip:hover .tag-chip-count,
+  .tag-chip:focus-visible .tag-chip-count {
+    background: color-mix(in srgb, var(--primary) 10%, var(--bg));
+  }
+
+  @media (min-width: 768px) {
+    .tag-directory { gap: 1rem; }
+  }
+</style>

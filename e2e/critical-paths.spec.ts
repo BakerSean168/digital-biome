@@ -107,3 +107,24 @@ test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category
   await expect(page.locator('[data-bookmark-card]')).toHaveCount(group.bookmarks.length);
   await expect(page).toHaveURL(new RegExp(`[?&]c=${encodeURIComponent(group.slug).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:&|$)`));
 });
+
+
+test('About surfaces keep full SSR data with compact markup', async ({ page }) => {
+  await page.goto('/about/tags/');
+  const directory = page.locator('[data-tag-directory]');
+  const expectedTags = Number.parseInt((await directory.getAttribute('data-tag-count')) || '0', 10);
+  expect(expectedTags).toBeGreaterThan(100);
+  await expect(page.locator('a.tag-chip')).toHaveCount(expectedTags);
+  await expect(page.locator('.lucide-tag')).toHaveCount(0);
+
+  await page.goto('/about/');
+  const heatmap = page.locator('[data-heatmap-grid]');
+  await expect(heatmap).toHaveAttribute('role', 'img');
+  const firstCell = page.locator('.contribution-cell').first();
+  await expect(firstCell).toHaveAttribute('data-tooltip', /.+/);
+  expect(await firstCell.evaluate(element => element.childElementCount)).toBe(0);
+  await firstCell.hover();
+  const pseudoContent = await firstCell.evaluate(element => getComputedStyle(element, '::after').content);
+  expect(pseudoContent).not.toBe('none');
+  expect(pseudoContent).not.toBe('normal');
+});
