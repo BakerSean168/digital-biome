@@ -175,7 +175,7 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   );
   // Reconcile route-oriented local note entries with metadata parsed by Thought Forest's
   // full YAML parser. Route/filePath, dates and stricter local visibility remain local-owned.
-  reconcileNoteIndex(upstreamKnowledgeIndexDir, indexDir);
+  reconcileNoteIndex(upstreamKnowledgeIndexDir, indexDir, protectedInfrastructureUrls);
 
   mergeAssetIndex(upstreamKnowledgeIndexDir, indexDir);
 

@@ -58,6 +58,30 @@ test('takes rich parsed metadata upstream while preserving Digital Biome route a
   assert.equal(result.status, 'active');
 });
 
+test('re-applies Digital Biome publication redaction to upstream metadata', () => {
+  const result = reconcileNote({
+    id: 'obsidian/example',
+    filePath: 'example.md',
+    title: 'Example',
+    tags: [],
+    aliases: [],
+    type: 'note',
+    visibility: 'public',
+  }, {
+    sourcePath: 'z/example.md',
+    title: 'Host 10.20.30.40',
+    description: 'proxy http://10.20.30.40:7890 and https://private.example/admin',
+    tags: ['host/10.20.30.40'],
+    aliases: ['10.20.30.40'],
+    visibility: 'public',
+  }, new Set(['https://private.example/admin']));
+
+  assert.equal(result.title, 'Host 10.20.x.x');
+  assert.equal(result.description, 'proxy http://10.20.x.x:7890 and private://redacted');
+  assert.deepEqual(result.tags, ['host/10.20.x.x']);
+  assert.deepEqual(result.aliases, ['10.20.x.x']);
+});
+
 test('reconciles matching upstream notes and leaves blogs/local-only entries untouched', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'digital-biome-index-'));
   const upstreamDir = path.join(root, 'upstream');

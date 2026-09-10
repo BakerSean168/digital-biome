@@ -10,6 +10,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { redactIPv4Addresses, redactProtectedInfrastructureUrls } from './markdown-transform';
 
 interface UpstreamNote {
   sourcePath: string;
@@ -40,6 +41,26 @@ interface LocalNotesIndex {
   entries: LocalNote[];
 }
 
+
+export function sanitizePublishedMetadataText(
+  value: string,
+  protectedInfrastructureUrls: ReadonlySet<string> = new Set(),
+): string {
+  return redactProtectedInfrastructureUrls(
+    redactIPv4Addresses(value),
+    protectedInfrastructureUrls,
+  );
+}
+
+function sanitizeOptionalMetadataText(
+  value: string | undefined,
+  protectedInfrastructureUrls: ReadonlySet<string>,
+): string | undefined {
+  return value === undefined
+    ? undefined
+    : sanitizePublishedMetadataText(value, protectedInfrastructureUrls);
+}
+
 export function toUpstreamSourcePath(localFilePath: string): string | null {
   const normalized = localFilePath.replace(/\\/g, '/').replace(/^\.\//, '');
   if (!normalized || normalized.startsWith('../')) return null;
@@ -51,21 +72,26 @@ export function toUpstreamSourcePath(localFilePath: string): string | null {
 export function reconcileNote(
   local: LocalNote,
   upstream: UpstreamNote | undefined,
+  protectedInfrastructureUrls: ReadonlySet<string> = new Set(),
 ): LocalNote {
   if (!upstream) return local;
 
   return {
     ...local,
-    title: upstream.title.trim(),
-    description: upstream.description,
-    tags: [...upstream.tags],
-    aliases: [...upstream.aliases],
+    title: sanitizePublishedMetadataText(upstream.title.trim(), protectedInfrastructureUrls),
+    description: sanitizeOptionalMetadataText(upstream.description, protectedInfrastructureUrls),
+    tags: upstream.tags.map(tag => sanitizePublishedMetadataText(tag, protectedInfrastructureUrls)),
+    aliases: upstream.aliases.map(alias => sanitizePublishedMetadataText(alias, protectedInfrastructureUrls)),
     type: upstream.noteType ?? local.type,
     status: upstream.status ?? local.status,
   };
 }
 
-export function reconcileNoteIndex(knowledgeIndexDir: string, indexDir: string): void {
+export function reconcileNoteIndex(
+  knowledgeIndexDir: string,
+  indexDir: string,
+  protectedInfrastructureUrls: ReadonlySet<string> = new Set(),
+): void {
   const upstreamPath = path.join(knowledgeIndexDir, 'notes-index.json');
   const localPath = path.join(indexDir, 'notes-index.json');
   if (!fs.existsSync(upstreamPath) || !fs.existsSync(localPath)) {
@@ -84,7 +110,7 @@ export function reconcileNoteIndex(knowledgeIndexDir: string, indexDir: string):
     const upstreamNote = bySourcePath.get(sourcePath);
     if (!upstreamNote) return note;
     reconciled += 1;
-    return reconcileNote(note, upstreamNote);
+    return reconcileNote(note, upstreamNote, protectedInfrastructureUrls);
   });
 
   fs.writeFileSync(localPath, JSON.stringify({ ...local, entries }, null, 2), 'utf8');
