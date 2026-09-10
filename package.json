@@ -1,7 +1,7 @@
 {
   "name": "digital-biome",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "digital-biome website",
   "packageManager": "pnpm@10.32.1",
   "engines": {
