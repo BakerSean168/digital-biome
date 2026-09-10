@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { inferAssetRole, toAssetCard } from './asset-card';
-import type { NoteCollectionEntry } from '../types/notes';
+import type { AssetNoteEntry, NoteCollectionEntry } from '../types/notes';
 
 function noteData(data: Record<string, unknown> = {}) {
   return data as unknown as NoteCollectionEntry['data'];
@@ -23,10 +23,7 @@ describe('inferAssetRole', () => {
   });
 
   test('infers showcase from the projects homepage section', () => {
-    assert.equal(
-      inferAssetRole(noteData({ homepage: { section: 'projects' } })),
-      'showcase',
-    );
+    assert.equal(inferAssetRole(noteData({ homepage: { section: 'projects' } })), 'showcase');
   });
 
   test('defaults services to ops and everything else to undefined', () => {
@@ -52,7 +49,7 @@ describe('toAssetCard', () => {
         monitor: { provider: 'nezha' },
         links: [{ label: 'Open', url: 'https://example.com' }],
       },
-    } as unknown as NoteCollectionEntry;
+    } as unknown as AssetNoteEntry;
 
     assert.deepEqual(toAssetCard(entry), {
       assetId: 'svc-home',
@@ -74,7 +71,7 @@ describe('toAssetCard', () => {
     const entry = {
       id: 'obsidian/assets/tools/x',
       data: { asset_id: 'tool-x', asset_type: 'tool', title: 'X' },
-    } as unknown as NoteCollectionEntry;
+    } as unknown as AssetNoteEntry;
 
     const card = toAssetCard(entry);
     assert.deepEqual(card.tags, []);

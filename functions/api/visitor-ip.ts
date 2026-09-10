@@ -44,12 +44,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
     '127.0.0.1';
 
-  const cf = (request.cf as Record<string, any>) || {};
+  const cf: Record<string, unknown> = request.cf ?? {};
 
-  const country = (cf.country as string) || 'Unknown';
-  const city = (cf.city as string) || 'Local';
-  const asnNum = cf.asn ? `AS${cf.asn}` : 'AS--';
-  const isp = (cf.asOrganization as string) || 'Unresolved network';
+  const country = typeof cf.country === 'string' ? cf.country : 'Unknown';
+  const city = typeof cf.city === 'string' ? cf.city : 'Local';
+  const asnNum = typeof cf.asn === 'number' || typeof cf.asn === 'string' ? `AS${cf.asn}` : 'AS--';
+  const isp = typeof cf.asOrganization === 'string' ? cf.asOrganization : 'Unresolved network';
 
   const maskedIp = maskIp(rawIp);
 

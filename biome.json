@@ -1,0 +1,40 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.13/schema.json",
+  "files": {
+    "includes": [
+      "src/**/*.ts",
+      "scripts/**/*.ts",
+      "scripts/**/*.cjs",
+      "scripts/**/*.js",
+      "functions/**/*.ts",
+      "edge/**/*.ts",
+      "e2e/**/*.ts",
+      "playwright.config.ts",
+      "astro.config.mjs"
+    ]
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          },
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    }
+  ]
+}

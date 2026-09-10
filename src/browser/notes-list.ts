@@ -1,11 +1,5 @@
-import {
-  createNotesCatalogLoader,
-  getNextNoteBatch,
-} from './notes-catalog';
-import {
-  filterNoteCatalog,
-  type NoteCatalogItem,
-} from '../view-models/note-list-item';
+import { createNotesCatalogLoader, getNextNoteBatch } from './notes-catalog';
+import { filterNoteCatalog, type NoteCatalogItem } from '../view-models/note-list-item';
 
 type NotesPageStrings = {
   totalCount: string;
@@ -37,7 +31,8 @@ function displayTag(tag: string): string {
 
 function createTagElement(tag: string, clickable: boolean): HTMLSpanElement {
   const tagElement = document.createElement('span');
-  tagElement.className = 'inline-block px-2 py-0.5 border border-border text-[10px] font-mono text-muted-foreground cursor-pointer hover:border-primary/40 transition-colors';
+  tagElement.className =
+    'inline-block px-2 py-0.5 border border-border text-[10px] font-mono text-muted-foreground cursor-pointer hover:border-primary/40 transition-colors';
   tagElement.dataset.cardTag = tag;
   tagElement.title = tag;
   tagElement.textContent = `#${displayTag(tag)}`;
@@ -48,25 +43,31 @@ function createTagElement(tag: string, clickable: boolean): HTMLSpanElement {
 function createCard(note: NoteCatalogItem, uncategorized: string): HTMLAnchorElement {
   const card = document.createElement('a');
   card.href = note.href;
-  card.className = 'group flex flex-col p-6 bg-transparent border border-border transition-all duration-300 hover:border-primary/40 hover:bg-card/40';
+  card.className =
+    'group flex flex-col p-6 bg-transparent border border-border transition-all duration-300 hover:border-primary/40 hover:bg-card/40';
 
   const tags = document.createElement('div');
   tags.className = 'mb-4 flex flex-wrap gap-2';
   if (note.tags.length > 0) {
-    note.tags.forEach(tag => tags.appendChild(createTagElement(tag, true)));
+    note.tags.forEach((tag) => {
+      tags.appendChild(createTagElement(tag, true));
+    });
   } else {
     const emptyTag = document.createElement('span');
-    emptyTag.className = 'inline-block px-2 py-0.5 border border-border text-[10px] font-mono text-muted-foreground';
+    emptyTag.className =
+      'inline-block px-2 py-0.5 border border-border text-[10px] font-mono text-muted-foreground';
     emptyTag.textContent = uncategorized;
     tags.appendChild(emptyTag);
   }
 
   const title = document.createElement('h3');
-  title.className = 'text-lg font-serif text-foreground mb-3 line-clamp-1 group-hover:text-primary transition-colors';
+  title.className =
+    'text-lg font-serif text-foreground mb-3 line-clamp-1 group-hover:text-primary transition-colors';
   title.textContent = note.title;
 
   const description = document.createElement('p');
-  description.className = 'text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed flex-grow';
+  description.className =
+    'text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed flex-grow';
   description.textContent = note.description;
 
   const date = document.createElement('div');
@@ -83,10 +84,15 @@ function createCard(note: NoteCatalogItem, uncategorized: string): HTMLAnchorEle
 }
 
 function parseInitialTags(searchParams: URLSearchParams): string[] {
-  return [...new Set(searchParams.getAll('tag')
-    .flatMap(value => value.split(','))
-    .map(value => value.trim())
-    .filter(Boolean))];
+  return [
+    ...new Set(
+      searchParams
+        .getAll('tag')
+        .flatMap((value) => value.split(','))
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ];
 }
 
 export function initializeNotesList(dependencies: NotesListDependencies = {}): void {
@@ -102,7 +108,18 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
   const sentinel = document.getElementById('load-more-sentinel');
   const catalogError = document.getElementById('catalog-error');
   const retryCatalog = document.getElementById('retry-catalog');
-  if (!page || !list || !empty || !count || !titleInput || !tagInput || !tagContainer || !sentinel || !catalogError) return;
+  if (
+    !page ||
+    !list ||
+    !empty ||
+    !count ||
+    !titleInput ||
+    !tagInput ||
+    !tagContainer ||
+    !sentinel ||
+    !catalogError
+  )
+    return;
 
   const strings = getPageStrings(page);
   const totalCount = Number(page.dataset.totalCount || 0);
@@ -128,7 +145,9 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
     if (query) url.searchParams.set('q', query);
     else url.searchParams.delete('q');
     url.searchParams.delete('tag');
-    activeTags.forEach(tag => url.searchParams.append('tag', tag));
+    activeTags.forEach((tag) => {
+      url.searchParams.append('tag', tag);
+    });
     window.history.replaceState({}, '', url);
   };
 
@@ -143,9 +162,10 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
       .replace('{count}', String(displayCount));
   };
 
-  const hasMore = () => showingFilteredResults || catalog !== null
-    ? displayCount < currentNotes.length
-    : displayCount < totalCount;
+  const hasMore = () =>
+    showingFilteredResults || catalog !== null
+      ? displayCount < currentNotes.length
+      : displayCount < totalCount;
 
   const updateSentinel = () => {
     if (!hasMore()) sentinel.classList.add('hidden');
@@ -185,9 +205,10 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
 
   const renderTags = () => {
     tagContainer.replaceChildren();
-    activeTags.forEach(tag => {
+    activeTags.forEach((tag) => {
       const tagElement = document.createElement('span');
-      tagElement.className = 'flex items-center gap-1 px-2 py-0.5 bg-primary/5 border border-primary/20 text-[11px] font-mono text-primary';
+      tagElement.className =
+        'flex items-center gap-1 px-2 py-0.5 bg-primary/5 border border-primary/20 text-[11px] font-mono text-primary';
       const label = document.createElement('span');
       label.textContent = `#${displayTag(tag)}`;
       const remove = document.createElement('button');
@@ -204,7 +225,9 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
 
   const appendNotes = (notes: NoteCatalogItem[]) => {
     const fragment = document.createDocumentFragment();
-    notes.forEach(note => fragment.appendChild(createCard(note, strings.uncategorized)));
+    notes.forEach((note) => {
+      fragment.appendChild(createCard(note, strings.uncategorized));
+    });
     list.appendChild(fragment);
   };
 
@@ -318,19 +341,21 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
   };
 
   const observer = dependencies.createObserver
-    ? dependencies.createObserver(isIntersecting => {
-      if (isIntersecting) void loadMore();
-    })
+    ? dependencies.createObserver((isIntersecting) => {
+        if (isIntersecting) void loadMore();
+      })
     : typeof IntersectionObserver === 'undefined'
       ? null
-      : new IntersectionObserver(entries => {
-        if (entries[0]?.isIntersecting) void loadMore();
-      }, { rootMargin: '200px' });
+      : new IntersectionObserver(
+          (entries) => {
+            if (entries[0]?.isIntersecting) void loadMore();
+          },
+          { rootMargin: '200px' },
+        );
 
-  list.addEventListener('click', event => {
-    const target = event.target instanceof Element
-      ? event.target.closest<HTMLElement>('[data-card-tag]')
-      : null;
+  list.addEventListener('click', (event) => {
+    const target =
+      event.target instanceof Element ? event.target.closest<HTMLElement>('[data-card-tag]') : null;
     if (!target) return;
     event.preventDefault();
     event.stopPropagation();
@@ -342,12 +367,13 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
     }
   });
 
-  tagContainer.addEventListener('click', event => {
-    const target = event.target instanceof Element
-      ? event.target.closest<HTMLButtonElement>('[data-remove-tag]')
-      : null;
+  tagContainer.addEventListener('click', (event) => {
+    const target =
+      event.target instanceof Element
+        ? event.target.closest<HTMLButtonElement>('[data-remove-tag]')
+        : null;
     if (!target) return;
-    activeTags = activeTags.filter(tag => tag !== target.dataset.removeTag);
+    activeTags = activeTags.filter((tag) => tag !== target.dataset.removeTag);
     renderTags();
     void applyFilters();
   });
@@ -367,7 +393,7 @@ export function initializeNotesList(dependencies: NotesListDependencies = {}): v
   });
 
   tagWrapper?.addEventListener('click', () => tagInput.focus());
-  tagInput.addEventListener('keydown', event => {
+  tagInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       const newTag = tagInput.value.trim();

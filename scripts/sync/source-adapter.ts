@@ -35,23 +35,24 @@ export function warnIfVaultSubmoduleOutOfSync(vaultRoot: string, stats: SyncStat
   if (!relativeVaultRoot || relativeVaultRoot.startsWith('..')) return;
 
   try {
-    const status = execSync(
-      `git submodule status -- "${relativeVaultRoot}"`,
-      { cwd: process.cwd(), encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }
-    ).trim();
+    const status = execSync(`git submodule status -- "${relativeVaultRoot}"`, {
+      cwd: process.cwd(),
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    }).trim();
 
     const prefix = status[0];
     if (prefix === '+') {
       stats.warnings.push(
-        `Submodule ${relativeVaultRoot} is ahead of the commit recorded in the main repo. Commit the submodule pointer before deploying, or CI may build stale notes data.`
+        `Submodule ${relativeVaultRoot} is ahead of the commit recorded in the main repo. Commit the submodule pointer before deploying, or CI may build stale notes data.`,
       );
     } else if (prefix === '-') {
       stats.warnings.push(
-        `Submodule ${relativeVaultRoot} is not initialized. Run "git submodule update --init --recursive" before syncing notes.`
+        `Submodule ${relativeVaultRoot} is not initialized. Run "git submodule update --init --recursive" before syncing notes.`,
       );
     } else if (prefix === 'U') {
       stats.errors.push(
-        `Submodule ${relativeVaultRoot} has merge conflicts. Resolve them before syncing notes.`
+        `Submodule ${relativeVaultRoot} has merge conflicts. Resolve them before syncing notes.`,
       );
     }
   } catch {
@@ -64,8 +65,9 @@ export function warnIfVaultSubmoduleOutOfSync(vaultRoot: string, stats: SyncStat
  */
 export function collectExpectedFiles(layout: SourceLayout): Set<string> {
   const expectedFiles = new Set(
-    Array.from(collectFiles(layout.notesSource, layout.notesSource))
-      .filter(f => f.endsWith('.md'))
+    Array.from(collectFiles(layout.notesSource, layout.notesSource)).filter((f) =>
+      f.endsWith('.md'),
+    ),
   );
 
   if (fs.existsSync(layout.assetNotesSource)) {
@@ -108,7 +110,9 @@ export async function validateSourceFiles(
   protectedInfrastructureUrls: ReadonlySet<string>,
 ): Promise<void> {
   if (!fs.existsSync(srcDir)) {
-    throw new Error(`Source directory does not exist: ${srcDir}. Check notes.config.ts for correct paths.`);
+    throw new Error(
+      `Source directory does not exist: ${srcDir}. Check notes.config.ts for correct paths.`,
+    );
   }
 
   const files = fs.readdirSync(srcDir);
@@ -144,7 +148,9 @@ export async function validateSourceFiles(
       const frontmatter = extractFrontmatter(content);
 
       if (content.startsWith('---') && !frontmatter) {
-        stats.warnings.push(`${path.relative(layout.vaultRoot, srcPath)}: frontmatter block is not closed; sync will normalize it`);
+        stats.warnings.push(
+          `${path.relative(layout.vaultRoot, srcPath)}: frontmatter block is not closed; sync will normalize it`,
+        );
       }
 
       if (frontmatter) {
@@ -160,7 +166,7 @@ export async function validateSourceFiles(
         if (!hasAssetId || !hasAssetType) {
           summary.assetSchemaRiskCount += 1;
           stats.warnings.push(
-            `${path.relative(layout.vaultRoot, srcPath)}: asset note is missing ${!hasAssetId && !hasAssetType ? 'asset_id and asset_type' : !hasAssetId ? 'asset_id' : 'asset_type'}`
+            `${path.relative(layout.vaultRoot, srcPath)}: asset note is missing ${!hasAssetId && !hasAssetType ? 'asset_id and asset_type' : !hasAssetId ? 'asset_id' : 'asset_type'}`,
           );
         }
       }
@@ -172,7 +178,7 @@ export async function validateSourceFiles(
 
       if (withFavicons) {
         const urlMatch = content.match(/^url:\s*['"]?([^'"\n]+)['"]?/m);
-        if (urlMatch && urlMatch[1]) {
+        if (urlMatch?.[1]) {
           // Dry-run validation should not download favicons; we only confirm the URL can be discovered.
         }
       }
@@ -195,7 +201,9 @@ export async function syncFiles(
   protectedInfrastructureUrls: ReadonlySet<string>,
 ): Promise<void> {
   if (!fs.existsSync(srcDir)) {
-    throw new Error(`Source directory does not exist: ${srcDir}. Check notes.config.ts for correct paths.`);
+    throw new Error(
+      `Source directory does not exist: ${srcDir}. Check notes.config.ts for correct paths.`,
+    );
   }
 
   if (!fs.existsSync(destDir)) {
@@ -212,14 +220,7 @@ export async function syncFiles(
     const stat = fs.statSync(srcPath);
 
     if (stat.isDirectory()) {
-      await syncFiles(
-        srcPath,
-        destPath,
-        layout,
-        withFavicons,
-        stats,
-        protectedInfrastructureUrls,
-      );
+      await syncFiles(srcPath, destPath, layout, withFavicons, stats, protectedInfrastructureUrls);
     } else if (file.endsWith('.md')) {
       try {
         let content = fs.readFileSync(srcPath, 'utf-8');
@@ -234,7 +235,7 @@ export async function syncFiles(
         // Extract URL for favicon caching (optional)
         if (withFavicons) {
           const urlMatch = content.match(/^url:\s*['"]?([^'"\n]+)['"]?/m);
-          if (urlMatch && urlMatch[1]) {
+          if (urlMatch?.[1]) {
             await cacheFavicon(urlMatch[1], layout.faviconsDest, stats);
           }
         }

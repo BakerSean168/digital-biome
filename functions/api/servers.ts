@@ -39,14 +39,15 @@ function mapServer(value: unknown, index: number): ServerItem | null {
   const telemetry = legacyStatus ?? liveState;
   const host = isRecord(value.host) ? value.host : null;
   const geoip = isRecord(value.geoip) ? value.geoip : null;
-  const hasStateField = Object.prototype.hasOwnProperty.call(value, 'state');
-  const online = legacyStatus && typeof legacyStatus.online === 'boolean'
-    ? legacyStatus.online
-    : typeof value.online === 'boolean'
-      ? value.online
-      : hasStateField
-        ? liveState !== null
-        : null;
+  const hasStateField = Object.hasOwn(value, 'state');
+  const online =
+    legacyStatus && typeof legacyStatus.online === 'boolean'
+      ? legacyStatus.online
+      : typeof value.online === 'boolean'
+        ? value.online
+        : hasStateField
+          ? liveState !== null
+          : null;
   if (online === null) return null;
 
   const memUsed = telemetry ? numberOrZero(telemetry.mem_used) : 0;
@@ -57,23 +58,26 @@ function mapServer(value: unknown, index: number): ServerItem | null {
 
   return {
     id,
-    name: typeof value.name === 'string'
-      ? value.name
-      : host && typeof host.name === 'string'
-        ? host.name
-        : `Server #${id}`,
-    location: geoip && typeof geoip.country_code === 'string'
-      ? geoip.country_code
-      : typeof value.country_code === 'string'
-      ? value.country_code
-      : typeof value.location === 'string'
-        ? value.location
-        : 'Global',
-    provider: host && typeof host.platform === 'string'
-      ? host.platform
-      : typeof value.platform === 'string'
-        ? value.platform
-        : 'VPS',
+    name:
+      typeof value.name === 'string'
+        ? value.name
+        : host && typeof host.name === 'string'
+          ? host.name
+          : `Server #${id}`,
+    location:
+      geoip && typeof geoip.country_code === 'string'
+        ? geoip.country_code
+        : typeof value.country_code === 'string'
+          ? value.country_code
+          : typeof value.location === 'string'
+            ? value.location
+            : 'Global',
+    provider:
+      host && typeof host.platform === 'string'
+        ? host.platform
+        : typeof value.platform === 'string'
+          ? value.platform
+          : 'VPS',
     online,
     cpu: Math.round(telemetry ? numberOrZero(telemetry.cpu) : numberOrZero(value.cpu)),
     ram: Math.round(memTotal > 0 ? (memUsed / memTotal) * 100 : numberOrZero(value.ram)),
@@ -160,7 +164,10 @@ async function readCachedResponse(request: Request): Promise<Response | null> {
   return (await edgeCache.match(new Request(request.url, { method: 'GET' }))) ?? null;
 }
 
-function cacheResponse(context: EventContext<ObservabilityEnv, string, unknown>, response: Response): void {
+function cacheResponse(
+  context: EventContext<ObservabilityEnv, string, unknown>,
+  response: Response,
+): void {
   if (context.request.method !== 'GET') return;
   const key = new Request(context.request.url, { method: 'GET' });
   const edgeCache = (caches as unknown as { default: Cache }).default;
@@ -177,7 +184,10 @@ export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
     const snapshot = await readNezhaPublicSnapshot(nezhaUrl);
     const mappedServers = snapshot.servers.map(mapServer);
     if (mappedServers.some((server) => server === null)) {
-      return Response.json({ error: 'Nezha returned unsupported server telemetry.' }, { status: 502 });
+      return Response.json(
+        { error: 'Nezha returned unsupported server telemetry.' },
+        { status: 502 },
+      );
     }
     const servers = mappedServers as ServerItem[];
     const online = servers.filter((server) => server.online).length;

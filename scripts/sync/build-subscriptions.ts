@@ -1,16 +1,21 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { notesConfig } from '../../notes.config.js';
+import {
+  frontmatterNumber,
+  frontmatterString,
+  parseMarkdownFrontmatter,
+} from '../../src/domain/markdown/frontmatter';
 
 export interface SubscriptionYamlData {
   asset_id?: string;
   id?: string;
-  name: string;
-  vendor: string;
-  cost: number;
-  currency: string;
+  name?: string;
+  vendor?: string;
+  cost?: number;
+  currency?: string;
   exchangeRateUsd?: number;
-  cycle: 'monthly' | 'yearly';
+  cycle?: 'monthly' | 'yearly';
   annualCost?: number;
   nextBillingDate?: string;
   status?: string;
@@ -18,50 +23,58 @@ export interface SubscriptionYamlData {
   notes?: string;
 }
 
-export function parseYamlFrontmatter(content: string): Record<string, any> {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!match) return {};
-  const lines = match[1].split(/\r?\n/);
-  const result: Record<string, any> = {};
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const colonIdx = trimmed.indexOf(':');
-    if (colonIdx === -1) continue;
-
-    const key = trimmed.slice(0, colonIdx).trim();
-    let valStr = trimmed.slice(colonIdx + 1).trim();
-
-    // Clean quotes
-    if ((valStr.startsWith('"') && valStr.endsWith('"')) || (valStr.startsWith("'") && valStr.endsWith("'"))) {
-      valStr = valStr.slice(1, -1);
-    }
-
-    // Number conversion
-    if (!isNaN(Number(valStr)) && valStr !== '') {
-      result[key] = Number(valStr);
-    } else if (valStr === 'true') {
-      result[key] = true;
-    } else if (valStr === 'false') {
-      result[key] = false;
-    } else {
-      result[key] = valStr;
-    }
-  }
-
-  return result;
+interface SubscriptionRecord {
+  id: string;
+  name: string;
+  vendor: string;
+  cost: number;
+  annualCost?: number;
+  originalCost: number;
+  originalCurrency: string;
+  currency: 'USD';
+  cycle: 'monthly' | 'yearly';
+  nextBillingDate: string;
+  status: string;
+  icon: string;
+  notes: string;
 }
 
-export function generateSubscriptionsJson() {
+export function projectSubscriptionFrontmatter(
+  content: string,
+  sourceLabel = 'subscription',
+): SubscriptionYamlData {
+  const { data } = parseMarkdownFrontmatter(content, sourceLabel);
+  const cycle = frontmatterString(data.cycle);
+  return {
+    asset_id: frontmatterString(data.asset_id),
+    id: frontmatterString(data.id),
+    name: frontmatterString(data.name),
+    vendor: frontmatterString(data.vendor),
+    cost: frontmatterNumber(data.cost),
+    currency: frontmatterString(data.currency),
+    exchangeRateUsd: frontmatterNumber(data.exchangeRateUsd),
+    cycle: cycle === 'yearly' ? 'yearly' : cycle === 'monthly' ? 'monthly' : undefined,
+    annualCost: frontmatterNumber(data.annualCost),
+    nextBillingDate: frontmatterString(data.nextBillingDate),
+    status: frontmatterString(data.status),
+    icon: frontmatterString(data.icon),
+    notes: frontmatterString(data.notes),
+  };
+}
+
+export function generateSubscriptionsJson(): void {
   const assetNotesPath = notesConfig.vault.assetNotesPath || 'thought-forest/assets';
   const targetPath = path.resolve(process.cwd(), 'src/data/subscriptions.json');
 
   const preserveExistingSnapshot = (reason: string): void => {
     if (fs.existsSync(targetPath)) {
-      const existing = JSON.parse(fs.readFileSync(targetPath, 'utf8')) as { subscriptions?: unknown[] };
+      const existing = JSON.parse(fs.readFileSync(targetPath, 'utf8')) as {
+        subscriptions?: unknown[];
+      };
       if (Array.isArray(existing.subscriptions) && existing.subscriptions.length > 0) {
-        console.warn(`[sync-subscriptions] ${reason}; preserving ${existing.subscriptions.length} tracked subscriptions.`);
+        console.warn(
+          `[sync-subscriptions] ${reason}; preserving ${existing.subscriptions.length} tracked subscriptions.`,
+        );
         return;
       }
     }
@@ -86,43 +99,43 @@ export function generateSubscriptionsJson() {
     RMB: 1 / 6.83,
   };
 
-  let subscriptions: any[] = [];
+  const subscriptions: SubscriptionRecord[] = [];
+  const files = fs.readdirSync(subsDir).filter((file) => file.endsWith('.md'));
+  if (files.length === 0) {
+    preserveExistingSnapshot(`No subscription notes found in ${subsDir}`);
+    return;
+  }
 
-  if (fs.existsSync(subsDir)) {
-    const files = fs.readdirSync(subsDir).filter((f) => f.endsWith('.md'));
-    if (files.length === 0) {
-      preserveExistingSnapshot(`No subscription notes found in ${subsDir}`);
-      return;
-    }
-    for (const file of files) {
-      const filePath = path.join(subsDir, file);
-      const raw = fs.readFileSync(filePath, 'utf8');
-      const data = parseYamlFrontmatter(raw) as SubscriptionYamlData;
+  for (const file of files) {
+    const filePath = path.join(subsDir, file);
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const data = projectSubscriptionFrontmatter(raw, filePath);
+    const subId = data.asset_id || data.id;
+    if (!subId || !data.name) continue;
 
-      const subId = data.asset_id || data.id;
+    const currency = data.currency || 'USD';
+    const originalCost = data.cost || 0;
+    const rateToUsd = data.exchangeRateUsd || currencyToUsdRate[currency.toUpperCase()] || 1.0;
+    const costUsd = Math.round(originalCost * rateToUsd * 100) / 100;
+    const annualCostUsd = data.annualCost
+      ? Math.round(data.annualCost * rateToUsd * 100) / 100
+      : undefined;
 
-      if (subId && data.name) {
-        const rateToUsd = data.exchangeRateUsd || currencyToUsdRate[data.currency?.toUpperCase() || 'USD'] || 1.0;
-        const costUsd = Math.round((data.cost || 0) * rateToUsd * 100) / 100;
-        const annualCostUsd = data.annualCost ? Math.round(data.annualCost * rateToUsd * 100) / 100 : undefined;
-
-        subscriptions.push({
-          id: subId,
-          name: data.name,
-          vendor: data.vendor || 'Service',
-          cost: costUsd,
-          annualCost: annualCostUsd,
-          originalCost: data.cost || 0,
-          originalCurrency: data.currency || 'USD',
-          currency: 'USD',
-          cycle: data.cycle || 'monthly',
-          nextBillingDate: data.nextBillingDate || '2026-12-31',
-          status: data.status || 'active',
-          icon: data.icon || 'service',
-          notes: data.notes || '',
-        });
-      }
-    }
+    subscriptions.push({
+      id: subId,
+      name: data.name,
+      vendor: data.vendor || 'Service',
+      cost: costUsd,
+      annualCost: annualCostUsd,
+      originalCost,
+      originalCurrency: currency,
+      currency: 'USD',
+      cycle: data.cycle || 'monthly',
+      nextBillingDate: data.nextBillingDate || '2026-12-31',
+      status: data.status || 'active',
+      icon: data.icon || 'service',
+      notes: data.notes || '',
+    });
   }
 
   if (subscriptions.length === 0) {
@@ -130,8 +143,9 @@ export function generateSubscriptionsJson() {
     return;
   }
 
-  // Sort by nextBillingDate ascending
-  subscriptions.sort((a, b) => new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime());
+  subscriptions.sort(
+    (a, b) => new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime(),
+  );
 
   const payload = {
     currency: 'USD',
@@ -142,7 +156,11 @@ export function generateSubscriptionsJson() {
 
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
   fs.writeFileSync(targetPath, JSON.stringify(payload, null, 2), 'utf8');
-  console.log(`[sync-subscriptions] Synced ${subscriptions.length} subscriptions from ${subsDir} to src/data/subscriptions.json`);
+  console.log(
+    `[sync-subscriptions] Synced ${subscriptions.length} subscriptions from ${subsDir} to src/data/subscriptions.json`,
+  );
 }
 
-generateSubscriptionsJson();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  generateSubscriptionsJson();
+}

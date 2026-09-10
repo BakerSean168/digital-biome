@@ -45,15 +45,13 @@ export function collectMediaFiles(dir: string): string[] {
  * Detect basename collisions among media files.
  * Returns an array of collisions (empty if none).
  */
-export function detectMediaCollisions(
-  mediaFiles: string[],
-  assetsDest: string
-): MediaCollision[] {
+export function detectMediaCollisions(mediaFiles: string[], assetsDest: string): MediaCollision[] {
   const byBasename = new Map<string, string[]>();
   for (const f of mediaFiles) {
     const base = path.basename(f);
-    if (!byBasename.has(base)) byBasename.set(base, []);
-    byBasename.get(base)!.push(f);
+    const existing = byBasename.get(base);
+    if (existing) existing.push(f);
+    else byBasename.set(base, [f]);
   }
 
   const collisions: MediaCollision[] = [];
@@ -73,11 +71,7 @@ export function detectMediaCollisions(
  * Copy all media files from source to destination (flat copy).
  * Detects and reports basename collisions as warnings.
  */
-export function syncAssets(
-  mediaSource: string,
-  assetsDest: string,
-  stats: SyncStats
-): void {
+export function syncAssets(mediaSource: string, assetsDest: string, stats: SyncStats): void {
   if (!fs.existsSync(mediaSource)) {
     console.log(`  assets dir not found, skipping: ${mediaSource}`);
     return;
@@ -94,7 +88,7 @@ export function syncAssets(
   for (const c of collisions) {
     stats.warnings.push(
       `media collision: ${c.basename} — ${c.sources.length} sources share the same target. ` +
-      `Last file copied wins. Sources: ${c.sources.join(', ')}`
+        `Last file copied wins. Sources: ${c.sources.join(', ')}`,
     );
   }
 

@@ -6,7 +6,7 @@ export function formatDate(date: Date | string, locale: string = 'zh-CN'): strin
   return d.toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
 }
 
@@ -26,10 +26,10 @@ export function getReadingTime(content: string): number {
  */
 export function formatTimeAgo(date: Date | string, lang: 'zh' | 'en' = 'zh'): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  if (isNaN(d.getTime())) return '';
-  
-  const seconds = Math.floor((new Date().getTime() - d.getTime()) / 1000);
-  
+  if (Number.isNaN(d.getTime())) return '';
+
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+
   let interval = Math.floor(seconds / 31536000);
   if (interval >= 1) {
     return lang === 'zh' ? `${interval} 年前` : `${interval} year${interval > 1 ? 's' : ''} ago`;
@@ -48,7 +48,9 @@ export function formatTimeAgo(date: Date | string, lang: 'zh' | 'en' = 'zh'): st
   }
   interval = Math.floor(seconds / 60);
   if (interval >= 1) {
-    return lang === 'zh' ? `${interval} 分钟前` : `${interval} minute${interval > 1 ? 's' : ''} ago`;
+    return lang === 'zh'
+      ? `${interval} 分钟前`
+      : `${interval} minute${interval > 1 ? 's' : ''} ago`;
   }
   return lang === 'zh' ? '刚刚' : 'just now';
 }

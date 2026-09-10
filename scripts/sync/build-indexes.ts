@@ -21,10 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 // ── Build-safe domain imports ──
 
-import {
-  ASSET_NOTE_PREFIX,
-  NOTE_ID_PREFIX,
-} from '../../src/domain/foundation/constants';
+import { ASSET_NOTE_PREFIX, NOTE_ID_PREFIX } from '../../src/domain/foundation/constants';
 import { toNoteId } from '../../src/domain/foundation/note-id';
 import { inferVisibility } from '../../src/domain/foundation/visibility';
 import { parseWikilinks } from '../../src/domain/foundation/wikilink-parser';
@@ -97,8 +94,9 @@ const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico|tiff?)$/i;
 function parseMarkdownLinks(text: string): string[] {
   const links: string[] = [];
   const regex = /\[([^\]]*)\]\(([^)]+)\)/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
+  while (true) {
+    const match = regex.exec(text);
+    if (match === null) break;
     const url = match[2].trim();
     if (url.startsWith('http') || url.startsWith('#') || url.startsWith('/')) continue;
     if (IMAGE_EXT.test(url)) continue;
@@ -182,7 +180,7 @@ function normalizeDate(value?: string): string | undefined {
   const cleaned = value.replace(/^['"]|['"]$/g, '').trim();
   if (!cleaned) return undefined;
   const d = new Date(cleaned);
-  if (isNaN(d.getTime())) return undefined;
+  if (Number.isNaN(d.getTime())) return undefined;
   return d.toISOString();
 }
 
@@ -202,10 +200,10 @@ export function buildIndexes(notesRoot?: string): void {
   const files = walkMarkdown(root);
   console.log(`  [build-indexes] Processing ${files.length} markdown files...`);
 
-  const notes = files.map(f => processNoteFile(f, root));
+  const notes = files.map((f) => processNoteFile(f, root));
 
   // Build note id set for wikilink resolution
-  const noteIds = new Set(notes.map(n => n.id));
+  const noteIds = new Set(notes.map((n) => n.id));
   const noteIdBasenameMap = new Map<string, string[]>();
   for (const id of noteIds) {
     const parts = id.split('/');
@@ -227,7 +225,7 @@ export function buildIndexes(notesRoot?: string): void {
   }
 
   // ── notes-index.json ──
-  const notesIndexEntries = notes.map(n => ({
+  const notesIndexEntries = notes.map((n) => ({
     id: n.id,
     title: n.fm.title ?? '',
     description: n.fm.description,
@@ -244,8 +242,8 @@ export function buildIndexes(notesRoot?: string): void {
     aliases: n.fm.aliases,
     isAsset: n.isAsset,
     asset_id: n.fm.asset_id,
-    asset_type: n.fm.asset_type as any,
-    asset_role: n.fm.asset_role as any,
+    asset_type: n.fm.asset_type,
+    asset_role: n.fm.asset_role,
     host_asset_id: n.fm.host_asset_id,
     parent_asset_id: n.fm.parent_asset_id,
     status: n.fm.status,
@@ -259,15 +257,17 @@ export function buildIndexes(notesRoot?: string): void {
   };
 
   // ── link-graph.json ──
-  const linkGraphEntries = notes.map(n => {
-    const resolved = n.outgoingTargets
-      .map(t => resolveTarget(t))
-      .filter((id): id is string => id !== undefined);
-    return {
-      sourceId: n.id,
-      outgoingIds: [...new Set(resolved)],
-    };
-  }).filter(e => e.outgoingIds.length > 0);
+  const linkGraphEntries = notes
+    .map((n) => {
+      const resolved = n.outgoingTargets
+        .map((t) => resolveTarget(t))
+        .filter((id): id is string => id !== undefined);
+      return {
+        sourceId: n.id,
+        outgoingIds: [...new Set(resolved)],
+      };
+    })
+    .filter((e) => e.outgoingIds.length > 0);
 
   const linkGraph = {
     version: 1,
@@ -292,7 +292,7 @@ export function buildIndexes(notesRoot?: string): void {
   };
 
   // ── asset-index.json ──
-  const assetEntries = notesIndexEntries.filter(e => e.isAsset && e.asset_id && e.asset_type);
+  const assetEntries = notesIndexEntries.filter((e) => e.isAsset && e.asset_id && e.asset_type);
   const assetIndex = {
     version: 1,
     generatedAt: new Date().toISOString(),
@@ -311,7 +311,9 @@ export function buildIndexes(notesRoot?: string): void {
   writeJson('tag-index.json', tagIndex);
   writeJson('asset-index.json', assetIndex);
 
-  console.log(`  [build-indexes] Done. ${notesIndexEntries.length} notes, ${linkGraphEntries.length} link entries, ${tagIndex.tags.length} tags, ${assetEntries.length} assets.`);
+  console.log(
+    `  [build-indexes] Done. ${notesIndexEntries.length} notes, ${linkGraphEntries.length} link entries, ${tagIndex.tags.length} tags, ${assetEntries.length} assets.`,
+  );
 }
 
 // ── CLI entry ──

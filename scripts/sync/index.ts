@@ -13,7 +13,12 @@
 import path from 'node:path';
 import { notesConfig } from '../../notes.config';
 import { buildSourceLayout } from './config';
-import { warnIfVaultSubmoduleOutOfSync, collectExpectedFiles, syncFiles, validateSourceFiles } from './source-adapter';
+import {
+  warnIfVaultSubmoduleOutOfSync,
+  collectExpectedFiles,
+  syncFiles,
+  validateSourceFiles,
+} from './source-adapter';
 import { syncAssets, detectMediaCollisions, collectMediaFiles } from './asset-transform';
 import { cleanStaleFiles } from './stale-cleaner';
 import { createStats, printSyncReport } from './sync-report';
@@ -63,9 +68,11 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
     const { collectFiles } = await import('./fs-utils');
 
     const existingDest = fs.existsSync(layout.notesDest)
-      ? Array.from(collectFiles(layout.notesDest, layout.notesDest)).filter(f => f.endsWith('.md'))
+      ? Array.from(collectFiles(layout.notesDest, layout.notesDest)).filter((f) =>
+          f.endsWith('.md'),
+        )
       : [];
-    const staleFiles = existingDest.filter(f => !expectedFiles.has(f));
+    const staleFiles = existingDest.filter((f) => !expectedFiles.has(f));
 
     // Count media files and detect collisions (shared logic)
     const mediaFiles = collectMediaFiles(layout.mediaSource);
@@ -76,13 +83,45 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
       assetSchemaRiskCount: 0,
     };
 
-    await validateSourceFiles(layout.notesSource, layout.notesDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
-    await validateSourceFiles(layout.assetNotesSource, layout.assetNotesDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
+    await validateSourceFiles(
+      layout.notesSource,
+      layout.notesDest,
+      layout,
+      withFavicons,
+      stats,
+      validationSummary,
+      protectedInfrastructureUrls,
+    );
+    await validateSourceFiles(
+      layout.assetNotesSource,
+      layout.assetNotesDest,
+      layout,
+      withFavicons,
+      stats,
+      validationSummary,
+      protectedInfrastructureUrls,
+    );
     if (layout.configSource && fs.existsSync(layout.configSource)) {
-      await validateSourceFiles(layout.configSource, layout.configDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
+      await validateSourceFiles(
+        layout.configSource,
+        layout.configDest,
+        layout,
+        withFavicons,
+        stats,
+        validationSummary,
+        protectedInfrastructureUrls,
+      );
     }
     if (layout.blogsSource && fs.existsSync(layout.blogsSource)) {
-      await validateSourceFiles(layout.blogsSource, layout.blogsDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
+      await validateSourceFiles(
+        layout.blogsSource,
+        layout.blogsDest,
+        layout,
+        withFavicons,
+        stats,
+        validationSummary,
+        protectedInfrastructureUrls,
+      );
     }
 
     console.log('\n[dry-run] Sync plan:');
@@ -95,14 +134,16 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
     console.log(`  Asset schema risks:     ${validationSummary.assetSchemaRiskCount}`);
     if (staleFiles.length > 0) {
       console.log(`\n  Stale files (first 10):`);
-      staleFiles.slice(0, 10).forEach(f => console.log(`    - ${f}`));
+      staleFiles.slice(0, 10).forEach((f) => {
+        console.log(`    - ${f}`);
+      });
       if (staleFiles.length > 10) console.log(`    ... and ${staleFiles.length - 10} more`);
     }
     if (collisions.length > 0) {
       console.log(`\n  Media collisions (${collisions.length}):`);
       console.log(`  Strategy: last-wins (last file copied overwrites earlier)`);
       console.log(`  ${'─'.repeat(60)}`);
-      collisions.forEach(c => {
+      collisions.forEach((c) => {
         console.log(`  ${c.basename}`);
         console.log(`    target: ${c.targetPath}`);
         c.sources.forEach((src, i) => {
@@ -113,7 +154,7 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
       // Write collision report
       const reportDir = path.join(process.cwd(), 'reports');
       if (!fs.existsSync(reportDir)) fs.mkdirSync(reportDir, { recursive: true });
-      const report = collisions.map(c => ({
+      const report = collisions.map((c) => ({
         basename: c.basename,
         targetPath: c.targetPath,
         sources: c.sources.map((src, i) => ({
@@ -122,18 +163,26 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
           outcome: i === c.sources.length - 1 ? 'wins' : 'overwritten',
         })),
         strategy: 'last-wins',
-        recommendation: 'Rename one source file to avoid collision, or use directory-prefixed output paths',
+        recommendation:
+          'Rename one source file to avoid collision, or use directory-prefixed output paths',
       }));
-      fs.writeFileSync(path.join(reportDir, 'media-collisions.json'), JSON.stringify(report, null, 2));
+      fs.writeFileSync(
+        path.join(reportDir, 'media-collisions.json'),
+        JSON.stringify(report, null, 2),
+      );
       console.log(`\n  Collision report written to: reports/media-collisions.json`);
     }
     if (stats.warnings.length > 0) {
       console.warn(`\n  Warnings (${stats.warnings.length}):`);
-      stats.warnings.forEach(w => console.warn(`    ⚠ ${w}`));
+      stats.warnings.forEach((w) => {
+        console.warn(`    ⚠ ${w}`);
+      });
     }
     if (stats.errors.length > 0) {
       console.error(`\n  Errors (${stats.errors.length}):`);
-      stats.errors.forEach(err => console.error(`    ✖ ${err}`));
+      stats.errors.forEach((err) => {
+        console.error(`    ✖ ${err}`);
+      });
     }
     return stats.errors.length;
   }
@@ -145,14 +194,35 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   cleanStaleFiles(layout.notesDest, expectedFiles, stats);
 
   // Sync markdown files
-  await syncFiles(layout.notesSource, layout.notesDest, layout, withFavicons, stats, protectedInfrastructureUrls);
-  await syncFiles(layout.assetNotesSource, layout.assetNotesDest, layout, withFavicons, stats, protectedInfrastructureUrls);
+  await syncFiles(
+    layout.notesSource,
+    layout.notesDest,
+    layout,
+    withFavicons,
+    stats,
+    protectedInfrastructureUrls,
+  );
+  await syncFiles(
+    layout.assetNotesSource,
+    layout.assetNotesDest,
+    layout,
+    withFavicons,
+    stats,
+    protectedInfrastructureUrls,
+  );
 
   // Sync config directory
   if (layout.configSource) {
     const fs = await import('fs');
     if (fs.existsSync(layout.configSource)) {
-      await syncFiles(layout.configSource, layout.configDest, layout, withFavicons, stats, protectedInfrastructureUrls);
+      await syncFiles(
+        layout.configSource,
+        layout.configDest,
+        layout,
+        withFavicons,
+        stats,
+        protectedInfrastructureUrls,
+      );
     }
   }
 
@@ -160,7 +230,14 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   if (layout.blogsSource) {
     const fs = await import('fs');
     if (fs.existsSync(layout.blogsSource)) {
-      await syncFiles(layout.blogsSource, layout.blogsDest, layout, withFavicons, stats, protectedInfrastructureUrls);
+      await syncFiles(
+        layout.blogsSource,
+        layout.blogsDest,
+        layout,
+        withFavicons,
+        stats,
+        protectedInfrastructureUrls,
+      );
     }
   }
 
@@ -172,7 +249,7 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   const upstreamKnowledgeIndexDir = path.resolve(
     process.cwd(),
     notesConfig.upstream.generatedPath,
-    'knowledge-index'
+    'knowledge-index',
   );
   // Reconcile route-oriented local note entries with metadata parsed by Thought Forest's
   // full YAML parser. Route/filePath, dates and stricter local visibility remain local-owned.
