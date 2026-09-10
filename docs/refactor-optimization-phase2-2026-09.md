@@ -139,6 +139,21 @@ production-build E2E 路径，避免“纯函数全绿但 DOM wiring 断掉”�
 **Acceptance**：private boundary 无回退；现有公开 routes/build 数量变化必须有可解释 diff；
 `build-indexes.ts` 的 parser ownership 显著缩小或删除，且 parity test 固化原因。
 
+**当前实施证据（同一份 3583 个同步 Markdown 做 scanner-only / reconciled A/B）：**
+
+- route `id`：0 变化；`filePath`：0 变化；visibility：0 变化；日期：0 变化；
+- public knowledge count：3460 → 3460；6 个 subscription 仍全部由 Digital Biome 判为 private；
+- Thought Forest full-YAML metadata 修正：3452 个 `status`、3493 个 `type`、2 个 title、3 个 aliases、
+  7 个 description；
+- Digital Biome 不同步 Thought Forest `docs/*` 到公开内容；blogs 继续是 Digital Biome 自有发布源；
+- 新增 authority contract，要求所有可映射条目的 title/description/tags/aliases/type/status 与上游
+  full-YAML projection 一致，同时禁止 local public 比上游 visibility 更宽。
+- `sync:content` 在真实同步结束后清理生成态 `.astro/`，防止大量 Markdown 替换后旧 content-loader cache
+  产生瞬时 duplicate-id 误报；清理后 `astro check` 153 files / 0 error / 0 warning / 0 hint。
+
+本次没有直接删除 local scanner：它仍负责 route/filePath、ISO date normalization、site-only fields、
+blogs，以及更严格的 asset publication policy。后续只有在这些 owner 都有替代契约后才继续缩减。
+
 ### Batch C — Remaining payload boundary
 
 #### DB-P2-201 — Tools catalog boundary
