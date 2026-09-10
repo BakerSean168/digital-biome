@@ -9,6 +9,7 @@ import { processContent, detectYamlRisks } from './markdown-transform';
 import { cacheFavicon } from './favicon-cache';
 import { collectFiles } from './fs-utils';
 import type { SourceLayout, SyncStats } from './types';
+import { splitMarkdownFrontmatter } from '../../src/domain/markdown/frontmatter';
 
 export interface ValidationSummary {
   markdownFiles: number;
@@ -17,10 +18,7 @@ export interface ValidationSummary {
 }
 
 function extractFrontmatter(content: string): string | null {
-  if (!content.startsWith('---')) return null;
-  const secondDash = content.indexOf('\n---', 3);
-  if (secondDash === -1) return null;
-  return content.slice(0, secondDash + 4);
+  return splitMarkdownFrontmatter(content).raw;
 }
 
 function hasFrontmatterField(frontmatter: string | null, field: string): boolean {
