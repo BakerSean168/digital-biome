@@ -7,6 +7,8 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-11
+
 ### Added
 
 - Added `/about/refactor`, a static Refactor Lab that teaches the v0.1.0-v0.4.0 optimization path through
