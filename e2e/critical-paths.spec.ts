@@ -18,7 +18,10 @@ async function readJson<T>(request: APIRequestContext, path: string): Promise<T>
   return response.json() as Promise<T>;
 }
 
-test('Notes keeps an SSR boundary and lazy-loads the catalog in Chromium', async ({ page, request }) => {
+test('Notes keeps an SSR boundary and lazy-loads the catalog in Chromium', async ({
+  page,
+  request,
+}) => {
   const response = await request.get('/notes/');
   expect(response.ok()).toBeTruthy();
   const html = await response.text();
@@ -29,8 +32,8 @@ test('Notes keeps an SSR boundary and lazy-loads the catalog in Chromium', async
   await expect(page.locator('#notes-list > a')).toHaveCount(12);
   await expect(page.locator('#load-more-sentinel')).toBeVisible();
 
-  const catalogResponse = page.waitForResponse(response =>
-    response.url().endsWith('/data/notes-catalog.json') && response.ok(),
+  const catalogResponse = page.waitForResponse(
+    (response) => response.url().endsWith('/data/notes-catalog.json') && response.ok(),
   );
   await page.locator('#load-more-sentinel').scrollIntoViewIfNeeded();
   await catalogResponse;
@@ -39,7 +42,7 @@ test('Notes keeps an SSR boundary and lazy-loads the catalog in Chromium', async
 
 test('Notes restores query and tag intent from the URL', async ({ page, request }) => {
   const catalog = await readJson<NoteCatalogItem[]>(request, '/data/notes-catalog.json');
-  const sample = catalog.find(note => note.title.trim().length >= 4 && note.tags.length > 0);
+  const sample = catalog.find((note) => note.title.trim().length >= 4 && note.tags.length > 0);
   expect(sample).toBeTruthy();
   if (!sample) return;
 
@@ -68,16 +71,23 @@ test('SiteSearch returns real Pagefind document results', async ({ page }) => {
   await expect(page.locator('#cmd-results')).toContainText(/typescript/i);
 });
 
-test('Discover falls back to typed public assets when Pagefind is unavailable', async ({ page }) => {
-  await page.route('**/pagefind/pagefind.js', route => route.abort('failed'));
+test('Discover falls back to typed public assets when Pagefind is unavailable', async ({
+  page,
+}) => {
+  await page.route('**/pagefind/pagefind.js', (route) => route.abort('failed'));
   await page.goto('/discover/?q=ForgeFlow');
 
-  await expect(page.locator('#discover-search-status')).toContainText('全文索引暂时不可用', { timeout: 10_000 });
+  await expect(page.locator('#discover-search-status')).toContainText('全文索引暂时不可用', {
+    timeout: 10_000,
+  });
   await expect(page.locator('#discover-results')).toContainText('ForgeFlow');
   await expect(page.locator('#discover-results')).toContainText('[ ASSETS ]');
 });
 
-test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category URL state', async ({ page, request }) => {
+test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category URL state', async ({
+  page,
+  request,
+}) => {
   const catalog = await readJson<ToolCatalogGroup[]>(request, '/data/tools-catalog.json');
   const totalAssignments = catalog.reduce((total, group) => total + group.bookmarks.length, 0);
   expect(totalAssignments).toBeGreaterThan(16);
@@ -89,8 +99,8 @@ test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category
   expect(html).not.toContain('data-tools-catalog');
   expect(html).not.toMatch(/\sonerror=/);
 
-  const fullCatalogResponse = page.waitForResponse(response =>
-    response.url().endsWith('/data/tools-catalog.json') && response.ok(),
+  const fullCatalogResponse = page.waitForResponse(
+    (response) => response.url().endsWith('/data/tools-catalog.json') && response.ok(),
   );
   await page.goto('/tools/');
   await expect(page.locator('[data-bookmark-card]')).toHaveCount(16);
@@ -98,17 +108,19 @@ test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category
   await fullCatalogResponse;
   await expect(page.locator('[data-bookmark-card]')).toHaveCount(totalAssignments);
 
-
-  const group = catalog.find(entry => entry.bookmarks.length > 0);
+  const group = catalog.find((entry) => entry.bookmarks.length > 0);
   expect(group).toBeTruthy();
   if (!group) return;
 
   await page.goto(`/tools/?c=${encodeURIComponent(group.slug)}`);
   await expect(page.locator('.id-current-filter')).toHaveText(group.slug.toUpperCase());
   await expect(page.locator('[data-bookmark-card]')).toHaveCount(group.bookmarks.length);
-  await expect(page).toHaveURL(new RegExp(`[?&]c=${encodeURIComponent(group.slug).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:&|$)`));
+  await expect(page).toHaveURL(
+    new RegExp(
+      `[?&]c=${encodeURIComponent(group.slug).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:&|$)`,
+    ),
+  );
 });
-
 
 test('About surfaces keep full SSR data with compact markup', async ({ page }) => {
   await page.goto('/about/tags/');
@@ -123,9 +135,32 @@ test('About surfaces keep full SSR data with compact markup', async ({ page }) =
   await expect(heatmap).toHaveAttribute('role', 'img');
   const firstCell = page.locator('.contribution-cell').first();
   await expect(firstCell).toHaveAttribute('data-tooltip', /.+/);
-  expect(await firstCell.evaluate(element => element.childElementCount)).toBe(0);
+  expect(await firstCell.evaluate((element) => element.childElementCount)).toBe(0);
   await firstCell.hover();
-  const pseudoContent = await firstCell.evaluate(element => getComputedStyle(element, '::after').content);
+  const pseudoContent = await firstCell.evaluate(
+    (element) => getComputedStyle(element, '::after').content,
+  );
   expect(pseudoContent).not.toBe('none');
   expect(pseudoContent).not.toBe('normal');
+});
+
+test('Refactor Lab teaches the released optimization path as a responsive static page', async ({
+  page,
+}) => {
+  await page.goto('/about/');
+  await expect(page.locator('a[href="/about/refactor"]')).toBeVisible();
+
+  await page.goto('/about/refactor/');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('不是把代码拆小');
+  await expect(page.locator('.phase-card')).toHaveCount(4);
+  await expect(page.locator('#data-boundary')).toContainText('1089.4');
+  await expect(page.locator('#privacy')).toContainText('404 + no-store');
+  await expect(page.locator('#quality')).toContainText('Incremental Format Ratchet');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  const horizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
 });

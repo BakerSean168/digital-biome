@@ -2,7 +2,6 @@
   "version": 1,
   "files": {
     "astro.config.mjs": "5d33b4c4c9c40ab861853e7e06cac59708c417fffff7a44fb7708e0eb7843186",
-    "e2e/critical-paths.spec.ts": "85a476a0793deab922b5c91f334a45f4cb4da85b1b52d2419f8c2d0e8eb2107a",
     "edge/access-verify.test.ts": "4fa16a6fb2f5f0475ff0751e930145015076ead5718448ad278f0222de6de415",
     "edge/access.test.ts": "8f11c3cae7c0ab1ebf4263d3f3ba7c087f50e0e1863e522723442e7e4043c522",
     "edge/ai-usage-read-bridge.test.ts": "11820856cb3afc6f4469a0e0767f9c99b971aec98c71b964337a1432cc4711ad",
@@ -100,7 +99,6 @@
     "src/i18n/utils.ts": "72e3866d00eb0e0c21a1573835e19afcb68ebbf87c9ef3af02ccbbbbbd672a9b",
     "src/layouts/NotesLayout.astro": "4d0e18003b1eb243d89c805fabd62c498d82327baaecba2a86f22f3357e72e14",
     "src/pages/404.astro": "fab9ea3b2b2bb0364ae7f5b59caa482befea0a85668733dcfd3db3ef3ed7a82c",
-    "src/pages/about/index.astro": "f5db80865a0110d3fc7c7c6a96bc43bcb3d4971d801225b53889b6f3f0597eb7",
     "src/pages/about/tags.astro": "5d8ca84330b6f989de826df10bc0ca2b32825a31562720f1f173f4af40ff988d",
     "src/pages/blog/index.astro": "2d1f342203021f12d87fefb87f4ee018e4aa66dd8514a42dd77e111c931a9533",
     "src/pages/data/notes-catalog.json.ts": "64fb66e28e9e8d752086c2b35b51f414ad67482282a69f1273701e94b64273ac",

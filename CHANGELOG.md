@@ -7,6 +7,18 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+### Added
+
+- Added `/about/refactor`, a static Refactor Lab that teaches the v0.1.0-v0.4.0 optimization path through
+  problem/root-cause/solution/evidence cards, before/after metrics, and architecture diagrams for data boundaries,
+  metadata authority, privacy revocation, and incremental quality gates. The About hero now links to the guide.
+
+### Validation
+
+- The learning page builds to 32.90 KiB raw / 9.44 KiB gzip HTML and adds no page-specific runtime data fetch.
+  Production verification remains green, and focused Chromium coverage is now 7/7 including the guide's About
+  entry point, four released phases, key evidence, and a 390 px no-horizontal-overflow check.
+
 ## [0.4.0] - 2026-09-10
 
 ### Added
