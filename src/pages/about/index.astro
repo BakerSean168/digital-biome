@@ -20,41 +20,58 @@ const filteredTags = Array.from(allTagsMap.entries())
 const representativeTags = filteredTags.slice(0, 80);
 
 const recentNotes = await getRecentNotesWithDate(3);
-const recentReads = recentNotes.map(item => ({
+const recentReads = recentNotes.map((item) => ({
   title: item.note.data.title || item.note.id.split('/').pop() || '',
   time: formatTimeAgo(item.date, 'zh'),
-  href: `/notes/${item.note.id}`
+  href: `/notes/${item.note.id}`,
 }));
-
 ---
 
 <BaseLayout title={`About | ${SITE_NAME}`} description="SYS.ENTITY_LOADED: 实体档案与工程履历">
-  
   <!-- Row 1: Full-Viewport Hero with Background Scrolling Tag Wall -->
   <section class="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent group/hero-section">
     <!-- Background Scrolling Tag Wall -->
     <ScrollingTagWall tags={representativeTags} lang="zh" />
-    
+
     <!-- Foreground Centered Hero Content -->
     <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center gap-6 px-6">
-      <SignalTitle as="h1" class="text-5xl sm:text-6xl font-bold font-mono tracking-tight text-foreground" title={`Hi, I'm ${AUTHOR_NAME}`} />
+      <SignalTitle
+        as="h1"
+        class="text-5xl sm:text-6xl font-bold font-mono tracking-tight text-foreground"
+        title={`Hi, I'm ${AUTHOR_NAME}`}
+      />
       <h2 class="text-2xl sm:text-3xl font-mono text-primary uppercase tracking-widest mt-2">
         [ 全栈开发者 / 数字园丁 ]
       </h2>
       <p class="text-muted-foreground leading-relaxed max-w-2xl font-mono text-base sm:text-lg mt-3">
         SYS.ENTITY_LOADED: 欢迎接入。这里存储着我的工程切片、架构推演与个人知识脉络。
       </p>
-      
+
       <div class="flex flex-wrap justify-center gap-10 mt-8">
-        <a href="/notes" class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none">
+        <a
+          href="/notes"
+          class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none"
+        >
           <span>[</span>
           <span class="uppercase">浏览笔记 // BROWSE_NOTES</span>
           <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
           <span>]</span>
         </a>
-        <a href="/about/tags" class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none">
+        <a
+          href="/about/tags"
+          class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none"
+        >
           <span>[</span>
           <span class="uppercase">所有标签 // TOPOLOGY_TAGS</span>
+          <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
+          <span>]</span>
+        </a>
+        <a
+          href="/about/refactor"
+          class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none"
+        >
+          <span>[</span>
+          <span class="uppercase">重构实验室 // REFACTOR_LAB</span>
           <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
           <span>]</span>
         </a>
@@ -65,21 +82,31 @@ const recentReads = recentNotes.map(item => ({
   <!-- Main Body (Rest of the Page) -->
   <main class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col gap-12">
-      
       <!-- Row 2 -->
       <div class="flex flex-col md:flex-row gap-6">
-        
         <!-- Recently Learning -->
         <div class="flex-[1] bg-transparent border border-border p-6 sm:p-8">
-          <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">[ RECENT_SYNC ] / 近期数据同步</h3>
+          <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">
+            [ RECENT_SYNC ] / 近期数据同步
+          </h3>
           <div class="flex flex-col gap-4">
-            {recentReads.map(item => (
-              <a href={item.href} class="group flex items-center justify-between p-4 bg-background border border-border hover:border-primary/50 transition-all">
+            {recentReads.map((item) => (
+              <a
+                href={item.href}
+                class="group flex items-center justify-between p-4 bg-background border border-border hover:border-primary/50 transition-all"
+              >
                 <div class="flex flex-col gap-1">
-                  <h4 class="text-sm font-mono text-foreground group-hover:text-primary transition-colors">{item.title}</h4>
-                  <span class="text-[10px] font-mono text-muted-foreground uppercase">UPDATED: {item.time}</span>
+                  <h4 class="text-sm font-mono text-foreground group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h4>
+                  <span class="text-[10px] font-mono text-muted-foreground uppercase">
+                    UPDATED: {item.time}
+                  </span>
                 </div>
-                <BookMarked size={16} class="text-muted-foreground group-hover:text-primary transition-colors" />
+                <BookMarked
+                  size={16}
+                  class="text-muted-foreground group-hover:text-primary transition-colors"
+                />
               </a>
             ))}
           </div>
@@ -88,9 +115,16 @@ const recentReads = recentNotes.map(item => ({
         <!-- GitHub Contributions -->
         <div class="flex-[2] bg-card/40 border border-border p-6 sm:p-8 overflow-hidden flex flex-col">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-sm font-mono tracking-widest text-muted-foreground hidden sm:block">GITHUB_ACTIVITY</h3>
+            <h3 class="text-sm font-mono tracking-widest text-muted-foreground hidden sm:block">
+              GITHUB_ACTIVITY
+            </h3>
             <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
-              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="btn-outline-sm !font-mono !text-[11px] !rounded-none">
+              <a
+                href={SOCIAL_LINKS.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-outline-sm !font-mono !text-[11px] !rounded-none"
+              >
                 [ GITHUB ] <GitBranch size={14} />
               </a>
             </div>
@@ -100,7 +134,6 @@ const recentReads = recentNotes.map(item => ({
             <GitHubContributions lang="zh" />
           </div>
         </div>
-
       </div>
 
       <!-- Observability Dashboard Section -->
@@ -108,71 +141,107 @@ const recentReads = recentNotes.map(item => ({
 
       <!-- Row 3 -->
       <div class="border border-border p-6 sm:p-8 bg-transparent">
-        <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">[ SITE_COORDINATES ] / 多站点协同导航网格</h3>
+        <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">
+          [ SITE_COORDINATES ] / 多站点协同导航网格
+        </h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
-          
           <div class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
             <div>
-              <div class="text-[10px] text-primary font-bold mb-2">// 01 . PERSONAL_WEBSITE (CURRENT)</div>
-              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3">[ 个人网站 ]</h4>
+              <div class="text-[10px] text-primary font-bold mb-2">
+                // 01 . PERSONAL_WEBSITE (CURRENT)
+              </div>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3">
+                [ 个人网站 ]
+              </h4>
               <p class="text-[11px] text-muted-foreground leading-relaxed">
                 个人数字花园与思想森林。承载 Obsidian 笔记库、核心工程履历、系统拓扑图。
               </p>
             </div>
-            <div class="mt-6 text-[10px] text-primary font-bold">
-              STATUS: ACTIVE_PRIMARY
-            </div>
+            <div class="mt-6 text-[10px] text-primary font-bold">STATUS: ACTIVE_PRIMARY</div>
           </div>
 
-          <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer" class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+          <a
+            href={SOCIAL_LINKS.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors"
+          >
             <div>
               <div class="text-[10px] text-muted-foreground mb-2">// 02 . GITHUB_PROFILE</div>
-              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">[ GITHUB 主页 ]</h4>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">
+                [ GITHUB 主页 ]
+              </h4>
               <p class="text-[11px] text-muted-foreground leading-relaxed">
                 开源项目与开发控制台。存放所有开源工程源代码、技术切片、提交历史。
               </p>
             </div>
             <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
-              ACCESS_PROFILE <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
+              ACCESS_PROFILE{' '}
+              <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
             </div>
           </a>
 
-          <a href="https://BakerSean168.github.io" target="_blank" rel="noopener noreferrer" class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
+          <a
+            href="https://BakerSean168.github.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors"
+          >
             <div>
               <div class="text-[10px] text-muted-foreground mb-2">// 03 . GITHUB_PAGES</div>
-              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">[ GITHUB PAGE ]</h4>
+              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">
+                [ GITHUB PAGE ]
+              </h4>
               <p class="text-[11px] text-muted-foreground leading-relaxed">
-                前端概念实验室与微应用演示区。用于托管独立的网页小玩具、交互动效演示及实验性 Web 组件。
+                前端概念实验室与微应用演示区。用于托管独立的网页小玩具、交互动效演示及实验性 Web
+                组件。
               </p>
             </div>
             <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
-              ACCESS_PAGES <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
+              ACCESS_PAGES{' '}
+              <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
             </div>
           </a>
-
         </div>
       </div>
-
     </div>
   </main>
 </BaseLayout>
 
 <style>
   @keyframes wave {
-    0% { transform: rotate(0.0deg) }
-    10% { transform: rotate(14.0deg) }
-    20% { transform: rotate(-8.0deg) }
-    30% { transform: rotate(14.0deg) }
-    40% { transform: rotate(-4.0deg) }
-    50% { transform: rotate(10.0deg) }
-    60% { transform: rotate(0.0deg) }
-    100% { transform: rotate(0.0deg) }
+    0% {
+      transform: rotate(0deg);
+    }
+    10% {
+      transform: rotate(14deg);
+    }
+    20% {
+      transform: rotate(-8deg);
+    }
+    30% {
+      transform: rotate(14deg);
+    }
+    40% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(10deg);
+    }
+    60% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
   }
   .animate-wave {
     animation: wave 2.5s infinite;
   }
   @keyframes terminal-blink {
-    50% { opacity: 0; }
+    50% {
+      opacity: 0;
+    }
   }
   .animate-terminal-blink {
     animation: terminal-blink 0.8s step-start infinite;

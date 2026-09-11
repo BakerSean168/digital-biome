@@ -1,0 +1,1141 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SignalTitle from '../../components/common/SignalTitle.astro';
+import { ArrowLeft, ExternalLink } from '@lucide/astro';
+import { SOCIAL_LINKS } from '../../constants';
+
+const phases = [
+  {
+    version: 'v0.1.0',
+    phase: 'PHASE 01',
+    title: '先解决真正昂贵的首屏数据',
+    problem: '/notes 把 3489 条笔记元数据直接塞进 HTML；About Hero 又复制了完整标签墙。',
+    root: '瓶颈不是框架 JS，而是“数据边界错误”：用户只看首屏，却提前支付完整知识库和重复 DOM 的成本。',
+    solution:
+      'Notes 只保留 12 条真实 SSR 卡片，完整 catalog 改为交互后按需加载；About Hero 只保留代表性标签，完整目录留在 /about/tags。',
+    evidence: '/notes raw 1089.4 → 47.8 KiB（-95.6%）；/about raw 779.5 → 358.1 KiB（-54.1%）。',
+  },
+  {
+    version: 'v0.2.0',
+    phase: 'PHASE 02',
+    title: '把数据事实源与浏览器验证收敛起来',
+    problem:
+      '/tools 仍完整 SSR 全部资源；本地 scanner 与 Thought Forest metadata 存在双事实源；HTTP/unit 测试没有覆盖真实浏览器行为。',
+    root: '数据生成、派生索引和浏览器行为各有多个 owner，局部都“看起来能工作”，但组合后容易漂移。',
+    solution:
+      'Tools 改成 16 条 SSR + deferred catalog；notes-index 成为派生 tag/asset index 的统一快照；加入 production-built Playwright Chromium E2E。',
+    evidence:
+      '/tools raw 633.96 → 63.46 KiB（-90.0%）；asset metadata drift 40/82 → 0/82；Chromium 首轮直接抓出 2 个真实 bug。',
+  },
+  {
+    version: 'v0.3.0',
+    phase: 'PHASE 03',
+    title: '减少重复标记，而不是为了数字删内容',
+    problem:
+      '/about/tags 的 700 个链接重复携带 Lucide SVG 和长 utility class；371 个 contribution cell 各自复制 tooltip DOM。',
+    root: '内容本身并不昂贵，昂贵的是每个节点重复的结构和样式描述。',
+    solution:
+      '保留完整 SSR 数据，把重复 SVG / tooltip subtree 收成短语义 class + CSS/data attribute；同时 prune 没有 runtime owner 的 Pagefind UI artifacts。',
+    evidence:
+      '/about/tags raw 651.27 → 125.13 KiB（-80.8%），SVG 703 → 3；dist JS 209.5 → 69.7 KiB。',
+  },
+  {
+    version: 'v0.3.1 → v0.4.0',
+    phase: 'PHASE 04',
+    title: '把安全与工程质量变成持续约束',
+    problem:
+      '旧 line scanner 会把 private: "true" 错投影为 public；即便新构建删除页面，Cloudflare 旧 edge cache 仍可能返回旧 200。仓库也缺统一 lint/format 契约。',
+    root: '“构建结果正确”不等于“线上立即撤销”；“代码现在整洁”也不等于未来不会回退。',
+    solution:
+      '统一 full-YAML adapter；private route 同时从静态产物、Pagefind、runtime 三层阻断；Biome 零 warning + Prettier 增量 ratchet，把质量规则放进 canonical verify。',
+    evidence:
+      '保护路由两域名均 404 + no-store；Biome 144 files / 0 warnings；206 format targets 中 75 已格式化、131 按触碰渐进收敛。',
+  },
+] as const;
+
+const metrics = [
+  { label: '/notes RAW HTML', before: '1089.4', after: '47.8', unit: 'KiB', delta: '-95.6%' },
+  { label: '/tools RAW HTML', before: '633.96', after: '63.46', unit: 'KiB', delta: '-90.0%' },
+  { label: '/about/tags RAW', before: '651.27', after: '125.13', unit: 'KiB', delta: '-80.8%' },
+  { label: 'DIST JAVASCRIPT', before: '209.5', after: '69.7', unit: 'KiB', delta: '-66.7%' },
+] as const;
+
+const principles = [
+  [
+    '01',
+    '先量化，再重构',
+    '先确认昂贵的是 HTML、DOM、JS 还是数据，再决定动哪里。文件大、代码长本身不是性能证据。',
+  ],
+  [
+    '02',
+    '边界优先于技巧',
+    '把完整数据从首屏移到 deferred catalog，通常比微调框架或手写更多优化代码收益更大。',
+  ],
+  [
+    '03',
+    '一个事实只有一个 owner',
+    'metadata、派生索引、Pagefind runtime 都需要明确 owner；否则修一处很容易在另一处重新漂移。',
+  ],
+  [
+    '04',
+    '安全要覆盖发布之后',
+    'private 内容不仅要“不生成”，还要考虑旧 CDN cache、搜索索引和 runtime route 的撤销语义。',
+  ],
+  [
+    '05',
+    '质量门禁要可持续',
+    '不做 170 文件的一次性格式化，而用 ratchet 让历史债务随着正常开发自然归零。',
+  ],
+  [
+    '06',
+    '不要为了重构而重构',
+    '大组件只有在职责、测试或性能证据支持时才拆；没有收益的目录搬家不是架构优化。',
+  ],
+] as const;
+---
+
+<BaseLayout
+  title="Digital Biome Refactor Lab"
+  description="用真实 before/after 数据拆解 Digital Biome 从 v0.1.0 到 v0.4.0 的性能、架构、安全与工程质量重构。"
+  bodyClass="refactor-lab"
+>
+  <main class="refactor-shell">
+    <section class="hero" id="top">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <a href="/about" class="back-link">
+          <ArrowLeft size={14} /> RETURN_TO_ABOUT
+        </a>
+        <p class="eyebrow">DIGITAL_BIOME / REFACTOR_LAB / v0.1.0 → v0.4.0</p>
+        <SignalTitle
+          as="h1"
+          class="hero-title"
+          title="不是把代码拆小，而是把成本、职责和风险放回正确的边界"
+        />
+        <p class="hero-intro">
+          这是一份可以直接浏览的重构复盘。每一轮都从一个真实问题开始：先测量，再找根因，再选择最小但长期正确的架构改动，最后用
+          production artifact、Chromium 和线上结果证明它真的有效。
+        </p>
+        <div class="hero-actions">
+          <a href="#timeline" class="primary-action">
+            START_WALKTHROUGH
+          </a>
+          <a
+            href={`${SOCIAL_LINKS.github}/digital-biome`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="secondary-action"
+          >
+            SOURCE_REPOSITORY <ExternalLink size={13} />
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-metrics" aria-label="核心优化结果">
+        {metrics.map((metric) => (
+          <article class="metric-card">
+            <p class="metric-label">{metric.label}</p>
+            <div class="metric-values">
+              <span class="metric-before">{metric.before}</span>
+              <span class="metric-arrow">→</span>
+              <strong>{metric.after}</strong>
+              <small>{metric.unit}</small>
+            </div>
+            <p class="metric-delta">{metric.delta}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <aside class="toc" aria-label="页面目录">
+        <p class="toc-title">// LEARNING_PATH</p>
+        <nav>
+          <a href="#mental-model">01 / 思维模型</a>
+          <a href="#timeline">02 / 四轮重构</a>
+          <a href="#data-boundary">03 / 数据边界</a>
+          <a href="#authority">04 / 数据权威</a>
+          <a href="#privacy">05 / 隐私边界</a>
+          <a href="#quality">06 / 质量门禁</a>
+          <a href="#takeaways">07 / 可复用原则</a>
+        </nav>
+      </aside>
+
+      <div class="learning-content">
+        <section class="lesson-section" id="mental-model">
+          <div class="section-heading">
+            <span>01</span>
+            <div>
+              <p>MENTAL_MODEL</p>
+              <h2>先问“成本为什么存在”，再问“代码怎么改”</h2>
+            </div>
+          </div>
+
+          <div class="diagnosis-grid">
+            <article>
+              <p class="card-kicker">BAD QUESTION</p>
+              <h3>哪个文件最大？要不要拆组件？</h3>
+              <p>这通常只告诉你源码长，不告诉你用户付出了什么成本，也不告诉你职责是否真的混乱。</p>
+            </article>
+            <article class="accent-card">
+              <p class="card-kicker">BETTER QUESTION</p>
+              <h3>哪个边界让用户提前支付了不需要的成本？</h3>
+              <p>
+                HTML 是否塞入完整 catalog？DOM 是否重复结构？搜索是否有多个 runtime owner？private
+                内容在部署后能否立即撤销？
+              </p>
+            </article>
+          </div>
+
+          <div class="equation" aria-label="重构决策公式">
+            <span>MEASURE</span>
+            <i>→</i>
+            <span>ROOT_CAUSE</span>
+            <i>→</i>
+            <span>BOUNDARY</span>
+            <i>→</i>
+            <span>CONTRACT</span>
+            <i>→</i>
+            <span>EVIDENCE</span>
+          </div>
+        </section>
+
+        <section class="lesson-section" id="timeline">
+          <div class="section-heading">
+            <span>02</span>
+            <div>
+              <p>REFACTOR_TIMELINE</p>
+              <h2>四轮优化分别解决了什么</h2>
+            </div>
+          </div>
+
+          <div class="timeline">
+            {phases.map((phase, index) => (
+              <article class="phase-card">
+                <div class="phase-rail" aria-hidden="true">
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                </div>
+                <div class="phase-body">
+                  <div class="phase-meta">
+                    <span>{phase.phase}</span>
+                    <strong>{phase.version}</strong>
+                  </div>
+                  <h3>{phase.title}</h3>
+                  <dl class="phase-details">
+                    <div>
+                      <dt>问题</dt>
+                      <dd>{phase.problem}</dd>
+                    </div>
+                    <div>
+                      <dt>根因</dt>
+                      <dd>{phase.root}</dd>
+                    </div>
+                    <div>
+                      <dt>方案</dt>
+                      <dd>{phase.solution}</dd>
+                    </div>
+                    <div class="evidence">
+                      <dt>效果</dt>
+                      <dd>{phase.evidence}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section class="lesson-section" id="data-boundary">
+          <div class="section-heading">
+            <span>03</span>
+            <div>
+              <p>CASE_STUDY / DATA_BOUNDARY</p>
+              <h2>为什么 `/notes` 能从 1 MB 降到 48 KiB</h2>
+            </div>
+          </div>
+
+          <div class="compare-flow">
+            <div class="flow-column danger-flow">
+              <p class="flow-label">BEFORE</p>
+              <div class="flow-node">3489 NOTES</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-node">完整 metadata array</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-node">define:vars 注入 HTML</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-output">
+                1089.4 KiB
+                <br />
+                <small>用户未搜索也先下载</small>
+              </div>
+            </div>
+            <div class="flow-column good-flow">
+              <p class="flow-label">AFTER</p>
+              <div class="flow-node">PUBLIC NOTES</div>
+              <div class="flow-split">
+                <span>↙</span>
+                <span>↘</span>
+              </div>
+              <div class="split-grid">
+                <div class="flow-node">12 SSR cards</div>
+                <div class="flow-node">deferred catalog</div>
+              </div>
+              <div class="flow-split">
+                <span>↓</span>
+                <span>↓</span>
+              </div>
+              <div class="split-grid">
+                <div class="flow-output">
+                  47.8 KiB
+                  <br />
+                  <small>立即可读</small>
+                </div>
+                <div class="flow-output">
+                  按需加载
+                  <br />
+                  <small>search / tag / more</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="lesson-note">
+            <strong>关键点：</strong>
+            不是“把数据压缩一点”，而是改变“什么时候需要为完整数据付费”的边界。SSR
+            仍然保留真实内容，所以 SEO、无 JS 基础可用性和首屏语义都没有被牺牲。
+          </p>
+        </section>
+
+        <section class="lesson-section" id="authority">
+          <div class="section-heading">
+            <span>04</span>
+            <div>
+              <p>CASE_STUDY / AUTHORITY</p>
+              <h2>为什么“一个事实只有一个 owner”很重要</h2>
+            </div>
+          </div>
+
+          <div class="authority-map">
+            <div class="authority-source">
+              Thought Forest
+              <br />
+              <small>full YAML / canonical metadata</small>
+            </div>
+            <div class="authority-arrow">↓</div>
+            <div class="authority-node">
+              Digital Biome publication policy
+              <br />
+              <small>route · privacy · date normalization · site-only fields</small>
+            </div>
+            <div class="authority-arrow">↓</div>
+            <div class="authority-node strong-node">
+              RECONCILED NOTES INDEX
+              <br />
+              <small>最终公开快照</small>
+            </div>
+            <div class="authority-branches">
+              <span>↙</span>
+              <span>↓</span>
+              <span>↘</span>
+            </div>
+            <div class="authority-results">
+              <div>TAG INDEX</div>
+              <div>ASSET INDEX</div>
+              <div>PAGE ROUTES</div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <strong>Before:</strong> local scanner、upstream parser、derived index 都可能各自解释
+            metadata。
+            <br />
+            <strong>After:</strong> downstream index 从同一 reconciled snapshot 派生，asset generic
+            metadata drift 从 <b>40/82 → 0/82</b>。
+          </div>
+        </section>
+
+        <section class="lesson-section" id="privacy">
+          <div class="section-heading">
+            <span>05</span>
+            <div>
+              <p>CASE_STUDY / PRIVACY</p>
+              <h2>一次“private: true”为什么最后变成三层防线</h2>
+            </div>
+          </div>
+
+          <div class="incident">
+            <div class="incident-problem">
+              <p class="card-kicker">INCIDENT</p>
+              <code>private: "true"</code>
+              <p>
+                旧 line scanner 把 quoted boolean 错当成 public。修掉 parser 后，新 build
+                已不再生成页面，但 `pages.dev` 仍能命中旧 CDN 200 cache。
+              </p>
+            </div>
+            <div class="incident-lesson">
+              <p class="card-kicker">LESSON</p>
+              <strong>“新构建没有它” ≠ “互联网现在访问不到它”</strong>
+              <p>撤销语义必须覆盖静态产物、搜索索引和已经驻留在 edge 的旧资产。</p>
+            </div>
+          </div>
+
+          <div class="privacy-stack">
+            <div>
+              <span>01</span>
+              <strong>BUILD</strong>
+              <p>private note 不进入 public route，也不进入 Pagefind。</p>
+            </div>
+            <div>
+              <span>02</span>
+              <strong>POSTBUILD</strong>
+              <p>对所有 protected note 做 fail-closed route contract。</p>
+            </div>
+            <div>
+              <span>03</span>
+              <strong>RUNTIME</strong>
+              <p>构建时生成 protected `_routes.json`，Pages Function 永远返回 404 + no-store。</p>
+            </div>
+          </div>
+          <p class="lesson-note">
+            <strong>验证方式：</strong>测试时故意把“旧 private 静态文件”重新塞回 dist，workerd
+            仍返回 404；公开 `/notes/` 继续 200。最终两个生产域名也都验证为 404 + no-store。
+          </p>
+        </section>
+
+        <section class="lesson-section" id="quality">
+          <div class="section-heading">
+            <span>06</span>
+            <div>
+              <p>CASE_STUDY / ENGINEERING_QUALITY</p>
+              <h2>为什么没有直接把 170 个文件全部 Prettier</h2>
+            </div>
+          </div>
+
+          <div class="quality-grid">
+            <article>
+              <p class="card-kicker">REJECTED</p>
+              <h3>一次性全仓格式化</h3>
+              <p>
+                会立即改 170 个文件，制造巨大无语义 diff，让真正的架构变化、bug fix 和 reviewer
+                evidence 更难审。
+              </p>
+            </article>
+            <article class="accent-card">
+              <p class="card-kicker">ADOPTED</p>
+              <h3>Incremental Format Ratchet</h3>
+              <p>
+                旧文件按 SHA-256 原样 grandfather；一旦被修改就必须通过 Prettier 并从 baseline
+                毕业。新文件从第一天就必须合规。
+              </p>
+            </article>
+          </div>
+
+          <div class="ratchet" aria-label="格式化债务渐进收敛">
+            <div>
+              <strong>206</strong>
+              <span>FORMAT TARGETS</span>
+            </div>
+            <div class="ratchet-arrow">→</div>
+            <div>
+              <strong>75</strong>
+              <span>FORMATTED NOW</span>
+            </div>
+            <div class="ratchet-plus">+</div>
+            <div>
+              <strong>131</strong>
+              <span>LEGACY / TOUCH TO GRADUATE</span>
+            </div>
+          </div>
+
+          <pre class="pipeline"><code>pnpm verify
+  ├─ quality
+  │   ├─ Biome lint: 144 files / 0 warnings
+  │   └─ Prettier format ratchet
+  ├─ Astro + edge type checks
+  ├─ unit / infrastructure tests
+  ├─ production build + Pagefind
+  ├─ privacy + performance gates
+  └─ Chromium E2E</code></pre>
+        </section>
+
+        <section class="lesson-section" id="takeaways">
+          <div class="section-heading">
+            <span>07</span>
+            <div>
+              <p>TRANSFERABLE_LESSONS</p>
+              <h2>可以带到其他项目里的 6 条原则</h2>
+            </div>
+          </div>
+
+          <div class="principle-grid">
+            {principles.map(([number, title, body]) => (
+              <article>
+                <span>{number}</span>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </article>
+            ))}
+          </div>
+
+          <div class="closing-panel">
+            <p class="eyebrow">THE END / CURRENT STATE</p>
+            <h2>
+              重构不是让代码看起来“更像架构”，而是让错误更难发生、成本更晚支付、事实更少分叉。
+            </h2>
+            <p>
+              Digital Biome 的原始明确重构 backlog 已在 v0.4.0
+              收口。以后只有出现新的性能数据、维护痛点、bug 或职责证据时，才值得开启下一轮。
+            </p>
+            <div class="hero-actions">
+              <a href="/about" class="primary-action">
+                BACK_TO_ABOUT
+              </a>
+              <a href="#top" class="secondary-action">
+                REPLAY_FROM_TOP ↑
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  :global(.refactor-lab) {
+    background:
+      radial-gradient(circle at 70% 0%, rgb(139 154 70 / 0.08), transparent 28rem),
+      linear-gradient(180deg, var(--bg) 0%, #11120f 100%);
+  }
+
+  .refactor-shell {
+    min-height: 100vh;
+  }
+  .hero {
+    position: relative;
+    min-height: 86vh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding: 8rem 1.5rem 5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.45;
+    background-image:
+      linear-gradient(rgb(139 154 70 / 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(139 154 70 / 0.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: linear-gradient(to bottom, black, transparent 92%);
+  }
+  .hero-copy,
+  .hero-metrics {
+    position: relative;
+    z-index: 1;
+    width: min(1120px, 100%);
+  }
+  .hero-copy {
+    margin-bottom: 3.5rem;
+  }
+  .back-link,
+  .eyebrow,
+  .toc,
+  .card-kicker,
+  .metric-label,
+  .phase-meta,
+  .flow-label,
+  .section-heading p {
+    font-family: var(--font-mono);
+    letter-spacing: 0.12em;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 2.5rem;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  .back-link:hover {
+    color: var(--primary);
+  }
+  .eyebrow {
+    color: var(--primary);
+    font-size: 0.72rem;
+    margin-bottom: 1.2rem;
+  }
+  .hero-title {
+    max-width: 950px;
+    font-size: clamp(2.35rem, 5vw, 5.25rem);
+    line-height: 1.02;
+    letter-spacing: -0.055em;
+    font-weight: 600;
+  }
+  .hero-intro {
+    max-width: 780px;
+    margin-top: 1.7rem;
+    color: var(--text-muted);
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    line-height: 1.85;
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 2rem;
+  }
+  .primary-action,
+  .secondary-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-color);
+    font: 600 0.72rem/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    transition: 160ms ease;
+  }
+  .primary-action {
+    color: #151614;
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .secondary-action {
+    color: var(--text-muted);
+    background: rgb(255 255 255 / 0.01);
+  }
+  .primary-action:hover {
+    background: var(--primary-hover);
+  }
+  .secondary-action:hover {
+    color: var(--primary);
+    border-color: rgb(139 154 70 / 0.5);
+  }
+
+  .hero-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--border-color);
+    background: rgb(21 22 20 / 0.75);
+  }
+  .metric-card {
+    padding: 1.15rem;
+    min-width: 0;
+  }
+  .metric-card + .metric-card {
+    border-left: 1px solid var(--border-color);
+  }
+  .metric-label {
+    color: var(--text-tertiary);
+    font-size: 0.61rem;
+  }
+  .metric-values {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    margin-top: 0.8rem;
+    font-family: var(--font-mono);
+  }
+  .metric-values strong {
+    color: var(--text-main);
+    font-size: 1.15rem;
+  }
+  .metric-values small,
+  .metric-before,
+  .metric-arrow {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+  }
+  .metric-before {
+    text-decoration: line-through;
+  }
+  .metric-delta {
+    margin-top: 0.45rem;
+    color: var(--primary);
+    font: 600 0.76rem var(--font-mono);
+  }
+
+  .content-grid {
+    width: min(1180px, calc(100% - 2rem));
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 4rem;
+    padding: 5rem 0 8rem;
+  }
+  .toc {
+    position: sticky;
+    top: 6rem;
+    align-self: start;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border-color);
+  }
+  .toc-title {
+    margin-bottom: 1.2rem;
+    color: var(--primary);
+    font-size: 0.62rem;
+  }
+  .toc nav {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .toc a {
+    color: var(--text-tertiary);
+    font-size: 0.66rem;
+    line-height: 1.4;
+  }
+  .toc a:hover {
+    color: var(--text-main);
+  }
+  .learning-content {
+    min-width: 0;
+  }
+  .lesson-section {
+    scroll-margin-top: 5rem;
+    padding: 1.5rem 0 6rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .lesson-section:last-child {
+    border-bottom: 0;
+  }
+  .section-heading {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1rem;
+    margin-bottom: 2.2rem;
+  }
+  .section-heading > span {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid rgb(139 154 70 / 0.4);
+    color: var(--primary);
+    font: 0.7rem var(--font-mono);
+  }
+  .section-heading p {
+    color: var(--text-tertiary);
+    font-size: 0.62rem;
+  }
+  .section-heading h2 {
+    margin-top: 0.45rem;
+    max-width: 760px;
+    font-size: clamp(1.5rem, 3vw, 2.45rem);
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+  }
+
+  .diagnosis-grid,
+  .quality-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .diagnosis-grid article,
+  .quality-grid article {
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    background: rgb(255 255 255 / 0.012);
+  }
+  .accent-card {
+    border-color: rgb(139 154 70 / 0.42) !important;
+    background: rgb(139 154 70 / 0.055) !important;
+  }
+  .card-kicker {
+    color: var(--text-tertiary);
+    font-size: 0.62rem;
+  }
+  .diagnosis-grid h3,
+  .quality-grid h3 {
+    margin-top: 0.7rem;
+    font-size: 1.05rem;
+  }
+  .diagnosis-grid p:last-child,
+  .quality-grid p:last-child {
+    margin-top: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1.75;
+    font-size: 0.9rem;
+  }
+  .equation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 1rem;
+    padding: 1.1rem;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font: 0.68rem var(--font-mono);
+    letter-spacing: 0.08em;
+  }
+  .equation i {
+    color: var(--primary);
+    font-style: normal;
+  }
+
+  .timeline {
+    display: grid;
+    gap: 1rem;
+  }
+  .phase-card {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    border: 1px solid var(--border-color);
+    background: rgb(255 255 255 / 0.012);
+  }
+  .phase-rail {
+    display: grid;
+    place-items: start center;
+    padding-top: 1.4rem;
+    border-right: 1px solid var(--border-color);
+    color: var(--primary);
+    font: 0.68rem var(--font-mono);
+  }
+  .phase-body {
+    padding: 1.4rem 1.5rem 1.55rem;
+  }
+  .phase-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--text-tertiary);
+    font-size: 0.62rem;
+  }
+  .phase-meta strong {
+    color: var(--primary);
+    font-weight: 500;
+  }
+  .phase-body h3 {
+    margin-top: 0.55rem;
+    font-size: 1.2rem;
+  }
+  .phase-details {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+  .phase-details > div {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 0.7rem;
+  }
+  .phase-details dt {
+    color: var(--text-tertiary);
+    font: 0.66rem var(--font-mono);
+  }
+  .phase-details dd {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    line-height: 1.7;
+  }
+  .phase-details .evidence dd {
+    color: var(--text-main);
+  }
+
+  .compare-flow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .flow-column {
+    padding: 1.4rem;
+    border: 1px solid var(--border-color);
+  }
+  .danger-flow {
+    background: rgb(170 80 70 / 0.035);
+  }
+  .good-flow {
+    background: rgb(139 154 70 / 0.045);
+    border-color: rgb(139 154 70 / 0.35);
+  }
+  .flow-label {
+    margin-bottom: 1rem;
+    color: var(--text-tertiary);
+    font-size: 0.62rem;
+  }
+  .flow-node,
+  .flow-output {
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    font: 0.72rem var(--font-mono);
+  }
+  .flow-output {
+    border-color: rgb(139 154 70 / 0.35);
+    color: var(--primary);
+  }
+  .flow-output small {
+    color: var(--text-tertiary);
+  }
+  .flow-arrow,
+  .flow-split,
+  .authority-arrow,
+  .authority-branches {
+    padding: 0.45rem 0;
+    text-align: center;
+    color: var(--text-tertiary);
+    font: 0.72rem var(--font-mono);
+  }
+  .flow-split {
+    display: flex;
+    justify-content: space-around;
+  }
+  .split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+  }
+  .lesson-note,
+  .callout {
+    margin-top: 1rem;
+    padding: 1rem 1.1rem;
+    border-left: 2px solid var(--primary);
+    background: rgb(139 154 70 / 0.04);
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.75;
+  }
+  .lesson-note strong,
+  .callout strong,
+  .callout b {
+    color: var(--text-main);
+  }
+
+  .authority-map {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .authority-source,
+  .authority-node,
+  .authority-results > div {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    font: 0.76rem var(--font-mono);
+  }
+  .authority-source {
+    border-color: rgb(139 154 70 / 0.42);
+    color: var(--primary);
+  }
+  .authority-source small,
+  .authority-node small {
+    color: var(--text-tertiary);
+  }
+  .strong-node {
+    background: rgb(139 154 70 / 0.07);
+    border-color: rgb(139 154 70 / 0.42);
+  }
+  .authority-branches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .authority-results {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.7rem;
+  }
+
+  .incident {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .incident > div {
+    padding: 1.4rem;
+    border: 1px solid var(--border-color);
+  }
+  .incident code {
+    display: inline-block;
+    margin: 0.8rem 0;
+    padding: 0.5rem 0.65rem;
+    background: #0d0e0c;
+    border: 1px solid var(--border-color);
+    color: #d4a5a0;
+    font-size: 0.9rem;
+  }
+  .incident p:last-child {
+    color: var(--text-muted);
+    line-height: 1.75;
+    font-size: 0.88rem;
+  }
+  .incident-lesson {
+    border-color: rgb(139 154 70 / 0.4) !important;
+  }
+  .incident-lesson strong {
+    display: block;
+    margin: 0.8rem 0;
+    font-size: 1.05rem;
+  }
+  .privacy-stack {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.7rem;
+    margin-top: 1rem;
+  }
+  .privacy-stack > div {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+  }
+  .privacy-stack span {
+    color: var(--primary);
+    font: 0.65rem var(--font-mono);
+  }
+  .privacy-stack strong {
+    display: block;
+    margin: 0.45rem 0;
+    font: 0.74rem var(--font-mono);
+  }
+  .privacy-stack p {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .ratchet {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1.2rem;
+    border: 1px solid var(--border-color);
+  }
+  .ratchet > div:not(.ratchet-arrow):not(.ratchet-plus) {
+    display: grid;
+    text-align: center;
+    gap: 0.3rem;
+  }
+  .ratchet strong {
+    color: var(--text-main);
+    font: 1.5rem var(--font-mono);
+  }
+  .ratchet span {
+    color: var(--text-tertiary);
+    font: 0.58rem var(--font-mono);
+    letter-spacing: 0.08em;
+  }
+  .ratchet-arrow,
+  .ratchet-plus {
+    color: var(--primary);
+    font: 0.9rem var(--font-mono);
+  }
+  .pipeline {
+    overflow-x: auto;
+    padding: 1.2rem;
+    border: 1px solid var(--border-color);
+    background: #0d0e0c;
+    color: #bdc3a0;
+    font: 0.72rem/1.8 var(--font-mono);
+  }
+
+  .principle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+  .principle-grid article {
+    min-height: 160px;
+    padding: 1.2rem;
+    border: 1px solid var(--border-color);
+  }
+  .principle-grid span {
+    color: var(--primary);
+    font: 0.65rem var(--font-mono);
+  }
+  .principle-grid h3 {
+    margin-top: 0.7rem;
+    font-size: 1rem;
+  }
+  .principle-grid p {
+    margin-top: 0.55rem;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    line-height: 1.7;
+  }
+  .closing-panel {
+    margin-top: 2.5rem;
+    padding: clamp(1.5rem, 5vw, 3rem);
+    border: 1px solid rgb(139 154 70 / 0.42);
+    background: linear-gradient(135deg, rgb(139 154 70 / 0.08), transparent 60%);
+  }
+  .closing-panel h2 {
+    max-width: 760px;
+    font-size: clamp(1.5rem, 3vw, 2.4rem);
+    line-height: 1.25;
+    letter-spacing: -0.03em;
+  }
+  .closing-panel > p:not(.eyebrow) {
+    max-width: 760px;
+    margin-top: 1rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 900px) {
+    .hero-metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .metric-card:nth-child(3) {
+      border-left: 0;
+      border-top: 1px solid var(--border-color);
+    }
+    .metric-card:nth-child(4) {
+      border-top: 1px solid var(--border-color);
+    }
+    .content-grid {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .toc {
+      position: static;
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      padding-top: 7rem;
+    }
+    .hero-metrics,
+    .diagnosis-grid,
+    .quality-grid,
+    .compare-flow,
+    .incident,
+    .principle-grid {
+      grid-template-columns: 1fr;
+    }
+    .metric-card + .metric-card {
+      border-left: 0;
+      border-top: 1px solid var(--border-color);
+    }
+    .privacy-stack {
+      grid-template-columns: 1fr;
+    }
+    .phase-card {
+      grid-template-columns: 38px 1fr;
+    }
+    .phase-body {
+      padding: 1.1rem;
+    }
+    .phase-details > div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+    .ratchet {
+      flex-wrap: wrap;
+    }
+    .ratchet-arrow {
+      transform: rotate(90deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
