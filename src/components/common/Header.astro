@@ -1,6 +1,6 @@
 ---
 import SiteSearch from './SiteSearch.astro';
-import { Search, Briefcase, Lock, LogOut } from '@lucide/astro';
+import { Search, Lock, LogOut } from '@lucide/astro';
 
 const currentPath = Astro.url.pathname;
 const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
@@ -19,19 +19,6 @@ const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
       <Search size={14} class="text-primary" />
       <span class="text-xs">[ SEARCH ]</span>
     </button>
-
-    <div class="h-4 w-px bg-border/80"></div>
-
-    <a
-      href={`/login?next=${encodeURIComponent(loginNext)}`}
-      data-private-link="svc-jobsync.links.app"
-      data-private-unlocked-label="[ JOBSYNC ]"
-      class="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
-      title="打开个人求职工作台"
-    >
-      <Briefcase size={12} />
-      <span data-private-link-label>[ JOBSYNC ]</span>
-    </a>
 
     <div class="h-4 w-px bg-border/80"></div>
 
