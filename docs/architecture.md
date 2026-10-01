@@ -36,12 +36,12 @@ flowchart LR
 
 ### 3.1 内容源层
 
-| 位置 | 职责 | 是否进入公开构建 |
-|---|---|---|
-| `thought-forest/z/` | 普通知识笔记 | 经同步、过滤和脱敏后进入 |
-| `thought-forest/assets/` | 资产笔记及媒体 | 元数据经脱敏后进入；媒体复制到公开目录 |
-| `thought-forest/config/` | Dashboard、技能和运维配置 | 可参与构建，但 `obsidian/config/` 不进入公开知识列表 |
-| `thought-forest/generated/knowledge-index/` | 上游完整 YAML 解析结果 | 只在同步阶段读取；私有 URL 会被替换为 `private_ref` |
+| 位置                                        | 职责                      | 是否进入公开构建                                     |
+| ------------------------------------------- | ------------------------- | ---------------------------------------------------- |
+| `thought-forest/z/`                         | 普通知识笔记              | 经同步、过滤和脱敏后进入                             |
+| `thought-forest/assets/`                    | 资产笔记及媒体            | 元数据经脱敏后进入；媒体复制到公开目录               |
+| `thought-forest/config/`                    | Dashboard、技能和运维配置 | 可参与构建，但 `obsidian/config/` 不进入公开知识列表 |
+| `thought-forest/generated/knowledge-index/` | 上游完整 YAML 解析结果    | 只在同步阶段读取；私有 URL 会被替换为 `private_ref`  |
 
 `thought-forest` 是私有 Git 子模块。`digital-biome` 的单个提交不足以独立完成构建，还需要对应的子模块提交以及上游生成索引。
 
@@ -124,14 +124,14 @@ Astro 生成 `dist/`，Pagefind 随后生成搜索索引。`scripts/postbuild.ts
 
 ## 4. 信任边界与数据分类
 
-| 数据 | 存储位置 | 可见范围 | 主要保护手段 |
-|---|---|---|---|
-| 公开笔记正文 | Pages 静态文件 | 互联网 | 发布过滤 |
-| 公开资产元数据 | 静态 JSON/HTML | 互联网 | 上游契约与 schema |
-| 私有/内部链接 | Pages Secret | Access 授权用户 | Access + JWT 二次校验 |
-| IP、SSH URL | 私有 vault、Pages Secret | 作者和授权用户 | 私有仓库、脱敏、泄漏门禁 |
-| Access AUD、团队域 | Pages Secret | Pages Functions | Cloudflare Secret |
-| 原始 vault | GitHub 私有仓库 | GitHub 授权主体 | 仓库权限 |
+| 数据               | 存储位置                 | 可见范围        | 主要保护手段             |
+| ------------------ | ------------------------ | --------------- | ------------------------ |
+| 公开笔记正文       | Pages 静态文件           | 互联网          | 发布过滤                 |
+| 公开资产元数据     | 静态 JSON/HTML           | 互联网          | 上游契约与 schema        |
+| 私有/内部链接      | Pages Secret             | Access 授权用户 | Access + JWT 二次校验    |
+| IP、SSH URL        | 私有 vault、Pages Secret | 作者和授权用户  | 私有仓库、脱敏、泄漏门禁 |
+| Access AUD、团队域 | Pages Secret             | Pages Functions | Cloudflare Secret        |
+| 原始 vault         | GitHub 私有仓库          | GitHub 授权主体 | 仓库权限                 |
 
 禁止把任何私有值放入以下位置：
 
@@ -143,27 +143,24 @@ Astro 生成 `dist/`，Pagefind 随后生成搜索索引。`scripts/postbuild.ts
 
 ## 5. 部署拓扑与当前决策
 
-Cloudflare Pages 项目仍与 `digital-biome` Git 仓库关联，但生产和预览自动构建均已关闭。生产发布由 GitHub Actions 使用锁定的两个仓库提交执行：
+Cloudflare Pages 项目仍与 `digital-biome` Git 仓库关联，但生产和预览自动构建均已关闭。交付现在分为 Integration、Release、Production Promotion 三个独立生命周期：
 
 ```text
-main SHA + private Vault SHA
-                ↓
- build/check/index/leak scan
-                ↓
- production Environment approval
-                ↓
- Secret update + Wrangler Direct Upload
-                ↓
-        Cloudflare Pages main
+PR -> CI -> main -> exact-SHA Candidate -> optional staging
+
+manual Release intent -> Release PR -> Published immutable vX.Y.Z
+
+manual select vX.Y.Z -> production Environment approval
+  -> private binding refresh -> immutable artifact upload -> smoke checks
 ```
 
-原因是 Cloudflare Git 克隆无法把凭据传给私有 `thought-forest` 子模块。GitHub Actions 则能用限定两个仓库的短期 GitHub App token 完成检出，并在批准后使用 Wrangler 部署。Cloudflare 官方支持在 Git 集成项目中关闭自动部署后继续使用 Wrangler 创建部署。
+Candidate 阶段同时编译 Astro 静态资源与 Pages Functions，并保存带 SHA-256 的不可变 artifact；Release 只提升该 artifact；Production 使用 `--no-bundle` 上传同一 artifact，不重新构建应用。私有 `thought-forest` 仍通过限定两个仓库的短期 GitHub App token 检出，用于 release-pinned private payload 验证与生成。
 
 ## 6. 已知架构问题
 
 ### 6.1 已缓解：部署不再依赖单个本地工作区
 
-日常生产路径已迁移到 `.github/workflows/deploy-cloudflare-pages.yml`，以主仓库 SHA、Vault SHA 和资产索引 hash 固定输入。本地 `pnpm deploy:cloudflare` 仅保留为紧急恢复手段。
+日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`，以主仓库 SHA、source CI、Candidate digest、Vault SHA 和资产索引 hash 固定 provenance。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
 
 剩余外部依赖是 GitHub App、Production Environment 和 Cloudflare API token 的控制面配置。
 

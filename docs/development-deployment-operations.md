@@ -23,14 +23,14 @@
 
 ## 2. 环境要求
 
-| 工具 | 要求 | 来源 |
-|---|---|---|
-| Git | 支持 submodule | 系统安装 |
-| Node.js | 24.x | `.node-version`、`package.json#engines` |
-| pnpm | 10.x | `packageManager: pnpm@10.32.1` |
-| Wrangler | 项目依赖 4.x | `pnpm install` |
-| GitHub 权限 | 读取 `digital-biome` 和私有 `thought-forest` | 个人账号/专用凭据 |
-| Cloudflare 权限 | Pages 部署与 Secret 管理 | Wrangler 登录或最小权限 API token |
+| 工具            | 要求                                         | 来源                                    |
+| --------------- | -------------------------------------------- | --------------------------------------- |
+| Git             | 支持 submodule                               | 系统安装                                |
+| Node.js         | 24.x                                         | `.node-version`、`package.json#engines` |
+| pnpm            | 10.x                                         | `packageManager: pnpm@10.32.1`          |
+| Wrangler        | 项目依赖 4.x                                 | `pnpm install`                          |
+| GitHub 权限     | 读取 `digital-biome` 和私有 `thought-forest` | 个人账号/专用凭据                       |
+| Cloudflare 权限 | Pages 部署与 Secret 管理                     | Wrangler 登录或最小权限 API token       |
 
 检查版本：
 
@@ -240,19 +240,17 @@ git status --short
 
 ### 8.1 当前权威流程
 
-Cloudflare Dashboard 中生产与预览自动部署均为 Disabled。`main` 更新后，
-`.github/workflows/deploy-cloudflare-pages.yml` 是唯一日常生产入口：
+Cloudflare Dashboard 中生产与预览自动部署均为 Disabled。日常交付采用三段式 lifecycle：
 
-1. 创建只读 GitHub App 短期令牌并检出主仓库与锁定的私有 Vault；
-2. 从该 Vault SHA 生成 knowledge index，同步公开投影；
-3. 执行 Astro、edge、Functions、基础设施契约和泄漏门禁；
-4. 保存构建产物、主仓库 SHA、Vault SHA 与资产索引 hash；
-5. 等待 `production` Environment 人工审批；
-6. 重新生成并核对私有 payload，更新 Pages Secret；
-7. 使用 Wrangler Direct Upload 部署并执行公开/受保护接口冒烟测试。
+1. `CI` 验证 PR；合入 `main` 后 exact-SHA main CI 再次验证；
+2. `Publish Main Candidate` 从该 successful main CI 构建 immutable Pages artifact，并可选提升到 staging；
+3. 手动 `Prepare Release` 创建/更新 Release PR；Release PR 合并后，新的 main CI + Candidate 触发 `Release Publish`，普通 main commit 则 safe no-op；
+4. `Release Publish` 把 exact Candidate artifact 提升为 Published `vX.Y.Z`，不重新 build；
+5. 手动 `Deploy Production(vX.Y.Z)` 选择 Published Release，验证 provenance 后进入 `production` Environment；
+6. Production 仅刷新 release-pinned private bindings 并使用 Wrangler `--no-bundle` 上传已有 artifact；
+7. 部署后执行公开/受保护 API smoke contracts 并记录 Cloudflare deployment identity。
 
-不要把“push 成功”或“build job 成功”视为发布完成；必须等 deploy job、Cloudflare
-deployment 记录和冒烟测试全部成功。
+因此：**Merge != Release，Release != Deploy，Deploy 不重新 Build 应用。** 完整 contract 见 `docs/delivery-lifecycle.md`。
 
 ### 8.2 紧急人工恢复
 
@@ -479,23 +477,28 @@ Failed: error occurred while updating repository submodules
 - 将值移入 `PRIVATE_INFRASTRUCTURE_JSON`；
 - 删除不应发布的附件或生成物。
 
-## 14. GitHub Actions 生产发布
+## 14. GitHub Actions 交付
 
-专用发布工作流位于 `.github/workflows/deploy-cloudflare-pages.yml`，已经实现：私有子模块短期凭据、当前 Vault SHA 索引生成、全部检查与泄漏门禁、artifact、Production Environment、私密 payload 更新、Wrangler Direct Upload 和无身份 smoke test。
+权威 workflow 分工如下：
+
+- `check.yml`：PR/main CI；
+- `candidate-publish.yml`：successful exact-SHA main CI -> immutable Candidate；
+- `release-please.yml`：显式 Release intent -> Release PR；
+- `release-publish.yml`：Release commit Candidate -> Published immutable Release；
+- `deploy-production.yml`：手动选择 Published `vX.Y.Z` -> Production promotion。
 
 管理员首次启用时仍需在 GitHub 控制面完成：
 
 1. 创建只具备 Contents Read 的 GitHub App，并只安装到 `digital-biome` 与 `thought-forest`；
 2. 添加 repository variable `VAULT_APP_CLIENT_ID`；
 3. 添加 repository secret `VAULT_APP_PRIVATE_KEY`；
-4. 创建 `production` Environment，限制 `main`，在套餐支持时启用 required reviewer 和禁止 self-review；
+4. 创建 `production` Environment，在套餐支持时启用 required reviewer 和禁止 self-review；
 5. 在该 Environment 添加 `CLOUDFLARE_ACCOUNT_ID`、只有 Pages Edit 的 `CLOUDFLARE_API_TOKEN`，以及 `PRODUCTION_URL`；
-6. 允许 GitHub Actions 使用当前仓库的 `GITHUB_TOKEN` 创建 PR；
-7. 保持 Cloudflare Git 自动 Production/Preview 构建关闭。
+6. 创建 `staging` Environment；在配置 staging Cloudflare 凭据前保持 repository variable `STAGING_DEPLOY_ENABLED=false`；
+7. 允许 GitHub Actions 使用当前仓库的 `GITHUB_TOKEN` 创建 PR 与 dispatch workflow；
+8. 保持 Cloudflare Git 自动 Production/Preview 构建关闭。
 
-`.github/workflows/sync-thought-forest-submodule.yml` 只用只读 App token 拉取 Vault，并用当前仓库的 `GITHUB_TOKEN` 创建子模块更新 PR，不再由机器人直接推送 `main`。PR 合并后，生产工作流使用该提交锁定的两个 SHA 构建。
-
-每次运行的 artifact 保存 `dist/` 和 `deployment-manifest.json`；manifest 只记录主仓库 SHA、Vault SHA 与资产索引 SHA-256，不记录私密 URL 或 IP。Cloudflare deployment URL 记录在 GitHub Deployment 中。
+`.github/workflows/sync-thought-forest-submodule.yml` 继续只用只读 App token 拉取 Vault，并用当前仓库 `GITHUB_TOKEN` 创建子模块更新 PR。Production 只消费 Published Release 中的 `release-manifest.json` 和 `digital-biome-pages.tar.gz`；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
 
 ## 15. 官方参考
 

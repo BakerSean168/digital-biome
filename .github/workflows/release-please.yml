@@ -1,0 +1,46 @@
+name: Prepare Release
+
+# Release preparation is an explicit product milestone. Normal main integration
+# and candidate/staging delivery do not implicitly create or update a Release PR.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: prepare-release-main
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Prepare Release PR
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@8b8fd2cc23b2e18957157a9d923d75aa0c6f6ad5 # v4
+        with:
+          # This workflow prepares/updates the Release PR only. GitHub Release
+          # publication is owned by release-publish.yml after the merge passes
+          # exact-SHA main CI and Publish Main Candidate.
+          token: ${{ github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Dispatch CI for the Release PR head
+        if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_JSON: ${{ steps.release.outputs.pr }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_branch="$(jq -r .headBranchName <<<"$PR_JSON")"
+          [[ -n "$release_branch" && "$release_branch" != null ]] || {
+            echo 'release-please did not return a Release PR head branch' >&2
+            exit 1
+          }
+          gh workflow run check.yml --ref "$release_branch"
+          echo "Dispatched CI for Release PR branch: $release_branch" >> "$GITHUB_STEP_SUMMARY"
