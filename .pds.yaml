@@ -1,0 +1,14 @@
+apiVersion: pds/v1alpha1
+kind: Component
+metadata:
+  id: digital-biome
+  name: Digital Biome
+spec:
+  type: presentation-portal
+  domain: presentation
+  lifecycle: active
+  repository:
+    url: https://github.com/BakerSean168/digital-biome.git
+    visibility: public
+  owns:
+    - pds://presentation/app/digital-biome
