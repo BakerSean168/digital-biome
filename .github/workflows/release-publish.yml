@@ -82,37 +82,10 @@ jobs:
             echo "candidate_revision=$candidate_revision"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Download exact Candidate identity
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ steps.run.outputs.candidate_artifact_name }}
-          path: reports/release/source
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ steps.run.outputs.candidate_run_id }}
-
-      - id: candidate
-        name: Resolve Candidate SHA from its manifest
-        shell: bash
-        run: |
-          set -euo pipefail
-          candidate=reports/release/source/reports/candidate/candidate-manifest.json
-          test -s "$candidate"
-          revision="$(jq -r .gitSha "$candidate")"
-          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || {
-            echo 'candidate manifest has invalid Git SHA' >&2
-            exit 1
-          }
-          [[ "$revision" == "${{ steps.run.outputs.candidate_revision }}" ]] || {
-            echo 'candidate manifest SHA does not match artifact identity' >&2
-            exit 1
-          }
-          echo "revision=$revision" >> "$GITHUB_OUTPUT"
-
       - name: Checkout exact Candidate source
         uses: actions/checkout@v6
         with:
-          ref: ${{ steps.candidate.outputs.revision }}
+          ref: ${{ steps.run.outputs.candidate_revision }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -128,11 +101,20 @@ jobs:
       - name: Install release tooling
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Download exact Candidate identity
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.run.outputs.candidate_artifact_name }}
+          path: reports/release/source
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.run.outputs.candidate_run_id }}
+
       - name: Verify Candidate identity and source CI provenance
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          CANDIDATE_SHA: ${{ steps.candidate.outputs.revision }}
+          CANDIDATE_SHA: ${{ steps.run.outputs.candidate_revision }}
         shell: bash
         run: |
           set -euo pipefail

@@ -48,6 +48,15 @@ test('release publication promotes the exact candidate artifact without rebuildi
   assert.match(releaseWorkflow, /digital-biome-pages\.tar\.gz/);
   assert.match(releaseWorkflow, /candidate_artifact_name/);
   assert.match(releaseWorkflow, /manifest\.ts provenance/);
+
+  const checkoutIndex = releaseWorkflow.indexOf('- name: Checkout exact Candidate source');
+  const downloadIndex = releaseWorkflow.indexOf('- name: Download exact Candidate identity');
+  assert.ok(checkoutIndex >= 0, 'release resolver must checkout the exact Candidate source');
+  assert.ok(
+    downloadIndex > checkoutIndex,
+    'Candidate artifact must be downloaded after checkout so checkout cleanup cannot delete it',
+  );
+
   assert.doesNotMatch(releaseWorkflow, /pnpm build:only/);
   assert.doesNotMatch(releaseWorkflow, /pages functions build/);
 });
