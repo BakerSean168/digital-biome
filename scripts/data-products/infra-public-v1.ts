@@ -64,6 +64,17 @@ function assertStringArray(value: unknown, label: string): asserts value is stri
   }
 }
 
+function assertOnlyKeys(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+  label: string,
+): void {
+  const unexpected = Object.keys(value).filter(key => !allowed.includes(key));
+  if (unexpected.length > 0) {
+    throw new Error(`${label} contains unexpected field(s): ${unexpected.join(', ')}`);
+  }
+}
+
 function assertPublicUrl(value: string, label: string): void {
   let parsed: URL;
   try {
@@ -80,6 +91,7 @@ function assertProjectionShape(projection: InfraPublicV1): void {
   const hostIds = new Set<string>();
   for (const host of projection.payload.hosts) {
     assertRecord(host, 'infra-public-v1 host');
+    assertOnlyKeys(host, ['id', 'provider', 'region', 'roles'], 'infra-public-v1 host');
     assertNonEmptyString(host.id, 'infra-public-v1 host.id');
     assertNonEmptyString(host.provider, `${host.id}.provider`);
     assertStringArray(host.roles, `${host.id}.roles`);
@@ -96,6 +108,11 @@ function assertProjectionShape(projection: InfraPublicV1): void {
   let activeEnvironmentCount = 0;
   for (const deployment of projection.payload.deployments) {
     assertRecord(deployment, 'infra-public-v1 deployment');
+    assertOnlyKeys(
+      deployment,
+      ['componentRef', 'environments'],
+      'infra-public-v1 deployment',
+    );
     assertNonEmptyString(deployment.componentRef, 'infra-public-v1 deployment.componentRef');
     if (!/^pds:\/\/system\/component\/[a-z0-9][a-z0-9-]*$/.test(deployment.componentRef)) {
       throw new Error(`infra-public-v1 invalid component reference: ${deployment.componentRef}`);
@@ -111,6 +128,11 @@ function assertProjectionShape(projection: InfraPublicV1): void {
     const environmentNames = new Set<string>();
     for (const environment of deployment.environments) {
       assertRecord(environment, `${deployment.componentRef} environment`);
+      assertOnlyKeys(
+        environment,
+        ['name', 'host', 'runtime', 'lifecycle', 'desiredState', 'publicUrls'],
+        `${deployment.componentRef} environment`,
+      );
       assertNonEmptyString(environment.name, `${deployment.componentRef}.environment.name`);
       assertNonEmptyString(environment.host, `${deployment.componentRef}.${environment.name}.host`);
       assertNonEmptyString(
@@ -155,6 +177,11 @@ function assertProjectionShape(projection: InfraPublicV1): void {
   }
 
   assertRecord(projection.payload.summary, 'infra-public-v1.payload.summary');
+  assertOnlyKeys(
+    projection.payload.summary,
+    ['hostCount', 'deploymentCount', 'activeEnvironmentCount'],
+    'infra-public-v1.payload.summary',
+  );
   const { summary } = projection.payload;
   if (
     summary.hostCount !== projection.payload.hosts.length ||
@@ -168,6 +195,11 @@ function assertProjectionShape(projection: InfraPublicV1): void {
 export function parseInfraPublicV1(raw: string): InfraPublicV1 {
   const value: unknown = JSON.parse(raw);
   assertRecord(value, 'infra-public-v1');
+  assertOnlyKeys(
+    value,
+    ['schemaVersion', 'product', 'generated', 'editable', 'producer', 'source', 'payload'],
+    'infra-public-v1',
+  );
   if (
     value.schemaVersion !== 1 ||
     value.product !== 'infra-public-v1' ||
@@ -179,6 +211,7 @@ export function parseInfraPublicV1(raw: string): InfraPublicV1 {
   }
 
   assertRecord(value.source, 'infra-public-v1.source');
+  assertOnlyKeys(value.source, ['repository', 'revision'], 'infra-public-v1.source');
   if (
     value.source.repository !== INFRA_PUBLIC_V1_REPOSITORY ||
     typeof value.source.revision !== 'string' ||
@@ -188,6 +221,11 @@ export function parseInfraPublicV1(raw: string): InfraPublicV1 {
   }
 
   assertRecord(value.payload, 'infra-public-v1.payload');
+  assertOnlyKeys(
+    value.payload,
+    ['hosts', 'deployments', 'summary'],
+    'infra-public-v1.payload',
+  );
   if (
     !Array.isArray(value.payload.hosts) ||
     !Array.isArray(value.payload.deployments) ||

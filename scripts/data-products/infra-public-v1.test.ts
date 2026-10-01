@@ -88,6 +88,14 @@ test('fails closed when payload summary no longer matches the projection', () =>
   );
 });
 
+test('fails closed on unexpected fields outside the public contract', () => {
+  const raw = JSON.stringify(fixture()).replace(
+    '"provider":"google-cloud"',
+    '"provider":"google-cloud","unexpected":"value"',
+  );
+  assert.throws(() => parseInfraPublicV1(raw), /unexpected field/);
+});
+
 test('materializes a validated projection without changing its provenance envelope', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'infra-public-v1-consumer-'));
   const output = path.join(root, 'infra-public-v1.json');
