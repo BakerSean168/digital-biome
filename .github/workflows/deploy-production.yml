@@ -1,0 +1,489 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published immutable release tag (for example v0.6.0)
+        required: true
+        type: string
+
+concurrency:
+  group: production-release-selection
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-release:
+    name: Verify published Release contract
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.identity.outputs.revision }}
+      release_tag: ${{ steps.identity.outputs.release_tag }}
+      release_digest: ${{ steps.identity.outputs.release_digest }}
+      vault_sha: ${{ steps.identity.outputs.vault_sha }}
+      asset_index_sha256: ${{ steps.identity.outputs.asset_index_sha256 }}
+    steps:
+      - id: published
+        name: Resolve Published Release tag identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || {
+            echo 'release_tag must be an immutable vX.Y.Z release' >&2
+            exit 1
+          }
+
+          release_json="$(gh release view "$RELEASE_TAG" \
+            --repo "$REPOSITORY" \
+            --json isDraft,isPrerelease,tagName)"
+          [[ "$(jq -r .tagName <<<"$release_json")" == "$RELEASE_TAG" ]] || {
+            echo 'release lookup/tag mismatch' >&2
+            exit 1
+          }
+          [[ "$(jq -r .isDraft <<<"$release_json")" == false ]] || {
+            echo 'Draft Release cannot be deployed' >&2
+            exit 1
+          }
+          [[ "$(jq -r .isPrerelease <<<"$release_json")" == false ]] || {
+            echo 'prerelease is not eligible for production' >&2
+            exit 1
+          }
+
+          tag_ref="$(gh api "repos/$REPOSITORY/git/ref/tags/$RELEASE_TAG")"
+          tag_object_sha="$(jq -r .object.sha <<<"$tag_ref")"
+          tag_type="$(jq -r .object.type <<<"$tag_ref")"
+          [[ "$tag_type" == tag ]] || {
+            echo 'production requires an annotated Release provenance tag' >&2
+            exit 1
+          }
+
+          tag_object="$(gh api "repos/$REPOSITORY/git/tags/$tag_object_sha")"
+          [[ "$(jq -r .object.type <<<"$tag_object")" == commit ]] || {
+            echo 'Release tag must point to a commit' >&2
+            exit 1
+          }
+          tag_sha="$(jq -r .object.sha <<<"$tag_object")"
+          [[ "$tag_sha" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'release tag does not resolve to a full Git SHA' >&2
+            exit 1
+          }
+          {
+            echo "tag_sha=$tag_sha"
+            echo "tag_object_sha=$tag_object_sha"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout exact release source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.published.outputs.tag_sha }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install release verification tooling
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Download immutable Published Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/deploy
+          gh release download "$RELEASE_TAG" \
+            --repo "$REPOSITORY" \
+            --pattern release-manifest.json \
+            --pattern digital-biome-pages.tar.gz \
+            --dir reports/deploy
+          test -s reports/deploy/release-manifest.json
+          test -s reports/deploy/digital-biome-pages.tar.gz
+
+      - id: identity
+        name: Validate Release manifest and immutable artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REQUESTED_TAG: ${{ inputs.release_tag }}
+          TAG_SHA: ${{ steps.published.outputs.tag_sha }}
+          TAG_OBJECT_SHA: ${{ steps.published.outputs.tag_object_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=reports/deploy/release-manifest.json
+          artifact=reports/deploy/digital-biome-pages.tar.gz
+
+          pnpm exec tsx scripts/delivery/manifest.ts validate --file "$manifest"
+          pnpm exec tsx scripts/delivery/release-contract.ts --require-release
+
+          revision="$(jq -r .gitSha "$manifest")"
+          release_tag="$(jq -r .tag "$manifest")"
+          release_digest="$(jq -r .digest "$manifest")"
+          vault_sha="$(jq -r .vaultSha "$manifest")"
+          asset_index_sha256="$(jq -r .assetIndexSha256 "$manifest")"
+
+          [[ "$release_tag" == "$REQUESTED_TAG" ]] || { echo 'release manifest tag mismatch' >&2; exit 1; }
+          [[ "$revision" == "$TAG_SHA" ]] || { echo 'release manifest/tag SHA mismatch' >&2; exit 1; }
+
+          expected_artifact="$(jq -r .artifact.sha256 "$manifest")"
+          actual_artifact="sha256:$(sha256sum "$artifact" | cut -d ' ' -f 1)"
+          [[ "$actual_artifact" == "$expected_artifact" ]] || {
+            echo 'Published Release artifact digest mismatch' >&2
+            exit 1
+          }
+
+          expected_tag_message="$(pnpm exec tsx scripts/delivery/manifest.ts provenance \
+            --file "$manifest")"
+          tag_object="$(gh api "repos/$REPOSITORY/git/tags/$TAG_OBJECT_SHA")"
+          actual_tag_message="$(jq -r .message <<<"$tag_object")"
+          [[ "$actual_tag_message" == "$expected_tag_message" ]] || {
+            echo 'annotated Release tag provenance does not match Published Release assets' >&2
+            exit 1
+          }
+
+          {
+            echo "revision=$revision"
+            echo "release_tag=$release_tag"
+            echo "release_digest=$release_digest"
+            echo "vault_sha=$vault_sha"
+            echo "asset_index_sha256=$asset_index_sha256"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verify main ancestry and exact source workflow provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ steps.identity.outputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=reports/deploy/release-manifest.json
+
+          git fetch --quiet origin main --tags
+          git merge-base --is-ancestor "$RELEASE_SHA" origin/main || {
+            echo 'release SHA is not reachable from main' >&2
+            exit 1
+          }
+
+          ci_run_id="$(jq -r .ciRunId "$manifest")"
+          ci_json="$(gh api "repos/$REPOSITORY/actions/runs/$ci_run_id")"
+          [[ "$(jq -r .name <<<"$ci_json")" == CI ]] || { echo 'release source run is not CI' >&2; exit 1; }
+          [[ "$(jq -r .event <<<"$ci_json")" == push ]] || { echo 'release source CI is not push' >&2; exit 1; }
+          [[ "$(jq -r .head_branch <<<"$ci_json")" == main ]] || { echo 'release source CI is not main' >&2; exit 1; }
+          [[ "$(jq -r .head_sha <<<"$ci_json")" == "$RELEASE_SHA" ]] || { echo 'release source CI SHA mismatch' >&2; exit 1; }
+          [[ "$(jq -r .conclusion <<<"$ci_json")" == success ]] || { echo 'release source CI did not succeed' >&2; exit 1; }
+
+          candidate_run_id="$(jq -r .candidateRunId "$manifest")"
+          candidate_json="$(gh api "repos/$REPOSITORY/actions/runs/$candidate_run_id")"
+          [[ "$(jq -r .name <<<"$candidate_json")" == 'Publish Main Candidate' ]] || {
+            echo 'release candidate run is not Publish Main Candidate' >&2
+            exit 1
+          }
+          [[ "$(jq -r .conclusion <<<"$candidate_json")" == success ]] || {
+            echo 'release candidate workflow did not succeed' >&2
+            exit 1
+          }
+
+          # Candidate artifacts are retained for 90 days, but Published Releases must
+          # remain deployable after that window. Long-lived integrity is anchored by
+          # the annotated Release tag, which binds the complete Release manifest digest.
+
+  deploy:
+    name: Promote selected Release to Cloudflare production
+    needs: verify-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    steps:
+      - name: Create short-lived Vault token
+        id: vault-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            digital-biome
+            thought-forest
+          permission-contents: read
+
+      - name: Checkout exact Release source and pinned Vault
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.vault-token.outputs.token }}
+          ref: ${{ needs.verify-release.outputs.revision }}
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install deployment and private-payload tooling
+        run: |
+          pnpm install --frozen-lockfile
+          npm --prefix thought-forest ci --ignore-scripts
+
+      - name: Download selected immutable Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.verify-release.outputs.release_tag }}
+        run: |
+          mkdir -p reports/deploy
+          gh release download "$RELEASE_TAG" \
+            --repo "$REPOSITORY" \
+            --pattern release-manifest.json \
+            --pattern digital-biome-pages.tar.gz \
+            --dir reports/deploy
+
+      - name: Revalidate pinned Vault and private source indexes
+        env:
+          EXPECTED_VAULT_SHA: ${{ needs.verify-release.outputs.vault_sha }}
+          EXPECTED_ASSET_INDEX_SHA256: ${{ needs.verify-release.outputs.asset_index_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=reports/deploy/release-manifest.json
+          pnpm exec tsx scripts/delivery/manifest.ts validate --file "$manifest"
+
+          actual_vault_sha="$(git -C thought-forest rev-parse HEAD)"
+          [[ "$actual_vault_sha" == "$EXPECTED_VAULT_SHA" ]] || {
+            echo 'pinned Vault SHA does not match Release manifest' >&2
+            exit 1
+          }
+
+          pnpm build:upstream-indexes
+          actual_asset_index="sha256:$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
+          [[ "$actual_asset_index" == "$EXPECTED_ASSET_INDEX_SHA256" ]] || {
+            echo 'Vault asset index hash does not match Release manifest' >&2
+            exit 1
+          }
+
+          # These steps regenerate only private deployment inputs and validate contracts.
+          # They do not rebuild the immutable public Pages artifact selected for production.
+          pnpm sync:content
+          pnpm test:infrastructure
+
+      - name: Validate production observability credentials
+        shell: bash
+        env:
+          AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
+          AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$AI_USAGE_HUB_URL"
+          test -n "$AI_USAGE_HUB_READ_KEY"
+
+      - name: Generate and update encrypted Pages bindings
+        shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
+          AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
+        run: |
+          set -euo pipefail
+          payload_file="${RUNNER_TEMP}/private-infrastructure.json"
+          pnpm export:private -- --out "$payload_file"
+          pnpm exec wrangler pages secret put PRIVATE_INFRASTRUCTURE_JSON \
+            --project-name digital-biome < "$payload_file"
+          printf '%s' "$AI_USAGE_HUB_URL" | pnpm exec wrangler pages secret put AI_USAGE_HUB_URL \
+            --project-name digital-biome
+          printf '%s' "$AI_USAGE_HUB_READ_KEY" | pnpm exec wrangler pages secret put AI_USAGE_HUB_READ_KEY \
+            --project-name digital-biome
+
+      - name: Verify and unpack immutable Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=reports/deploy/release-manifest.json
+          artifact=reports/deploy/digital-biome-pages.tar.gz
+
+          expected="$(jq -r .artifact.sha256 "$manifest")"
+          actual="sha256:$(sha256sum "$artifact" | cut -d ' ' -f 1)"
+          [[ "$actual" == "$expected" ]]
+
+          if tar -tzf "$artifact" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
+            echo 'release archive contains unsafe path entries' >&2
+            exit 1
+          fi
+
+          mkdir release-package
+          tar -xzf "$artifact" -C release-package
+          test -s release-package/dist/_worker.js
+          test -s release-package/dist/_routes.json
+
+      - name: Deploy selected immutable artifact
+        id: deploy
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          wranglerVersion: 4.111.0
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          workingDirectory: release-package
+          command: >-
+            pages deploy dist
+            --project-name digital-biome
+            --branch main
+            --commit-hash ${{ needs.verify-release.outputs.revision }}
+            --commit-dirty=false
+            --no-bundle
+
+      - name: Record Cloudflare deployment identity
+        shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          deployments_file="${RUNNER_TEMP}/pages-deployments.json"
+          pnpm wrangler pages deployment list \
+            --project-name digital-biome \
+            --environment production \
+            --json > "$deployments_file"
+
+          deployment_id="$(jq -r --arg url "$DEPLOYMENT_URL" \
+            '[.[] | select(.Deployment == $url)][0].Id // empty' "$deployments_file")"
+          test -n "$deployment_id"
+
+          jq \
+            --arg deployment_id "$deployment_id" \
+            --arg deployment_url "$DEPLOYMENT_URL" \
+            '. + {deployment:{id:$deployment_id,url:$deployment_url}}' \
+            reports/deploy/release-manifest.json > deployment-result.json
+
+      - name: Upload production deployment record
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-pages-production-${{ needs.verify-release.outputs.revision }}
+          path: deployment-result.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Smoke test public site and telemetry contracts
+        shell: bash
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://digital-biome.pages.dev' }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            "$PRODUCTION_URL/" > /dev/null
+
+          ai_usage_file="$(mktemp)"
+          servers_file="$(mktemp)"
+          headers="$(mktemp)"
+          trap 'rm -f "$ai_usage_file" "$servers_file" "$headers"' EXIT
+
+          wait_for_contract() {
+            local url="$1"
+            local output_file="$2"
+            local contract="$3"
+            local label="$4"
+
+            for attempt in $(seq 1 12); do
+              if curl --fail --silent --show-error --location --retry 2 --retry-all-errors \
+                  "$url" > "$output_file" &&
+                jq -e "$contract" "$output_file" > /dev/null; then
+                return 0
+              fi
+
+              if [ "$attempt" -eq 12 ]; then
+                echo "$label contract did not propagate after $attempt attempts" >&2
+                jq . "$output_file" >&2 || true
+                return 1
+              fi
+              sleep 5
+            done
+          }
+
+          wait_for_contract \
+            "$PRODUCTION_URL/api/ai-usage" \
+            "$ai_usage_file" \
+            '(.totalTokens7d | type == "number") and
+             (.estimatedCost7d | type == "number") and
+             (.tools | type == "array") and
+             (.byMachine.local.tokens7d | type == "number") and
+             (.byMachine.local.costUsd7d | type == "number") and
+             (.byMachine.hermes.tokens7d | type == "number") and
+             (.byMachine.hermes.costUsd7d | type == "number") and
+             (.periods["1d"].machines.local.agents | type == "array") and
+             (.periods["7d"].machines.hermes.models | type == "array") and
+             (.periods["30d"].totalTokens | type == "number") and
+             (.periods.all.totalTokens | type == "number") and
+             (.periods.all.totalCostUsd | type == "number") and
+             (.periods.all.machines.local.agents | type == "array") and
+             (.periods.all.machines.hermes.models | type == "array") and
+             (.periods.all.coverage.startDate | type == "string") and
+             (.periods.all.coverage.endDate | type == "string") and
+             (.periods.all.coverage.activeDays | type == "number")' \
+            'AI usage API'
+
+          wait_for_contract \
+            "$PRODUCTION_URL/api/servers" \
+            "$servers_file" \
+            '(.total | type == "number") and
+             (.online | type == "number") and
+             (.servers | type == "array" and length > 0) and
+             (all(.servers[]; .online | type == "boolean"))' \
+            'Servers API'
+
+          status="$(curl --silent --dump-header "$headers" --output /dev/null \
+            --write-out '%{http_code}' \
+            "$PRODUCTION_URL/api/private/infrastructure")"
+          case "$status" in
+            401|403) ;;
+            302)
+              grep --ignore-case --quiet '^www-authenticate: cloudflare-access' "$headers"
+              grep --ignore-case --quiet \
+                '^location: https://[^/]*\.cloudflareaccess\.com/cdn-cgi/access/login/' \
+                "$headers"
+              ;;
+            *)
+              echo "Protected API returned unexpected HTTP $status" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Record production promotion
+        env:
+          RELEASE_TAG: ${{ needs.verify-release.outputs.release_tag }}
+          RELEASE_SHA: ${{ needs.verify-release.outputs.revision }}
+          RELEASE_DIGEST: ${{ needs.verify-release.outputs.release_digest }}
+        run: |
+          {
+            echo '### Production Release selected'
+            echo
+            echo "- Release: $RELEASE_TAG"
+            echo "- Revision: $RELEASE_SHA"
+            echo "- Release manifest: $RELEASE_DIGEST"
+            echo '- Deployable application artifact was promoted without rebuild.'
+          } >> "$GITHUB_STEP_SUMMARY"

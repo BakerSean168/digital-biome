@@ -1,0 +1,340 @@
+name: Release Publish
+
+on:
+  workflow_run:
+    workflows: ['Publish Main Candidate']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: Successful Publish Main Candidate run ID to resume or retry
+        required: true
+        type: string
+
+concurrency:
+  group: release-publish-${{ github.event.workflow_run.id || inputs.candidate_run_id || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+
+jobs:
+  resolve:
+    name: Resolve exact release candidate
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.contract.outputs.eligible }}
+      revision: ${{ steps.contract.outputs.sha }}
+      version: ${{ steps.contract.outputs.version }}
+      tag: ${{ steps.contract.outputs.tag }}
+      candidate_run_id: ${{ steps.run.outputs.candidate_run_id }}
+    steps:
+      - id: run
+        name: Resolve and verify candidate workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          REQUESTED_RUN_ID: ${{ inputs.candidate_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id="${EVENT_RUN_ID:-${REQUESTED_RUN_ID:-}}"
+          [[ "$run_id" =~ ^[0-9]+$ ]] || { echo 'candidate workflow run ID must be numeric' >&2; exit 1; }
+
+          run_json="$(gh api "repos/$REPOSITORY/actions/runs/$run_id")"
+          [[ "$(jq -r .name <<<"$run_json")" == 'Publish Main Candidate' ]] || {
+            echo 'selected run is not Publish Main Candidate' >&2
+            exit 1
+          }
+          [[ "$(jq -r .conclusion <<<"$run_json")" == success ]] || {
+            echo 'selected candidate workflow did not succeed' >&2
+            exit 1
+          }
+
+          artifacts_json="$(gh api "repos/$REPOSITORY/actions/runs/$run_id/artifacts?per_page=100")"
+          candidate_count="$(jq \
+            '[.artifacts[] | select(.expired == false) | select(.name | startswith("candidate-")) | .name] | unique | length' \
+            <<<"$artifacts_json")"
+          [[ "$candidate_count" -eq 1 ]] || {
+            echo "candidate run must contain exactly one unexpired candidate-* artifact" >&2
+            exit 1
+          }
+
+          candidate_artifact_name="$(jq -r \
+            '[.artifacts[] | select(.expired == false) | select(.name | startswith("candidate-")) | .name] | unique | .[0]' \
+            <<<"$artifacts_json")"
+          candidate_revision="${candidate_artifact_name#candidate-}"
+          [[ "$candidate_revision" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "candidate artifact name does not encode a full Git SHA" >&2
+            exit 1
+          }
+
+          {
+            echo "candidate_run_id=$run_id"
+            echo "candidate_artifact_name=$candidate_artifact_name"
+            echo "candidate_revision=$candidate_revision"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download exact Candidate identity
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.run.outputs.candidate_artifact_name }}
+          path: reports/release/source
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.run.outputs.candidate_run_id }}
+
+      - id: candidate
+        name: Resolve Candidate SHA from its manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate=reports/release/source/reports/candidate/candidate-manifest.json
+          test -s "$candidate"
+          revision="$(jq -r .gitSha "$candidate")"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'candidate manifest has invalid Git SHA' >&2
+            exit 1
+          }
+          [[ "$revision" == "${{ steps.run.outputs.candidate_revision }}" ]] || {
+            echo 'candidate manifest SHA does not match artifact identity' >&2
+            exit 1
+          }
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout exact Candidate source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.candidate.outputs.revision }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install release tooling
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Verify Candidate identity and source CI provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CANDIDATE_SHA: ${{ steps.candidate.outputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate=reports/release/source/reports/candidate/candidate-manifest.json
+          artifact=reports/release/source/digital-biome-pages.tar.gz
+
+          pnpm exec tsx scripts/delivery/manifest.ts validate --file "$candidate"
+          [[ "$(jq -r .gitSha "$candidate")" == "$CANDIDATE_SHA" ]] || {
+            echo 'candidate manifest/source SHA mismatch' >&2
+            exit 1
+          }
+
+          expected_artifact="$(jq -r .artifact.sha256 "$candidate")"
+          actual_artifact="sha256:$(sha256sum "$artifact" | cut -d ' ' -f 1)"
+          [[ "$actual_artifact" == "$expected_artifact" ]] || {
+            echo 'candidate artifact digest mismatch' >&2
+            exit 1
+          }
+
+          ci_run_id="$(jq -r .ciRunId "$candidate")"
+          ci_json="$(gh api "repos/$REPOSITORY/actions/runs/$ci_run_id")"
+          [[ "$(jq -r .name <<<"$ci_json")" == CI ]] || { echo 'candidate source run is not CI' >&2; exit 1; }
+          [[ "$(jq -r .event <<<"$ci_json")" == push ]] || { echo 'candidate source CI is not push' >&2; exit 1; }
+          [[ "$(jq -r .head_branch <<<"$ci_json")" == main ]] || { echo 'candidate source CI is not main' >&2; exit 1; }
+          [[ "$(jq -r .head_sha <<<"$ci_json")" == "$CANDIDATE_SHA" ]] || {
+            echo 'candidate source CI SHA mismatch' >&2
+            exit 1
+          }
+          [[ "$(jq -r .conclusion <<<"$ci_json")" == success ]] || {
+            echo 'candidate source CI did not succeed' >&2
+            exit 1
+          }
+
+          git fetch --quiet origin main
+          git merge-base --is-ancestor "$CANDIDATE_SHA" origin/main || {
+            echo 'candidate revision is no longer reachable from main' >&2
+            exit 1
+          }
+
+      - id: contract
+        name: Detect exact Release PR merge contract
+        run: pnpm exec tsx scripts/delivery/release-contract.ts --github-output
+
+      - name: No-op summary for normal main Candidate
+        if: steps.contract.outputs.eligible != 'true'
+        run: echo 'Candidate is not a release-preparation merge; Release Publish is a safe no-op.' >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish immutable GitHub Release
+    needs: resolve
+    if: needs.resolve.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact Release source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.resolve.outputs.revision }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install release tooling
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Download exact Candidate artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-${{ needs.resolve.outputs.revision }}
+          path: reports/release/source
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ needs.resolve.outputs.candidate_run_id }}
+
+      - name: Build Release metadata without rebuilding application artifact
+        env:
+          RELEASE_VERSION: ${{ needs.resolve.outputs.version }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+          CANDIDATE_RUN_ID: ${{ needs.resolve.outputs.candidate_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate=reports/release/source/reports/candidate/candidate-manifest.json
+          mkdir -p reports/release/publish
+
+          pnpm exec tsx scripts/delivery/release-contract.ts --require-release --write-notes reports/release/publish/release-notes.md
+          pnpm exec tsx scripts/delivery/manifest.ts release --candidate "$candidate" --version "$RELEASE_VERSION" --tag "$RELEASE_TAG" --candidate-run-id "$CANDIDATE_RUN_ID" --output reports/release/publish/release-manifest.json
+
+          cp "$candidate" reports/release/publish/candidate-manifest.json
+          cp reports/release/source/digital-biome-pages.tar.gz reports/release/publish/digital-biome-pages.tar.gz
+
+      - id: release
+        name: Create or resume immutable Draft Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+          RELEASE_SHA: ${{ needs.resolve.outputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_manifest=reports/release/publish/release-manifest.json
+          expected_tag_message="$(pnpm exec tsx scripts/delivery/manifest.ts provenance \
+            --file "$release_manifest")"
+
+          if tag_ref="$(gh api "repos/$REPOSITORY/git/ref/tags/$RELEASE_TAG" 2>/dev/null)"; then
+            tag_object_sha="$(jq -r .object.sha <<<"$tag_ref")"
+            tag_type="$(jq -r .object.type <<<"$tag_ref")"
+            [[ "$tag_type" == tag ]] || {
+              echo "$RELEASE_TAG exists but is not an annotated provenance tag" >&2
+              exit 1
+            }
+
+            tag_object="$(gh api "repos/$REPOSITORY/git/tags/$tag_object_sha")"
+            tag_sha="$(jq -r .object.sha <<<"$tag_object")"
+            tag_message="$(jq -r .message <<<"$tag_object")"
+            [[ "$tag_sha" == "$RELEASE_SHA" ]] || {
+              echo "$RELEASE_TAG already points to $tag_sha, expected $RELEASE_SHA" >&2
+              exit 1
+            }
+            [[ "$tag_message" == "$expected_tag_message" ]] || {
+              echo "$RELEASE_TAG provenance message does not match this Release identity" >&2
+              exit 1
+            }
+          else
+            tag_object="$(gh api --method POST "repos/$REPOSITORY/git/tags" \
+              -f tag="$RELEASE_TAG" \
+              -f message="$expected_tag_message" \
+              -f object="$RELEASE_SHA" \
+              -f type=commit)"
+            tag_object_sha="$(jq -r .sha <<<"$tag_object")"
+            [[ "$tag_object_sha" =~ ^[0-9a-f]{40}$ ]]
+            gh api --method POST "repos/$REPOSITORY/git/refs" \
+              -f ref="refs/tags/$RELEASE_TAG" \
+              -f sha="$tag_object_sha" > /dev/null
+          fi
+
+          if gh release view "$RELEASE_TAG" --repo "$REPOSITORY" > /dev/null 2>&1; then
+            is_draft="$(gh release view "$RELEASE_TAG" --repo "$REPOSITORY" --json isDraft --jq .isDraft)"
+            if [[ "$is_draft" != true ]]; then
+              tmp="$(mktemp -d)"
+              trap 'rm -rf "$tmp"' EXIT
+              gh release download "$RELEASE_TAG" --repo "$REPOSITORY" --pattern release-manifest.json --pattern digital-biome-pages.tar.gz --dir "$tmp"
+
+              pnpm exec tsx scripts/delivery/manifest.ts validate --file "$tmp/release-manifest.json"
+              expected_release_digest="$(jq -r .digest reports/release/publish/release-manifest.json)"
+              existing_release_digest="$(jq -r .digest "$tmp/release-manifest.json")"
+              [[ "$existing_release_digest" == "$expected_release_digest" ]] || {
+                echo 'published Release manifest identity does not match this Candidate' >&2
+                exit 1
+              }
+
+              expected_artifact="$(jq -r .artifact.sha256 reports/release/publish/release-manifest.json)"
+              existing_artifact="sha256:$(sha256sum "$tmp/digital-biome-pages.tar.gz" | cut -d ' ' -f 1)"
+              [[ "$existing_artifact" == "$expected_artifact" ]] || {
+                echo 'published Release artifact does not match Release manifest' >&2
+                exit 1
+              }
+
+              echo 'already_published=true' >> "$GITHUB_OUTPUT"
+              echo "$RELEASE_TAG is already published with the same immutable identity." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          else
+            gh release create "$RELEASE_TAG" --repo "$REPOSITORY" --verify-tag --draft --title "$RELEASE_TAG" --notes-file reports/release/publish/release-notes.md
+          fi
+
+          echo 'already_published=false' >> "$GITHUB_OUTPUT"
+
+      - name: Upload immutable Release assets
+        if: steps.release.outputs.already_published != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          gh release upload "$RELEASE_TAG" --repo "$REPOSITORY" --clobber reports/release/publish/release-manifest.json reports/release/publish/candidate-manifest.json reports/release/publish/digital-biome-pages.tar.gz
+
+      - name: Publish Release
+        if: steps.release.outputs.already_published != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+        run: gh release edit "$RELEASE_TAG" --repo "$REPOSITORY" --draft=false
+
+      - name: Record Release identity
+        env:
+          RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
+          RELEASE_SHA: ${{ needs.resolve.outputs.revision }}
+        run: |
+          {
+            echo '### Immutable Release published'
+            echo
+            echo "- Release: $RELEASE_TAG"
+            echo "- Revision: $RELEASE_SHA"
+            echo '- Application artifact: promoted from Publish Main Candidate without rebuild'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -28,32 +28,32 @@ sequenceDiagram
 
 ## 2. Pages 项目配置
 
-| 项 | 值 |
-|---|---|
-| Project | `digital-biome` |
-| Production branch | `main` |
-| Output directory | `dist` |
-| Node | 24.x (`.node-version`) |
-| Wrangler config | `wrangler.jsonc` |
-| Functions routes | `/api/private/*` |
-| Automatic production deployments | Disabled |
-| Automatic preview deployments | None |
+| 项                               | 值                                              |
+| -------------------------------- | ----------------------------------------------- |
+| Project                          | `digital-biome`                                 |
+| Production branch                | `main`                                          |
+| Output directory                 | `dist`                                          |
+| Node                             | 24.x (`.node-version`)                          |
+| Wrangler config                  | `wrangler.jsonc`                                |
+| Functions routes                 | `/api/*` plus `/notes/obsidian/*` source routes |
+| Automatic production deployments | Disabled                                        |
+| Automatic preview deployments    | None                                            |
 
 `wrangler.jsonc` 是 Pages 运行配置的版本控制入口，但 Access Policy、Secrets 和 GitHub App 权限仍位于外部控制面。
 
 ## 3. Functions 路由
 
-`public/_routes.json`：
+`public/_routes.json` 当前覆盖公开 API 路由：
 
 ```json
 {
   "version": 1,
-  "include": ["/api/private/*"],
+  "include": ["/api/*"],
   "exclude": []
 }
 ```
 
-该文件必须进入最终 `dist/`。Functions 目录位于仓库根目录，不能移入 `dist/`。
+开发源码仍位于仓库根目录 `functions/`。Candidate 阶段通过 `wrangler pages functions build` 将它编译为 `dist/_worker.js` 并生成最终 `dist/_routes.json`；Release 与 Production 只携带/上传这个已构建结果，不在部署时重新编译 Functions。
 
 ## 4. Cloudflare Access Application
 
@@ -77,11 +77,11 @@ Path: /api/private/*
 
 仅保留：
 
-| Secret | 用途 |
-|---|---|
-| `CF_ACCESS_TEAM_DOMAIN` | JWKS issuer 与证书地址，例如团队 `cloudflareaccess.com` 域 |
-| `CF_ACCESS_AUD` | 绑定当前 Access Application |
-| `PRIVATE_INFRASTRUCTURE_JSON` | 版本化真实 values/links |
+| Secret                        | 用途                                                       |
+| ----------------------------- | ---------------------------------------------------------- |
+| `CF_ACCESS_TEAM_DOMAIN`       | JWKS issuer 与证书地址，例如团队 `cloudflareaccess.com` 域 |
+| `CF_ACCESS_AUD`               | 绑定当前 Access Application                                |
+| `PRIVATE_INFRASTRUCTURE_JSON` | 版本化真实 values/links                                    |
 
 这些值必须是 encrypted secrets，不能是 plaintext build variables 或 `PUBLIC_*`。
 
@@ -135,58 +135,60 @@ Cloudflare Access 是外层策略，`edge/access.ts` 是源站校验。中间件
 - exporter 与公开索引共用 `edge/private-refs.ts`；
 - API 响应使用 `Cache-Control: private, no-store`。
 
-## 8. 构建与部署
+## 8. 构建、Release 与部署
 
-生产发布入口是 `.github/workflows/deploy-cloudflare-pages.yml`。`main` 更新后先在无 Cloudflare 凭据的 build job 中完成：
+完整 contract 见 [Digital-Biome Delivery Lifecycle](delivery-lifecycle.md)。当前不再使用 `main push -> production`：
 
-1. 用短期 GitHub App token 检出主仓库与锁定的私有 Vault；
-2. 从该 Vault SHA 生成 knowledge index；
-3. 执行 Astro、Pages Functions、edge 和基础设施契约检查；
-4. 生成 Pagefind 并执行泄漏扫描；
-5. 保存 `dist/`、主仓库 SHA、Vault SHA 和资产索引 hash。
+```text
+PR -> CI -> main -> exact-SHA CI -> Candidate -> optional staging
 
-随后 `production` Environment 阻断 deploy job。批准后才会读取 Cloudflare Secrets，重新生成同一 Vault SHA 的私密 payload、核对资产索引 hash、更新 `PRIVATE_INFRASTRUCTURE_JSON`、上传已审查的 `dist/` 与 Functions，并执行未登录冒烟测试。
+manual Prepare Release -> Release PR -> CI -> merge -> Candidate
+  -> Published GitHub Release
+
+manual Deploy Production(vX.Y.Z)
+  -> verify Published Release
+  -> production Environment gate
+  -> promote immutable artifact
+```
+
+主要 workflow：
+
+- `.github/workflows/check.yml`：PR/main CI；
+- `.github/workflows/candidate-publish.yml`：从 successful exact-SHA main CI 构建 Candidate；
+- `.github/workflows/release-please.yml`：手动创建/更新 Release PR；
+- `.github/workflows/release-publish.yml`：仅对真正 Release commit 发布 immutable GitHub Release；
+- `.github/workflows/deploy-production.yml`：手动选择 Published `vX.Y.Z` 后部署 Production。
+
+Candidate 阶段完成 Astro/Pagefind 构建和 Pages Functions 编译，并生成带 SHA-256 的 `digital-biome-pages.tar.gz`。Release 只提升该 artifact；Production 使用 `--no-bundle` 上传同一 artifact，因此不会重建应用。
+
+Production 仍会从 Release SHA 检出锁定的私有 Vault，用于重新生成私有 payload、验证 asset-index hash 和更新 encrypted Pages bindings；这些属于部署配置，不改变已经发布的 public application artifact。
 
 首次启用前必须配置：
 
-| 位置 | 名称 | 最小用途 |
-|---|---|---|
-| Repository variable | `VAULT_APP_CLIENT_ID` | 创建短期 GitHub App token |
-| Repository secret | `VAULT_APP_PRIVATE_KEY` | GitHub App 私钥 |
-| Production secret | `CLOUDFLARE_ACCOUNT_ID` | 目标 Cloudflare 账户 |
-| Production secret | `CLOUDFLARE_API_TOKEN` | 仅目标账户 Cloudflare Pages Edit |
-| Production variable | `PRODUCTION_URL` | 部署后的自定义域冒烟测试 |
+| 位置                | 名称                     | 最小用途                              |
+| ------------------- | ------------------------ | ------------------------------------- |
+| Repository variable | `VAULT_APP_CLIENT_ID`    | 创建短期 GitHub App token             |
+| Repository secret   | `VAULT_APP_PRIVATE_KEY`  | GitHub App 私钥                       |
+| Repository variable | `STAGING_DEPLOY_ENABLED` | 是否启用 Candidate -> staging preview |
+| Staging secret      | `CLOUDFLARE_ACCOUNT_ID`  | staging preview 的 Cloudflare 账户    |
+| Staging secret      | `CLOUDFLARE_API_TOKEN`   | staging preview 的 Pages Edit 权限    |
+| Production secret   | `CLOUDFLARE_ACCOUNT_ID`  | 目标 Cloudflare 账户                  |
+| Production secret   | `CLOUDFLARE_API_TOKEN`   | 仅目标账户 Cloudflare Pages Edit      |
+| Production variable | `PRODUCTION_URL`         | 部署后的自定义域冒烟测试              |
 
-GitHub App 只安装到 `digital-biome` 与 `thought-forest`，且只授予 Contents Read。子模块更新分支和 PR 使用当前仓库内置的 `GITHUB_TOKEN`（Contents Write、Pull requests Write），不把 Vault 写权限交给 App；仓库还需允许 GitHub Actions 创建 PR。`production` Environment 应限制为 `main`，并在当前 GitHub 套餐支持时启用 required reviewer 与禁止 self-review。
+GitHub App 只安装到 `digital-biome` 与 `thought-forest`，且只授予 Contents Read。Release Prepare 使用仓库 `GITHUB_TOKEN`，并显式 dispatch Release PR head 的 CI，不要求新增长期 PAT。`production` Environment 应保留审批保护；`staging` Environment 在 Cloudflare 凭据配置完成前保持禁用。
 
-本地命令保留用于开发验证和紧急人工恢复：
-
-```bash
-pnpm sync
-pnpm check
-pnpm check:edge
-pnpm test:edge
-pnpm build:only
-pnpm exec wrangler pages deploy dist --project-name digital-biome --branch main
-```
-
-或使用整合命令：
-
-```bash
-pnpm deploy:cloudflare
-```
-
-Cloudflare 官方允许在 Git 集成项目中关闭自动构建，然后继续使用 Wrangler 创建直接部署。当前项目采用 GitHub Actions + Wrangler Direct Upload，以保持私有子模块不公开且消除日常发布对个人电脑的依赖。
+Cloudflare Git 自动 Production/Preview deployments 继续关闭；日常交付由 GitHub Actions + Wrangler Direct Upload 完成，以保持私有子模块不公开并让所有 promotion 具备可审计 provenance。
 
 ## 9. 验收矩阵
 
-| 场景 | 自定义域 | `pages.dev` 直连 | 页面结果 |
-|---|---|---|---|
-| 未登录 | Access 登录/拒绝 | Functions `401` | 保持遮罩 |
-| 不允许身份 | Access 拒绝 | Functions `401` | 保持遮罩 |
-| 允许身份 | Access 通过 + JWT 有效 | 取决于是否有有效 assertion | 字段和链接解锁 |
-| Secret 配置错误 | Access 通过 | Functions `500` | 保持遮罩 |
-| payload key 缺失 | API 可成功 | API 可成功 | 对应字段仍锁定 |
+| 场景             | 自定义域               | `pages.dev` 直连           | 页面结果       |
+| ---------------- | ---------------------- | -------------------------- | -------------- |
+| 未登录           | Access 登录/拒绝       | Functions `401`            | 保持遮罩       |
+| 不允许身份       | Access 拒绝            | Functions `401`            | 保持遮罩       |
+| 允许身份         | Access 通过 + JWT 有效 | 取决于是否有有效 assertion | 字段和链接解锁 |
+| Secret 配置错误  | Access 通过            | Functions `500`            | 保持遮罩       |
+| payload key 缺失 | API 可成功             | API 可成功                 | 对应字段仍锁定 |
 
 生产验收必须同时覆盖外层 Access 和内层 Functions，不能只测试其中一个。
 

@@ -1,0 +1,292 @@
+name: Publish Main Candidate
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: Successful main CI run ID to resume or republish
+        required: true
+        type: string
+
+concurrency:
+  group: candidate-publish-${{ github.event.workflow_run.id || inputs.ci_run_id || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  resolve:
+    name: Resolve successful exact-SHA main CI
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.ci.outputs.revision }}
+      ci_run_id: ${{ steps.ci.outputs.ci_run_id }}
+    steps:
+      - id: ci
+        name: Verify source CI provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          REQUESTED_RUN_ID: ${{ inputs.ci_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id="${EVENT_RUN_ID:-${REQUESTED_RUN_ID:-}}"
+          [[ "$run_id" =~ ^[0-9]+$ ]] || { echo 'CI run ID must be numeric' >&2; exit 1; }
+
+          run_json="$(gh api "repos/$REPOSITORY/actions/runs/$run_id")"
+          [[ "$(jq -r .name <<<"$run_json")" == CI ]] || { echo 'selected run is not CI' >&2; exit 1; }
+          [[ "$(jq -r .event <<<"$run_json")" == push ]] || { echo 'selected CI run is not a push run' >&2; exit 1; }
+          [[ "$(jq -r .head_branch <<<"$run_json")" == main ]] || { echo 'selected CI run is not on main' >&2; exit 1; }
+          [[ "$(jq -r .conclusion <<<"$run_json")" == success ]] || { echo 'selected CI run did not succeed' >&2; exit 1; }
+
+          revision="$(jq -r .head_sha <<<"$run_json")"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo 'CI run has invalid head SHA' >&2; exit 1; }
+          {
+            echo "revision=$revision"
+            echo "ci_run_id=$run_id"
+          } >> "$GITHUB_OUTPUT"
+
+  build-candidate:
+    name: Build immutable Pages candidate
+    needs: resolve
+    runs-on: ubuntu-latest
+    outputs:
+      candidate_digest: ${{ steps.identity.outputs.candidate_digest }}
+    steps:
+      - name: Create short-lived Vault token
+        id: vault-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            digital-biome
+            thought-forest
+          permission-contents: read
+
+      - name: Checkout exact application and Vault revisions
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.vault-token.outputs.token }}
+          ref: ${{ needs.resolve.outputs.revision }}
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          npm --prefix thought-forest ci --ignore-scripts
+
+      - name: Build exact-SHA public artifact
+        run: |
+          set -euo pipefail
+          pnpm sync
+          pnpm build:only
+
+      - name: Compile Pages Functions into the deployable artifact
+        run: |
+          set -euo pipefail
+          pnpm exec wrangler pages functions build functions \
+            --outfile dist/_worker.js \
+            --output-routes-path dist/_routes.json \
+            --build-output-directory dist
+
+      - id: identity
+        name: Record immutable candidate identity
+        env:
+          REVISION: ${{ needs.resolve.outputs.revision }}
+          CI_RUN_ID: ${{ needs.resolve.outputs.ci_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/candidate
+          artifact=digital-biome-pages.tar.gz
+          tar -czf "$artifact" dist
+
+          vault_sha="$(git -C thought-forest rev-parse HEAD)"
+          asset_hash="$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
+          artifact_hash="$(sha256sum "$artifact" | cut -d ' ' -f 1)"
+          artifact_bytes="$(stat -c '%s' "$artifact")"
+
+          jq -n \
+            --arg gitSha "$REVISION" \
+            --arg ciRunId "$CI_RUN_ID" \
+            --arg vaultSha "$vault_sha" \
+            --arg assetIndexSha256 "sha256:$asset_hash" \
+            --arg file "$artifact" \
+            --arg artifactSha256 "sha256:$artifact_hash" \
+            --argjson bytes "$artifact_bytes" \
+            '{
+              gitSha:$gitSha,
+              ciRunId:$ciRunId,
+              vaultSha:$vaultSha,
+              assetIndexSha256:$assetIndexSha256,
+              artifact:{file:$file,sha256:$artifactSha256,bytes:$bytes}
+            }' > reports/candidate/input.json
+
+          pnpm exec tsx scripts/delivery/manifest.ts candidate \
+            --input reports/candidate/input.json \
+            --output reports/candidate/candidate-manifest.json
+          candidate_digest="$(jq -r .digest reports/candidate/candidate-manifest.json)"
+          echo "candidate_digest=$candidate_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Upload immutable candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-${{ needs.resolve.outputs.revision }}
+          path: |
+            digital-biome-pages.tar.gz
+            reports/candidate/candidate-manifest.json
+          if-no-files-found: error
+          retention-days: 90
+
+  deploy-staging:
+    name: Promote latest candidate to Cloudflare staging
+    needs: [resolve, build-candidate]
+    if: vars.STAGING_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout exact candidate tooling
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.resolve.outputs.revision }}
+          persist-credentials: false
+
+      - name: Check main freshness before staging preparation
+        id: freshness
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_main="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          [[ "$current_main" =~ ^[0-9a-f]{40}$ ]]
+          if [[ "$current_main" == "${{ needs.resolve.outputs.revision }}" ]]; then
+            echo 'eligible=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'eligible=false' >> "$GITHUB_OUTPUT"
+            echo "Candidate remains valid, but main advanced to $current_main; staging promotion skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Setup pnpm
+        if: steps.freshness.outputs.eligible == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.freshness.outputs.eligible == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install deployment tooling
+        if: steps.freshness.outputs.eligible == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Download immutable candidate
+        if: steps.freshness.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-${{ needs.resolve.outputs.revision }}
+
+      - name: Verify and unpack candidate
+        if: steps.freshness.outputs.eligible == 'true'
+        env:
+          EXPECTED_SHA: ${{ needs.resolve.outputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsx scripts/delivery/manifest.ts validate \
+            --file reports/candidate/candidate-manifest.json
+          [[ "$(jq -r .gitSha reports/candidate/candidate-manifest.json)" == "$EXPECTED_SHA" ]]
+          expected="$(jq -r .artifact.sha256 reports/candidate/candidate-manifest.json)"
+          actual="sha256:$(sha256sum digital-biome-pages.tar.gz | cut -d ' ' -f 1)"
+          [[ "$actual" == "$expected" ]]
+
+          mkdir release-package
+          tar -xzf digital-biome-pages.tar.gz -C release-package
+          test -s release-package/dist/_worker.js
+          test -s release-package/dist/_routes.json
+
+      - name: Recheck main HEAD immediately before staging mutation
+        if: steps.freshness.outputs.eligible == 'true'
+        id: mutation-freshness
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_main="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | awk '{print $1}')"
+          [[ "$current_main" =~ ^[0-9a-f]{40}$ ]]
+          if [[ "$current_main" == "${{ needs.resolve.outputs.revision }}" ]]; then
+            echo 'eligible=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'eligible=false' >> "$GITHUB_OUTPUT"
+            echo "Main advanced to $current_main after staging preparation; mutation skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Deploy verified candidate as preview branch
+        if: steps.mutation-freshness.outputs.eligible == 'true'
+        id: deploy
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          wranglerVersion: 4.111.0
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          workingDirectory: release-package
+          command: >-
+            pages deploy dist
+            --project-name digital-biome
+            --branch staging
+            --commit-hash ${{ needs.resolve.outputs.revision }}
+            --commit-dirty=false
+            --no-bundle
+
+      - name: Smoke test staging deployment
+        if: steps.mutation-freshness.outputs.eligible == 'true'
+        env:
+          STAGING_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            "$STAGING_URL/" > /dev/null
+
+      - name: Record staging promotion
+        if: steps.mutation-freshness.outputs.eligible == 'true'
+        env:
+          STAGING_URL: ${{ steps.deploy.outputs.deployment-url }}
+          REVISION: ${{ needs.resolve.outputs.revision }}
+          CANDIDATE_DIGEST: ${{ needs.build-candidate.outputs.candidate_digest }}
+        run: |
+          {
+            echo '### Staging candidate promoted'
+            echo
+            echo "- Revision: $REVISION"
+            echo "- Candidate: $CANDIDATE_DIGEST"
+            echo "- URL: $STAGING_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
