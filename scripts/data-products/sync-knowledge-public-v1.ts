@@ -11,7 +11,7 @@ function resolveArtifactPath(): string {
   const configured = positional || process.env.KNOWLEDGE_PUBLIC_V1_ARTIFACT?.trim();
   if (!configured) {
     throw new Error(
-      'usage: tsx scripts/data-products/sync-knowledge-public-v1.ts <knowledge-public-v1.json> [--dry-run]',
+      'usage: tsx scripts/data-products/sync-knowledge-public-v1.ts <knowledge-public-v1.json> [--dry-run] [--with-favicons]',
     );
   }
   return path.resolve(configured);
@@ -20,6 +20,7 @@ function resolveArtifactPath(): string {
 async function main(): Promise<void> {
   const artifactPath = resolveArtifactPath();
   const dryRun = process.argv.includes('--dry-run');
+  const withFavicons = process.argv.includes('--with-favicons');
   const projection = parseKnowledgePublicV1(fs.readFileSync(artifactPath, 'utf8'));
 
   const configuredSourceRoot = process.env.KNOWLEDGE_PUBLIC_V1_SOURCE_ROOT?.trim();
@@ -38,7 +39,7 @@ async function main(): Promise<void> {
 
   try {
     const { runSync } = await import('../sync/index');
-    const errorCount = await runSync({ dryRun });
+    const errorCount = await runSync({ dryRun, withFavicons });
     if (!dryRun) {
       const { generateSubscriptionsJson } = await import('../sync/build-subscriptions');
       generateSubscriptionsJson();

@@ -37,7 +37,7 @@ flowchart LR
     F --> G[Cloudflare Pages]
 ```
 
-CI and Candidate builds pin Thought Forest through `data-products/knowledge-public-v1.lock.json`, which identifies an immutable producer Release by exact source revision and SHA-256. The build downloads and validates that producer-owned public projection before materializing it into the existing sync pipeline. The private `thought-forest` gitlink is retained only for local authoring compatibility and release-pinned private deployment payloads during the remaining migration.
+CI and Candidate builds pin Thought Forest through `data-products/knowledge-public-v1.lock.json`, which identifies an immutable producer Release by exact source revision and SHA-256. The build downloads and validates that producer-owned public projection before materializing it into the existing sync pipeline. Digital Biome no longer embeds Thought Forest as a gitlink; production checks out the exact private producer revision ephemerally only while regenerating protected deployment inputs.
 
 ## Project showcase model
 
@@ -66,12 +66,13 @@ This keeps deployed services, source repositories, and portfolio presentation se
 
 - Node.js 22+
 - pnpm 10+
-- Git (submodule support is only required for direct local/private Vault workflows)
+- Git
+- GitHub CLI (`gh`) authenticated for the private producer, or `GH_TOKEN`
 
 ### Local development
 
 ```bash
-git clone --recurse-submodules https://github.com/BakerSean168/digital-biome.git
+git clone https://github.com/BakerSean168/digital-biome.git
 cd digital-biome
 pnpm install
 cp .env.example .env
@@ -104,7 +105,6 @@ src/
 functions/              Cloudflare Pages Functions
 scripts/                sync, data-product, deployment and validation tooling
 data-products/           immutable producer projection locks
-thought-forest/         private Vault compatibility/private-deployment gitlink
 docs/                   architecture and operations documentation
 ```
 

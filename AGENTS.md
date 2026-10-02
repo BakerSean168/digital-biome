@@ -30,7 +30,6 @@ src/
 functions/               # Cloudflare Pages Functions
 scripts/                 # Sync, data-product, validation, and build tooling
 data-products/           # Immutable producer projection locks
-thought-forest/          # Private Vault compatibility/private-deployment gitlink
 ```
 
 ## Commands & Development Specifications
@@ -38,7 +37,7 @@ thought-forest/          # Private Vault compatibility/private-deployment gitlin
 - **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步。
 - **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm check` 进行 Astro、内容和 TypeScript 诊断。
 - **可复用验证门禁**：`pnpm verify` 运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
-- **提交前运行完整门禁**：CI/Candidate 路径先用 `scripts/data-products/prepare-knowledge-public-v1.sh` 验证并物化 committed lock，再运行 `pnpm verify:full`；直接编辑 Vault 的本地兼容路径仍可先执行 `pnpm sync`。仅需构建已物化内容时使用 `pnpm build:only`。
+- **提交前运行完整门禁**：CI/Candidate 路径先用 `scripts/data-products/prepare-knowledge-public-v1.sh` 验证并物化 committed lock，再运行 `pnpm verify:full`；`pnpm sync` 现在同样从 committed lock 拉取并验证 public projection；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
 
 ## Context Workflow
 
@@ -95,46 +94,28 @@ thought-forest/          # Private Vault compatibility/private-deployment gitlin
 - `pnpm verify` / `pnpm verify:full` 覆盖诊断、测试、生产构建、泄漏扫描和性能预算
 
 <!-- MANUAL ADDITIONS START -->
-## 笔记仓库配置
+## 笔记数据源配置
 
-在 `notes.config.ts` 中配置笔记仓库路径：
+`notes.config.ts` 默认读取 `.pds-runtime/knowledge-public-v1/source`。该目录由
+`scripts/data-products/prepare-knowledge-public-v1.sh` 根据 committed lock 验证并物化；
+不要把 producer source layout 重新编码成仓库内路径。
 
-```ts
-export const notesConfig = {
-  vault: {
-    notesPath: 'thought-forest/z',
-    assetNotesPath: 'thought-forest/assets',
-    configPath: 'thought-forest/config',
-    mediaPath: ['thought-forest/sources/attachments', 'thought-forest/attachments/images'],
-    include: ['**/*.md'],
-    exclude: ['**/.git/**', '**/node_modules/**', '**/.obsidian/**', '**/.trash/**'],
-  },
-  output: {
-    notes: 'src/data/obsidian',
-    assets: 'public/vault-assets',
-  },
-  upstream: {
-    generatedPath: 'thought-forest/generated',
-  },
-};
+日常同步：
+
+```bash
+pnpm sync
 ```
 
-### 本地直接使用私有 Vault 的兼容步骤
+如果 `GH_TOKEN` 未设置，脚本会尝试复用 `gh auth token`。CI 使用短期只读 GitHub App token。
 
-CI / Candidate 不读取该 gitlink，而是消费 `data-products/knowledge-public-v1.lock.json`。只有本地直接编辑/同步私有 Vault 或生成 production 私有 payload 时需要以下步骤。
+本地确需直接联调私有 Thought Forest 时，使用外部 checkout，并显式选择：
 
-1. 确保 Obsidian vault submodule 已初始化：
-   ```bash
-   git submodule update --init
-   ```
+```bash
+NOTES_VAULT_ROOT=/path/to/thought-forest \
+NOTES_UPSTREAM_GENERATED=/path/to/thought-forest/generated \
+pnpm sync:content
+```
 
-2. 运行同步脚本：
-   ```bash
-   pnpm sync
-   ```
-
-3. 启动开发服务器：
-   ```bash
-   pnpm dev
-   ```
+Production 不依赖仓库 gitlink；它按 Release manifest 的 source revision 临时检出私有
+Thought Forest，只用于重建受保护 deployment payload，然后部署既有 immutable Pages artifact。
 <!-- MANUAL ADDITIONS END -->

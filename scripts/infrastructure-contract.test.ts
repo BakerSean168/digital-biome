@@ -169,14 +169,17 @@ test('private payload exporter preserves stable refs and explicit SSH IP rules',
   });
 });
 
-test('private Vault source still satisfies operational endpoint and SSH contracts when present', (t) => {
-  const generatedRoot = path.resolve(process.cwd(), 'thought-forest/generated');
-  if (!fs.existsSync(generatedRoot)) {
-    t.skip(
-      'private Thought Forest source is intentionally absent from this public-projection build',
-    );
+test('private Vault source still satisfies operational endpoint and SSH contracts when selected', (t) => {
+  const privateRoot = process.env.PDS_PRIVATE_VAULT_ROOT?.trim();
+  if (!privateRoot) {
+    t.skip('private Thought Forest source is not selected in this public-projection build');
     return;
   }
+  const generatedRoot = path.resolve(process.cwd(), privateRoot, 'generated');
+  assert.ok(
+    fs.existsSync(generatedRoot),
+    `selected private producer generated root is missing: ${generatedRoot}`,
+  );
 
   const assets = loadAssetIndex(generatedRoot);
   const serialized = JSON.stringify(assets);

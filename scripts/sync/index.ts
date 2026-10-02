@@ -2,7 +2,7 @@
  * Sync pipeline orchestrator.
  *
  * Coordinates the full sync process:
- *   1. Check submodule status
+ *   1. Resolve selected source layout
  *   2. Copy media assets
  *   3. Collect expected files
  *   4. Clean stale files
@@ -14,7 +14,6 @@ import path from 'node:path';
 import { notesConfig } from '../../notes.config';
 import { buildSourceLayout } from './config';
 import {
-  warnIfVaultSubmoduleOutOfSync,
   collectExpectedFiles,
   syncFiles,
   validateSourceFiles,
@@ -55,8 +54,6 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   console.log('');
 
   const stats = createStats();
-
-  warnIfVaultSubmoduleOutOfSync(layout.vaultRoot, stats);
 
   // Collect expected files for stale detection
   const expectedFiles = collectExpectedFiles(layout);

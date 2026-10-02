@@ -63,7 +63,7 @@ export function projectSubscriptionFrontmatter(
 }
 
 export function generateSubscriptionsJson(): void {
-  const assetNotesPath = notesConfig.vault.assetNotesPath || 'thought-forest/assets';
+  const assetNotesPath = notesConfig.vault.assetNotesPath;
   const targetPath = path.resolve(process.cwd(), 'src/data/subscriptions.json');
 
   const preserveExistingSnapshot = (reason: string): void => {

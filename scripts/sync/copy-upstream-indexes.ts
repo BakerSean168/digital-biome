@@ -1,6 +1,6 @@
 /**
  * Upstream index copier — replaces locally-generated link-graph.json and
- * tag-index.json with the upstream versions from thought-forest/generated/.
+ * tag-index.json with the upstream versions from <selected-source>/generated/.
  *
  * Why replace rather than merge?
  *
@@ -62,7 +62,7 @@ interface UpstreamLinkGraphItem {
  * interface expected by `knowledge-index-loader.ts`.
  *
  * @param knowledgeIndexDir - Absolute path to the upstream knowledge-index directory
- *                            (e.g. `/home/thought-forest/generated/knowledge-index`)
+ *                            (e.g. `/home/<selected-source>/generated/knowledge-index`)
  * @param indexDir          - Absolute path to the local src/data/indexes directory
  */
 export function copyUpstreamLinkGraph(knowledgeIndexDir: string, indexDir: string): void {

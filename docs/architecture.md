@@ -10,7 +10,7 @@ Digital Biome 是一个由私有 Obsidian 知识库生成的 Astro 静态站点�
 - 可公开发布的知识笔记、索引、标签、双链和展示型资产信息；
 - 只允许授权用户读取的基础设施 IP、SSH 地址和内部入口。
 
-因此，系统不是单纯的静态博客，而是“私有 canonical source + producer-owned 公网投影 + 少量边缘私有 API”的混合架构。公开构建不再直接读取私有 Vault gitlink，而是消费被 source revision 与 SHA-256 锁定的 `knowledge-public-v1`。
+因此，系统不是单纯的静态博客，而是“私有 canonical source + producer-owned 公网投影 + 少量边缘私有 API”的混合架构。Digital Biome 不保存私有 Vault gitlink；公开构建消费被 source revision 与 SHA-256 锁定的 `knowledge-public-v1`，Production 仅按 Release provenance 临时检出精确私有 producer revision。
 
 ## 2. 当前系统上下文
 
@@ -41,12 +41,12 @@ flowchart LR
 
 | 位置                                        | 职责                      | 是否进入公开构建                                     |
 | ------------------------------------------- | ------------------------- | ---------------------------------------------------- |
-| `thought-forest/z/`                         | 普通知识笔记              | 经同步、过滤和脱敏后进入                             |
-| `thought-forest/assets/`                    | 资产笔记及媒体            | 元数据经脱敏后进入；媒体复制到公开目录               |
-| `thought-forest/config/`                    | Dashboard、技能和运维配置 | 可参与构建，但 `obsidian/config/` 不进入公开知识列表 |
-| `thought-forest/generated/knowledge-index/` | 上游完整 YAML 解析结果    | 只在同步阶段读取；私有 URL 会被替换为 `private_ref`  |
+| producer `z/`                              | 普通知识笔记              | 通过 `knowledge-public-v1` 进入公开构建              |
+| producer `assets/`                         | 资产笔记及媒体            | producer 先做公开投影；消费者继续执行二次脱敏        |
+| producer `config/`                         | Dashboard、技能和运维配置 | public projection 仅携带允许公开的子集               |
+| projection `generated/knowledge-index/`    | producer-owned 公开索引   | lock 校验后物化；消费者据此生成站点查询索引           |
 
-Thought Forest 仍是私有 canonical repository，但公开构建边界是 `knowledge-public-v1`。Digital Biome 提交通过 `data-products/knowledge-public-v1.lock.json` 固定 producer repository、source revision、immutable Release tag、artifact SHA-256 与 manifest SHA-256，因此 CI / Candidate 不初始化私有 gitlink也能完成可复现公开构建。仓库中的 `thought-forest` gitlink暂时保留给本地 authoring 兼容与 production 私有 payload。
+Thought Forest 仍是私有 canonical repository，但仓库边界已经收敛到 `knowledge-public-v1`。Digital Biome 提交通过 `data-products/knowledge-public-v1.lock.json` 固定 producer repository、source revision、immutable Release tag、artifact SHA-256 与 manifest SHA-256。CI / Candidate 只消费该 producer-owned projection；Production 从 Release manifest 读取同一 source revision，以短期只读 App token 将私有 Thought Forest 临时检出到 `.pds-runtime/private-thought-forest/`，只生成受保护 payload，不把 source layout 纳入 Digital Biome repository lifecycle。
 
 ### 3.2 同步与投影层
 
@@ -169,11 +169,11 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 ### 6.2 已缓解：GitHub Actions 私有子模块凭据
 
-相关工作流创建一小时内有效、Contents Read 的 GitHub App installation token，并限定 `digital-biome` 与 `thought-forest`。CI / Candidate 用它读取 producer Release assets，不再 clone 私有 submodule；Production 才用同一只读权限检出 release-pinned private source。同步 PR 使用当前仓库内置的 `GITHUB_TOKEN` 写 Digital Biome，不向 App 或 Vault 授予写权限。
+相关工作流创建一小时内有效、Contents Read 的 GitHub App installation token，并限定 `digital-biome` 与 `thought-forest`。CI / Candidate 用它读取 producer Release assets；Production 才用同一只读权限临时检出 release-pinned private source。同步 PR 使用当前仓库内置的 `GITHUB_TOKEN` 写 Digital Biome，不向 App 或 Vault 授予写权限；若仓库策略要求批准 bot-authored PR CI，同步 workflow 只对自己生成的固定 automation branch 执行 Actions approval 并等待受保护 CI。
 
 ### 6.3 已缓解：构建输入漂移
 
-`notes.config.ts` 不搜索仓库外的 `generated/`。CI / Candidate 通过 committed lock + producer Release digest 固定公开输入；Production 对 v2 Release 重新验证相同 producer projection，并要求 private gitlink 与该 source revision 一致。仅 legacy v1 rollback 继续使用 private asset-index SHA-256。
+`notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`；Production 对 v2 Release 重新验证相同 producer projection，并要求临时 private checkout 的 Git SHA 与该 source revision 一致。仅 legacy v1 rollback 在历史 Release source 中继续使用旧 gitlink + private asset-index SHA-256 路径。
 
 ### 6.4 P1：同一 frontmatter 存在两套解析器
 

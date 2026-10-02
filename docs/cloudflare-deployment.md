@@ -178,7 +178,7 @@ Production 会重新验证 Release manifest 绑定的 `knowledge-public-v1` prod
 
 GitHub App 只安装到 `digital-biome` 与 `thought-forest`，且只授予 Contents Read。Release Prepare 使用仓库 `GITHUB_TOKEN`，并显式 dispatch Release PR head 的 CI，不要求新增长期 PAT。`production` Environment 应保留审批保护；`staging` Environment 在 Cloudflare 凭据配置完成前保持禁用。
 
-Cloudflare Git 自动 Production/Preview deployments 继续关闭；日常交付由 GitHub Actions + Wrangler Direct Upload 完成。公开 Candidate 只消费 producer-owned projection，私有 gitlink仅在 production/private-payload 路径读取，因此不需要把 Vault 暴露给公开构建系统，同时所有 promotion 都保留可审计 provenance。
+Cloudflare Git 自动 Production/Preview deployments 继续关闭；日常交付由 GitHub Actions + Wrangler Direct Upload 完成。公开 Candidate 只消费 producer-owned projection；Production 仅用短期只读 App token 临时检出 Release 记录的精确 private producer revision，因此不需要把 Vault 纳入 Digital Biome 仓库或公开构建系统，同时所有 promotion 都保留可审计 provenance。
 
 ## 9. 验收矩阵
 

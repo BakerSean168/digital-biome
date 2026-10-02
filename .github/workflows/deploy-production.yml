@@ -260,13 +260,24 @@ jobs:
             thought-forest
           permission-contents: read
 
-      - name: Checkout exact Release source and pinned Vault
+      - name: Checkout exact Release source
         uses: actions/checkout@v6
         with:
           token: ${{ steps.vault-token.outputs.token }}
           ref: ${{ needs.verify-release.outputs.revision }}
           fetch-depth: 0
-          submodules: recursive
+          submodules: ${{ needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v1' && 'recursive' || 'false' }}
+          persist-credentials: false
+
+      - name: Checkout exact private Thought Forest revision
+        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v2'
+        uses: actions/checkout@v6
+        with:
+          repository: BakerSean168/thought-forest
+          token: ${{ steps.vault-token.outputs.token }}
+          ref: ${{ needs.verify-release.outputs.knowledge_source_revision }}
+          path: .pds-runtime/private-thought-forest
+          fetch-depth: 1
           persist-credentials: false
 
       - name: Setup pnpm
@@ -278,10 +289,16 @@ jobs:
           node-version: '24'
           cache: pnpm
 
-      - name: Install deployment and private-payload tooling
-        run: |
-          pnpm install --frozen-lockfile
-          npm --prefix thought-forest ci --ignore-scripts
+      - name: Install deployment tooling
+        run: pnpm install --frozen-lockfile
+
+      - name: Install v2 private producer index tooling
+        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v2'
+        run: npm --prefix .pds-runtime/private-thought-forest ci --ignore-scripts
+
+      - name: Install legacy v1 Vault index tooling
+        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v1'
+        run: npm --prefix thought-forest ci --ignore-scripts
 
       - name: Download selected immutable Release assets
         env:
@@ -312,11 +329,10 @@ jobs:
           manifest=reports/deploy/release-manifest.json
           pnpm exec tsx scripts/delivery/manifest.ts validate --file "$manifest"
 
-          actual_vault_sha="$(git -C thought-forest rev-parse HEAD)"
-
           case "$MANIFEST_SCHEMA" in
             digital-biome.release/v2)
               lock=data-products/knowledge-public-v1.lock.json
+              private_root=.pds-runtime/private-thought-forest
               [[ "$(jq -r .sourceRevision "$lock")" == "$KNOWLEDGE_SOURCE_REVISION" ]]
               [[ "$(jq -r .releaseTag "$lock")" == "$KNOWLEDGE_RELEASE_TAG" ]]
               [[ "$(jq -r .artifact.sha256 "$lock")" == "$KNOWLEDGE_ARTIFACT_SHA256" ]]
@@ -325,13 +341,29 @@ jobs:
               scripts/data-products/fetch-knowledge-public-v1.sh \
                 .pds-runtime/knowledge-public-v1 "$lock"
 
-              [[ "$actual_vault_sha" == "$KNOWLEDGE_SOURCE_REVISION" ]] || {
-                echo 'private Vault revision does not match the Release knowledge source revision' >&2
+              actual_private_sha="$(git -C "$private_root" rev-parse HEAD)"
+              [[ "$actual_private_sha" == "$KNOWLEDGE_SOURCE_REVISION" ]] || {
+                echo 'ephemeral private producer revision does not match the Release knowledge source revision' >&2
                 exit 1
               }
-              pnpm build:upstream-indexes
+
+              npm --prefix "$private_root" run kb:index
+              {
+                echo "NOTES_VAULT_ROOT=$private_root"
+                echo "NOTES_UPSTREAM_GENERATED=$private_root/generated"
+                echo "PDS_PRIVATE_VAULT_ROOT=$private_root"
+              } >> "$GITHUB_ENV"
+              NOTES_VAULT_ROOT="$private_root" \
+                NOTES_UPSTREAM_GENERATED="$private_root/generated" \
+                PDS_PRIVATE_VAULT_ROOT="$private_root" \
+                pnpm sync:content
+              NOTES_VAULT_ROOT="$private_root" \
+                NOTES_UPSTREAM_GENERATED="$private_root/generated" \
+                PDS_PRIVATE_VAULT_ROOT="$private_root" \
+                pnpm test:infrastructure
               ;;
             digital-biome.release/v1)
+              actual_vault_sha="$(git -C thought-forest rev-parse HEAD)"
               [[ "$actual_vault_sha" == "$LEGACY_VAULT_SHA" ]] || {
                 echo 'pinned Vault SHA does not match legacy Release manifest' >&2
                 exit 1
@@ -342,6 +374,8 @@ jobs:
                 echo 'Vault asset index hash does not match legacy Release manifest' >&2
                 exit 1
               }
+              pnpm sync:content
+              pnpm test:infrastructure
               ;;
             *)
               echo "unsupported Release manifest schema: $MANIFEST_SCHEMA" >&2
@@ -349,10 +383,8 @@ jobs:
               ;;
           esac
 
-          # These steps regenerate only private deployment inputs and validate contracts.
-          # They do not rebuild the immutable public Pages artifact selected for production.
-          pnpm sync:content
-          pnpm test:infrastructure
+          # Private source work above regenerates only deployment inputs and validates
+          # contracts. It never rebuilds the immutable public Pages artifact.
 
       - name: Validate production observability credentials
         shell: bash

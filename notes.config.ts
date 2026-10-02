@@ -1,11 +1,11 @@
 /**
  * 笔记仓库配置文件
  *
- * 默认读取仓库内的 `thought-forest` 子模块，保证本地与 CI/CD 数据源一致。
- * 如需临时指向外部 vault，可显式设置 `NOTES_VAULT_ROOT` 环境变量。
+ * 默认读取由 committed `knowledge-public-v1` lock 验证并物化的只读 source。
+ * 本地确需直接读取私有 Thought Forest 时，显式设置 `NOTES_VAULT_ROOT`。
  */
 
-const DEFAULT_VAULT_ROOT = 'thought-forest';
+const DEFAULT_VAULT_ROOT = '.pds-runtime/knowledge-public-v1/source';
 const vaultRoot = process.env.NOTES_VAULT_ROOT?.trim() || DEFAULT_VAULT_ROOT;
 
 function vaultPath(...segments: string[]): string {
@@ -51,7 +51,7 @@ export const notesConfig = {
       vaultPath('attachments/images'),
     ],
 
-    /** 博客文章目录 (thought-forest/blogs) */
+    /** 博客文章目录 (<selected-source>/blogs) */
     blogsPath: vaultPath('blogs'),
 
     /** 要包含的文件模式 */
@@ -75,8 +75,9 @@ export const notesConfig = {
   },
 
   /**
-   * Upstream thought-forest generated/ directory config.
-   * Contains pre-built knowledge-index JSON files produced by `npm run kb:index`.
+   * Selected producer source generated/ directory config.
+   * Contains pre-built knowledge-index JSON files from the verified public projection
+   * or, for production-private workflows, an explicitly selected Thought Forest checkout.
    *
    * generatedPath is resolved automatically (see resolveUpstreamGeneratedPath above).
    * Override with NOTES_UPSTREAM_GENERATED env var if needed.

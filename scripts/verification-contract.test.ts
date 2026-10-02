@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
@@ -46,19 +46,27 @@ test('main integration builds from the immutable knowledge projection instead of
   assert.doesNotMatch(candidateWorkflow, /environment:\n {6}name: production/);
 });
 
-test('producer publication updates an immutable consumer lock through a reviewable PR', () => {
+test('producer publication updates only the immutable consumer lock through a protected PR', () => {
   assert.match(knowledgeSyncWorkflow, /knowledge-public-v1-published/);
   assert.match(knowledgeSyncWorkflow, /automation\/knowledge-public-v1-sync/);
+  assert.match(knowledgeSyncWorkflow, /actions: write/);
   assert.match(knowledgeSyncWorkflow, /artifact_sha256/);
   assert.match(knowledgeSyncWorkflow, /manifest_sha256/);
   assert.match(knowledgeSyncWorkflow, /gh release download/);
-  assert.match(knowledgeSyncWorkflow, /data-products\/knowledge-public-v1\.lock\.json/);
-  assert.match(knowledgeSyncWorkflow, /git ls-tree HEAD thought-forest/);
-  assert.match(
-    knowledgeSyncWorkflow,
-    /git add data-products\/knowledge-public-v1\.lock\.json thought-forest/,
-  );
+  assert.match(knowledgeSyncWorkflow, /git add data-products\/knowledge-public-v1\.lock\.json/);
+  assert.doesNotMatch(knowledgeSyncWorkflow, /git ls-tree HEAD thought-forest/);
+  assert.doesNotMatch(knowledgeSyncWorkflow, /git submodule/);
   assert.match(knowledgeSyncWorkflow, /gh pr create/);
+  assert.match(knowledgeSyncWorkflow, /actions\/runs\/\$run_id\/approve/);
+  assert.match(knowledgeSyncWorkflow, /gh run watch "\$run_id"/);
+});
+
+test('Digital Biome no longer carries a Thought Forest gitlink', () => {
+  const gitmodules = fileURLToPath(new URL('../.gitmodules', import.meta.url));
+  assert.equal(existsSync(gitmodules), false);
+  assert.equal('build:upstream-indexes' in packageJson.scripts, false);
+  assert.equal('pull-notes' in packageJson.scripts, false);
+  assert.equal('dev:pull' in packageJson.scripts, false);
 });
 
 test('release publication promotes the exact candidate artifact without rebuilding', () => {
@@ -109,9 +117,9 @@ test('production verifies the immutable knowledge projection before private depl
 
   const projectionFetch = step.indexOf('fetch-knowledge-public-v1.sh');
   const privateRevisionCheck = step.indexOf(
-    'private Vault revision does not match the Release knowledge source revision',
+    'ephemeral private producer revision does not match the Release knowledge source revision',
   );
-  const upstreamBuild = step.indexOf('pnpm build:upstream-indexes');
+  const upstreamBuild = step.indexOf('npm --prefix "$private_root" run kb:index');
   const syncContent = step.indexOf('pnpm sync:content');
   const infrastructureTests = step.indexOf('pnpm test:infrastructure');
 
@@ -135,7 +143,12 @@ test('production verifies the immutable knowledge projection before private depl
     infrastructureTests > syncContent,
     'infrastructure contracts must run after generated indexes exist',
   );
+  assert.match(step, /PDS_PRIVATE_VAULT_ROOT/);
   assert.match(step, /digital-biome\.release\/v1[\s\S]*actual_asset_index/);
+  assert.match(
+    productionWorkflow,
+    /repository: BakerSean168\/thought-forest[\s\S]*path: \.pds-runtime\/private-thought-forest/,
+  );
 });
 
 test('quality gates are part of the canonical verify contract', () => {

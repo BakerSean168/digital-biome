@@ -4,7 +4,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { processContent, detectYamlRisks } from './markdown-transform';
 import { cacheFavicon } from './favicon-cache';
 import { collectFiles } from './fs-utils';
@@ -25,39 +24,6 @@ function hasFrontmatterField(frontmatter: string | null, field: string): boolean
   if (!frontmatter) return false;
   const pattern = new RegExp(`^${field}:\\s*.+$`, 'm');
   return pattern.test(frontmatter);
-}
-
-/**
- * Check if the vault git submodule is out of sync.
- */
-export function warnIfVaultSubmoduleOutOfSync(vaultRoot: string, stats: SyncStats): void {
-  const relativeVaultRoot = path.relative(process.cwd(), vaultRoot);
-  if (!relativeVaultRoot || relativeVaultRoot.startsWith('..')) return;
-
-  try {
-    const status = execSync(`git submodule status -- "${relativeVaultRoot}"`, {
-      cwd: process.cwd(),
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'ignore'],
-    }).trim();
-
-    const prefix = status[0];
-    if (prefix === '+') {
-      stats.warnings.push(
-        `Submodule ${relativeVaultRoot} is ahead of the commit recorded in the main repo. Commit the submodule pointer before deploying, or CI may build stale notes data.`,
-      );
-    } else if (prefix === '-') {
-      stats.warnings.push(
-        `Submodule ${relativeVaultRoot} is not initialized. Run "git submodule update --init --recursive" before syncing notes.`,
-      );
-    } else if (prefix === 'U') {
-      stats.errors.push(
-        `Submodule ${relativeVaultRoot} has merge conflicts. Resolve them before syncing notes.`,
-      );
-    }
-  } catch {
-    // Ignore when the selected vault root is not a git submodule.
-  }
 }
 
 /**

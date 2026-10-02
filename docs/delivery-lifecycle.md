@@ -42,7 +42,7 @@ The invariants are:
 - Production consumes only a non-draft, non-prerelease GitHub Release that passed exact-SHA main CI.
 - Pages Functions are compiled during Candidate creation. Staging and Production upload the compiled `dist/_worker.js` with `--no-bundle`.
 - Candidate/Release provenance binds the immutable `knowledge-public-v1` producer Release (source revision + artifact/manifest SHA-256) separately from the Pages artifact.
-- Private deployment inputs are regenerated from the private Vault gitlink pinned to the same producer revision, but this does not rebuild the public application artifact.
+- Private deployment inputs are regenerated from an ephemeral private Thought Forest checkout pinned to the same producer revision; the private source is not part of the Digital Biome repository lifecycle and does not rebuild the public application artifact.
 
 ## 1. Integration and Candidate
 
@@ -62,7 +62,7 @@ A successful main `CI` run is resolved through the GitHub Actions API and must s
 
 The candidate workflow then:
 
-1. checks out that exact application SHA without initializing the private Vault gitlink;
+1. checks out that exact application SHA; Digital Biome contains no private Vault gitlink;
 2. reads `data-products/knowledge-public-v1.lock.json`, downloads the exact private-producer GitHub prerelease through a short-lived read-only App token, and verifies source revision plus artifact/manifest SHA-256;
 3. materializes the validated producer projection into `.pds-runtime/knowledge-public-v1/source/` and runs the existing synchronization pipeline;
 4. builds `dist/`;
@@ -130,8 +130,8 @@ Before the production Environment is mutated, the workflow verifies:
 
 Inside the `production` Environment gate it then:
 
-1. checks out the exact release source and its private Vault gitlink;
-2. for v2 Releases, re-fetches and verifies the exact `knowledge-public-v1` Release recorded in the Release manifest and confirms the private Vault gitlink points to the same Thought Forest source revision;
+1. checks out the exact release source; for legacy v1 rollback only, Actions initializes the historical gitlink that still exists in that old source commit;
+2. for v2 Releases, separately checks out private Thought Forest at the exact source revision recorded in the Release manifest, re-fetches the matching `knowledge-public-v1` Release, and verifies both identities agree;
 3. for legacy v1 Releases only, preserves the previous Vault SHA + private asset-index hash verification path;
 4. regenerates only private deployment inputs and encrypted Pages bindings from the exact private source and runs infrastructure contracts;
 5. unpacks the already-built Release artifact;
