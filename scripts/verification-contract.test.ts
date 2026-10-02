@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
@@ -39,6 +39,8 @@ test('main integration builds from the immutable knowledge projection instead of
   assert.match(candidateWorkflow, /Build immutable Pages candidate/);
   assert.match(candidateWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
   assert.match(candidateWorkflow, /knowledgeArtifactSha256/);
+  assert.match(candidateWorkflow, /digital-biome-private-infrastructure-v1\.lock\.json/);
+  assert.match(candidateWorkflow, /privateInfrastructure:/);
   assert.doesNotMatch(candidateWorkflow, /submodules: recursive/);
   assert.match(candidateWorkflow, /pages functions build functions/);
   assert.match(candidateWorkflow, /digital-biome-pages\.tar\.gz/);
@@ -46,19 +48,27 @@ test('main integration builds from the immutable knowledge projection instead of
   assert.doesNotMatch(candidateWorkflow, /environment:\n {6}name: production/);
 });
 
-test('producer publication updates an immutable consumer lock through a reviewable PR', () => {
+test('producer publication updates only the immutable consumer lock through a protected PR', () => {
   assert.match(knowledgeSyncWorkflow, /knowledge-public-v1-published/);
   assert.match(knowledgeSyncWorkflow, /automation\/knowledge-public-v1-sync/);
+  assert.match(knowledgeSyncWorkflow, /actions: write/);
   assert.match(knowledgeSyncWorkflow, /artifact_sha256/);
   assert.match(knowledgeSyncWorkflow, /manifest_sha256/);
   assert.match(knowledgeSyncWorkflow, /gh release download/);
-  assert.match(knowledgeSyncWorkflow, /data-products\/knowledge-public-v1\.lock\.json/);
-  assert.match(knowledgeSyncWorkflow, /git ls-tree HEAD thought-forest/);
-  assert.match(
-    knowledgeSyncWorkflow,
-    /git add data-products\/knowledge-public-v1\.lock\.json thought-forest/,
-  );
+  assert.match(knowledgeSyncWorkflow, /git add data-products\/knowledge-public-v1\.lock\.json/);
+  assert.doesNotMatch(knowledgeSyncWorkflow, /git ls-tree HEAD thought-forest/);
+  assert.doesNotMatch(knowledgeSyncWorkflow, /git submodule/);
   assert.match(knowledgeSyncWorkflow, /gh pr create/);
+  assert.match(knowledgeSyncWorkflow, /actions\/runs\/\$run_id\/approve/);
+  assert.match(knowledgeSyncWorkflow, /gh run watch "\$run_id"/);
+});
+
+test('Digital Biome no longer carries a Thought Forest gitlink', () => {
+  const gitmodules = fileURLToPath(new URL('../.gitmodules', import.meta.url));
+  assert.equal(existsSync(gitmodules), false);
+  assert.equal('build:upstream-indexes' in packageJson.scripts, false);
+  assert.equal('pull-notes' in packageJson.scripts, false);
+  assert.equal('dev:pull' in packageJson.scripts, false);
 });
 
 test('release publication promotes the exact candidate artifact without rebuilding', () => {
@@ -101,41 +111,45 @@ test('production server telemetry does not require a Nezha PAT', () => {
   assert.doesNotMatch(productionWorkflow, /NEZHA_PAT/);
 });
 
-test('production verifies the immutable knowledge projection before private deployment inputs', () => {
+test('production v3 consumes the pinned Personal Infrastructure runtime binding', () => {
   const step = productionWorkflow.match(
     / {6}- name: Revalidate knowledge projection and private deployment source\n[\s\S]*?(?=\n {6}- name: Validate production observability credentials)/,
   )?.[0];
   assert.ok(step, 'knowledge/private source verification step must exist');
 
-  const projectionFetch = step.indexOf('fetch-knowledge-public-v1.sh');
-  const privateRevisionCheck = step.indexOf(
-    'private Vault revision does not match the Release knowledge source revision',
+  assert.match(
+    productionWorkflow,
+    /repository: BakerSean168\/personal-infrastructure[\s\S]*ssh-key: \$\{\{ secrets\.PERSONAL_INFRASTRUCTURE_DEPLOY_KEY \}\}[\s\S]*path: \.pds-runtime\/personal-infrastructure/,
   );
-  const upstreamBuild = step.indexOf('pnpm build:upstream-indexes');
-  const syncContent = step.indexOf('pnpm sync:content');
-  const infrastructureTests = step.indexOf('pnpm test:infrastructure');
+  assert.match(step, /digital-biome\.release\/v3/);
+  assert.match(step, /digital-biome-private-infrastructure-v1\.lock\.json/);
+  assert.match(step, /Personal Infrastructure runtime binding digest mismatch/);
+  assert.match(step, /PDS_PRIVATE_INFRASTRUCTURE_BINDING/);
+  assert.match(step, /private-infrastructure-binding\.test\.ts/);
 
-  assert.ok(
-    projectionFetch >= 0,
-    'deploy must re-fetch and verify the immutable public projection',
-  );
-  assert.ok(
-    privateRevisionCheck > projectionFetch,
-    'private deployment source must be pinned to the same producer revision after projection verification',
-  );
-  assert.ok(
-    upstreamBuild > privateRevisionCheck,
-    'deploy must rebuild the exact private source index',
-  );
-  assert.ok(
-    syncContent > upstreamBuild,
-    'deploy must generate private deployment inputs only after exact-source validation',
-  );
-  assert.ok(
-    infrastructureTests > syncContent,
-    'infrastructure contracts must run after generated indexes exist',
+  const v3Block = step.match(
+    /digital-biome\.release\/v3\)[\s\S]*?(?=\n {12}digital-biome\.release\/v2\))/,
+  )?.[0];
+  assert.ok(v3Block, 'v3 private runtime binding branch must exist');
+  assert.doesNotMatch(v3Block, /kb:index/);
+  assert.doesNotMatch(v3Block, /sync:content/);
+  assert.doesNotMatch(v3Block, /private-thought-forest/);
+
+  assert.match(
+    productionWorkflow,
+    /digital-biome\.release\/v2[\s\S]*repository: BakerSean168\/thought-forest[\s\S]*path: \.pds-runtime\/private-thought-forest/,
   );
   assert.match(step, /digital-biome\.release\/v1[\s\S]*actual_asset_index/);
+
+  const bindingStep = productionWorkflow.match(
+    / {6}- name: Generate and update encrypted Pages bindings\n[\s\S]*?(?=\n {6}- name: Verify and unpack immutable Pages artifact)/,
+  )?.[0];
+  assert.ok(bindingStep, 'encrypted binding step must exist');
+  assert.match(bindingStep, /--contract "\$PDS_PRIVATE_INFRASTRUCTURE_BINDING"/);
+  assert.match(
+    bindingStep,
+    /digital-biome\.release\/v2\|digital-biome\.release\/v1\)[\s\S]*pnpm export:private:legacy/,
+  );
 });
 
 test('quality gates are part of the canonical verify contract', () => {

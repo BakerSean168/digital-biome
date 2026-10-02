@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "product": "digital-biome-private-infrastructure-v1",
+  "producerRepository": "BakerSean168/personal-infrastructure",
+  "sourceRevision": "ded497495223fc66d0c3baa42fb5513225ded2cd",
+  "contractPath": "bindings/digital-biome/private-infrastructure-v1.json",
+  "sha256": "sha256:b126e5e6e238cdfc5d4cf576bf1a2ece38374fde530f76e132da5f5473a16621"
+}

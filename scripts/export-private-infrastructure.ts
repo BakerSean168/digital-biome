@@ -1,136 +1,126 @@
 /**
- * Export PRIVATE_INFRASTRUCTURE_JSON from upstream asset-index.
+ * Render PRIVATE_INFRASTRUCTURE_JSON from the producer-owned Personal Infrastructure runtime binding.
  *
  * Usage:
- *   pnpm export:private
- *   pnpm export:private -- --out .dev.vars.private.json
- *   pnpm export:private -- --print
- *
- * Values are derived from protected asset links. Host IPs are accepted only
- * from an explicit protected SSH link, never from the first arbitrary URL.
+ *   pnpm export:private -- --contract <binding.json>
+ *   pnpm export:private -- --contract <binding.json> --out tmp/private-infrastructure.json
+ *   pnpm export:private -- --contract <binding.json> --print
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { notesConfig } from '../notes.config';
-import { buildPrivateLinkRefs } from '../edge/private-refs';
-import { parsePrivateInfrastructure } from '../edge/private-infrastructure';
+import {
+  parsePrivateInfrastructure,
+  type PrivateInfrastructurePayload,
+} from '../edge/private-infrastructure';
 
-interface UpstreamAssetLink {
-  label: string;
-  url: string;
-  kind?: string;
-  visibility?: 'public' | 'private' | 'internal';
-}
+export const DEFAULT_PRIVATE_INFRASTRUCTURE_BINDING =
+  '.pds-runtime/personal-infrastructure/bindings/digital-biome/private-infrastructure-v1.json';
 
-interface UpstreamAssetItem {
-  assetId: string;
-  assetType?: string;
-  links?: UpstreamAssetLink[];
-}
-
-const IPV4_HOSTNAME =
-  /^(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
-
-const REQUIRED_SHOWCASE_HOSTS = [
-  'host-azure-hk-vps',
-  'host-aliyun-chengdu-dailyuse-vps',
-  'host-azure-japan-singbox-vps',
-  'host-azure-korea-singbox-vps',
-  'host-oracle-osaka-amd-proxy-vps',
-  'host-oracle-osaka-arm-development-vps',
-] as const;
-
-function extractSshHostnameIp(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'ssh:') return null;
-    if (IPV4_HOSTNAME.test(parsed.hostname)) {
-      return parsed.hostname;
-    }
-  } catch {
-    // ignore invalid URLs
+function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`${label} must be an object`);
   }
-  return null;
 }
 
-function loadUpstreamAssets(): UpstreamAssetItem[] {
-  const upstreamPath = path.resolve(
-    process.cwd(),
-    notesConfig.upstream.generatedPath,
-    'knowledge-index',
-    'asset-index.json',
-  );
-  if (!fs.existsSync(upstreamPath)) {
+function assertExactKeys(value: Record<string, unknown>, expected: string[], label: string): void {
+  const actual = Object.keys(value).sort();
+  const wanted = [...expected].sort();
+  if (actual.length !== wanted.length || actual.some((key, index) => key !== wanted[index])) {
     throw new Error(
-      `Upstream asset-index not found at ${upstreamPath}. Run kb:index in thought-forest or set NOTES_UPSTREAM_GENERATED.`,
+      `${label} fields mismatch: expected ${wanted.join(', ')}; got ${actual.join(', ')}`,
     );
   }
-  const parsed: unknown = JSON.parse(fs.readFileSync(upstreamPath, 'utf8'));
-  if (!Array.isArray(parsed)) {
-    throw new Error('Upstream asset-index must be an array.');
-  }
-  return parsed as UpstreamAssetItem[];
 }
 
-export function buildPrivateInfrastructurePayload(assets: UpstreamAssetItem[]) {
-  const values: Record<string, string> = {};
-  const links: Record<string, string> = {};
-  const sshIpsByAsset = new Map<string, Set<string>>();
+export function parsePrivateInfrastructureBinding(raw: string): PrivateInfrastructurePayload {
+  const value: unknown = JSON.parse(raw);
+  assertRecord(value, 'private infrastructure binding');
+  assertExactKeys(
+    value,
+    ['apiVersion', 'kind', 'metadata', 'spec'],
+    'private infrastructure binding',
+  );
 
-  for (const asset of assets) {
-    const assetLinks = asset.links ?? [];
-    for (const { link, privateRef } of buildPrivateLinkRefs(asset.assetId, assetLinks)) {
-      if (!privateRef || !link.url) continue;
-      links[privateRef] = link.url.trim();
-      if (link.kind === 'ssh') {
-        const ip = extractSshHostnameIp(link.url);
-        // Stable SSH hostnames (for example Tailscale MagicDNS) are valid
-        // protected links. Only legacy showcase hosts require an exported
-        // IPv4 compatibility value; that requirement is enforced below.
-        if (ip) {
-          const ips = sshIpsByAsset.get(asset.assetId) ?? new Set<string>();
-          ips.add(ip);
-          sshIpsByAsset.set(asset.assetId, ips);
-        }
-      }
-    }
+  assertRecord(value.metadata, 'private infrastructure binding metadata');
+  assertExactKeys(value.metadata, ['id'], 'private infrastructure binding metadata');
+  assertRecord(value.spec, 'private infrastructure binding spec');
+  assertExactKeys(
+    value.spec,
+    ['producer', 'consumer', 'contract', 'payload'],
+    'private infrastructure binding spec',
+  );
+  assertRecord(value.spec.producer, 'private infrastructure binding producer');
+  assertRecord(value.spec.consumer, 'private infrastructure binding consumer');
+  assertRecord(value.spec.contract, 'private infrastructure binding contract');
+
+  if (
+    value.apiVersion !== 'pds/v1alpha1' ||
+    value.kind !== 'RuntimeBinding' ||
+    value.metadata.id !== 'digital-biome-private-infrastructure-v1' ||
+    value.spec.producer.ref !== 'pds://system/component/personal-infrastructure' ||
+    value.spec.consumer.ref !== 'pds://system/component/digital-biome' ||
+    value.spec.contract.name !== 'digital-biome-private-infrastructure' ||
+    value.spec.contract.version !== 'v1'
+  ) {
+    throw new Error('private infrastructure binding identity mismatch');
   }
 
-  for (const [assetId, ips] of sshIpsByAsset) {
-    if (ips.size !== 1) {
-      throw new Error(`${assetId} must resolve to exactly one IP from protected SSH links.`);
-    }
-    values[`${assetId}.ip`] = [...ips][0];
-  }
-
-  for (const assetId of REQUIRED_SHOWCASE_HOSTS) {
-    if (!values[`${assetId}.ip`]) {
-      throw new Error(`${assetId} must define exactly one protected SSH IPv4 link.`);
-    }
-  }
-
-  return {
-    version: 1 as const,
-    values,
-    links,
-  };
+  return parsePrivateInfrastructure(JSON.stringify(value.spec.payload));
 }
 
 function parseArgs(argv: string[]) {
-  const outIndex = argv.indexOf('--out');
-  const outPath = outIndex >= 0 ? argv[outIndex + 1] : null;
-  const printOnly = argv.includes('--print');
-  const asDevVars = argv.includes('--dev-vars');
-  return { outPath, printOnly, asDevVars };
+  let contractPath =
+    process.env.PDS_PRIVATE_INFRASTRUCTURE_BINDING?.trim() ||
+    DEFAULT_PRIVATE_INFRASTRUCTURE_BINDING;
+  let outPath: string | null = null;
+  let printOnly = false;
+  let asDevVars = false;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (token === '--') continue;
+    if (token === '--contract') {
+      const value = argv[index + 1];
+      if (!value) throw new Error('--contract requires a value');
+      contractPath = value;
+      index += 1;
+      continue;
+    }
+    if (token === '--out') {
+      const value = argv[index + 1];
+      if (!value) throw new Error('--out requires a value');
+      outPath = value;
+      index += 1;
+      continue;
+    }
+    if (token === '--print') {
+      printOnly = true;
+      continue;
+    }
+    if (token === '--dev-vars') {
+      asDevVars = true;
+      continue;
+    }
+    throw new Error(`unknown argument: ${token}`);
+  }
+
+  return { contractPath: path.resolve(contractPath), outPath, printOnly, asDevVars };
+}
+
+function loadBinding(contractPath: string): PrivateInfrastructurePayload {
+  if (!fs.existsSync(contractPath)) {
+    throw new Error(
+      `Private infrastructure binding not found at ${contractPath}. ` +
+        'Materialize the pinned Personal Infrastructure contract or pass --contract.',
+    );
+  }
+  return parsePrivateInfrastructureBinding(fs.readFileSync(contractPath, 'utf8'));
 }
 
 function main() {
-  const { outPath, printOnly, asDevVars } = parseArgs(process.argv.slice(2));
-  const payload = buildPrivateInfrastructurePayload(loadUpstreamAssets());
-  // Validate against runtime parser before writing.
-  parsePrivateInfrastructure(JSON.stringify(payload));
-
+  const { contractPath, outPath, printOnly, asDevVars } = parseArgs(process.argv.slice(2));
+  const payload = loadBinding(contractPath);
   const json = JSON.stringify(payload);
   const pretty = JSON.stringify(payload, null, 2);
 
@@ -141,7 +131,7 @@ function main() {
 
   if (asDevVars) {
     const content = [
-      '# Generated by pnpm export:private -- --dev-vars',
+      '# Generated by pnpm export:private -- --contract <binding> --dev-vars',
       '# Fill CF_ACCESS_* for local Pages Functions emulation with wrangler pages dev.',
       'CF_ACCESS_TEAM_DOMAIN=example.cloudflareaccess.com',
       'CF_ACCESS_AUD=0000000000000000000000000000000000000000000000000000000000000000',
@@ -150,15 +140,21 @@ function main() {
     ].join('\n');
     const target = outPath || '.dev.vars';
     fs.writeFileSync(target, content, 'utf8');
-    console.log(`Wrote ${target} (${Object.keys(payload.values).length} values, ${Object.keys(payload.links).length} links)`);
+    console.log(
+      `Wrote ${target} (${Object.keys(payload.values).length} values, ${Object.keys(payload.links).length} links)`,
+    );
     return;
   }
 
   const target = outPath || path.join('tmp', 'private-infrastructure.json');
   fs.mkdirSync(path.dirname(path.resolve(target)), { recursive: true });
   fs.writeFileSync(target, `${pretty}\n`, 'utf8');
-  console.log(`Wrote ${target} (${Object.keys(payload.values).length} values, ${Object.keys(payload.links).length} links)`);
-  console.log('Set Cloudflare secret PRIVATE_INFRASTRUCTURE_JSON to the minified JSON (or use the file contents).');
+  console.log(
+    `Wrote ${target} (${Object.keys(payload.values).length} values, ${Object.keys(payload.links).length} links)`,
+  );
+  console.log(
+    'Set Cloudflare secret PRIVATE_INFRASTRUCTURE_JSON to the rendered JSON (or use the file contents).',
+  );
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

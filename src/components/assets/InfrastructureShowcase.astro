@@ -10,12 +10,29 @@ interface Props {
   locale?: 'zh' | 'en';
 }
 
-const {
-  title,
-  description,
-  resolvedNodes,
-  locale = 'zh',
-} = Astro.props;
+interface VpsService {
+  name: string;
+  subName: string;
+  description: string;
+  repoUrl: string;
+  liveUrl?: string;
+  privateRef?: string;
+  isPublic: boolean;
+}
+
+interface VpsNode {
+  provider: string;
+  region: string;
+  ip: string;
+  privateRef: string;
+  role: string;
+  specs: string;
+  os: string;
+  network: string;
+  services: VpsService[];
+}
+
+const { title, description, resolvedNodes, locale = 'zh' } = Astro.props;
 
 const currentPath = Astro.url.pathname;
 const requireAssetUrl = (assetName: string, value?: string) => {
@@ -26,162 +43,142 @@ const monitorUrl = requireAssetUrl(
   'svc-nezha-panel',
   resolvedNodes['nezha-panel']?.monitorUrl ?? resolvedNodes['nezha-panel']?.primaryUrl,
 );
-const memoflowUrl = requireAssetUrl('svc-memoflow-dailyuse', resolvedNodes['memoflow-dailyuse']?.primaryUrl);
+const memoflowUrl = requireAssetUrl(
+  'svc-memoflow-dailyuse',
+  resolvedNodes['memoflow-dailyuse']?.primaryUrl,
+);
 const monitorHostname = new URL(monitorUrl).hostname;
 
-const portalLabels = locale === 'en'
-  ? {
-      monitorTitle: 'Real-time Server Monitor',
-      monitorSub: monitorHostname,
-      monitorDesc: 'Tracks global VPS resource metrics, bandwidth, latency, and node health worldwide. Publicly readable.',
-      monitorBtn: '[ VIEW_REALTIME_MONITOR ]',
-      controlTitle: 'Private Control Center',
-      controlSub: 'CF_ACCESS.PROTECTED',
-      controlDesc: 'Protected by Cloudflare Access. Unified dashboard for PVE, RouterOS, storage, and private containers.',
-      controlBtn: '[ AUTHENTICATE_AND_ENTER ]',
-    }
-  : {
-      sectionTitle: '核心网关与监控通道',
-      sectionDesc: '数字基础设施的统一管理入口与运行状态观测点。',
-      monitorTitle: '服务器实时监控',
-      monitorSub: monitorHostname,
-      monitorDesc: '基于哪吒监控探针，提供家庭计算底座、公网云 VPS 及网络节点的实时负载、下行带宽与服务在线率视图。',
-      monitorBtn: '[ 进入监控面板 ]',
-      controlTitle: '私人基础设施控制中心',
-      controlSub: 'CF_ACCESS.PROTECTED',
-      controlDesc: '基于 Cloudflare Access 提供 Google / GitHub 强身份验证，集中调度 PVE 宿主机、RouterOS 网关及容器集群后台。',
-      controlBtn: '[ 认证并进入控制台 ]',
-    };
+const portalLabels =
+  locale === 'en'
+    ? {
+        monitorTitle: 'Real-time Server Monitor',
+        monitorSub: monitorHostname,
+        monitorDesc:
+          'Tracks global VPS resource metrics, bandwidth, latency, and node health worldwide. Publicly readable.',
+        monitorBtn: '[ VIEW_REALTIME_MONITOR ]',
+        controlTitle: 'Private Control Center',
+        controlSub: 'CF_ACCESS.PROTECTED',
+        controlDesc:
+          'Protected by Cloudflare Access. Unified dashboard for PVE, RouterOS, storage, and private containers.',
+        controlBtn: '[ AUTHENTICATE_AND_ENTER ]',
+      }
+    : {
+        sectionTitle: '核心网关与监控通道',
+        sectionDesc: '数字基础设施的统一管理入口与运行状态观测点。',
+        monitorTitle: '服务器实时监控',
+        monitorSub: monitorHostname,
+        monitorDesc:
+          '基于哪吒监控探针，提供家庭计算底座、公网云 VPS 及网络节点的实时负载、下行带宽与服务在线率视图。',
+        monitorBtn: '[ 进入监控面板 ]',
+        controlTitle: '私人基础设施控制中心',
+        controlSub: 'CF_ACCESS.PROTECTED',
+        controlDesc:
+          '基于 Cloudflare Access 提供 Google / GitHub 强身份验证，集中调度 PVE 宿主机、RouterOS 网关及容器集群后台。',
+        controlBtn: '[ 认证并进入控制台 ]',
+      };
 
-const vpsNodes = [
+const vpsNodes: VpsNode[] = [
   {
-    provider: "Azure",
-    region: "Hong Kong (East Asia)",
-    ip: "LOCKED",
-    privateRef: "host-azure-hk-vps.ip",
-    role: "Control Plane / 控制平面",
-    specs: "1 vCPU / 2 GB / 30 GB SSD",
-    os: "Ubuntu 24.04 LTS",
-    network: "100 Mbps / 500 GB",
+    provider: 'Aliyun',
+    region: 'Chengdu (cn-chengdu)',
+    ip: 'LOCKED',
+    privateRef: 'host-aliyun-chengdu-dailyuse-vps.ip',
+    role: 'Workload Node / 业务负载',
+    specs: '2 vCPU / 4 GB / 80 GB SSD',
+    os: 'Debian 12',
+    network: '30 Mbps / Unlimited Traffic',
     services: [
       {
-        name: "Nezha Panel",
-        subName: "Monitor Console",
-        description: "VPS 节点状态与探针观测面板",
-        repoUrl: "https://github.com/naiba/nezha",
-        liveUrl: monitorUrl,
-        isPublic: true
-      },
-      {
-        name: "Sub-Store",
-        subName: "Subscription Admin",
-        description: "订阅管理与分发中心，负责公网运维入口",
-        repoUrl: "https://github.com/sub-store-org/Sub-Store",
-        privateRef: "svc-sub-store.links.admin",
-        isPublic: false
-      }
-    ]
-  },
-  {
-    provider: "Aliyun",
-    region: "Chengdu (cn-chengdu)",
-    ip: "LOCKED",
-    privateRef: "host-aliyun-chengdu-dailyuse-vps.ip",
-    role: "Workload Node / 业务负载",
-    specs: "2 vCPU / 4 GB / 80 GB SSD",
-    os: "Debian 12",
-    network: "30 Mbps / Unlimited Traffic",
-    services: [
-      {
-        name: "DailyUse / Memoflow",
-        subName: "Personal API",
-        description: "个人产品生产业务端服务与数据流桥接",
-        repoUrl: "https://github.com/BakerSean168/daily-use",
+        name: 'DailyUse / Memoflow',
+        subName: 'Personal API',
+        description: '个人产品生产业务端服务与数据流桥接',
+        repoUrl: 'https://github.com/BakerSean168/daily-use',
         liveUrl: memoflowUrl,
-        isPublic: true
-      }
-    ]
+        isPublic: true,
+      },
+    ],
   },
   {
-    provider: "Azure",
-    region: "Tokyo (Japan East)",
-    ip: "LOCKED",
-    privateRef: "host-azure-japan-singbox-vps.ip",
-    role: "Proxy Node / 区域代理",
-    specs: "1 vCPU / 1 GB / 32 GB SSD",
-    os: "Ubuntu 22.04 LTS",
-    network: "100 Mbps / 1 TB Traffic",
+    provider: 'Azure',
+    region: 'Tokyo (Japan East)',
+    ip: 'LOCKED',
+    privateRef: 'host-azure-japan-singbox-vps.ip',
+    role: 'Proxy Node / 区域代理',
+    specs: '1 vCPU / 1 GB / 32 GB SSD',
+    os: 'Ubuntu 22.04 LTS',
+    network: '100 Mbps / 1 TB Traffic',
     services: [
       {
-        name: "sing-box",
-        subName: "Proxy Core",
-        description: "日本区域的出站代理与分流服务",
-        repoUrl: "https://github.com/SagerNet/sing-box",
-        privateRef: "svc-homepage-dashboard.links.app",
-        isPublic: false
-      }
-    ]
+        name: 'sing-box',
+        subName: 'Proxy Core',
+        description: '日本区域的出站代理与分流服务',
+        repoUrl: 'https://github.com/SagerNet/sing-box',
+        privateRef: 'svc-homepage-dashboard.links.app',
+        isPublic: false,
+      },
+    ],
   },
   {
-    provider: "Azure",
-    region: "Seoul (Korea Central)",
-    ip: "LOCKED",
-    privateRef: "host-azure-korea-singbox-vps.ip",
-    role: "Proxy Node / 备用代理",
-    specs: "1 vCPU / 1 GB / 32 GB SSD",
-    os: "Ubuntu 22.04 LTS",
-    network: "100 Mbps / 1 TB Traffic",
+    provider: 'Azure',
+    region: 'Seoul (Korea Central)',
+    ip: 'LOCKED',
+    privateRef: 'host-azure-korea-singbox-vps.ip',
+    role: 'Proxy Node / 备用代理',
+    specs: '1 vCPU / 1 GB / 32 GB SSD',
+    os: 'Ubuntu 22.04 LTS',
+    network: '100 Mbps / 1 TB Traffic',
     services: [
       {
-        name: "sing-box",
-        subName: "Backup Proxy",
-        description: "韩国区域出站代理与链路测试节点",
-        repoUrl: "https://github.com/SagerNet/sing-box",
-        privateRef: "svc-homepage-dashboard.links.app",
-        isPublic: false
-      }
-    ]
+        name: 'sing-box',
+        subName: 'Backup Proxy',
+        description: '韩国区域出站代理与链路测试节点',
+        repoUrl: 'https://github.com/SagerNet/sing-box',
+        privateRef: 'svc-homepage-dashboard.links.app',
+        isPublic: false,
+      },
+    ],
   },
   {
-    provider: "Oracle Cloud",
-    region: "Osaka (Japan West)",
-    ip: "LOCKED",
-    privateRef: "host-oracle-osaka-amd-proxy-vps.ip",
-    role: "Proxy & Edge Node / 边缘代理",
-    specs: "1 vCPU / 1 GB / 45 GB SSD",
-    os: "Ubuntu 22.04 LTS",
-    network: "480 Mbps / Always Free AMD",
+    provider: 'Oracle Cloud',
+    region: 'Osaka (Japan West)',
+    ip: 'LOCKED',
+    privateRef: 'host-oracle-osaka-amd-proxy-vps.ip',
+    role: 'Proxy & Edge Node / 边缘代理',
+    specs: '1 vCPU / 1 GB / 45 GB SSD',
+    os: 'Ubuntu 22.04 LTS',
+    network: '480 Mbps / Always Free AMD',
     services: [
       {
-        name: "sing-box / Egress",
-        subName: "Proxy Edge",
-        description: "大阪区域边缘代理与链路优化节点",
-        repoUrl: "https://github.com/SagerNet/sing-box",
-        privateRef: "svc-homepage-dashboard.links.app",
-        isPublic: false
-      }
-    ]
+        name: 'sing-box / Egress',
+        subName: 'Proxy Edge',
+        description: '大阪区域边缘代理与链路优化节点',
+        repoUrl: 'https://github.com/SagerNet/sing-box',
+        privateRef: 'svc-homepage-dashboard.links.app',
+        isPublic: false,
+      },
+    ],
   },
   {
-    provider: "Oracle Cloud",
-    region: "Osaka (Japan West)",
-    ip: "LOCKED",
-    privateRef: "host-oracle-osaka-arm-development-vps.ip",
-    role: "Development Host / 极客开发",
-    specs: "4 vCPU / 24 GB / 100 GB SSD",
-    os: "Ubuntu 22.04 LTS",
-    network: "1 Gbps / Always Free ARM",
+    provider: 'Oracle Cloud',
+    region: 'Osaka (Japan West)',
+    ip: 'LOCKED',
+    privateRef: 'host-oracle-osaka-arm-development-vps.ip',
+    role: 'Development Host / 极客开发',
+    specs: '4 vCPU / 24 GB / 100 GB SSD',
+    os: 'Ubuntu 22.04 LTS',
+    network: '1 Gbps / Always Free ARM',
     services: [
       {
-        name: "Dev Workspace",
-        subName: "Build Engine",
-        description: "高配 ARM64 远程编译与极客开发节点",
-        repoUrl: "https://github.com/BakerSean168",
-        privateRef: "svc-homepage-dashboard.links.app",
-        isPublic: false
-      }
-    ]
-  }
+        name: 'Dev Workspace',
+        subName: 'Build Engine',
+        description: '高配 ARM64 远程编译与极客开发节点',
+        repoUrl: 'https://github.com/BakerSean168',
+        privateRef: 'svc-homepage-dashboard.links.app',
+        isPublic: false,
+      },
+    ],
+  },
 ];
 ---
 
@@ -193,7 +190,7 @@ const vpsNodes = [
         {locale === 'en' ? 'INFRASTRUCTURE' : '数字基础设施'}
       </span>
     </div>
-    
+
     <div class="flex flex-col md:flex-row gap-8 justify-between">
       <div class="w-full">
         <h1 class="text-3xl md:text-5xl font-mono tracking-tight text-foreground">{title}</h1>
@@ -218,7 +215,9 @@ const vpsNodes = [
           </div>
           <div>
             <h3 class="text-sm font-bold text-foreground font-sans">{portalLabels.monitorTitle}</h3>
-            <p class="text-[10px] font-mono text-muted-foreground tracking-wider">{portalLabels.monitorSub}</p>
+            <p class="text-[10px] font-mono text-muted-foreground tracking-wider">
+              {portalLabels.monitorSub}
+            </p>
           </div>
         </div>
         <p class="text-xs font-mono text-muted-foreground leading-relaxed">
@@ -226,9 +225,17 @@ const vpsNodes = [
         </p>
       </div>
       <div class="mt-6 pt-4 border-t border-border/50">
-        <a href={monitorUrl} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center gap-2 w-full py-2.5 bg-background border border-border hover:border-primary/50 text-xs font-mono tracking-widest text-foreground transition-colors group/btn rounded-lg">
+        <a
+          href={monitorUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center justify-center gap-2 w-full py-2.5 bg-background border border-border hover:border-primary/50 text-xs font-mono tracking-widest text-foreground transition-colors group/btn rounded-lg"
+        >
           <span>{portalLabels.monitorBtn}</span>
-          <ExternalLink size={12} class="text-muted-foreground group-hover/btn:text-primary transition-colors" />
+          <ExternalLink
+            size={12}
+            class="text-muted-foreground group-hover/btn:text-primary transition-colors"
+          />
         </a>
       </div>
     </div>
@@ -245,7 +252,9 @@ const vpsNodes = [
           </div>
           <div>
             <h3 class="text-sm font-bold text-foreground font-sans">{portalLabels.controlTitle}</h3>
-            <p class="text-[10px] font-mono text-muted-foreground tracking-wider">{portalLabels.controlSub}</p>
+            <p class="text-[10px] font-mono text-muted-foreground tracking-wider">
+              {portalLabels.controlSub}
+            </p>
           </div>
         </div>
         <p class="text-xs font-mono text-muted-foreground leading-relaxed">
@@ -262,7 +271,10 @@ const vpsNodes = [
           class="flex items-center justify-center gap-2 w-full py-2.5 bg-background border border-border hover:border-primary/50 text-xs font-mono tracking-widest text-foreground transition-colors group/btn rounded-sm"
         >
           <span data-private-link-label>{portalLabels.controlBtn}</span>
-          <Shield size={12} class="text-muted-foreground group-hover/btn:text-primary transition-colors" />
+          <Shield
+            size={12}
+            class="text-muted-foreground group-hover/btn:text-primary transition-colors"
+          />
         </a>
       </div>
     </div>
@@ -271,16 +283,20 @@ const vpsNodes = [
   <div class="h-px bg-border/50 w-full my-4"></div>
 
   <!-- STACKED SECTIONS LAYOUT (上下段落布局) -->
-  
+
   <!-- 1. Public VPS Showcase Section -->
   <section class="flex flex-col gap-6">
     <div class="border-b border-border/40 pb-3 flex items-center justify-between">
-      <h2 class="text-xl font-bold font-sans text-foreground tracking-tight">公网 VPS 资产 / Public VPS Fleet</h2>
-      <span class="text-[10px] font-mono text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 uppercase tracking-wider rounded-sm">静态配置</span>
+      <h2 class="text-xl font-bold font-sans text-foreground tracking-tight">
+        公网 VPS 资产 / Public VPS Fleet
+      </h2>
+      <span class="text-[10px] font-mono text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 uppercase tracking-wider rounded-sm">
+        静态配置
+      </span>
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      {vpsNodes.map(vps => (
+      {vpsNodes.map((vps) => (
         <div class="border border-[#8B9A46]/35 bg-[#1A1B19] hover:border-primary/50 transition-colors p-6 rounded-sm flex flex-col gap-4 text-left relative overflow-hidden group">
           <!-- Header Block -->
           <div class="flex items-center justify-between border-b border-border/40 pb-4">
@@ -289,62 +305,109 @@ const vpsNodes = [
                 <Server size={20} />
               </div>
               <div>
-                <h3 class="text-lg font-bold font-sans text-foreground leading-tight">{vps.provider}</h3>
-                <p class="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mt-0.5">{vps.role.split(' / ')[1]}</p>
+                <h3 class="text-lg font-bold font-sans text-foreground leading-tight">
+                  {vps.provider}
+                </h3>
+                <p class="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mt-0.5">
+                  {vps.role.split(' / ')[1]}
+                </p>
               </div>
             </div>
             <div class="text-right text-[11px] font-mono text-muted-foreground leading-normal">
-              <p>Region: <span class="text-foreground">{vps.region}</span></p>
-              <p>IP: <span class="text-foreground" data-private-value={vps.privateRef}>{vps.ip}</span></p>
+              <p>
+                Region: <span class="text-foreground">{vps.region}</span>
+              </p>
+              <p>
+                IP:{' '}
+                <span class="text-foreground" data-private-value={vps.privateRef}>
+                  {vps.ip}
+                </span>
+              </p>
             </div>
           </div>
 
           <!-- Static specs details -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 py-2 border-b border-border/20 text-left font-mono">
             <div>
-              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">CPU</span>
-              <span class="text-xs text-foreground/90 font-medium">{vps.specs.split(' / ')[0]}</span>
+              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">
+                CPU
+              </span>
+              <span class="text-xs text-foreground/90 font-medium">
+                {vps.specs.split(' / ')[0]}
+              </span>
             </div>
             <div>
-              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">Memory</span>
-              <span class="text-xs text-foreground/90 font-medium">{vps.specs.split(' / ')[1]}</span>
+              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">
+                Memory
+              </span>
+              <span class="text-xs text-foreground/90 font-medium">
+                {vps.specs.split(' / ')[1]}
+              </span>
             </div>
             <div>
-              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">Storage</span>
-              <span class="text-xs text-foreground/90 font-medium">{vps.specs.split(' / ')[2]}</span>
+              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">
+                Storage
+              </span>
+              <span class="text-xs text-foreground/90 font-medium">
+                {vps.specs.split(' / ')[2]}
+              </span>
             </div>
             <div>
-              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">Traffic / BW</span>
+              <span class="text-[8px] uppercase tracking-wider text-muted-foreground block">
+                Traffic / BW
+              </span>
               <span class="text-xs text-foreground/90 font-medium">{vps.network}</span>
             </div>
           </div>
 
           <!-- Services nested Drawer -->
           <div class="flex flex-col gap-3 mt-1">
-            <span class="text-[9px] font-mono tracking-widest text-muted-foreground uppercase">Deployed Services / 运行服务</span>
+            <span class="text-[9px] font-mono tracking-widest text-muted-foreground uppercase">
+              Deployed Services / 运行服务
+            </span>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {vps.services.map(svc => (
+              {vps.services.map((svc) => (
                 <div class="border border-border/50 bg-[#161715]/70 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors">
                   <div class="space-y-1.5">
                     <div class="flex items-center gap-2">
                       <div class="w-7 h-7 border border-primary/20 bg-primary/5 flex items-center justify-center text-primary rounded-md">
-                        {svc.name.includes("Panel") || svc.name.includes("Monitor") ? <Activity size={14} /> : <Globe size={14} />}
+                        {svc.name.includes('Panel') || svc.name.includes('Monitor') ? (
+                          <Activity size={14} />
+                        ) : (
+                          <Globe size={14} />
+                        )}
                       </div>
                       <div>
-                        <h4 class="text-xs font-bold text-foreground font-sans leading-none">{svc.name}</h4>
-                        <p class="text-[8px] font-mono text-muted-foreground mt-0.5">{svc.subName}</p>
+                        <h4 class="text-xs font-bold text-foreground font-sans leading-none">
+                          {svc.name}
+                        </h4>
+                        <p class="text-[8px] font-mono text-muted-foreground mt-0.5">
+                          {svc.subName}
+                        </p>
                       </div>
                     </div>
-                    <p class="text-[11px] text-muted-foreground font-sans leading-relaxed">{svc.description}</p>
+                    <p class="text-[11px] text-muted-foreground font-sans leading-relaxed">
+                      {svc.description}
+                    </p>
                   </div>
-                  
+
                   <div class="mt-4 pt-3 border-t border-border/20 flex gap-2">
-                    <a href={svc.repoUrl} target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-1.5 py-1.5 border border-border/80 hover:border-primary/50 text-[10px] font-mono text-foreground hover:bg-card-hover rounded-lg transition-colors">
+                    <a
+                      href={svc.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="flex-1 flex items-center justify-center gap-1.5 py-1.5 border border-border/80 hover:border-primary/50 text-[10px] font-mono text-foreground hover:bg-card-hover rounded-lg transition-colors"
+                    >
                       <Shield size={10} />
                       <span>Git</span>
                     </a>
                     {svc.isPublic && svc.liveUrl ? (
-                      <a href={svc.liveUrl} target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-primary/95 hover:bg-primary text-[10px] font-mono font-bold text-background rounded-lg transition-colors">
+                      <a
+                        href={svc.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-primary/95 hover:bg-primary text-[10px] font-mono font-bold text-background rounded-lg transition-colors"
+                      >
                         <ExternalLink size={10} />
                         <span>Open</span>
                       </a>
@@ -377,125 +440,284 @@ const vpsNodes = [
   <!-- 2. Homelab Network Topology Section -->
   <section class="flex flex-col gap-6">
     <div class="border-b border-border/40 pb-3 flex items-center justify-between">
-      <h2 class="text-xl font-bold font-sans text-foreground tracking-tight">家庭实验室物理拓扑 / Homelab Hardware Link</h2>
-      <span class="text-[10px] font-mono text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 uppercase tracking-wider rounded-sm">点击 N100 交互</span>
+      <h2 class="text-xl font-bold font-sans text-foreground tracking-tight">
+        家庭实验室物理拓扑 / Homelab Hardware Link
+      </h2>
+      <span class="text-[10px] font-mono text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 uppercase tracking-wider rounded-sm">
+        点击 N100 交互
+      </span>
     </div>
 
     <!-- Responsive SVG Container -->
     <div class="border border-[#8B9A46]/30 bg-[#1A1B19] p-4 md:p-8 rounded-sm w-full flex flex-col items-center overflow-hidden">
       <div class="w-full overflow-x-auto scrollbar-thin select-none">
         <div class="min-w-[760px] max-w-4xl mx-auto w-full">
-        <svg viewBox="0 0 800 450" class="w-full h-auto font-mono text-[10px]">
-          <!-- Grid Background Pattern -->
-          <defs>
-            <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(139, 154, 70, 0.04)" stroke-width="1" />
-            </pattern>
-            <!-- Arrow Marker -->
-            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#8B9A46" />
-            </marker>
-          </defs>
-          
-          <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+          <svg viewBox="0 0 800 450" class="w-full h-auto font-mono text-[10px]">
+            <!-- Grid Background Pattern -->
+            <defs>
+              <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path
+                  d="M 20 0 L 0 0 0 20"
+                  fill="none"
+                  stroke="rgba(139, 154, 70, 0.04)"
+                  stroke-width="1"
+                />
+              </pattern>
+              <!-- Arrow Marker -->
+              <marker
+                id="arrow"
+                viewBox="0 0 10 10"
+                refX="6"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#8B9A46" />
+              </marker>
+            </defs>
 
-          <!-- Connection Lines (Ethernet Cables) -->
-          <!-- 1. Modem to Switch -->
-          <path d="M 230 90 L 390 90" stroke="#8B9A46" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="4,4" class="hud-connector-line" />
-          <circle cx="310" cy="90" r="4" fill="#8B9A46" class="animate-pulse-soft" />
-          
-          <!-- 2. Switch to Wireless AP (L-shape) -->
-          <path d="M 460 130 L 460 180 L 230 180 L 230 220" stroke="#8B9A46" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="4,4" class="hud-connector-line" />
-          <circle cx="330" cy="180" r="4" fill="#8B9A46" class="animate-pulse-soft" />
+            <rect width="100%" height="100%" fill="url(#grid-pattern)" />
 
-          <!-- 3. Switch to N100 Host (L-shape) -->
-          <path d="M 540 130 L 540 180 L 600 180 L 600 220" stroke="#8B9A46" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="4,4" class="hud-connector-line" />
-          <circle cx="570" cy="180" r="4" fill="#8B9A46" class="animate-pulse-soft" />
+            <!-- Connection Lines (Ethernet Cables) -->
+            <!-- 1. Modem to Switch -->
+            <path
+              d="M 230 90 L 390 90"
+              stroke="#8B9A46"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+              stroke-dasharray="4,4"
+              class="hud-connector-line"
+            />
+            <circle cx="310" cy="90" r="4" fill="#8B9A46" class="animate-pulse-soft" />
 
-          <!-- Port Labels and Cable Specs -->
-          <text x="310" y="80" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">CAT6 Copper (1G)</text>
-          <text x="330" y="172" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">LAN to WAN AP Link (1G)</text>
-          <text x="570" y="172" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">2.5G Trunk Link</text>
+            <!-- 2. Switch to Wireless AP (L-shape) -->
+            <path
+              d="M 460 130 L 460 180 L 230 180 L 230 220"
+              stroke="#8B9A46"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+              stroke-dasharray="4,4"
+              class="hud-connector-line"
+            />
+            <circle cx="330" cy="180" r="4" fill="#8B9A46" class="animate-pulse-soft" />
 
-          <!-- Device: Optical Modem (家庭光猫) -->
-          <g transform="translate(80, 50)" class="select-none">
-            <rect width="150" height="80" rx="8" fill="#161715" stroke="#2C2D2A" stroke-width="1.5" />
-            <text x="75" y="32" text-anchor="middle" fill="#E2E1DD" class="font-bold text-xs font-sans">家庭光猫</text>
-            <text x="75" y="48" text-anchor="middle" fill="#A8A9A4" class="text-[9px]">GPON Optical Modem</text>
-            <!-- Ports -->
-            <rect x="0" y="35" width="6" height="10" fill="#2C2D2A" />
-            <text x="10" y="42" fill="#8B9A46" class="text-[7px]">FIBER WAN</text>
-            
-            <rect x="144" y="35" width="6" height="10" fill="#8B9A46" />
-            <text x="110" y="42" fill="#E2E1DD" class="text-[7px]">LAN1 (1G)</text>
-          </g>
+            <!-- 3. Switch to N100 Host (L-shape) -->
+            <path
+              d="M 540 130 L 540 180 L 600 180 L 600 220"
+              stroke="#8B9A46"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+              stroke-dasharray="4,4"
+              class="hud-connector-line"
+            />
+            <circle cx="570" cy="180" r="4" fill="#8B9A46" class="animate-pulse-soft" />
 
-          <!-- Device: Main Switch (主交换机) -->
-          <g transform="translate(390, 50)" class="select-none">
-            <rect width="200" height="80" rx="8" fill="#161715" stroke="#2C2D2A" stroke-width="1.5" />
-            <text x="100" y="32" text-anchor="middle" fill="#E2E1DD" class="font-bold text-xs font-sans">主交换机</text>
-            <text x="100" y="48" text-anchor="middle" fill="#A8A9A4" class="text-[9px]">TP-Link 2.5G Switch</text>
-            <!-- Ports -->
-            <rect x="0" y="35" width="6" height="10" fill="#8B9A46" />
-            <text x="10" y="42" fill="#E2E1DD" class="text-[7px]">Port 1 (Modem)</text>
-            
-            <!-- Bottom Ports -->
-            <rect x="60" y="74" width="20" height="6" fill="#8B9A46" />
-            <text x="70" y="68" fill="#E2E1DD" class="text-[7px] text-center">Port 2 (AP)</text>
+            <!-- Port Labels and Cable Specs -->
+            <text x="310" y="80" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">
+              CAT6 Copper (1G)
+            </text>
+            <text x="330" y="172" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">
+              LAN to WAN AP Link (1G)
+            </text>
+            <text x="570" y="172" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">
+              2.5G Trunk Link
+            </text>
 
-            <rect x="140" y="74" width="20" height="6" fill="#8B9A46" />
-            <text x="150" y="68" fill="#E2E1DD" class="text-[7px] text-center">Port 3 (N100)</text>
-          </g>
+            <!-- Device: Optical Modem (家庭光猫) -->
+            <g transform="translate(80, 50)" class="select-none">
+              <rect
+                width="150"
+                height="80"
+                rx="8"
+                fill="#161715"
+                stroke="#2C2D2A"
+                stroke-width="1.5"
+              />
+              <text
+                x="75"
+                y="32"
+                text-anchor="middle"
+                fill="#E2E1DD"
+                class="font-bold text-xs font-sans"
+              >
+                家庭光猫
+              </text>
+              <text x="75" y="48" text-anchor="middle" fill="#A8A9A4" class="text-[9px]">
+                GPON Optical Modem
+              </text>
+              <!-- Ports -->
+              <rect x="0" y="35" width="6" height="10" fill="#2C2D2A" />
+              <text x="10" y="42" fill="#8B9A46" class="text-[7px]">
+                FIBER WAN
+              </text>
 
-          <!-- Device: Wireless AP (无线 AP / 路由器) -->
-          <g transform="translate(130, 220)" class="select-none">
-            <rect width="200" height="90" rx="8" fill="#161715" stroke="#2C2D2A" stroke-width="1.5" />
-            <text x="100" y="32" text-anchor="middle" fill="#E2E1DD" class="font-bold text-xs font-sans">无线 AP / 路由器</text>
-            <text x="100" y="48" text-anchor="middle" fill="#A8A9A4" class="text-[9px]">WiFi AP Node (Bridged)</text>
-            <text x="100" y="64" text-anchor="middle" fill="#8B9A46" class="text-[9px]">提供全屋无线 WiFi 覆盖</text>
-            
-            <!-- Top Port -->
-            <rect x="90" y="0" width="20" height="6" fill="#8B9A46" />
-            <text x="100" y="15" fill="#E2E1DD" class="text-[7px] text-center">WAN Port</text>
-          </g>
+              <rect x="144" y="35" width="6" height="10" fill="#8B9A46" />
+              <text x="110" y="42" fill="#E2E1DD" class="text-[7px]">
+                LAN1 (1G)
+              </text>
+            </g>
 
-          <!-- Interactive Device: N100 Host (PVE Host) -->
-          <g id="n100-node" transform="translate(480, 220)" class="cursor-pointer group">
-            <!-- Glow effect on hover -->
-            <rect width="240" height="120" rx="12" fill="#1C1D1A" stroke="#8B9A46" stroke-width="2" class="transition-all duration-300 group-hover:stroke-primary group-hover:fill-[#222320]" />
-            
-            <!-- Top port indicator -->
-            <rect x="110" y="0" width="20" height="6" fill="#8B9A46" />
-            <text x="120" y="15" fill="#E2E1DD" class="text-[7px] text-center">eth0 (2.5G)</text>
+            <!-- Device: Main Switch (主交换机) -->
+            <g transform="translate(390, 50)" class="select-none">
+              <rect
+                width="200"
+                height="80"
+                rx="8"
+                fill="#161715"
+                stroke="#2C2D2A"
+                stroke-width="1.5"
+              />
+              <text
+                x="100"
+                y="32"
+                text-anchor="middle"
+                fill="#E2E1DD"
+                class="font-bold text-xs font-sans"
+              >
+                主交换机
+              </text>
+              <text x="100" y="48" text-anchor="middle" fill="#A8A9A4" class="text-[9px]">
+                TP-Link 2.5G Switch
+              </text>
+              <!-- Ports -->
+              <rect x="0" y="35" width="6" height="10" fill="#8B9A46" />
+              <text x="10" y="42" fill="#E2E1DD" class="text-[7px]">
+                Port 1 (Modem)
+              </text>
 
-            <!-- Content -->
-            <text x="120" y="35" text-anchor="middle" fill="#E2E1DD" class="font-bold text-sm font-sans group-hover:fill-primary transition-colors">N100 主机</text>
-            <text x="120" y="55" text-anchor="middle" fill="#A8A9A4" class="text-[10px]">Intel N100 · 16G RAM · PVE</text>
-            
-            <rect x="20" y="70" width="200" height="34" rx="6" fill="rgba(139,154,70,0.06)" stroke="rgba(139,154,70,0.2)" />
-            <text x="120" y="84" text-anchor="middle" fill="#8B9A46" class="text-[9px] font-bold">● Proxmox VE (PVE)</text>
-            <text x="120" y="96" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">[ 点击查看虚拟子系统 / VIEW SYSTEMS ]</text>
-          </g>
-        </svg>
+              <!-- Bottom Ports -->
+              <rect x="60" y="74" width="20" height="6" fill="#8B9A46" />
+              <text x="70" y="68" fill="#E2E1DD" class="text-[7px] text-center">
+                Port 2 (AP)
+              </text>
+
+              <rect x="140" y="74" width="20" height="6" fill="#8B9A46" />
+              <text x="150" y="68" fill="#E2E1DD" class="text-[7px] text-center">
+                Port 3 (N100)
+              </text>
+            </g>
+
+            <!-- Device: Wireless AP (无线 AP / 路由器) -->
+            <g transform="translate(130, 220)" class="select-none">
+              <rect
+                width="200"
+                height="90"
+                rx="8"
+                fill="#161715"
+                stroke="#2C2D2A"
+                stroke-width="1.5"
+              />
+              <text
+                x="100"
+                y="32"
+                text-anchor="middle"
+                fill="#E2E1DD"
+                class="font-bold text-xs font-sans"
+              >
+                无线 AP / 路由器
+              </text>
+              <text x="100" y="48" text-anchor="middle" fill="#A8A9A4" class="text-[9px]">
+                WiFi AP Node (Bridged)
+              </text>
+              <text x="100" y="64" text-anchor="middle" fill="#8B9A46" class="text-[9px]">
+                提供全屋无线 WiFi 覆盖
+              </text>
+
+              <!-- Top Port -->
+              <rect x="90" y="0" width="20" height="6" fill="#8B9A46" />
+              <text x="100" y="15" fill="#E2E1DD" class="text-[7px] text-center">
+                WAN Port
+              </text>
+            </g>
+
+            <!-- Interactive Device: N100 Host (PVE Host) -->
+            <g id="n100-node" transform="translate(480, 220)" class="cursor-pointer group">
+              <!-- Glow effect on hover -->
+              <rect
+                width="240"
+                height="120"
+                rx="12"
+                fill="#1C1D1A"
+                stroke="#8B9A46"
+                stroke-width="2"
+                class="transition-all duration-300 group-hover:stroke-primary group-hover:fill-[#222320]"
+              />
+
+              <!-- Top port indicator -->
+              <rect x="110" y="0" width="20" height="6" fill="#8B9A46" />
+              <text x="120" y="15" fill="#E2E1DD" class="text-[7px] text-center">
+                eth0 (2.5G)
+              </text>
+
+              <!-- Content -->
+              <text
+                x="120"
+                y="35"
+                text-anchor="middle"
+                fill="#E2E1DD"
+                class="font-bold text-sm font-sans group-hover:fill-primary transition-colors"
+              >
+                N100 主机
+              </text>
+              <text x="120" y="55" text-anchor="middle" fill="#A8A9A4" class="text-[10px]">
+                Intel N100 · 16G RAM · PVE
+              </text>
+
+              <rect
+                x="20"
+                y="70"
+                width="200"
+                height="34"
+                rx="6"
+                fill="rgba(139,154,70,0.06)"
+                stroke="rgba(139,154,70,0.2)"
+              />
+              <text x="120" y="84" text-anchor="middle" fill="#8B9A46" class="text-[9px] font-bold">
+                ● Proxmox VE (PVE)
+              </text>
+              <text x="120" y="96" text-anchor="middle" fill="#A8A9A4" class="text-[8px]">
+                [ 点击查看虚拟子系统 / VIEW SYSTEMS ]
+              </text>
+            </g>
+          </svg>
         </div>
-        
+
         <!-- Related documentation links -->
         <div class="mt-6 w-full border-t border-border/40 pt-4 flex flex-col gap-2 text-left">
-          <span class="flex items-center gap-1.5 text-[9px] font-mono tracking-widest text-muted-foreground uppercase"><Lightbulb size={12} class="text-primary" />相关运维与搭建配置笔记 / INFRASTRUCTURE_WIKI</span>
+          <span class="flex items-center gap-1.5 text-[9px] font-mono tracking-widest text-muted-foreground uppercase">
+            <Lightbulb size={12} class="text-primary" />
+            相关运维与搭建配置笔记 / INFRASTRUCTURE_WIKI
+          </span>
           <div class="flex flex-wrap gap-2.5 font-mono text-xs mt-1">
-            <a href="/notes/obsidian/home-server-setup" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
+            <a
+              href="/notes/obsidian/home-server-setup"
+              class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors"
+            >
               [ PVE 宿主机搭建 ]
             </a>
-            <a href="/notes/obsidian/routeros-configuration" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
+            <a
+              href="/notes/obsidian/routeros-configuration"
+              class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors"
+            >
               [ RouterOS 配置 ]
             </a>
-            <a href="/notes/obsidian/immortalwrt-configuration" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
+            <a
+              href="/notes/obsidian/immortalwrt-configuration"
+              class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors"
+            >
               [ iStoreOS / EmuWrt 配置 ]
             </a>
-            <a href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
+            <a
+              href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden"
+              class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors"
+            >
               [ Docker 业务部署 ]
             </a>
-            <a href="/notes/obsidian/pve-install-fnos" class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors">
+            <a
+              href="/notes/obsidian/pve-install-fnos"
+              class="border border-border/60 bg-[#161715]/50 px-3 py-1.5 rounded-sm hover:border-primary/50 hover:text-primary transition-colors"
+            >
               [ fnOS 安装与直通 ]
             </a>
           </div>
@@ -506,48 +728,81 @@ const vpsNodes = [
 </div>
 
 <!-- Interactive Modal for N100 Host Virtualization details -->
-<div id="n100-modal" class="fixed inset-0 bg-black/80 items-center justify-center hidden z-[9999] transition-opacity duration-300 opacity-0 pointer-events-none">
+<div
+  id="n100-modal"
+  class="fixed inset-0 bg-black/80 items-center justify-center hidden z-[9999] transition-opacity duration-300 opacity-0 pointer-events-none"
+>
   <!-- Modal Content Container -->
   <div class="border border-[#8B9A46]/40 bg-[#151614] max-w-2xl w-full mx-4 rounded-sm p-6 relative flex flex-col gap-6 text-left scale-95 transition-transform duration-300 pointer-events-auto">
     <!-- Close button -->
-    <button id="modal-close" class="absolute top-4 right-4 text-muted-foreground hover:text-foreground font-mono text-xs cursor-pointer">[ ESC_CLOSE / 关闭 ]</button>
-    
+    <button
+      id="modal-close"
+      class="absolute top-4 right-4 text-muted-foreground hover:text-foreground font-mono text-xs cursor-pointer"
+    >
+      [ ESC_CLOSE / 关闭 ]
+    </button>
+
     <!-- Modal Header -->
     <div class="flex items-center gap-3 border-b border-border/40 pb-4">
       <div class="w-10 h-10 border border-[#8B9A46]/20 bg-[#8B9A46]/5 flex items-center justify-center text-primary rounded-lg">
         <Cpu size={20} />
       </div>
       <div>
-        <h3 class="text-base font-bold text-foreground font-sans">N100 虚拟化底座系统 / PVE Virtual Substrate</h3>
-        <p class="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mt-0.5">Parent Hypervisor & Child Virtual Machines</p>
+        <h3 class="text-base font-bold text-foreground font-sans">
+          N100 虚拟化底座系统 / PVE Virtual Substrate
+        </h3>
+        <p class="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mt-0.5">
+          Parent Hypervisor & Child Virtual Machines
+        </p>
       </div>
     </div>
 
     <!-- PVE Parent Info -->
-    <a href="/notes/obsidian/home-server-setup" class="block bg-[#1C1D1A] border border-[#8B9A46]/20 p-4 rounded-sm space-y-2 hover:border-primary/40 transition-colors group/pve">
+    <a
+      href="/notes/obsidian/home-server-setup"
+      class="block bg-[#1C1D1A] border border-[#8B9A46]/20 p-4 rounded-sm space-y-2 hover:border-primary/40 transition-colors group/pve"
+    >
       <div class="flex items-center justify-between">
         <span class="text-xs font-bold text-foreground font-mono">宿主底座系统 / Host OS</span>
-        <span class="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-mono">HYPERVISOR</span>
+        <span class="text-[9px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded font-mono">
+          HYPERVISOR
+        </span>
       </div>
-      <p class="text-sm font-bold text-foreground font-mono group-hover/pve:text-primary transition-colors">Proxmox VE (PVE 8.x)</p>
-      <p class="text-xs text-muted-foreground">负责整机硬件资源虚拟化、PCI-e 设备直通、虚拟网卡桥接以及各个虚拟机状态调度。</p>
+      <p class="text-sm font-bold text-foreground font-mono group-hover/pve:text-primary transition-colors">
+        Proxmox VE (PVE 8.x)
+      </p>
+      <p class="text-xs text-muted-foreground">
+        负责整机硬件资源虚拟化、PCI-e 设备直通、虚拟网卡桥接以及各个虚拟机状态调度。
+      </p>
       <div class="pt-1 text-[9px] font-mono text-primary">查看家庭服务器搭建与配置笔记 →</div>
     </a>
 
     <!-- Children VMs -->
     <div class="space-y-3">
-      <span class="text-[10px] font-mono tracking-widest text-muted-foreground uppercase">Nested Virtual Guest Systems / 运行中的虚拟子系统</span>
+      <span class="text-[10px] font-mono tracking-widest text-muted-foreground uppercase">
+        Nested Virtual Guest Systems / 运行中的虚拟子系统
+      </span>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
         <!-- RouterOS VM -->
-        <a href="/notes/obsidian/routeros-configuration" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a
+          href="/notes/obsidian/routeros-configuration"
+          class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm"
+        >
           <div>
             <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-foreground font-mono font-bold group-hover/vm:text-primary transition-colors">RouterOS VM</h4>
-              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">Documentation</span>
+              <h4 class="text-xs font-bold text-foreground font-mono font-bold group-hover/vm:text-primary transition-colors">
+                RouterOS VM
+              </h4>
+              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">
+                Documentation
+              </span>
             </div>
-            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">Role: 主路由 / PPPoE Gateway</p>
-            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">承接家庭网络拨号、NAT 转发、DHCP 分配与防火墙。直通两个物理网口。</p>
+            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">
+              Role: 主路由 / PPPoE Gateway
+            </p>
+            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+              承接家庭网络拨号、NAT 转发、DHCP 分配与防火墙。直通两个物理网口。
+            </p>
           </div>
           <div class="mt-4 pt-2 border-t border-border/20 flex justify-between text-[9px] font-mono text-muted-foreground">
             <span>查看配置笔记 →</span>
@@ -556,14 +811,25 @@ const vpsNodes = [
         </a>
 
         <!-- iStoreOS VM -->
-        <a href="/notes/obsidian/immortalwrt-configuration" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a
+          href="/notes/obsidian/immortalwrt-configuration"
+          class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm"
+        >
           <div>
             <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-foreground font-mono font-bold">iStoreOS (EmuWrt) VM</h4>
-              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">Documentation</span>
+              <h4 class="text-xs font-bold text-foreground font-mono font-bold">
+                iStoreOS (EmuWrt) VM
+              </h4>
+              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">
+                Documentation
+              </span>
             </div>
-            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">Role: 旁路路由 / iStoreOS (EmuWrt)</p>
-            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">负责轻量网络服务、局域网内流量策略代理与局域网科学分流。</p>
+            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">
+              Role: 旁路路由 / iStoreOS (EmuWrt)
+            </p>
+            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+              负责轻量网络服务、局域网内流量策略代理与局域网科学分流。
+            </p>
           </div>
           <div class="mt-4 pt-2 border-t border-border/20 flex justify-between text-[9px] font-mono text-muted-foreground">
             <span>查看配置笔记 →</span>
@@ -572,14 +838,25 @@ const vpsNodes = [
         </a>
 
         <!-- Debian VM -->
-        <a href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a
+          href="/notes/obsidian/debian-docker-deploy-homepage-vaultwarden"
+          class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm"
+        >
           <div>
             <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-foreground font-mono font-bold group-hover/vm:text-primary transition-colors">Debian Linux VM</h4>
-              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">Documentation</span>
+              <h4 class="text-xs font-bold text-foreground font-mono font-bold group-hover/vm:text-primary transition-colors">
+                Debian Linux VM
+              </h4>
+              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">
+                Documentation
+              </span>
             </div>
-            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">Role: 核心服务 / Docker VM</p>
-            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">承载 Docker 容器引擎，部署 Homepage、Vaultwarden 等核心家庭网络入口服务。</p>
+            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">
+              Role: 核心服务 / Docker VM
+            </p>
+            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+              承载 Docker 容器引擎，部署 Homepage、Vaultwarden 等核心家庭网络入口服务。
+            </p>
           </div>
           <div class="mt-4 pt-2 border-t border-border/20 flex justify-between text-[9px] font-mono text-muted-foreground">
             <span>查看部署笔记 →</span>
@@ -588,21 +865,31 @@ const vpsNodes = [
         </a>
 
         <!-- fnOS NAS VM -->
-        <a href="/notes/obsidian/pve-install-fnos" class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm">
+        <a
+          href="/notes/obsidian/pve-install-fnos"
+          class="border border-border bg-[#161715]/90 p-4 rounded-sm flex flex-col justify-between hover:border-primary/45 transition-colors group/vm"
+        >
           <div>
             <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-foreground font-mono font-bold">fnOS (飞牛 NAS) VM</h4>
-              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">Documentation</span>
+              <h4 class="text-xs font-bold text-foreground font-mono font-bold">
+                fnOS (飞牛 NAS) VM
+              </h4>
+              <span class="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded font-mono">
+                Documentation
+              </span>
             </div>
-            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">Role: 家庭存储 / Media Server</p>
-            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">飞牛私有云存储系统，挂载主力硬盘，提供 Jellyfin 影院与网络下载通道。</p>
+            <p class="text-[10px] font-mono text-muted-foreground mt-0.5">
+              Role: 家庭存储 / Media Server
+            </p>
+            <p class="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+              飞牛私有云存储系统，挂载主力硬盘，提供 Jellyfin 影院与网络下载通道。
+            </p>
           </div>
           <div class="mt-4 pt-2 border-t border-border/20 flex justify-between text-[9px] font-mono text-muted-foreground">
             <span>查看安装笔记 →</span>
             <span class="text-primary font-bold">ACTIVE</span>
           </div>
         </a>
-
       </div>
     </div>
   </div>

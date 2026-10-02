@@ -1,11 +1,11 @@
 /**
  * 笔记仓库配置文件
  *
- * 默认读取仓库内的 `thought-forest` 子模块，保证本地与 CI/CD 数据源一致。
- * 如需临时指向外部 vault，可显式设置 `NOTES_VAULT_ROOT` 环境变量。
+ * 默认读取由 committed `knowledge-public-v1` lock 验证并物化的只读 source。
+ * 本地确需直接读取私有 Thought Forest 时，显式设置 `NOTES_VAULT_ROOT`。
  */
 
-const DEFAULT_VAULT_ROOT = 'thought-forest';
+const DEFAULT_VAULT_ROOT = '.pds-runtime/knowledge-public-v1/source';
 const vaultRoot = process.env.NOTES_VAULT_ROOT?.trim() || DEFAULT_VAULT_ROOT;
 
 function vaultPath(...segments: string[]): string {
@@ -46,24 +46,16 @@ export const notesConfig = {
      * Thought Forest 已将原始附件迁移到 sources/attachments；保留旧路径作为
      * 兼容回退，便于旧 checkout / 历史 submodule 仍可构建。
      */
-    mediaPath: [
-      vaultPath('sources/attachments'),
-      vaultPath('attachments/images'),
-    ],
+    mediaPath: [vaultPath('sources/attachments'), vaultPath('attachments/images')],
 
-    /** 博客文章目录 (thought-forest/blogs) */
+    /** 博客文章目录 (<selected-source>/blogs) */
     blogsPath: vaultPath('blogs'),
 
     /** 要包含的文件模式 */
     include: ['**/*.md'],
 
     /** 要排除的文件/目录模式 */
-    exclude: [
-      '**/.git/**',
-      '**/node_modules/**',
-      '**/.obsidian/**',
-      '**/.trash/**',
-    ],
+    exclude: ['**/.git/**', '**/node_modules/**', '**/.obsidian/**', '**/.trash/**'],
   },
 
   output: {
@@ -75,8 +67,9 @@ export const notesConfig = {
   },
 
   /**
-   * Upstream thought-forest generated/ directory config.
-   * Contains pre-built knowledge-index JSON files produced by `npm run kb:index`.
+   * Selected producer source generated/ directory config.
+   * Contains pre-built knowledge-index JSON files from the verified public projection.
+   * Explicit external Thought Forest roots are development-only compatibility inputs;
    *
    * generatedPath is resolved automatically (see resolveUpstreamGeneratedPath above).
    * Override with NOTES_UPSTREAM_GENERATED env var if needed.

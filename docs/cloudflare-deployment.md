@@ -161,24 +161,25 @@ manual Deploy Production(vX.Y.Z)
 
 Candidate 阶段先验证 committed `knowledge-public-v1` lock 与 immutable producer Release，再完成 Astro/Pagefind 构建和 Pages Functions 编译，并生成带 SHA-256 的 `digital-biome-pages.tar.gz`。Release 只提升该 artifact；Production 使用 `--no-bundle` 上传同一 artifact，因此不会重建应用。
 
-Production 会重新验证 Release manifest 绑定的 `knowledge-public-v1` producer identity，并从 Release SHA 检出同一 Thought Forest source revision 的私有 Vault，用于重新生成私有 payload 和更新 encrypted Pages bindings。legacy v1 rollback Release 才继续执行旧的 private asset-index hash 校验；这些步骤都属于部署配置，不改变已经发布的 public application artifact。
+Production 会重新验证 Release manifest 绑定的 `knowledge-public-v1` producer identity。当前 v3 Release 另外绑定 Personal Infrastructure 的 `digital-biome-private-infrastructure-v1` RuntimeBinding：工作流按 exact revision 检出私有 producer、校验 contract SHA-256，再渲染 `PRIVATE_INFRASTRUCTURE_JSON`。v2 / legacy v1 rollback 才保留历史 Thought Forest private-source 路径；这些步骤都属于部署配置，不改变已经发布的 public application artifact。
 
 首次启用前必须配置：
 
-| 位置                | 名称                     | 最小用途                              |
-| ------------------- | ------------------------ | ------------------------------------- |
-| Repository variable | `VAULT_APP_CLIENT_ID`    | 创建短期 GitHub App token             |
-| Repository secret   | `VAULT_APP_PRIVATE_KEY`  | GitHub App 私钥                       |
-| Repository variable | `STAGING_DEPLOY_ENABLED` | 是否启用 Candidate -> staging preview |
-| Staging secret      | `CLOUDFLARE_ACCOUNT_ID`  | staging preview 的 Cloudflare 账户    |
-| Staging secret      | `CLOUDFLARE_API_TOKEN`   | staging preview 的 Pages Edit 权限    |
-| Production secret   | `CLOUDFLARE_ACCOUNT_ID`  | 目标 Cloudflare 账户                  |
-| Production secret   | `CLOUDFLARE_API_TOKEN`   | 仅目标账户 Cloudflare Pages Edit      |
-| Production variable | `PRODUCTION_URL`         | 部署后的自定义域冒烟测试              |
+| 位置                | 名称                                 | 最小用途                                             |
+| ------------------- | ------------------------------------ | ---------------------------------------------------- |
+| Repository variable | `VAULT_APP_CLIENT_ID`                | 创建短期 GitHub App token                            |
+| Repository secret   | `VAULT_APP_PRIVATE_KEY`              | GitHub App 私钥                                      |
+| Repository variable | `STAGING_DEPLOY_ENABLED`             | 是否启用 Candidate -> staging preview                |
+| Staging secret      | `CLOUDFLARE_ACCOUNT_ID`              | staging preview 的 Cloudflare 账户                   |
+| Staging secret      | `CLOUDFLARE_API_TOKEN`               | staging preview 的 Pages Edit 权限                   |
+| Production secret   | `CLOUDFLARE_ACCOUNT_ID`              | 目标 Cloudflare 账户                                 |
+| Production secret   | `CLOUDFLARE_API_TOKEN`               | 仅目标账户 Cloudflare Pages Edit                     |
+| Production secret   | `PERSONAL_INFRASTRUCTURE_DEPLOY_KEY` | Personal Infrastructure 私有 RuntimeBinding 只读检出 |
+| Production variable | `PRODUCTION_URL`                     | 部署后的自定义域冒烟测试                             |
 
-GitHub App 只安装到 `digital-biome` 与 `thought-forest`，且只授予 Contents Read。Release Prepare 使用仓库 `GITHUB_TOKEN`，并显式 dispatch Release PR head 的 CI，不要求新增长期 PAT。`production` Environment 应保留审批保护；`staging` Environment 在 Cloudflare 凭据配置完成前保持禁用。
+GitHub App 只安装到 `digital-biome` 与 `thought-forest`，且只授予 Contents Read，用于 `knowledge-public-v1` Release 读取。Personal Infrastructure 使用单独的 read-only deploy key；其私钥只保存为 Digital Biome `production` Environment secret `PERSONAL_INFRASTRUCTURE_DEPLOY_KEY`。Release Prepare 使用仓库 `GITHUB_TOKEN`，并显式 dispatch Release PR head 的 CI，不要求长期 PAT。`production` Environment 应保留审批保护；`staging` Environment 在 Cloudflare 凭据配置完成前保持禁用。
 
-Cloudflare Git 自动 Production/Preview deployments 继续关闭；日常交付由 GitHub Actions + Wrangler Direct Upload 完成。公开 Candidate 只消费 producer-owned projection，私有 gitlink仅在 production/private-payload 路径读取，因此不需要把 Vault 暴露给公开构建系统，同时所有 promotion 都保留可审计 provenance。
+Cloudflare Git 自动 Production/Preview deployments 继续关闭；日常交付由 GitHub Actions + Wrangler Direct Upload 完成。公开 Candidate 只消费 producer-owned projection；当前 Production 从独立 Personal Infrastructure RuntimeBinding 获取 private runtime facts，因此 Thought Forest 的私有 source layout 不再参与当前生产路径，同时所有 promotion 都保留可审计 provenance。
 
 ## 9. 验收矩阵
 

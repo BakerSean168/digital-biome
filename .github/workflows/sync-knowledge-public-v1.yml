@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -152,10 +153,8 @@ jobs:
               }
             }' > "$next_lock"
 
-          current_source_sha="$(git ls-tree HEAD thought-forest | awk '{print $3}')"
           if [ -f data-products/knowledge-public-v1.lock.json ] &&
-             cmp -s data-products/knowledge-public-v1.lock.json "$next_lock" &&
-             [ "$current_source_sha" = "$SOURCE_SHA" ]; then
+             cmp -s data-products/knowledge-public-v1.lock.json "$next_lock"; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -167,7 +166,6 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PRODUCER_TOKEN: ${{ steps.producer-token.outputs.token }}
           SOURCE_SHA: ${{ steps.target.outputs.source_sha }}
           NEXT_LOCK: ${{ steps.lock.outputs.path }}
         run: |
@@ -179,12 +177,7 @@ jobs:
           mkdir -p data-products
           cp "$NEXT_LOCK" data-products/knowledge-public-v1.lock.json
 
-          auth_header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$PRODUCER_TOKEN" | base64 -w0)"
-          git -c http.https://github.com/.extraheader="$auth_header" submodule update --init thought-forest
-          git -C thought-forest -c http.https://github.com/.extraheader="$auth_header" fetch origin "$SOURCE_SHA" --depth=1
-          git -C thought-forest checkout --detach "$SOURCE_SHA"
-
-          git add data-products/knowledge-public-v1.lock.json thought-forest
+          git add data-products/knowledge-public-v1.lock.json
           git commit -m "chore(data): pin knowledge-public-v1 to ${SOURCE_SHA:0:12}"
           gh auth setup-git
           git push --force --set-upstream origin "$SYNC_BRANCH"
@@ -201,9 +194,45 @@ jobs:
           if [ -n "$open_pr" ]; then
             echo "knowledge-public-v1 sync PR #$open_pr updated in place."
           else
-            gh pr create               --base main               --head "$SYNC_BRANCH"               --title "chore(data): update knowledge-public-v1 to ${SOURCE_SHA:0:12}"               --body "Atomically pins the immutable Thought Forest `knowledge-public-v1` projection and the private deployment gitlink to source revision `$SOURCE_SHA`. Merge only after CI validates the projection-backed build."
+            gh pr create               --base main               --head "$SYNC_BRANCH"               --title "chore(data): update knowledge-public-v1 to ${SOURCE_SHA:0:12}"               --body "Pins the immutable Thought Forest `knowledge-public-v1` projection to source revision `$SOURCE_SHA`. Public build provenance uses this lock; protected infrastructure runtime data is owned and pinned separately by Personal Infrastructure. Merge only after CI validates the projection-backed build."
           fi
+
+      - name: Approve and wait for protected PR CI when required
+        if: steps.lock.outputs.changed == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          head_sha="$(git rev-parse HEAD)"
+          run_id=''
+          conclusion=''
+
+          for attempt in $(seq 1 20); do
+            run_json="$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow check.yml \
+              --branch "$SYNC_BRANCH" \
+              --event pull_request \
+              --limit 10 \
+              --json databaseId,headSha,status,conclusion)"
+            run_id="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].databaseId // empty' <<<"$run_json")"
+            conclusion="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].conclusion // empty' <<<"$run_json")"
+            [ -n "$run_id" ] && break
+            sleep 2
+          done
+
+          test -n "$run_id" || {
+            echo 'protected pull_request CI run did not appear for the generated sync commit' >&2
+            exit 1
+          }
+
+          if [ "$conclusion" = action_required ]; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve" > /dev/null
+          fi
+
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
 
       - name: Report no-op
         if: steps.lock.outputs.changed != 'true'
-        run: echo "knowledge-public-v1 lock and private deployment gitlink already point to the published projection source revision."
+        run: echo "knowledge-public-v1 lock already points to the published projection source revision."

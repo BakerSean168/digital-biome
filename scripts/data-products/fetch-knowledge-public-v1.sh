@@ -4,8 +4,15 @@ set -euo pipefail
 lock_path="${2:-data-products/knowledge-public-v1.lock.json}"
 runtime_root="${1:-.pds-runtime/knowledge-public-v1}"
 
+if [ -z "${GH_TOKEN:-}" ]; then
+  if command -v gh > /dev/null 2>&1; then
+    GH_TOKEN="$(gh auth token 2>/dev/null || true)"
+    export GH_TOKEN
+  fi
+fi
+
 test -n "${GH_TOKEN:-}" || {
-  echo "GH_TOKEN is required to fetch the private knowledge-public-v1 Release." >&2
+  echo "A GitHub token is required to fetch the private knowledge-public-v1 Release. Set GH_TOKEN or authenticate gh." >&2
   exit 1
 }
 

@@ -130,6 +130,10 @@ jobs:
           knowledge_release_tag="$(jq -r .releaseTag data-products/knowledge-public-v1.lock.json)"
           knowledge_artifact_sha256="$(jq -r .artifact.sha256 data-products/knowledge-public-v1.lock.json)"
           knowledge_manifest_sha256="$(jq -r .manifest.sha256 data-products/knowledge-public-v1.lock.json)"
+          private_infra_producer="$(jq -r .producerRepository data-products/digital-biome-private-infrastructure-v1.lock.json)"
+          private_infra_source_sha="$(jq -r .sourceRevision data-products/digital-biome-private-infrastructure-v1.lock.json)"
+          private_infra_contract_path="$(jq -r .contractPath data-products/digital-biome-private-infrastructure-v1.lock.json)"
+          private_infra_sha256="$(jq -r .sha256 data-products/digital-biome-private-infrastructure-v1.lock.json)"
           artifact_hash="$(sha256sum "$artifact" | cut -d ' ' -f 1)"
           artifact_bytes="$(stat -c '%s' "$artifact")"
 
@@ -140,6 +144,10 @@ jobs:
             --arg knowledgeReleaseTag "$knowledge_release_tag" \
             --arg knowledgeArtifactSha256 "$knowledge_artifact_sha256" \
             --arg knowledgeManifestSha256 "$knowledge_manifest_sha256" \
+            --arg privateInfraProducer "$private_infra_producer" \
+            --arg privateInfraSourceSha "$private_infra_source_sha" \
+            --arg privateInfraContractPath "$private_infra_contract_path" \
+            --arg privateInfraSha256 "$private_infra_sha256" \
             --arg file "$artifact" \
             --arg artifactSha256 "sha256:$artifact_hash" \
             --argjson bytes "$artifact_bytes" \
@@ -152,6 +160,12 @@ jobs:
                 releaseTag:$knowledgeReleaseTag,
                 artifactSha256:$knowledgeArtifactSha256,
                 manifestSha256:$knowledgeManifestSha256
+              },
+              privateInfrastructure:{
+                producerRepository:$privateInfraProducer,
+                sourceRevision:$privateInfraSourceSha,
+                contractPath:$privateInfraContractPath,
+                sha256:$privateInfraSha256
               },
               artifact:{file:$file,sha256:$artifactSha256,bytes:$bytes}
             }' > reports/candidate/input.json

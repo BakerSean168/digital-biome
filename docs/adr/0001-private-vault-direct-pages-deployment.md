@@ -1,8 +1,9 @@
 # ADR-0001：私有 Vault、GitHub Actions 与 Cloudflare Pages 直接部署
 
-- 状态：Accepted
+- 状态：Accepted（其中“生产检出私有 Thought Forest 生成基础设施 payload”的机制已由 ADR-0002 取代）
 - 日期：2026-07-18
 - 决策范围：内容供应链、Cloudflare Pages 发布方式、GitHub App 权限
+- 后续：见 [ADR-0002：Producer-owned private infrastructure RuntimeBinding](0002-private-infrastructure-runtime-binding.md)
 
 ## 背景
 

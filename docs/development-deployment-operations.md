@@ -25,7 +25,7 @@
 
 | 工具            | 要求                                         | 来源                                    |
 | --------------- | -------------------------------------------- | --------------------------------------- |
-| Git             | 支持 submodule                               | 系统安装                                |
+| Git             | 标准 clone / worktree                        | 系统安装                                |
 | Node.js         | 24.x                                         | `.node-version`、`package.json#engines` |
 | pnpm            | 10.x                                         | `packageManager: pnpm@10.32.1`          |
 | Wrangler        | 项目依赖 4.x                                 | `pnpm install`                          |
@@ -44,22 +44,15 @@ pnpm exec wrangler --version
 ## 3. 新机器初始化
 
 ```bash
-git clone --recurse-submodules <digital-biome-repository-url>
+git clone <digital-biome-repository-url>
 cd digital-biome
-git submodule status
 pnpm install --frozen-lockfile
-pnpm sync -- --dry-run
+gh auth status
 pnpm sync
 pnpm check
 ```
 
-若克隆主仓库时没有初始化子模块：
-
-```bash
-git submodule update --init --recursive
-```
-
-如果 `thought-forest` 返回 404 或认证失败，先修复 GitHub 私有仓库权限。不要把子模块 URL 改成带 token 的 URL，也不要把 token 写进 `.gitmodules`。
+`pnpm sync` 根据 committed `data-products/knowledge-public-v1.lock.json` 下载并验证 producer Release。若未显式设置 `GH_TOKEN`，脚本会尝试复用 `gh auth token`。Digital Biome 不需要初始化 Thought Forest submodule。
 
 ## 4. 工作区输入与生成物
 
@@ -72,12 +65,13 @@ git submodule update --init --recursive
 - `scripts/`、`notes.config.ts`；
 - `wrangler.jsonc`、`public/_routes.json`；
 - `src/data/github-contributions.json`（公开、可审查的 GitHub 贡献快照）；
-- `thought-forest` 子模块指针。
+- `data-products/knowledge-public-v1.lock.json`（公开 producer projection 的不可变输入身份）。
 
 ### 4.2 私有外部输入
 
-- `thought-forest/z/`、`assets/`、`config/`；
-- `thought-forest/generated/knowledge-index/` 或 `NOTES_UPSTREAM_GENERATED` 指向的等价目录；
+- 默认：由 lock 验证并物化到 `.pds-runtime/knowledge-public-v1/source/` 的只读 public projection；
+- 显式私有联调：`NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 指向的独立 Thought Forest checkout；
+- Production：Release-pinned `.pds-runtime/private-thought-forest/` 临时 checkout；
 - Cloudflare Pages Secrets。
 
 ### 4.3 可删除生成物
@@ -132,37 +126,35 @@ pnpm check:edge
 pnpm test:edge
 ```
 
-### 5.2 修改或拉取笔记
+### 5.2 更新公开笔记投影
 
-在 `thought-forest` 中修改后：
+Thought Forest main 发布新的 `knowledge-public-v1` 后，会 dispatch Digital Biome 的固定 automation PR。该 PR 只更新 committed lock，并在仓库策略要求时批准/等待该 bot PR 的受保护 CI。
+
+本地要使用当前已提交 lock：
 
 ```bash
-pnpm sync -- --dry-run
 pnpm sync
 pnpm dev:only
 ```
 
-需要更新子模块到远端最新提交时：
+需要直接联调尚未进入 public projection 的私有 Thought Forest checkout 时：
 
 ```bash
-pnpm pull-notes
-pnpm sync
+NOTES_VAULT_ROOT=/path/to/thought-forest \
+NOTES_UPSTREAM_GENERATED=/path/to/thought-forest/generated \
+pnpm sync:content
+pnpm dev:only
 ```
 
-`pull-notes` 会改变子模块指针。提交主仓库前必须检查：
+这种外部 checkout 不属于 Digital Biome Git 状态，也不应复制进仓库。
+
+### 5.3 拉取已锁定投影并启动
 
 ```bash
-git status --short
-git diff --submodule=log
+pnpm dev
 ```
 
-### 5.3 一次性拉取笔记并启动
-
-```bash
-pnpm dev:pull
-```
-
-这个命令会更新子模块、同步全部内容再启动 Astro。只有明确需要最新 vault 时才使用。
+`pnpm dev` 会先执行 lock-backed `pnpm sync`，再启动 Astro。生成内容已存在时仍优先使用 `pnpm dev:only`。
 
 ### 5.4 同步 favicon
 
@@ -271,7 +263,7 @@ pnpm exec wrangler pages deploy dist \
 
 只有在以下条件全部成立时才能复用现有 `dist/`：
 
-- 构建后源码、子模块、索引和 Secret 输入未变化；
+- 构建后源码、knowledge projection lock、索引和 Secret 输入未变化；
 - `postbuild` 已通过；
 - `dist/_routes.json` 存在且只包含 `/api/private/*`；
 - 当前分支和待发布提交明确。
@@ -282,7 +274,7 @@ pnpm exec wrangler pages deploy dist \
 
 - `git rev-parse HEAD`；
 - `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 digest；
-- Production/private-payload 路径额外记录 `git submodule status thought-forest`；
+- 当前 v3 Production/private-payload 路径额外记录 Personal Infrastructure RuntimeBinding revision、contract SHA-256 与 Release manifest identity；v1/v2 rollback 才记录历史 Thought Forest private source identity；
 - 上游/物化索引生成时间或摘要；
 - `PRIVATE_INFRASTRUCTURE_JSON` 的 schema version 和 key 数量，不记录值；
 - 构建检查结果；
@@ -429,16 +421,9 @@ rg -n "ssh://|Cf-Access|PRIVATE_INFRASTRUCTURE" dist
 
 ## 13. 常见故障
 
-### 13.1 Cloudflare Git 构建在子模块处失败
+### 13.1 历史部署记录出现 private submodule 错误
 
-症状：
-
-```text
-fatal: could not read Username for 'https://github.com'
-Failed: error occurred while updating repository submodules
-```
-
-当前策略不是重新公开 vault，而是保持自动构建关闭并使用 Wrangler。不要反复重试失败的 Git deployment。
+旧架构的 Cloudflare Git build 可能仍保留 `could not read Username` / `updating repository submodules` 日志。当前 Digital Biome 已移除 Thought Forest gitlink；不要为兼容历史日志重新引入 submodule 或公开 Vault。日常交付继续使用 GitHub Actions + Wrangler Direct Upload。
 
 ### 13.2 同步缺少上游 asset-index
 
@@ -446,9 +431,9 @@ Failed: error occurred while updating repository submodules
 
 处理：
 
-1. 在 `thought-forest` 中生成 knowledge index；
-2. 确认 `thought-forest/generated/knowledge-index/asset-index.json` 存在；
-3. 或显式设置 `NOTES_UPSTREAM_GENERATED`；
+1. public build：重新执行 `pnpm sync`，让 committed lock 的 producer artifact 被重新验证与物化；
+2. Production/private workflow：确认 Release-pinned private checkout 已执行 `npm run kb:index`；
+3. 本地私有联调：显式设置 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED`；
 4. 重新同步、导出 payload 和构建。
 
 生产部署不应接受关键 merge 步骤被跳过。
@@ -499,7 +484,7 @@ Failed: error occurred while updating repository submodules
 7. 允许 GitHub Actions 使用当前仓库的 `GITHUB_TOKEN` 创建 PR 与 dispatch workflow；
 8. 保持 Cloudflare Git 自动 Production/Preview 构建关闭。
 
-`.github/workflows/sync-knowledge-public-v1.yml` 是唯一的 Thought Forest consumer-sync authority：它只在 producer 的 immutable publication 成功后响应 dispatch，并在同一个固定分支/PR 中原子更新 `knowledge-public-v1` lock 与 production private-payload gitlink，使两者始终绑定同一 source revision。读取 Thought Forest 使用只读 App token，写 Digital Biome PR 使用当前仓库 `GITHUB_TOKEN`。Production 只部署 Published Release 中的 `release-manifest.json` 和 `digital-biome-pages.tar.gz`，不会重建 public artifact；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
+`.github/workflows/sync-knowledge-public-v1.yml` 是唯一的 Thought Forest public-projection consumer-sync authority：它只在 producer 的 immutable publication 成功后响应 dispatch，并在固定 automation branch/PR 中更新 `knowledge-public-v1` lock。读取 producer Release 使用只读 App token，写 Digital Biome PR 使用当前仓库 `GITHUB_TOKEN`；若 bot-authored PR 被仓库策略置为 `action_required`，workflow 仅批准自己生成的该固定分支 CI 并等待结果。当前 v3 Production 不检出 Thought Forest 私有 source；它按 Release provenance 验证 `knowledge-public-v1`，并以 production-scoped read-only deploy key 读取 Personal Infrastructure RuntimeBinding。Published Release 的 Pages artifact 不会重建；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
 
 ## 15. 官方参考
 

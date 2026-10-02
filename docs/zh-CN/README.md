@@ -37,7 +37,7 @@ flowchart LR
     F --> G[Cloudflare Pages]
 ```
 
-CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thought Forest 的 producer-owned 公开投影：lock 同时绑定精确 source revision、immutable Release tag 与 SHA-256。构建先验证并物化该投影，再进入现有同步管道。私有 `thought-forest` gitlink 暂时只保留给本地编辑兼容与 release-pinned 私有 deployment payload。
+CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thought Forest 的 producer-owned 公开投影：lock 同时绑定精确 source revision、immutable Release tag 与 SHA-256。构建先验证并物化该投影，再进入现有同步管道。Digital Biome 不再保存 `thought-forest` gitlink。受保护基础设施值改由 Personal Infrastructure 独立拥有，并由 `data-products/digital-biome-private-infrastructure-v1.lock.json` 固定精确 revision 与 SHA-256；Production 只读取该受限 RuntimeBinding 并更新 encrypted Pages binding。
 
 ## 项目展示模型
 
@@ -66,12 +66,13 @@ CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thoug
 
 - Node.js 22+
 - pnpm 10+
-- Git（只有直接使用本地/私有 Vault 流程时才需要 submodule 支持）
+- Git
+- 已认证私有 producer 的 GitHub CLI (`gh`)，或显式 `GH_TOKEN`
 
 ### 本地开发
 
 ```bash
-git clone --recurse-submodules https://github.com/BakerSean168/digital-biome.git
+git clone https://github.com/BakerSean168/digital-biome.git
 cd digital-biome
 pnpm install
 cp .env.example .env
@@ -104,7 +105,6 @@ src/
 functions/              Cloudflare Pages Functions
 scripts/                同步、data-product、部署与校验工具
 data-products/           immutable producer projection lock
-thought-forest/         私有 Vault 兼容 / private-deployment gitlink
 docs/                   架构与运维文档
 ```
 

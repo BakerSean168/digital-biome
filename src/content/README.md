@@ -6,11 +6,11 @@
 
 | 集合 | 目录 | 格式 | 用途 |
 |------|------|------|------|
-| notes | `notes/obsidian/` | Markdown | Obsidian 笔记（同步生成） |
+| notes | `src/data/obsidian/` | Markdown | `knowledge-public-v1` 物化后同步生成 |
 
 ## 笔记系统
 
-笔记内容来自 Obsidian vault（通过 git submodule 管理），使用 `pnpm sync` 同步到 `notes/obsidian/` 目录。
+笔记事实由 Thought Forest / Obsidian 拥有。Digital Biome 使用 committed `knowledge-public-v1` lock 验证 producer-owned 公开投影，再通过 `pnpm sync` 物化到 `src/data/obsidian/`。
 
 ### 笔记 frontmatter 示例
 
@@ -75,11 +75,11 @@ draft: true
 
 ## 同步流程
 
-1. Obsidian vault 通过 git submodule 管理
-2. 运行 `pnpm sync` 将 vault 笔记同步到 `notes/obsidian/`
-3. 同步脚本会保留原始 frontmatter，补充缺失的 title 字段
-4. 图片资源同步到 `public/vault-assets/`
-5. 构建时 Astro Content Collections 读取同步后的笔记
+1. Thought Forest 发布 immutable `knowledge-public-v1` producer Release
+2. Digital Biome lock 固定 source revision、Release tag 与 artifact/manifest digest
+3. `pnpm sync` 验证 lock 并物化只读 source，再同步到 `src/data/obsidian/`
+4. 图片资源同步到 `public/vault-assets/`，索引生成到 `src/data/indexes/`
+5. 构建时 Astro Content Collections 读取同步后的公开笔记
 
 ## Schema 定义
 
