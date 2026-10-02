@@ -8,10 +8,6 @@ export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v4';
 export const RELEASE_SCHEMA = 'digital-biome.release/v4';
 export const PREVIOUS_CANDIDATE_SCHEMA = 'digital-biome.candidate/v3';
 export const PREVIOUS_RELEASE_SCHEMA = 'digital-biome.release/v3';
-export const V2_CANDIDATE_SCHEMA = 'digital-biome.candidate/v2';
-export const V2_RELEASE_SCHEMA = 'digital-biome.release/v2';
-export const LEGACY_CANDIDATE_SCHEMA = 'digital-biome.candidate/v1';
-export const LEGACY_RELEASE_SCHEMA = 'digital-biome.release/v1';
 
 const KNOWLEDGE_PRODUCER_REPOSITORY = 'BakerSean168/thought-forest';
 const INFRASTRUCTURE_PRODUCER_REPOSITORY = 'BakerSean168/personal-infrastructure';
@@ -201,33 +197,14 @@ export function createCandidate(inputValue: unknown, generatedAt = new Date().to
   return candidate;
 }
 
-function validateLegacyCandidate(candidate: JsonRecord): string[] {
-  const errors: string[] = [];
-  if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
-  if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (!SHA_RE.test(String(candidate.vaultSha ?? '')))
-    errors.push('vaultSha must be a full Git SHA');
-  if (!SHA256_RE.test(String(candidate.assetIndexSha256 ?? ''))) {
-    errors.push('assetIndexSha256 must be sha256:<64 hex>');
-  }
-  errors.push(...validateArtifact(candidate.artifact));
-  errors.push(...validateDigest(candidate, 'candidate'));
-  return errors;
-}
-
-function validateV2Candidate(candidate: JsonRecord): string[] {
+function validateV3Candidate(candidate: JsonRecord): string[] {
   const errors: string[] = [];
   if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
   errors.push(...validateKnowledgeIdentity(candidate.knowledge));
+  errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
   errors.push(...validateArtifact(candidate.artifact));
   errors.push(...validateDigest(candidate, 'candidate'));
-  return errors;
-}
-
-function validateV3Candidate(candidate: JsonRecord): string[] {
-  const errors = validateV2Candidate(candidate);
-  errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
   return errors;
 }
 
@@ -236,8 +213,6 @@ export function validateCandidate(value: unknown): string[] {
     return ['candidate must be an object'];
   }
   const candidate = value as JsonRecord;
-  if (candidate.schema === LEGACY_CANDIDATE_SCHEMA) return validateLegacyCandidate(candidate);
-  if (candidate.schema === V2_CANDIDATE_SCHEMA) return validateV2Candidate(candidate);
   if (candidate.schema === PREVIOUS_CANDIDATE_SCHEMA) return validateV3Candidate(candidate);
 
   const errors: string[] = [];
@@ -268,13 +243,7 @@ export function createReleaseManifest(
   const candidate = candidateValue as JsonRecord;
   const schema = candidate.schema;
   const releaseSchema =
-    schema === LEGACY_CANDIDATE_SCHEMA
-      ? LEGACY_RELEASE_SCHEMA
-      : schema === V2_CANDIDATE_SCHEMA
-        ? V2_RELEASE_SCHEMA
-        : schema === PREVIOUS_CANDIDATE_SCHEMA
-          ? PREVIOUS_RELEASE_SCHEMA
-          : RELEASE_SCHEMA;
+    schema === PREVIOUS_CANDIDATE_SCHEMA ? PREVIOUS_RELEASE_SCHEMA : RELEASE_SCHEMA;
 
   const release: JsonRecord = {
     schema: releaseSchema,
@@ -284,20 +253,16 @@ export function createReleaseManifest(
     ciRunId: candidate.ciRunId,
     candidateRunId,
     candidateManifestDigest: candidate.digest,
-    ...(schema === LEGACY_CANDIDATE_SCHEMA
-      ? { vaultSha: candidate.vaultSha, assetIndexSha256: candidate.assetIndexSha256 }
-      : schema === V2_CANDIDATE_SCHEMA
-        ? { knowledge: candidate.knowledge }
-        : schema === PREVIOUS_CANDIDATE_SCHEMA
-          ? {
-              knowledge: candidate.knowledge,
-              privateInfrastructure: candidate.privateInfrastructure,
-            }
-          : {
-              knowledge: candidate.knowledge,
-              publicInfrastructure: candidate.publicInfrastructure,
-              privateInfrastructure: candidate.privateInfrastructure,
-            }),
+    ...(schema === PREVIOUS_CANDIDATE_SCHEMA
+      ? {
+          knowledge: candidate.knowledge,
+          privateInfrastructure: candidate.privateInfrastructure,
+        }
+      : {
+          knowledge: candidate.knowledge,
+          publicInfrastructure: candidate.publicInfrastructure,
+          privateInfrastructure: candidate.privateInfrastructure,
+        }),
     artifact: candidate.artifact,
     generatedAt,
   };
@@ -320,28 +285,12 @@ function validateReleaseBase(release: JsonRecord): string[] {
   return errors;
 }
 
-function validateLegacyRelease(release: JsonRecord): string[] {
-  const errors = validateReleaseBase(release);
-  if (!SHA_RE.test(String(release.vaultSha ?? ''))) errors.push('vaultSha must be a full Git SHA');
-  if (!SHA256_RE.test(String(release.assetIndexSha256 ?? ''))) {
-    errors.push('assetIndexSha256 must be sha256:<64 hex>');
-  }
-  errors.push(...validateArtifact(release.artifact));
-  errors.push(...validateDigest(release, 'release'));
-  return errors;
-}
-
-function validateV2Release(release: JsonRecord): string[] {
+function validateV3Release(release: JsonRecord): string[] {
   const errors = validateReleaseBase(release);
   errors.push(...validateKnowledgeIdentity(release.knowledge));
+  errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
   errors.push(...validateArtifact(release.artifact));
   errors.push(...validateDigest(release, 'release'));
-  return errors;
-}
-
-function validateV3Release(release: JsonRecord): string[] {
-  const errors = validateV2Release(release);
-  errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
   return errors;
 }
 
@@ -350,8 +299,6 @@ export function validateReleaseManifest(value: unknown): string[] {
     return ['release must be an object'];
   }
   const release = value as JsonRecord;
-  if (release.schema === LEGACY_RELEASE_SCHEMA) return validateLegacyRelease(release);
-  if (release.schema === V2_RELEASE_SCHEMA) return validateV2Release(release);
   if (release.schema === PREVIOUS_RELEASE_SCHEMA) return validateV3Release(release);
 
   const errors = validateReleaseBase(release);

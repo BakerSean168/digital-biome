@@ -93,12 +93,9 @@ The public application artifact is built only during Candidate creation. Product
 
 ## Rollback compatibility
 
-Historical Release schemas remain valid:
+At the time of this ADR, v1/v2 historical deployment paths were temporarily retained. They were later retired after auditing the published release set: no deployable Published Release manifest still requires v1/v2, while `v0.6.0` and `v0.6.1` remain real v3 rollback targets.
 
-- v2 keeps the former exact private Thought Forest checkout path;
-- v1 keeps the historical gitlink + Vault SHA + private asset-index digest path.
-
-This preserves deployability of older Published Releases without reintroducing those dependencies into the current v3 path.
+Current deployability is intentionally bounded to v3/v4 rather than preserving unused historical source-layout dependencies indefinitely.
 
 ## Consequences
 
@@ -114,7 +111,7 @@ Negative:
 
 - Production has one additional read-only credential boundary for Personal Infrastructure.
 - A private binding revision change requires a Digital Biome lock update before a new Release can carry it.
-- v1/v2 rollback support retains some historical workflow complexity until those Releases are intentionally retired.
+- The temporary v1/v2 rollback compatibility described by this ADR has now been retired; only v3/v4 deployment schemas remain supported.
 
 ## Alternatives rejected
 

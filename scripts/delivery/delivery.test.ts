@@ -3,13 +3,9 @@ import { createHash } from 'node:crypto';
 import test from 'node:test';
 import {
   CANDIDATE_SCHEMA,
-  LEGACY_CANDIDATE_SCHEMA,
-  LEGACY_RELEASE_SCHEMA,
   PREVIOUS_CANDIDATE_SCHEMA,
   PREVIOUS_RELEASE_SCHEMA,
   RELEASE_SCHEMA,
-  V2_CANDIDATE_SCHEMA,
-  V2_RELEASE_SCHEMA,
   createCandidate,
   createReleaseManifest,
   releaseProvenanceMessage,
@@ -173,49 +169,19 @@ test('v3 delivery manifests remain valid for rollback deployment', () => {
   assert.deepEqual(previousRelease.privateInfrastructure, previousCandidate.privateInfrastructure);
 });
 
-test('v2 delivery manifests remain valid for rollback deployment', () => {
-  const v2Candidate = withDigest({
-    schema: V2_CANDIDATE_SCHEMA,
-    gitSha: sha,
-    ciRunId: '12345',
-    knowledge: knowledge(),
-    artifact: artifact(),
-    generatedAt: '2026-09-15T00:00:00.000Z',
-  });
-  assert.deepEqual(validateCandidate(v2Candidate), []);
-  const release = createReleaseManifest(
-    v2Candidate,
-    '0.5.5',
-    'v0.5.5',
-    '67888',
-    '2026-09-15T01:00:00.000Z',
-  );
-  assert.equal(release.schema, V2_RELEASE_SCHEMA);
-  assert.deepEqual(validateReleaseManifest(release), []);
-  assert.equal('privateInfrastructure' in release, false);
-});
-
-test('legacy v1 delivery manifests remain valid for rollback deployment', () => {
-  const legacyCandidate = withDigest({
-    schema: LEGACY_CANDIDATE_SCHEMA,
-    gitSha: sha,
-    ciRunId: '12345',
-    vaultSha: knowledgeSourceSha,
-    assetIndexSha256: hash,
-    artifact: artifact(),
-    generatedAt: '2026-09-01T00:00:00.000Z',
-  });
-
-  assert.deepEqual(validateCandidate(legacyCandidate), []);
-  const legacyRelease = createReleaseManifest(
-    legacyCandidate,
-    '0.5.0',
-    'v0.5.0',
-    '67890',
-    '2026-09-01T01:00:00.000Z',
-  );
-  assert.equal(legacyRelease.schema, LEGACY_RELEASE_SCHEMA);
-  assert.deepEqual(validateReleaseManifest(legacyRelease), []);
+test('retired v1/v2 delivery schemas are rejected', () => {
+  for (const schema of ['digital-biome.candidate/v1', 'digital-biome.candidate/v2']) {
+    assert.match(
+      validateCandidate({ schema }).join('; '),
+      /schema must be digital-biome\.candidate\/v4/,
+    );
+  }
+  for (const schema of ['digital-biome.release/v1', 'digital-biome.release/v2']) {
+    assert.match(
+      validateReleaseManifest({ schema }).join('; '),
+      /schema must be digital-biome\.release\/v4/,
+    );
+  }
 });
 
 test('release contract accepts only release-please-shaped commits', () => {

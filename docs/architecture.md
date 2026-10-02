@@ -164,7 +164,7 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 ### 6.1 已缓解：部署不再依赖单个本地工作区
 
-日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`。当前 v3 provenance 同时绑定主仓库 SHA、source CI、Candidate digest、immutable `knowledge-public-v1` producer identity、Personal Infrastructure private RuntimeBinding identity 与 Pages artifact digest；v2 / legacy v1 Release 仍可用于 rollback。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
+日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`。当前 v4 provenance 同时绑定主仓库 SHA、source CI、Candidate digest、immutable `knowledge-public-v1` producer identity、`infra-public-v2` producer identity、Personal Infrastructure private RuntimeBinding identity 与 Pages artifact digest；仅仍有真实已发布 Release 的 v3 保留为 rollback。v1/v2 delivery schema 已退休。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
 
 剩余外部依赖是 GitHub App、Production Environment 和 Cloudflare API token 的控制面配置。
 
@@ -174,7 +174,7 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 ### 6.3 已缓解：构建输入漂移
 
-`notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`。当前 v3 Production 不再需要知识仓库的私有 source layout：它只验证 `knowledge-public-v1` provenance 与 Personal Infrastructure RuntimeBinding；v2 / legacy v1 rollback 才保留历史 private Thought Forest 兼容路径。
+`notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`。当前 v4 Production 与受支持的 v3 rollback 都不需要知识仓库的私有 source layout：它们验证 `knowledge-public-v1` provenance 与 Personal Infrastructure RuntimeBinding；历史 v1/v2 private Thought Forest 兼容路径已经退休。
 
 ### 6.4 P1：同一 frontmatter 存在两套解析器
 

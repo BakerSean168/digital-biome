@@ -27,7 +27,6 @@
     "verify": "pnpm quality && pnpm check && pnpm check:edge && pnpm test:edge && pnpm test:unit && pnpm test:infrastructure",
     "verify:full": "pnpm verify && pnpm build:only && pnpm check:performance",
     "export:private": "tsx scripts/export-private-infrastructure.ts",
-    "export:private:legacy": "tsx scripts/export-private-infrastructure-legacy.ts",
     "deploy:cloudflare": "pnpm build && wrangler pages deploy dist --project-name digital-biome --branch main",
     "preview": "astro preview",
     "sync": "bash scripts/data-products/prepare-knowledge-public-v1.sh && bash scripts/data-products/prepare-infra-public-v2.sh",
