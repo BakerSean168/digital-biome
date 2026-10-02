@@ -27,13 +27,13 @@ Digital Biome 不再内嵌 Thought Forest。`pnpm sync` 与 CI 使用同一 comm
 
 实际路径以 `notes.config.ts` 为准：
 
-| 输入 | 输出 | 说明 |
-|---|---|---|
-| `<selected-source>/z/**/*.md` | `src/data/obsidian/**/*.md` | 普通知识笔记 |
-| `<selected-source>/assets/**/*.md` | `src/data/obsidian/assets/**/*.md` | host/service/tool/network 资产笔记 |
-| `<selected-source>/config/**/*.md` | `src/data/obsidian/config/**/*.md` | 构建配置；不进入公开知识列表 |
-| `<selected-source>/sources/attachments/**` | `public/vault-assets/` | producer 允许公开且被引用的媒体 |
-| `<selected-source>/generated/knowledge-index/*.json` | `src/data/indexes/*.json` | 合并/替换后的查询索引 |
+| 输入                                                 | 输出                               | 说明                               |
+| ---------------------------------------------------- | ---------------------------------- | ---------------------------------- |
+| `<selected-source>/z/**/*.md`                        | `src/data/obsidian/**/*.md`        | 普通知识笔记                       |
+| `<selected-source>/assets/**/*.md`                   | `src/data/obsidian/assets/**/*.md` | host/service/tool/network 资产笔记 |
+| `<selected-source>/config/**/*.md`                   | `src/data/obsidian/config/**/*.md` | 构建配置；不进入公开知识列表       |
+| `<selected-source>/sources/attachments/**`           | `public/vault-assets/`             | producer 允许公开且被引用的媒体    |
+| `<selected-source>/generated/knowledge-index/*.json` | `src/data/indexes/*.json`          | 合并/替换后的查询索引              |
 
 CI / Candidate 与默认本地同步中的 `<selected-source>` 都是 `.pds-runtime/knowledge-public-v1/source/`；直接私有联调时它可以是显式选择的外部 Thought Forest checkout。
 
@@ -41,9 +41,9 @@ CI / Candidate 与默认本地同步中的 `<selected-source>` 都是 `.pds-runt
 
 ## 3. 上游索引解析顺序
 
-`notes.config.ts` 只读取当前显式选择的 source root 及其 `generated/`，不会自动搜索父目录、相邻克隆或其他工作区。默认值就是已验证的 `.pds-runtime/knowledge-public-v1/source/`；Production private-payload 路径会显式切换到 release-pinned 的临时私有 checkout。
+`notes.config.ts` 只读取当前显式选择的 source root 及其 `generated/`，不会自动搜索父目录、相邻克隆或其他工作区。默认值就是已验证的 `.pds-runtime/knowledge-public-v1/source/`。当前 v3 Production 的 private payload 不再切换知识 source root，而是单独验证 Personal Infrastructure RuntimeBinding。
 
-`prepare-knowledge-public-v1.sh` 在物化前先验证 committed lock 与 producer Release；`pnpm sync` 直接调用该入口。私有 producer 的 `kb:index` 只在 Production 临时 checkout 或显式本地私有联调中执行。最终所有模式都向同一 sync pipeline 提供 source layout，但 Digital Biome repository 不拥有该 layout。发布前必须确认：
+`prepare-knowledge-public-v1.sh` 在物化前先验证 committed lock 与 producer Release；`pnpm sync` 直接调用该入口。Thought Forest 私有 checkout 仅保留给显式本地 authoring/debug 与 v1/v2 历史 rollback；当前 v3 Production 不运行私有知识库的 `kb:index`。发布前必须确认：
 
 ```text
 <resolved-generated>/knowledge-index/asset-index.json
@@ -192,7 +192,7 @@ pnpm build:only
 
 ### 8.1 CI 无法获取 `knowledge-public-v1`
 
-先检查 `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 SHA-256 是否一致，再检查只读 GitHub App 是否安装到 `digital-biome` 与 `thought-forest`。不要改成 mutable `latest` URL，也不要跳过 digest 校验。
+先检查 `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 SHA-256 是否一致，再检查只读 GitHub App 是否安装到 `digital-biome` 与 `thought-forest`。私有基础设施另检查 `data-products/digital-biome-private-infrastructure-v1.lock.json` 的 Personal Infrastructure revision / contract path / SHA-256，以及 production-scoped read-only deploy key。不要使用 mutable ref，也不要跳过 digest 校验。
 
 ### 8.2 无法读取私有 Thought Forest
 
@@ -200,7 +200,7 @@ pnpm build:only
 
 ### 8.3 上游索引缺失
 
-CI 应重新运行 `prepare-knowledge-public-v1.sh`，而不是手工制造 index。仅在显式选择私有 producer checkout 的开发/Production 路径中才运行其知识索引生成命令；开发环境确需读取另一个已生成目录时，可显式设置 `NOTES_UPSTREAM_GENERATED`。
+CI 应重新运行 `prepare-knowledge-public-v1.sh`，而不是手工制造 index。只有显式本地 authoring/debug 或 v1/v2 rollback 才运行私有 Thought Forest 的知识索引生成命令；当前 v3 Production 只验证独立 private RuntimeBinding。开发环境确需读取另一个已生成目录时，可显式设置 `NOTES_UPSTREAM_GENERATED`。
 
 ### 8.4 重复 Content ID
 

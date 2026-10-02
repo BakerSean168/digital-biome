@@ -37,7 +37,7 @@ flowchart LR
     F --> G[Cloudflare Pages]
 ```
 
-CI and Candidate builds pin Thought Forest through `data-products/knowledge-public-v1.lock.json`, which identifies an immutable producer Release by exact source revision and SHA-256. The build downloads and validates that producer-owned public projection before materializing it into the existing sync pipeline. Digital Biome no longer embeds Thought Forest as a gitlink; production checks out the exact private producer revision ephemerally only while regenerating protected deployment inputs.
+CI and Candidate builds pin Thought Forest through `data-products/knowledge-public-v1.lock.json`, which identifies an immutable producer Release by exact source revision and SHA-256. The build downloads and validates that producer-owned public projection before materializing it into the existing sync pipeline. Digital Biome no longer embeds Thought Forest as a gitlink. Protected infrastructure values are owned separately by Personal Infrastructure and pinned through `data-products/digital-biome-private-infrastructure-v1.lock.json`; Production verifies that exact private RuntimeBinding before updating encrypted Pages bindings.
 
 ## Project showcase model
 

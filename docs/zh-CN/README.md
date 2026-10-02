@@ -37,7 +37,7 @@ flowchart LR
     F --> G[Cloudflare Pages]
 ```
 
-CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thought Forest 的 producer-owned 公开投影：lock 同时绑定精确 source revision、immutable Release tag 与 SHA-256。构建先验证并物化该投影，再进入现有同步管道。Digital Biome 不再保存 `thought-forest` gitlink；Production 只在生成受保护 deployment payload 时临时检出 Release 记录的精确私有 producer revision。
+CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thought Forest 的 producer-owned 公开投影：lock 同时绑定精确 source revision、immutable Release tag 与 SHA-256。构建先验证并物化该投影，再进入现有同步管道。Digital Biome 不再保存 `thought-forest` gitlink。受保护基础设施值改由 Personal Infrastructure 独立拥有，并由 `data-products/digital-biome-private-infrastructure-v1.lock.json` 固定精确 revision 与 SHA-256；Production 只读取该受限 RuntimeBinding 并更新 encrypted Pages binding。
 
 ## 项目展示模型
 

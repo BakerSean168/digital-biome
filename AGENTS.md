@@ -49,10 +49,12 @@ data-products/           # Immutable producer projection locks
 ## Code Style & Conventions
 
 ### 通用
+
 - TypeScript 5.9.x，遵循标准规范
 - 组件格式：`.astro` 文件
 
 ### 样式与设计语言 (Basalt & Moss)
+
 - **核心风格**: 极客侘寂风 (Geek Wabi-Sabi)。严禁使用弥散阴影、大面积光晕和过大的圆角。
 - **设计规范文件**: `docs/design-system-basalt-and-moss.md`。在新建任何组件前，必须参考此文档。
 - **使用 Tailwind v4 utility classes**，不要写 scoped `<style>` 块。
@@ -63,22 +65,25 @@ data-products/           # Immutable producer projection locks
   - 文字: `--text-main` 冷白高对比度 (映射为 `text-foreground`)
   - 次要文字: `--text-muted` (映射为 `text-muted-foreground`)
   - 边框: `--border-color` (映射为 `border-border`，大量用于 1px solid 边框)
-- **UI 元素**: 
+- **UI 元素**:
   - 杜绝使用 `rounded-xl`、`rounded-2xl`，使用直角或 `rounded-sm`。
   - 强调终端视觉效果（Terminal-like），多用等宽字体 (`font-mono`) 配合大写和字距 (`tracking-widest`)，如按钮 `[ BUTTON_TEXT ]`。
 
 ### 图标
+
 - **统一使用 `@lucide/astro`**，不要用 emoji 或内联 SVG
 - 导入方式：`import { IconName } from '@lucide/astro'`
 - 用法：`<IconName size={20} />`
 - 图标列表参考：https://lucide.dev/icons/
 
 ### 布局
+
 - 所有页面必须通过 `BaseLayout.astro` 渲染 `<html>` 壳
 - 子 layout（DashboardLayout、NotesLayout）嵌套 BaseLayout
 - BaseLayout 支持 props: `title`, `description?`, `image?`, `type?`, `bodyClass?`, `showHeader?`, `showFooter?`
 
 ### 标签系统
+
 - 笔记使用层级标签，格式: `维度/子分类/...`（如 `tech/lang/typescript`）
 - 常见维度: `status/`, `tech/`, `type/`, `life/`, `website/`
 - 标签显示时取叶子节点名称，hover 显示完整路径
@@ -94,6 +99,7 @@ data-products/           # Immutable producer projection locks
 - `pnpm verify` / `pnpm verify:full` 覆盖诊断、测试、生产构建、泄漏扫描和性能预算
 
 <!-- MANUAL ADDITIONS START -->
+
 ## 笔记数据源配置
 
 `notes.config.ts` 默认读取 `.pds-runtime/knowledge-public-v1/source`。该目录由
@@ -116,6 +122,8 @@ NOTES_UPSTREAM_GENERATED=/path/to/thought-forest/generated \
 pnpm sync:content
 ```
 
-Production 不依赖仓库 gitlink；它按 Release manifest 的 source revision 临时检出私有
-Thought Forest，只用于重建受保护 deployment payload，然后部署既有 immutable Pages artifact。
+Production 不依赖仓库 gitlink。当前 v3 Release 将公开知识投影与私有基础设施绑定分开：
+`knowledge-public-v1` 继续由 Thought Forest 发布；受保护 deployment payload 则按 Release manifest
+固定的 Personal Infrastructure revision + SHA-256 读取 `digital-biome-private-infrastructure-v1`
+RuntimeBinding，然后部署既有 immutable Pages artifact。v1/v2 仅作为历史 rollback 兼容路径。
 <!-- MANUAL ADDITIONS END -->

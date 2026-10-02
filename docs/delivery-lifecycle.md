@@ -42,7 +42,7 @@ The invariants are:
 - Production consumes only a non-draft, non-prerelease GitHub Release that passed exact-SHA main CI.
 - Pages Functions are compiled during Candidate creation. Staging and Production upload the compiled `dist/_worker.js` with `--no-bundle`.
 - Candidate/Release provenance binds the immutable `knowledge-public-v1` producer Release (source revision + artifact/manifest SHA-256) separately from the Pages artifact.
-- Private deployment inputs are regenerated from an ephemeral private Thought Forest checkout pinned to the same producer revision; the private source is not part of the Digital Biome repository lifecycle and does not rebuild the public application artifact.
+- Current v3 provenance also binds the Personal Infrastructure `digital-biome-private-infrastructure-v1` RuntimeBinding by exact producer revision, contract path and SHA-256. Production verifies that binding independently; it does not need Thought Forest's private source layout.
 
 ## 1. Integration and Candidate
 
@@ -131,9 +131,9 @@ Before the production Environment is mutated, the workflow verifies:
 Inside the `production` Environment gate it then:
 
 1. checks out the exact release source; for legacy v1 rollback only, Actions initializes the historical gitlink that still exists in that old source commit;
-2. for v2 Releases, separately checks out private Thought Forest at the exact source revision recorded in the Release manifest, re-fetches the matching `knowledge-public-v1` Release, and verifies both identities agree;
-3. for legacy v1 Releases only, preserves the previous Vault SHA + private asset-index hash verification path;
-4. regenerates only private deployment inputs and encrypted Pages bindings from the exact private source and runs infrastructure contracts;
+2. for current v3 Releases, re-fetches the matching `knowledge-public-v1` Release, checks out the exact Personal Infrastructure revision through a production-scoped read-only deploy key, verifies the RuntimeBinding SHA-256, and validates consumer coverage;
+3. for v2 Releases, preserves the former ephemeral private Thought Forest checkout path; for legacy v1 Releases, preserves the historical Vault SHA + private asset-index hash path;
+4. renders only the encrypted private Pages binding from the verified Personal Infrastructure contract (or the historical rollback source for v1/v2);
 5. unpacks the already-built Release artifact;
 6. uploads it with Wrangler `pages deploy ... --no-bundle`;
 7. records the Cloudflare deployment identity;
@@ -145,16 +145,17 @@ The public application artifact is never rebuilt in this phase. Candidate Action
 
 Required repository configuration:
 
-| Scope                             | Name                     | Purpose                                   |
-| --------------------------------- | ------------------------ | ----------------------------------------- |
-| Repository variable               | `VAULT_APP_CLIENT_ID`    | Create short-lived producer/Vault read token |
-| Repository secret                 | `VAULT_APP_PRIVATE_KEY`  | GitHub App private key                       |
-| Repository variable               | `STAGING_DEPLOY_ENABLED` | Enables optional staging promotion        |
-| `staging` Environment secret      | `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare account for staging preview    |
-| `staging` Environment secret      | `CLOUDFLARE_API_TOKEN`   | Pages Edit credential for staging preview |
-| `production` Environment secret   | `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare account for production         |
-| `production` Environment secret   | `CLOUDFLARE_API_TOKEN`   | Pages Edit credential for production      |
-| `production` Environment variable | `PRODUCTION_URL`         | Custom-domain smoke target                |
+| Scope                             | Name                                 | Purpose                                             |
+| --------------------------------- | ------------------------------------ | --------------------------------------------------- |
+| Repository variable               | `VAULT_APP_CLIENT_ID`                | Create short-lived producer/Vault read token        |
+| Repository secret                 | `VAULT_APP_PRIVATE_KEY`              | GitHub App private key                              |
+| Repository variable               | `STAGING_DEPLOY_ENABLED`             | Enables optional staging promotion                  |
+| `staging` Environment secret      | `CLOUDFLARE_ACCOUNT_ID`              | Cloudflare account for staging preview              |
+| `staging` Environment secret      | `CLOUDFLARE_API_TOKEN`               | Pages Edit credential for staging preview           |
+| `production` Environment secret   | `CLOUDFLARE_ACCOUNT_ID`              | Cloudflare account for production                   |
+| `production` Environment secret   | `CLOUDFLARE_API_TOKEN`               | Pages Edit credential for production                |
+| `production` Environment secret   | `PERSONAL_INFRASTRUCTURE_DEPLOY_KEY` | Read-only deploy key for the pinned private binding |
+| `production` Environment variable | `PRODUCTION_URL`                     | Custom-domain smoke target                          |
 
 The `staging` Environment is intentionally disabled by default until its Cloudflare credentials are provisioned. Candidate creation does not depend on staging being enabled.
 

@@ -25,7 +25,7 @@
 
 | 工具            | 要求                                         | 来源                                    |
 | --------------- | -------------------------------------------- | --------------------------------------- |
-| Git             | 标准 clone / worktree                       | 系统安装                                |
+| Git             | 标准 clone / worktree                        | 系统安装                                |
 | Node.js         | 24.x                                         | `.node-version`、`package.json#engines` |
 | pnpm            | 10.x                                         | `packageManager: pnpm@10.32.1`          |
 | Wrangler        | 项目依赖 4.x                                 | `pnpm install`                          |
@@ -274,7 +274,7 @@ pnpm exec wrangler pages deploy dist \
 
 - `git rev-parse HEAD`；
 - `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 digest；
-- Production/private-payload 路径额外记录 Release manifest 的 Thought Forest source revision 与临时 private checkout `git rev-parse HEAD`；
+- 当前 v3 Production/private-payload 路径额外记录 Personal Infrastructure RuntimeBinding revision、contract SHA-256 与 Release manifest identity；v1/v2 rollback 才记录历史 Thought Forest private source identity；
 - 上游/物化索引生成时间或摘要；
 - `PRIVATE_INFRASTRUCTURE_JSON` 的 schema version 和 key 数量，不记录值；
 - 构建检查结果；
@@ -484,7 +484,7 @@ rg -n "ssh://|Cf-Access|PRIVATE_INFRASTRUCTURE" dist
 7. 允许 GitHub Actions 使用当前仓库的 `GITHUB_TOKEN` 创建 PR 与 dispatch workflow；
 8. 保持 Cloudflare Git 自动 Production/Preview 构建关闭。
 
-`.github/workflows/sync-knowledge-public-v1.yml` 是唯一的 Thought Forest consumer-sync authority：它只在 producer 的 immutable publication 成功后响应 dispatch，并在固定 automation branch/PR 中更新 `knowledge-public-v1` lock。读取 producer Release 使用只读 App token，写 Digital Biome PR 使用当前仓库 `GITHUB_TOKEN`；若 bot-authored PR 被仓库策略置为 `action_required`，workflow 仅批准自己生成的该固定分支 CI 并等待结果。Production 根据 Release manifest 临时检出同一 Thought Forest source revision，只部署 Published Release 中的 `release-manifest.json` 和 `digital-biome-pages.tar.gz`，不会重建 public artifact；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
+`.github/workflows/sync-knowledge-public-v1.yml` 是唯一的 Thought Forest public-projection consumer-sync authority：它只在 producer 的 immutable publication 成功后响应 dispatch，并在固定 automation branch/PR 中更新 `knowledge-public-v1` lock。读取 producer Release 使用只读 App token，写 Digital Biome PR 使用当前仓库 `GITHUB_TOKEN`；若 bot-authored PR 被仓库策略置为 `action_required`，workflow 仅批准自己生成的该固定分支 CI 并等待结果。当前 v3 Production 不检出 Thought Forest 私有 source；它按 Release provenance 验证 `knowledge-public-v1`，并以 production-scoped read-only deploy key 读取 Personal Infrastructure RuntimeBinding。Published Release 的 Pages artifact 不会重建；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
 
 ## 15. 官方参考
 
