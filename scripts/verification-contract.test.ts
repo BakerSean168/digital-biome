@@ -146,6 +146,10 @@ test('production v3 consumes the pinned Personal Infrastructure runtime binding'
   )?.[0];
   assert.ok(bindingStep, 'encrypted binding step must exist');
   assert.match(bindingStep, /--contract "\$PDS_PRIVATE_INFRASTRUCTURE_BINDING"/);
+  assert.match(
+    bindingStep,
+    /digital-biome\.release\/v2\|digital-biome\.release\/v1\)[\s\S]*pnpm export:private:legacy/,
+  );
 });
 
 test('quality gates are part of the canonical verify contract', () => {

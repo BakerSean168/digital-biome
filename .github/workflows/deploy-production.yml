@@ -482,7 +482,7 @@ jobs:
                 --out "$payload_file"
               ;;
             digital-biome.release/v2|digital-biome.release/v1)
-              pnpm export:private -- --out "$payload_file"
+              pnpm export:private:legacy -- --out "$payload_file"
               ;;
             *)
               echo "unsupported Release manifest schema: $MANIFEST_SCHEMA" >&2
