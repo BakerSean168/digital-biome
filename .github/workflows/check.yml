@@ -21,6 +21,7 @@ on:
       - 'astro.config.mjs'
       - 'notes.config.ts'
       - '.github/workflows/**'
+      - 'data-products/**'
       - 'thought-forest'
       - 'docs/**'
       - 'AGENTS.md'
@@ -39,7 +40,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Create short-lived Vault token
+      - name: Create short-lived knowledge product token
         id: vault-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -55,7 +56,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           token: ${{ steps.vault-token.outputs.token }}
-          submodules: recursive
           persist-credentials: false
 
       - name: Setup pnpm
@@ -70,13 +70,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Vault index dependencies
-        run: npm --prefix thought-forest ci --ignore-scripts
-
-      - name: Build and sync the pinned Vault
-        run: pnpm sync
+      - name: Fetch and materialize pinned knowledge-public-v1
+        env:
+          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
+        run: scripts/data-products/prepare-knowledge-public-v1.sh
 
       - name: Run verification and production build gates
+        env:
+          NOTES_VAULT_ROOT: ${{ github.workspace }}/.pds-runtime/knowledge-public-v1/source
+          NOTES_UPSTREAM_GENERATED: ${{ github.workspace }}/.pds-runtime/knowledge-public-v1/source/generated
         run: pnpm verify:full
 
       - name: Install Playwright Chromium

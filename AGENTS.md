@@ -28,8 +28,9 @@ src/
 └── view-models/         # Browser and page presentation models
 
 functions/               # Cloudflare Pages Functions
-scripts/                 # Sync, validation, and build tooling
-thought-forest/          # Pinned private knowledge-source submodule
+scripts/                 # Sync, data-product, validation, and build tooling
+data-products/           # Immutable producer projection locks
+thought-forest/          # Private Vault compatibility/private-deployment gitlink
 ```
 
 ## Commands & Development Specifications
@@ -37,7 +38,7 @@ thought-forest/          # Pinned private knowledge-source submodule
 - **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步。
 - **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm check` 进行 Astro、内容和 TypeScript 诊断。
 - **可复用验证门禁**：`pnpm verify` 运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
-- **提交前运行完整门禁**：同步 pinned Thought Forest 后运行 `pnpm verify:full`；仅需构建时可使用 `pnpm build:only`。
+- **提交前运行完整门禁**：CI/Candidate 路径先用 `scripts/data-products/prepare-knowledge-public-v1.sh` 验证并物化 committed lock，再运行 `pnpm verify:full`；直接编辑 Vault 的本地兼容路径仍可先执行 `pnpm sync`。仅需构建已物化内容时使用 `pnpm build:only`。
 
 ## Context Workflow
 
@@ -118,7 +119,9 @@ export const notesConfig = {
 };
 ```
 
-### 使用步骤
+### 本地直接使用私有 Vault 的兼容步骤
+
+CI / Candidate 不读取该 gitlink，而是消费 `data-products/knowledge-public-v1.lock.json`。只有本地直接编辑/同步私有 Vault 或生成 production 私有 payload 时需要以下步骤。
 
 1. 确保 Obsidian vault submodule 已初始化：
    ```bash

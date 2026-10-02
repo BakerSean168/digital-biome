@@ -41,6 +41,7 @@ coverage/
 # Temporary files
 *.log
 tmp/
+.pds-runtime/
 .codegraph/
 repomix-output.*
 

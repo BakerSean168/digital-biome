@@ -64,7 +64,7 @@ jobs:
     outputs:
       candidate_digest: ${{ steps.identity.outputs.candidate_digest }}
     steps:
-      - name: Create short-lived Vault token
+      - name: Create short-lived knowledge product token
         id: vault-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -76,13 +76,12 @@ jobs:
             thought-forest
           permission-contents: read
 
-      - name: Checkout exact application and Vault revisions
+      - name: Checkout exact application revision
         uses: actions/checkout@v6
         with:
           token: ${{ steps.vault-token.outputs.token }}
           ref: ${{ needs.resolve.outputs.revision }}
           fetch-depth: 0
-          submodules: recursive
           persist-credentials: false
 
       - name: Setup pnpm
@@ -95,14 +94,16 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile
-          npm --prefix thought-forest ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch and materialize pinned knowledge-public-v1
+        env:
+          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
+        run: scripts/data-products/prepare-knowledge-public-v1.sh
 
       - name: Build exact-SHA public artifact
         run: |
           set -euo pipefail
-          pnpm sync
           pnpm build:only
 
       - name: Compile Pages Functions into the deployable artifact
@@ -125,24 +126,33 @@ jobs:
           artifact=digital-biome-pages.tar.gz
           tar -czf "$artifact" dist
 
-          vault_sha="$(git -C thought-forest rev-parse HEAD)"
-          asset_hash="$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
+          knowledge_source_sha="$(jq -r .sourceRevision data-products/knowledge-public-v1.lock.json)"
+          knowledge_release_tag="$(jq -r .releaseTag data-products/knowledge-public-v1.lock.json)"
+          knowledge_artifact_sha256="$(jq -r .artifact.sha256 data-products/knowledge-public-v1.lock.json)"
+          knowledge_manifest_sha256="$(jq -r .manifest.sha256 data-products/knowledge-public-v1.lock.json)"
           artifact_hash="$(sha256sum "$artifact" | cut -d ' ' -f 1)"
           artifact_bytes="$(stat -c '%s' "$artifact")"
 
           jq -n \
             --arg gitSha "$REVISION" \
             --arg ciRunId "$CI_RUN_ID" \
-            --arg vaultSha "$vault_sha" \
-            --arg assetIndexSha256 "sha256:$asset_hash" \
+            --arg knowledgeSourceSha "$knowledge_source_sha" \
+            --arg knowledgeReleaseTag "$knowledge_release_tag" \
+            --arg knowledgeArtifactSha256 "$knowledge_artifact_sha256" \
+            --arg knowledgeManifestSha256 "$knowledge_manifest_sha256" \
             --arg file "$artifact" \
             --arg artifactSha256 "sha256:$artifact_hash" \
             --argjson bytes "$artifact_bytes" \
             '{
               gitSha:$gitSha,
               ciRunId:$ciRunId,
-              vaultSha:$vaultSha,
-              assetIndexSha256:$assetIndexSha256,
+              knowledge:{
+                producerRepository:"BakerSean168/thought-forest",
+                sourceRevision:$knowledgeSourceSha,
+                releaseTag:$knowledgeReleaseTag,
+                artifactSha256:$knowledgeArtifactSha256,
+                manifestSha256:$knowledgeManifestSha256
+              },
               artifact:{file:$file,sha256:$artifactSha256,bytes:$bytes}
             }' > reports/candidate/input.json
 

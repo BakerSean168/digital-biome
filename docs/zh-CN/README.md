@@ -37,7 +37,7 @@ flowchart LR
     F --> G[Cloudflare Pages]
 ```
 
-仓库通过 Git submodule 固定 Thought Forest revision，从而保证构建可复现。开发过程中，内容通过与 CI 相同的索引和同步管道重新生成，而不是直接修改自动生成的 `src/data` 输出。
+CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thought Forest 的 producer-owned 公开投影：lock 同时绑定精确 source revision、immutable Release tag 与 SHA-256。构建先验证并物化该投影，再进入现有同步管道。私有 `thought-forest` gitlink 暂时只保留给本地编辑兼容与 release-pinned 私有 deployment payload。
 
 ## 项目展示模型
 
@@ -66,7 +66,7 @@ flowchart LR
 
 - Node.js 22+
 - pnpm 10+
-- 支持 submodule 的 Git
+- Git（只有直接使用本地/私有 Vault 流程时才需要 submodule 支持）
 
 ### 本地开发
 
@@ -102,8 +102,9 @@ src/
 └── view-models/        展示层适配器
 
 functions/              Cloudflare Pages Functions
-scripts/                同步、索引、部署与校验工具
-thought-forest/         固定 revision 的知识源 submodule
+scripts/                同步、data-product、部署与校验工具
+data-products/           immutable producer projection lock
+thought-forest/         私有 Vault 兼容 / private-deployment gitlink
 docs/                   架构与运维文档
 ```
 
@@ -127,7 +128,7 @@ Thought Forest 持有规范化的知识和资产元数据；Digital Biome 负责
 这种分离是有意设计的：
 
 - 即使没有网站，知识仍然可以在 Obsidian 中独立使用；
-- 网站可以从固定的知识 revision 重新构建；
+- CI / Candidate 可以从 immutable `knowledge-public-v1` projection lock 可复现地重建公开内容；
 - private/internal 资产元数据可以留在公开输出之外；
 - 项目卡可以持续演进，而不需要在前端代码中复制项目事实。
 

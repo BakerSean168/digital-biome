@@ -1,6 +1,6 @@
 # Digital Biome 系统架构
 
-> 状态基线：2026-07-18
+> 状态基线：2026-10-02
 > 本文描述当前已经运行在生产环境中的真实架构，同时明确尚未解决的问题。它不是理想化设计稿。
 
 ## 1. 系统定位
@@ -10,20 +10,23 @@ Digital Biome 是一个由私有 Obsidian 知识库生成的 Astro 静态站点�
 - 可公开发布的知识笔记、索引、标签、双链和展示型资产信息；
 - 只允许授权用户读取的基础设施 IP、SSH 地址和内部入口。
 
-因此，系统不是单纯的静态博客，而是“私有内容源 + 构建期公开投影 + 少量边缘私有 API”的混合架构。
+因此，系统不是单纯的静态博客，而是“私有 canonical source + producer-owned 公网投影 + 少量边缘私有 API”的混合架构。公开构建不再直接读取私有 Vault gitlink，而是消费被 source revision 与 SHA-256 锁定的 `knowledge-public-v1`。
 
 ## 2. 当前系统上下文
 
 ```mermaid
 flowchart LR
-  Author["作者 / Obsidian"] --> Vault["thought-forest\n私有 Git 仓库"]
-  Vault --> Sync["pnpm sync\n同步、标准化、脱敏、建索引"]
-  Sync --> PublicData["公开投影\nsrc/data/obsidian + indexes"]
-  Vault --> Exporter["export:private\n生成私有 payload"]
-  Exporter --> Secret["Cloudflare Pages Secret\nPRIVATE_INFRASTRUCTURE_JSON"]
+  Author["作者 / Obsidian"] --> Vault["thought-forest\n私有 canonical repo"]
+  Vault --> Projection["knowledge-public-v1\nproducer-owned + redacted"]
+  Projection --> ProducerRelease["immutable producer Release\nsource SHA + digests"]
+  ProducerRelease --> Lock["Digital Biome lock\ndata-products/*.lock.json"]
+  Lock --> Materialize["verify + materialize\n.pds-runtime source"]
+  Materialize --> PublicData["src/data/obsidian + indexes"]
   PublicData --> Build["Astro + Pagefind\n静态构建"]
   Build --> LeakGate["postbuild\n泄漏门禁"]
   LeakGate --> Pages["Cloudflare Pages\n静态站点"]
+  Vault --> Exporter["production only\nexport:private"]
+  Exporter --> Secret["Cloudflare Pages Secret\nPRIVATE_INFRASTRUCTURE_JSON"]
   Secret --> Functions["Pages Functions\n/api/private/*"]
   Access["Cloudflare Access"] --> Functions
   Functions --> Browser["授权浏览器\n客户端解锁私有字段"]
@@ -43,11 +46,11 @@ flowchart LR
 | `thought-forest/config/`                    | Dashboard、技能和运维配置 | 可参与构建，但 `obsidian/config/` 不进入公开知识列表 |
 | `thought-forest/generated/knowledge-index/` | 上游完整 YAML 解析结果    | 只在同步阶段读取；私有 URL 会被替换为 `private_ref`  |
 
-`thought-forest` 是私有 Git 子模块。`digital-biome` 的单个提交不足以独立完成构建，还需要对应的子模块提交以及上游生成索引。
+Thought Forest 仍是私有 canonical repository，但公开构建边界是 `knowledge-public-v1`。Digital Biome 提交通过 `data-products/knowledge-public-v1.lock.json` 固定 producer repository、source revision、immutable Release tag、artifact SHA-256 与 manifest SHA-256，因此 CI / Candidate 不初始化私有 gitlink也能完成可复现公开构建。仓库中的 `thought-forest` gitlink暂时保留给本地 authoring 兼容与 production 私有 payload。
 
 ### 3.2 同步与投影层
 
-入口为 `pnpm sync`，实现位于 `scripts/sync/`：
+CI / Candidate 入口为 `scripts/data-products/prepare-knowledge-public-v1.sh`，它先验证并物化 producer projection；随后复用 `scripts/sync/`。本地直接使用私有 Vault 时仍可运行 `pnpm sync`：
 
 1. 解析 `notes.config.ts`，确定 vault 和上游索引位置；
 2. 扫描笔记、资产笔记和配置目录；
@@ -154,23 +157,23 @@ manual select vX.Y.Z -> production Environment approval
   -> private binding refresh -> immutable artifact upload -> smoke checks
 ```
 
-Candidate 阶段同时编译 Astro 静态资源与 Pages Functions，并保存带 SHA-256 的不可变 artifact；Release 只提升该 artifact；Production 使用 `--no-bundle` 上传同一 artifact，不重新构建应用。私有 `thought-forest` 仍通过限定两个仓库的短期 GitHub App token 检出，用于 release-pinned private payload 验证与生成。
+Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 producer Release，编译 Astro 静态资源与 Pages Functions，并保存带 SHA-256 的不可变 artifact；Release 只提升该 artifact。Production 使用 `--no-bundle` 上传同一 artifact，不重新构建应用。私有 `thought-forest` 只在 production 通过限定两个仓库的短期 GitHub App token 检出，用于同 source revision 的 private payload 验证与生成。
 
 ## 6. 已知架构问题
 
 ### 6.1 已缓解：部署不再依赖单个本地工作区
 
-日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`，以主仓库 SHA、source CI、Candidate digest、Vault SHA 和资产索引 hash 固定 provenance。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
+日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`。v2 provenance 绑定主仓库 SHA、source CI、Candidate digest、immutable `knowledge-public-v1` producer identity 与 Pages artifact digest；legacy v1 Release 的 Vault SHA + asset-index hash 仍可用于 rollback。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
 
 剩余外部依赖是 GitHub App、Production Environment 和 Cloudflare API token 的控制面配置。
 
 ### 6.2 已缓解：GitHub Actions 私有子模块凭据
 
-相关工作流现在先创建一小时内有效、Contents Read 的 GitHub App installation token，并限定 `digital-biome` 与 `thought-forest`。子模块更新工作流使用当前仓库内置的 `GITHUB_TOKEN` 创建分支和 PR，不向 App 或 Vault 授予写权限。
+相关工作流创建一小时内有效、Contents Read 的 GitHub App installation token，并限定 `digital-biome` 与 `thought-forest`。CI / Candidate 用它读取 producer Release assets，不再 clone 私有 submodule；Production 才用同一只读权限检出 release-pinned private source。同步 PR 使用当前仓库内置的 `GITHUB_TOKEN` 写 Digital Biome，不向 App 或 Vault 授予写权限。
 
 ### 6.3 已缓解：构建输入漂移
 
-`notes.config.ts` 不再搜索仓库外的 `generated/`；`pnpm sync` 会先从当前子模块运行 `kb:index`。生产构建记录并在批准后重新核对主仓库 SHA、Vault SHA 与资产索引 SHA-256。
+`notes.config.ts` 不搜索仓库外的 `generated/`。CI / Candidate 通过 committed lock + producer Release digest 固定公开输入；Production 对 v2 Release 重新验证相同 producer projection，并要求 private gitlink 与该 source revision 一致。仅 legacy v1 rollback 继续使用 private asset-index SHA-256。
 
 ### 6.4 P1：同一 frontmatter 存在两套解析器
 

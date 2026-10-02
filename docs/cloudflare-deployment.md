@@ -159,9 +159,9 @@ manual Deploy Production(vX.Y.Z)
 - `.github/workflows/release-publish.yml`：仅对真正 Release commit 发布 immutable GitHub Release；
 - `.github/workflows/deploy-production.yml`：手动选择 Published `vX.Y.Z` 后部署 Production。
 
-Candidate 阶段完成 Astro/Pagefind 构建和 Pages Functions 编译，并生成带 SHA-256 的 `digital-biome-pages.tar.gz`。Release 只提升该 artifact；Production 使用 `--no-bundle` 上传同一 artifact，因此不会重建应用。
+Candidate 阶段先验证 committed `knowledge-public-v1` lock 与 immutable producer Release，再完成 Astro/Pagefind 构建和 Pages Functions 编译，并生成带 SHA-256 的 `digital-biome-pages.tar.gz`。Release 只提升该 artifact；Production 使用 `--no-bundle` 上传同一 artifact，因此不会重建应用。
 
-Production 仍会从 Release SHA 检出锁定的私有 Vault，用于重新生成私有 payload、验证 asset-index hash 和更新 encrypted Pages bindings；这些属于部署配置，不改变已经发布的 public application artifact。
+Production 会重新验证 Release manifest 绑定的 `knowledge-public-v1` producer identity，并从 Release SHA 检出同一 Thought Forest source revision 的私有 Vault，用于重新生成私有 payload 和更新 encrypted Pages bindings。legacy v1 rollback Release 才继续执行旧的 private asset-index hash 校验；这些步骤都属于部署配置，不改变已经发布的 public application artifact。
 
 首次启用前必须配置：
 
@@ -178,7 +178,7 @@ Production 仍会从 Release SHA 检出锁定的私有 Vault，用于重新生�
 
 GitHub App 只安装到 `digital-biome` 与 `thought-forest`，且只授予 Contents Read。Release Prepare 使用仓库 `GITHUB_TOKEN`，并显式 dispatch Release PR head 的 CI，不要求新增长期 PAT。`production` Environment 应保留审批保护；`staging` Environment 在 Cloudflare 凭据配置完成前保持禁用。
 
-Cloudflare Git 自动 Production/Preview deployments 继续关闭；日常交付由 GitHub Actions + Wrangler Direct Upload 完成，以保持私有子模块不公开并让所有 promotion 具备可审计 provenance。
+Cloudflare Git 自动 Production/Preview deployments 继续关闭；日常交付由 GitHub Actions + Wrangler Direct Upload 完成。公开 Candidate 只消费 producer-owned projection，私有 gitlink仅在 production/private-payload 路径读取，因此不需要把 Vault 暴露给公开构建系统，同时所有 promotion 都保留可审计 provenance。
 
 ## 9. 验收矩阵
 

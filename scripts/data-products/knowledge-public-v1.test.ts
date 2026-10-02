@@ -37,6 +37,9 @@ function fixture(): KnowledgePublicV1 {
           slug: 'example',
           title: 'Example',
           aliases: [],
+          url: 'https://example.com/tool',
+          icon: 'example',
+          category: 'demo',
           tags: ['demo'],
           visibility: 'public',
           isAsset: false,
@@ -120,6 +123,13 @@ test('fails closed on contract identity or publication-boundary drift', () => {
   assert.throws(
     () => parseKnowledgePublicV1(JSON.stringify(wrongRepository)),
     /source provenance is invalid/,
+  );
+
+  const unsafeUrl = fixture();
+  unsafeUrl.payload.notes[0].url = 'ssh://private-host';
+  assert.throws(
+    () => parseKnowledgePublicV1(JSON.stringify(unsafeUrl)),
+    /url must be public HTTP\(S\)/,
   );
 });
 

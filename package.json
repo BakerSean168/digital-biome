@@ -21,6 +21,7 @@
     "test:infrastructure": "tsx --test 'scripts/**/*.test.ts'",
     "snapshot:data-products:knowledge": "node scripts/data-products/materialize-knowledge-public-v1-legacy-snapshot.mjs",
     "verify:data-products:knowledge": "tsx scripts/data-products/verify-knowledge-public-v1-parity.ts",
+    "verify:data-products:knowledge:lock": "tsx scripts/data-products/verify-knowledge-public-v1-lock.ts",
     "sync:data-products:knowledge": "tsx scripts/data-products/sync-knowledge-public-v1.ts",
     "sync:data-products:knowledge:legacy": "pnpm sync:content",
     "sync:data-products:infra": "tsx scripts/data-products/sync-infra-public-v1.ts",

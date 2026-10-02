@@ -19,94 +19,137 @@ const notes = defineCollection({
     base: './src/data/obsidian',
     generateId: ({ entry }) => toNoteId(entry),
   }),
-  schema: z.object({
-    title: optionalString(),
-    description: optionalString(),
-    tags: optionalStringArray(),
-    created: optionalDate(),
-    updated: optionalDate(),
-    draft: optionalBooleanish().default(false),
-    private: optionalBooleanish().default(false),
-    visibility: z.enum(['public', 'private', 'internal']).nullable().optional(),
-    type: z.enum(['note', 'resource', 'tool', 'article']).nullable().optional().default('note'),
-    url: optionalString(),
-    icon: optionalString(),
-    rating: optionalNumber(),
-    platform: optionalString(),
-    pricing: z.enum(['free', 'freemium', 'paid', 'subscription']).nullable().optional(),
-    status: z.enum(['active', 'planned', 'archived', 'deprecated', 'decommissioning', 'retired']).nullable().optional(),
-    aliases: optionalStringArray(),
-    category: optionalString(),
-    asset_id: optionalString(),
-    asset_type: z.enum(['service', 'tool', 'host', 'network', 'subscription', 'project']).nullable().optional(),
-    asset_role: z.enum(['ops', 'product', 'showcase', 'portal']).nullable().optional(),
-    host_asset_id: optionalString(),
-    parent_asset_id: optionalString(),
-    homepage: z.object({
-      enabled: optionalBooleanish().default(true),
-      section: z.enum(['services', 'projects', 'tools']).nullable().optional(),
-      featured: optionalBooleanish().default(false),
-      order: z.number().nullable().optional().default(100),
-      label: optionalString(),
+  schema: z
+    .object({
+      title: optionalString(),
       description: optionalString(),
-    }).nullable().optional(),
-    monitor: z.object({
-      provider: z.enum(['nezha', 'uptime-kuma', 'none']).nullable().optional(),
-      url: optionalString(),
-      target_id: optionalString(),
-      label: optionalString(),
-    }).nullable().optional(),
-    links: z.array(z.object({
-      label: z.string(),
-      url: optionalString(),
-      private_ref: optionalString(),
-      kind: z.enum(['app', 'admin', 'repo', 'repository', 'showcase', 'docs', 'monitor', 'panel', 'ssh', 'web', 'service', 'vm', 'other']).default('other'),
-      description: optionalString(),
+      tags: optionalStringArray(),
+      created: optionalDate(),
+      updated: optionalDate(),
+      draft: optionalBooleanish().default(false),
+      private: optionalBooleanish().default(false),
       visibility: z.enum(['public', 'private', 'internal']).nullable().optional(),
-    })).nullable().optional(),
-  }).passthrough().transform(data => ({
-    ...data,
-    title: data.title ?? undefined,
-    description: data.description ?? undefined,
-    tags: data.tags ?? [],
-    aliases: data.aliases ?? [],
-    draft: Boolean(data.draft),
-    private: Boolean(data.private),
-    type: data.type ?? 'note',
-    icon: data.icon ?? undefined,
-    status: data.status ?? undefined,
-    asset_id: data.asset_id ?? undefined,
-    asset_type: data.asset_type ?? undefined,
-    asset_role: data.asset_role ?? undefined,
-    host_asset_id: data.host_asset_id ?? undefined,
-    parent_asset_id: data.parent_asset_id ?? undefined,
-    created: data.created ? new Date(data.created) : undefined,
-    updated: data.updated ? new Date(data.updated) : undefined,
-    homepage: data.homepage ? {
-      ...data.homepage,
-      enabled: Boolean(data.homepage.enabled),
-      section: data.homepage.section ?? undefined,
-      featured: Boolean(data.homepage.featured),
-      order: data.homepage.order ?? undefined,
-      label: data.homepage.label ?? undefined,
-      description: data.homepage.description ?? undefined,
-    } : undefined,
-    monitor: data.monitor ? {
-      ...data.monitor,
-      provider: data.monitor.provider ?? undefined,
-      url: data.monitor.url ?? undefined,
-      target_id: data.monitor.target_id ?? undefined,
-      label: data.monitor.label ?? undefined,
-    } : undefined,
-    links: data.links ? data.links.map(link => ({
-      label: link.label,
-      kind: link.kind,
-      url: link.url ?? undefined,
-      private_ref: link.private_ref ?? undefined,
-      description: link.description ?? undefined,
-      visibility: link.visibility ?? undefined,
-    })) : undefined,
-  })),
+      // Producer-owned knowledge note kinds are an open string domain (concept, howto,
+      // synthesis, asset, ...). Asset-specific narrowing happens in the asset index layer.
+      type: optionalString().default('note'),
+      url: optionalString(),
+      icon: optionalString(),
+      rating: optionalNumber(),
+      platform: optionalString(),
+      pricing: z.enum(['free', 'freemium', 'paid', 'subscription']).nullable().optional(),
+      // Knowledge lifecycle states (growing, evergreen, seed, ...) coexist with asset
+      // lifecycle states. Keep the generic content collection aligned with the public contract.
+      status: optionalString(),
+      aliases: optionalStringArray(),
+      category: optionalString(),
+      asset_id: optionalString(),
+      asset_type: z
+        .enum(['service', 'tool', 'host', 'network', 'subscription', 'project'])
+        .nullable()
+        .optional(),
+      asset_role: z.enum(['ops', 'product', 'showcase', 'portal']).nullable().optional(),
+      host_asset_id: optionalString(),
+      parent_asset_id: optionalString(),
+      homepage: z
+        .object({
+          enabled: optionalBooleanish().default(true),
+          section: z.enum(['services', 'projects', 'tools']).nullable().optional(),
+          featured: optionalBooleanish().default(false),
+          order: z.number().nullable().optional().default(100),
+          label: optionalString(),
+          description: optionalString(),
+        })
+        .nullable()
+        .optional(),
+      monitor: z
+        .object({
+          provider: z.enum(['nezha', 'uptime-kuma', 'none']).nullable().optional(),
+          url: optionalString(),
+          target_id: optionalString(),
+          label: optionalString(),
+        })
+        .nullable()
+        .optional(),
+      links: z
+        .array(
+          z.object({
+            label: z.string(),
+            url: optionalString(),
+            private_ref: optionalString(),
+            kind: z
+              .enum([
+                'app',
+                'admin',
+                'repo',
+                'repository',
+                'showcase',
+                'docs',
+                'monitor',
+                'panel',
+                'ssh',
+                'web',
+                'service',
+                'vm',
+                'other',
+              ])
+              .default('other'),
+            description: optionalString(),
+            visibility: z.enum(['public', 'private', 'internal']).nullable().optional(),
+          }),
+        )
+        .nullable()
+        .optional(),
+    })
+    .passthrough()
+    .transform((data) => ({
+      ...data,
+      title: data.title ?? undefined,
+      description: data.description ?? undefined,
+      tags: data.tags ?? [],
+      aliases: data.aliases ?? [],
+      draft: Boolean(data.draft),
+      private: Boolean(data.private),
+      type: data.type ?? 'note',
+      icon: data.icon ?? undefined,
+      status: data.status ?? undefined,
+      asset_id: data.asset_id ?? undefined,
+      asset_type: data.asset_type ?? undefined,
+      asset_role: data.asset_role ?? undefined,
+      host_asset_id: data.host_asset_id ?? undefined,
+      parent_asset_id: data.parent_asset_id ?? undefined,
+      created: data.created ? new Date(data.created) : undefined,
+      updated: data.updated ? new Date(data.updated) : undefined,
+      homepage: data.homepage
+        ? {
+            ...data.homepage,
+            enabled: Boolean(data.homepage.enabled),
+            section: data.homepage.section ?? undefined,
+            featured: Boolean(data.homepage.featured),
+            order: data.homepage.order ?? undefined,
+            label: data.homepage.label ?? undefined,
+            description: data.homepage.description ?? undefined,
+          }
+        : undefined,
+      monitor: data.monitor
+        ? {
+            ...data.monitor,
+            provider: data.monitor.provider ?? undefined,
+            url: data.monitor.url ?? undefined,
+            target_id: data.monitor.target_id ?? undefined,
+            label: data.monitor.label ?? undefined,
+          }
+        : undefined,
+      links: data.links
+        ? data.links.map((link) => ({
+            label: link.label,
+            kind: link.kind,
+            url: link.url ?? undefined,
+            private_ref: link.private_ref ?? undefined,
+            description: link.description ?? undefined,
+            visibility: link.visibility ?? undefined,
+          }))
+        : undefined,
+    })),
 });
 
 export const collections = {

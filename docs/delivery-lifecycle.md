@@ -41,7 +41,8 @@ The invariants are:
 - A Published Release points to one exact main SHA and one exact candidate artifact digest, and an annotated Git tag binds the Release manifest digest to that artifact identity.
 - Production consumes only a non-draft, non-prerelease GitHub Release that passed exact-SHA main CI.
 - Pages Functions are compiled during Candidate creation. Staging and Production upload the compiled `dist/_worker.js` with `--no-bundle`.
-- Private deployment inputs are regenerated from the release's pinned private Vault SHA, but this does not rebuild the public application artifact.
+- Candidate/Release provenance binds the immutable `knowledge-public-v1` producer Release (source revision + artifact/manifest SHA-256) separately from the Pages artifact.
+- Private deployment inputs are regenerated from the private Vault gitlink pinned to the same producer revision, but this does not rebuild the public application artifact.
 
 ## 1. Integration and Candidate
 
@@ -61,13 +62,16 @@ A successful main `CI` run is resolved through the GitHub Actions API and must s
 
 The candidate workflow then:
 
-1. checks out that exact application SHA and pinned `thought-forest` gitlink;
-2. regenerates public indexes;
-3. builds `dist/`;
-4. compiles Pages Functions into `dist/_worker.js` and the deployment routes file;
-5. archives `dist/` as `digital-biome-pages.tar.gz`;
-6. records a canonical candidate manifest containing application SHA, CI run ID, Vault SHA, asset-index hash, artifact SHA-256 and size;
-7. retains the candidate artifact for 90 days.
+1. checks out that exact application SHA without initializing the private Vault gitlink;
+2. reads `data-products/knowledge-public-v1.lock.json`, downloads the exact private-producer GitHub prerelease through a short-lived read-only App token, and verifies source revision plus artifact/manifest SHA-256;
+3. materializes the validated producer projection into `.pds-runtime/knowledge-public-v1/source/` and runs the existing synchronization pipeline;
+4. builds `dist/`;
+5. compiles Pages Functions into `dist/_worker.js` and the deployment routes file;
+6. archives `dist/` as `digital-biome-pages.tar.gz`;
+7. records a `digital-biome.candidate/v2` manifest containing application SHA, CI run ID, immutable knowledge projection identity, and Pages artifact SHA-256/size;
+8. retains the candidate artifact for 90 days.
+
+The v2 knowledge identity contains producer repository, exact source revision, immutable `knowledge-public-v1-<SHA>` Release tag, producer artifact SHA-256 and producer manifest SHA-256. Legacy v1 Candidate/Release manifests remain accepted only so an already-published rollback Release can still be deployed.
 
 If `STAGING_DEPLOY_ENABLED=true`, the latest main candidate can be promoted to the Cloudflare `staging` preview branch. A freshness check prevents an older concurrent candidate from overwriting a newer staging channel.
 
@@ -126,13 +130,14 @@ Before the production Environment is mutated, the workflow verifies:
 
 Inside the `production` Environment gate it then:
 
-1. checks out the exact release source and pinned private Vault;
-2. validates the Vault SHA and public asset-index hash;
-3. regenerates only private deployment inputs and encrypted Pages bindings;
-4. unpacks the already-built Release artifact;
-5. uploads it with Wrangler `pages deploy ... --no-bundle`;
-6. records the Cloudflare deployment identity;
-7. runs public, telemetry and protected-API smoke contracts.
+1. checks out the exact release source and its private Vault gitlink;
+2. for v2 Releases, re-fetches and verifies the exact `knowledge-public-v1` Release recorded in the Release manifest and confirms the private Vault gitlink points to the same Thought Forest source revision;
+3. for legacy v1 Releases only, preserves the previous Vault SHA + private asset-index hash verification path;
+4. regenerates only private deployment inputs and encrypted Pages bindings from the exact private source and runs infrastructure contracts;
+5. unpacks the already-built Release artifact;
+6. uploads it with Wrangler `pages deploy ... --no-bundle`;
+7. records the Cloudflare deployment identity;
+8. runs public, telemetry and protected-API smoke contracts.
 
 The public application artifact is never rebuilt in this phase. Candidate Actions artifacts are retained for 90 days, but a Published Release remains deployable after that window because long-lived integrity is anchored by the annotated Release tag plus the attached Release manifest and artifact digest.
 
@@ -142,8 +147,8 @@ Required repository configuration:
 
 | Scope                             | Name                     | Purpose                                   |
 | --------------------------------- | ------------------------ | ----------------------------------------- |
-| Repository variable               | `VAULT_APP_CLIENT_ID`    | Create short-lived read-only Vault token  |
-| Repository secret                 | `VAULT_APP_PRIVATE_KEY`  | GitHub App private key                    |
+| Repository variable               | `VAULT_APP_CLIENT_ID`    | Create short-lived producer/Vault read token |
+| Repository secret                 | `VAULT_APP_PRIVATE_KEY`  | GitHub App private key                       |
 | Repository variable               | `STAGING_DEPLOY_ENABLED` | Enables optional staging promotion        |
 | `staging` Environment secret      | `CLOUDFLARE_ACCOUNT_ID`  | Cloudflare account for staging preview    |
 | `staging` Environment secret      | `CLOUDFLARE_API_TOKEN`   | Pages Edit credential for staging preview |
