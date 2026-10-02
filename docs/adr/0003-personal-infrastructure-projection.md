@@ -33,7 +33,7 @@ The delivery contract is therefore upgraded to v4 so Candidate/Release provenanc
 - `publicInfrastructure`;
 - `privateInfrastructure`.
 
-v1-v3 Release validation remains available for rollback compatibility.
+Historical Release validation for v1-v3 remains available for rollback compatibility. The old Digital Biome `infra-public-v1` parser/materializer is not part of that rollback path: rollback deploys an already-published immutable Pages artifact, while only the historical private binding regeneration remains schema-specific. The unused v1 consumer implementation is therefore retired from the current source tree.
 
 ## Consequences
 
