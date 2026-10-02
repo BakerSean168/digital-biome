@@ -74,8 +74,11 @@ jobs:
             exit 1
           }
 
-          git -C "$PRODUCER_ROOT" fetch --force origin "refs/tags/$release_tag:refs/tags/$release_tag"
-          tag_sha="$(git -C "$PRODUCER_ROOT" rev-list -n 1 "$release_tag")"
+          tag_sha="$(git -C "$PRODUCER_ROOT" rev-list -n 1 "refs/tags/$release_tag" 2>/dev/null || true)"
+          test -n "$tag_sha" || {
+            echo "immutable producer tag is missing from the checked-out repository" >&2
+            exit 1
+          }
           [[ "$tag_sha" == "$source_sha" ]] || {
             echo "immutable producer tag does not point at the selected source revision" >&2
             exit 1
