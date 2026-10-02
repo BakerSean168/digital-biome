@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {
-  materializeKnowledgePublicV1Source,
-  parseKnowledgePublicV1,
-} from './knowledge-public-v1';
+import { materializeKnowledgePublicV1Source, parseKnowledgePublicV1 } from './knowledge-public-v1';
 
 function resolveArtifactPath(): string {
-  const positional = process.argv.slice(2).find(arg => !arg.startsWith('--'))?.trim();
+  const positional = process.argv
+    .slice(2)
+    .find((arg) => !arg.startsWith('--'))
+    ?.trim();
   const configured = positional || process.env.KNOWLEDGE_PUBLIC_V1_ARTIFACT?.trim();
   if (!configured) {
     throw new Error(
@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error(error);
   process.exit(1);
 });

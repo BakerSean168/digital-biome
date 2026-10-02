@@ -46,7 +46,7 @@ function assertProducerIndexesMatchProjection(projection, producerRoot) {
   }
 
   const projectionByPath = new Map(
-    projection.payload.notes.map(note => [String(note.sourcePath).replaceAll('\\\\', '/'), note]),
+    projection.payload.notes.map((note) => [String(note.sourcePath).replaceAll('\\\\', '/'), note]),
   );
   let publicNotes = 0;
   let restrictedNotes = 0;
@@ -56,7 +56,8 @@ function assertProducerIndexesMatchProjection(projection, producerRoot) {
     if (note.visibility === 'public') {
       publicNotes += 1;
       if (!projected) fail(`${sourcePath}: public upstream note missing from projection`);
-      if (projected.visibility !== 'public') fail(`${sourcePath}: public projection visibility drift`);
+      if (projected.visibility !== 'public')
+        fail(`${sourcePath}: public projection visibility drift`);
       if (projected.title !== note.title) fail(`${sourcePath}: title drift`);
       assertStringArrayEqual(projected.tags, note.tags, `${sourcePath}: tags`);
       assertStringArrayEqual(projected.aliases, note.aliases, `${sourcePath}: aliases`);
@@ -66,14 +67,15 @@ function assertProducerIndexesMatchProjection(projection, producerRoot) {
     }
   }
 
-  const projectionAssetIds = new Set(projection.payload.assets.map(asset => asset.assetId));
+  const projectionAssetIds = new Set(projection.payload.assets.map((asset) => asset.assetId));
   let publicAssets = 0;
   for (const asset of upstreamAssets) {
     const assetId = String(asset.assetId ?? '');
     if (!assetId) continue;
     if (asset.visibility === 'public') {
       publicAssets += 1;
-      if (!projectionAssetIds.has(assetId)) fail(`${assetId}: public upstream asset missing from projection`);
+      if (!projectionAssetIds.has(assetId))
+        fail(`${assetId}: public upstream asset missing from projection`);
     } else if (projectionAssetIds.has(assetId)) {
       fail(`${assetId}: restricted upstream asset leaked into projection`);
     }
@@ -160,7 +162,12 @@ export function materializeExactSourceLegacySnapshot({
   const digitalBiomeTar = path.join(root, 'digital-biome.tar');
   const thoughtForestTar = path.join(root, 'thought-forest.tar');
 
-  archiveRevision(resolvedDigitalBiome, digitalBiomeRevision, digitalBiomeSnapshot, digitalBiomeTar);
+  archiveRevision(
+    resolvedDigitalBiome,
+    digitalBiomeRevision,
+    digitalBiomeSnapshot,
+    digitalBiomeTar,
+  );
   archiveRevision(resolvedProducer, sourceRevision, thoughtForestSnapshot, thoughtForestTar);
   fs.unlinkSync(digitalBiomeTar);
   fs.unlinkSync(thoughtForestTar);
@@ -168,7 +175,12 @@ export function materializeExactSourceLegacySnapshot({
   const producerIndexRoot = path.join(resolvedProducer, 'generated', 'knowledge-index');
   const snapshotIndexRoot = path.join(thoughtForestSnapshot, 'generated', 'knowledge-index');
   fs.mkdirSync(snapshotIndexRoot, { recursive: true });
-  for (const name of ['notes-index.json', 'asset-index.json', 'link-graph.json', 'tag-index.json']) {
+  for (const name of [
+    'notes-index.json',
+    'asset-index.json',
+    'link-graph.json',
+    'tag-index.json',
+  ]) {
     const source = path.join(producerIndexRoot, name);
     if (fs.existsSync(source)) fs.copyFileSync(source, path.join(snapshotIndexRoot, name));
   }
@@ -179,16 +191,11 @@ export function materializeExactSourceLegacySnapshot({
     ['install', '--frozen-lockfile', '--ignore-scripts', '--prefer-offline'],
     digitalBiomeSnapshot,
   );
-  run(
-    pnpm,
-    ['sync:content'],
-    digitalBiomeSnapshot,
-    {
-      ...process.env,
-      NOTES_VAULT_ROOT: thoughtForestSnapshot,
-      NOTES_UPSTREAM_GENERATED: path.join(thoughtForestSnapshot, 'generated'),
-    },
-  );
+  run(pnpm, ['sync:content'], digitalBiomeSnapshot, {
+    ...process.env,
+    NOTES_VAULT_ROOT: thoughtForestSnapshot,
+    NOTES_UPSTREAM_GENERATED: path.join(thoughtForestSnapshot, 'generated'),
+  });
 
   const indexHashes = {};
   for (const name of ['notes-index.json', 'asset-index.json', 'link-graph.json']) {

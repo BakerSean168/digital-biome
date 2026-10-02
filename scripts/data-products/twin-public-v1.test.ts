@@ -93,10 +93,7 @@ test('fails closed on dangling references and unsafe asset paths', () => {
 
   const badPath = fixture();
   badPath.payload.assets[0].path = '../private/preview.webp';
-  assert.throws(
-    () => parseTwinPublicV1(JSON.stringify(badPath)),
-    /normalized relative POSIX path/,
-  );
+  assert.throws(() => parseTwinPublicV1(JSON.stringify(badPath)), /normalized relative POSIX path/);
 });
 
 test('fails closed on provenance drift and invalid asset digests', () => {
@@ -109,10 +106,7 @@ test('fails closed on provenance drift and invalid asset digests', () => {
 
   const badDigest = fixture();
   badDigest.payload.assets[0].sha256 = 'not-a-digest';
-  assert.throws(
-    () => parseTwinPublicV1(JSON.stringify(badDigest)),
-    /lowercase SHA-256 digest/,
-  );
+  assert.throws(() => parseTwinPublicV1(JSON.stringify(badDigest)), /lowercase SHA-256 digest/);
 });
 
 test('materializes a validated twin projection without changing its envelope', () => {

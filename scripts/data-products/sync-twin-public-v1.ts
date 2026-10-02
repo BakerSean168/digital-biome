@@ -7,7 +7,10 @@ import {
 } from './twin-public-v1';
 
 function resolveArtifactPath(): string {
-  const positional = process.argv.slice(2).find(arg => !arg.startsWith('--'))?.trim();
+  const positional = process.argv
+    .slice(2)
+    .find((arg) => !arg.startsWith('--'))
+    ?.trim();
   const configured = positional || process.env.TWIN_PUBLIC_V1_ARTIFACT?.trim();
   if (!configured) {
     throw new Error(

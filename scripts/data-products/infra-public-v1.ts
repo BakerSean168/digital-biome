@@ -59,7 +59,7 @@ function assertNonEmptyString(value: unknown, label: string): asserts value is s
 }
 
 function assertStringArray(value: unknown, label: string): asserts value is string[] {
-  if (!Array.isArray(value) || value.some(item => typeof item !== 'string')) {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
     throw new Error(`${label} must be a string array`);
   }
 }
@@ -69,7 +69,7 @@ function assertOnlyKeys(
   allowed: readonly string[],
   label: string,
 ): void {
-  const unexpected = Object.keys(value).filter(key => !allowed.includes(key));
+  const unexpected = Object.keys(value).filter((key) => !allowed.includes(key));
   if (unexpected.length > 0) {
     throw new Error(`${label} contains unexpected field(s): ${unexpected.join(', ')}`);
   }
@@ -108,11 +108,7 @@ function assertProjectionShape(projection: InfraPublicV1): void {
   let activeEnvironmentCount = 0;
   for (const deployment of projection.payload.deployments) {
     assertRecord(deployment, 'infra-public-v1 deployment');
-    assertOnlyKeys(
-      deployment,
-      ['componentRef', 'environments'],
-      'infra-public-v1 deployment',
-    );
+    assertOnlyKeys(deployment, ['componentRef', 'environments'], 'infra-public-v1 deployment');
     assertNonEmptyString(deployment.componentRef, 'infra-public-v1 deployment.componentRef');
     if (!/^pds:\/\/system\/component\/[a-z0-9][a-z0-9-]*$/.test(deployment.componentRef)) {
       throw new Error(`infra-public-v1 invalid component reference: ${deployment.componentRef}`);
@@ -144,9 +140,7 @@ function assertProjectionShape(projection: InfraPublicV1): void {
         `${deployment.componentRef}.${environment.name}.lifecycle`,
       );
       if (!['active', 'planned', 'retired'].includes(environment.desiredState)) {
-        throw new Error(
-          `${deployment.componentRef}.${environment.name}.desiredState is invalid`,
-        );
+        throw new Error(`${deployment.componentRef}.${environment.name}.desiredState is invalid`);
       }
       if (!hostIds.has(environment.host)) {
         throw new Error(
@@ -221,11 +215,7 @@ export function parseInfraPublicV1(raw: string): InfraPublicV1 {
   }
 
   assertRecord(value.payload, 'infra-public-v1.payload');
-  assertOnlyKeys(
-    value.payload,
-    ['hosts', 'deployments', 'summary'],
-    'infra-public-v1.payload',
-  );
+  assertOnlyKeys(value.payload, ['hosts', 'deployments', 'summary'], 'infra-public-v1.payload');
   if (
     !Array.isArray(value.payload.hosts) ||
     !Array.isArray(value.payload.deployments) ||
@@ -248,10 +238,7 @@ export function infraProjectionSummary(projection: InfraPublicV1) {
   };
 }
 
-export function materializeInfraPublicV1(
-  projection: InfraPublicV1,
-  outputPath: string,
-): string {
+export function materializeInfraPublicV1(projection: InfraPublicV1, outputPath: string): string {
   assertProjectionShape(projection);
   const destination = path.resolve(outputPath);
   fs.mkdirSync(path.dirname(destination), { recursive: true });

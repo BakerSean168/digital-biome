@@ -38,7 +38,9 @@ export function readPinnedThoughtForestRevision(legacyRoot: string): string {
   }).trim();
   const match = /^160000\s+([0-9a-f]{40})\s+0\s+thought-forest$/m.exec(output);
   if (!match) {
-    throw new Error('legacy Digital Biome checkout does not contain a pinned thought-forest gitlink');
+    throw new Error(
+      'legacy Digital Biome checkout does not contain a pinned thought-forest gitlink',
+    );
   }
   return match[1];
 }
@@ -91,8 +93,10 @@ export function verifyKnowledgePublicParity(
 
   const projectionByFile = new Map(
     projection.payload.notes
-      .map(note => [toLegacyFilePath(note.sourcePath), note] as const)
-      .filter((entry): entry is [string, (typeof projection.payload.notes)[number]] => entry[0] !== null),
+      .map((note) => [toLegacyFilePath(note.sourcePath), note] as const)
+      .filter(
+        (entry): entry is [string, (typeof projection.payload.notes)[number]] => entry[0] !== null,
+      ),
   );
 
   let compared = 0;
@@ -114,19 +118,22 @@ export function verifyKnowledgePublicParity(
     compared += 1;
   }
 
-  const projectedAssetIds = new Set(projection.payload.assets.map(asset => asset.assetId));
+  const projectedAssetIds = new Set(projection.payload.assets.map((asset) => asset.assetId));
   const publicLegacyAssetIds = legacyAssets.entries
     .filter(
-      asset =>
+      (asset) =>
         !asset.draft &&
         !asset.private &&
         asset.visibility !== 'private' &&
         asset.visibility !== 'internal' &&
         typeof asset.asset_id === 'string',
     )
-    .map(asset => asset.asset_id as string);
+    .map((asset) => asset.asset_id as string);
   for (const assetId of publicLegacyAssetIds) {
-    assert.ok(projectedAssetIds.has(assetId), `${assetId}: missing from knowledge-public-v1 assets`);
+    assert.ok(
+      projectedAssetIds.has(assetId),
+      `${assetId}: missing from knowledge-public-v1 assets`,
+    );
   }
 
   assert.ok(compared > 0, 'expected at least one public legacy note to compare');

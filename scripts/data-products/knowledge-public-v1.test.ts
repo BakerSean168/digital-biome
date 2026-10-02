@@ -147,7 +147,10 @@ test('materializes a projection as an isolated legacy-compatible sync source', (
         'utf8',
       ),
     ) as Array<{ id: string }>;
-    assert.deepEqual(noteIndex.map(entry => entry.id), ['obsidian/example']);
+    assert.deepEqual(
+      noteIndex.map((entry) => entry.id),
+      ['obsidian/example'],
+    );
     assert.deepEqual(
       fs.readFileSync(path.join(sourceRoot, 'sources', 'attachments', 'example.png')),
       media,

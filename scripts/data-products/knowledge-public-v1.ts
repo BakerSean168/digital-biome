@@ -2,8 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const KNOWLEDGE_PUBLIC_V1_REPOSITORY =
-  'https://github.com/BakerSean168/thought-forest.git';
+export const KNOWLEDGE_PUBLIC_V1_REPOSITORY = 'https://github.com/BakerSean168/thought-forest.git';
 
 export type KnowledgePublicNote = {
   id: string;
@@ -61,7 +60,7 @@ function assertRecord(value: unknown, label: string): asserts value is Record<st
 }
 
 function assertStringArray(value: unknown, label: string): asserts value is string[] {
-  if (!Array.isArray(value) || value.some(item => typeof item !== 'string')) {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
     throw new Error(`${label} must be a string array`);
   }
 }
@@ -71,7 +70,7 @@ function assertSafeRelativePath(value: string, label: string): string {
     !value ||
     value.includes('\\') ||
     path.posix.isAbsolute(value) ||
-    value.split('/').some(segment => segment === '..' || segment === '.' || segment === '')
+    value.split('/').some((segment) => segment === '..' || segment === '.' || segment === '')
   ) {
     throw new Error(`${label} must be a normalized relative POSIX path`);
   }
@@ -197,7 +196,7 @@ export function knowledgeProjectionSummary(projection: KnowledgePublicV1) {
 }
 
 export function knowledgePublicIds(projection: KnowledgePublicV1): Set<string> {
-  return new Set(projection.payload.notes.map(note => note.id));
+  return new Set(projection.payload.notes.map((note) => note.id));
 }
 
 function writeJson(filePath: string, value: unknown): void {
@@ -215,7 +214,9 @@ function withAssetRoutingFrontmatter(
   }
   const closing = markdown.indexOf('\n---\n', 4);
   if (closing < 0) {
-    throw new Error(`knowledge-public-v1 asset markdown frontmatter is malformed: ${asset.assetId}`);
+    throw new Error(
+      `knowledge-public-v1 asset markdown frontmatter is malformed: ${asset.assetId}`,
+    );
   }
   const header = markdown.slice(4, closing);
   const body = markdown.slice(closing + '\n---\n'.length);
@@ -251,10 +252,12 @@ export function materializeKnowledgePublicV1Source(
   }
 
   const assetBySourceId = new Map(
-    projection.payload.assets.map(asset => [asset.sourceId, asset] as const),
+    projection.payload.assets.map((asset) => [asset.sourceId, asset] as const),
   );
   for (const note of projection.payload.notes) {
-    if (!['z/', 'assets/', 'config/', 'blogs/'].some(prefix => note.sourcePath.startsWith(prefix))) {
+    if (
+      !['z/', 'assets/', 'config/', 'blogs/'].some((prefix) => note.sourcePath.startsWith(prefix))
+    ) {
       continue;
     }
     const relativePath = assertSafeRelativePath(note.sourcePath, `${note.id}.sourcePath`);
@@ -275,7 +278,7 @@ export function materializeKnowledgePublicV1Source(
 
   const indexRoot = path.join(sourceRoot, 'generated', 'knowledge-index');
   const indexedNotes = projection.payload.notes
-    .filter(note => note.collection !== 'blog')
+    .filter((note) => note.collection !== 'blog')
     .map(({ markdown: _markdown, collection: _collection, ...note }) => note);
   writeJson(path.join(indexRoot, 'notes-index.json'), indexedNotes);
   writeJson(path.join(indexRoot, 'asset-index.json'), projection.payload.assets);

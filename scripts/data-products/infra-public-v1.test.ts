@@ -73,10 +73,7 @@ test('fails closed on provenance and host-reference drift', () => {
 
   const unknownHost = fixture();
   unknownHost.payload.deployments[0].environments[0].host = 'missing-host';
-  assert.throws(
-    () => parseInfraPublicV1(JSON.stringify(unknownHost)),
-    /references unknown host/,
-  );
+  assert.throws(() => parseInfraPublicV1(JSON.stringify(unknownHost)), /references unknown host/);
 });
 
 test('fails closed when payload summary no longer matches the projection', () => {

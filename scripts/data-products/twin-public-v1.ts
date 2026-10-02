@@ -56,7 +56,7 @@ function assertOnlyKeys(
   allowed: readonly string[],
   label: string,
 ): void {
-  const unexpected = Object.keys(value).filter(key => !allowed.includes(key));
+  const unexpected = Object.keys(value).filter((key) => !allowed.includes(key));
   if (unexpected.length > 0) {
     throw new Error(`${label} contains unexpected field(s): ${unexpected.join(', ')}`);
   }
@@ -69,7 +69,10 @@ function assertNonEmptyString(value: unknown, label: string): asserts value is s
 }
 
 function assertStringArray(value: unknown, label: string): asserts value is string[] {
-  if (!Array.isArray(value) || value.some(item => typeof item !== 'string' || item.length === 0)) {
+  if (
+    !Array.isArray(value) ||
+    value.some((item) => typeof item !== 'string' || item.length === 0)
+  ) {
     throw new Error(`${label} must be a non-empty-string array`);
   }
 }
@@ -79,7 +82,7 @@ function assertSafeRelativePath(value: string, label: string): void {
     !value ||
     value.includes('\\') ||
     path.posix.isAbsolute(value) ||
-    value.split('/').some(segment => segment === '' || segment === '.' || segment === '..')
+    value.split('/').some((segment) => segment === '' || segment === '.' || segment === '..')
   ) {
     throw new Error(`${label} must be a normalized relative POSIX path`);
   }
@@ -154,11 +157,7 @@ function assertProjectionShape(projection: TwinPublicV1): void {
   const layoutIds = new Set<string>();
   for (const layout of projection.payload.furnitureLayouts) {
     assertRecord(layout, 'furniture layout');
-    assertOnlyKeys(
-      layout,
-      ['id', 'title', 'summary', 'assetIds', 'spaceId'],
-      'furniture layout',
-    );
+    assertOnlyKeys(layout, ['id', 'title', 'summary', 'assetIds', 'spaceId'], 'furniture layout');
     assertNonEmptyString(layout.id, 'furniture layout.id');
     assertNonEmptyString(layout.title, `${layout.id}.title`);
     assertNonEmptyString(layout.spaceId, `${layout.id}.spaceId`);
@@ -236,10 +235,7 @@ export function twinProjectionSummary(projection: TwinPublicV1) {
   };
 }
 
-export function materializeTwinPublicV1(
-  projection: TwinPublicV1,
-  outputPath: string,
-): string {
+export function materializeTwinPublicV1(projection: TwinPublicV1, outputPath: string): string {
   assertProjectionShape(projection);
   const destination = path.resolve(outputPath);
   fs.mkdirSync(path.dirname(destination), { recursive: true });
