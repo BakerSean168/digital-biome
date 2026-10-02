@@ -108,6 +108,11 @@ test('release publication promotes the exact candidate artifact without rebuildi
 
   assert.doesNotMatch(releaseWorkflow, /pnpm build:only/);
   assert.doesNotMatch(releaseWorkflow, /pages functions build/);
+  assert.match(releaseWorkflow, /issues: write/);
+  assert.match(releaseWorkflow, /Finalize release-please PR state/);
+  assert.match(releaseWorkflow, /commits\/\$RELEASE_SHA\/pulls/);
+  assert.match(releaseWorkflow, /--remove-label 'autorelease: pending'/);
+  assert.match(releaseWorkflow, /--add-label 'autorelease: tagged'/);
 });
 
 test('production is manual Release selection and does not rebuild application code', () => {
