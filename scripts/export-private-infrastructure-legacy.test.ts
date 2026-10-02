@@ -30,7 +30,7 @@ test('legacy rollback exporter preserves the historical v1/v2 payload contract',
         label: 'Admin',
         url: 'https://private.example.test/',
         kind: 'admin',
-        visibility: 'internal' as const,
+        visibility: 'private' as const,
       },
     ],
   });
