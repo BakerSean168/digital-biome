@@ -331,10 +331,13 @@ jobs:
             --color ededed \
             --description 'Release PR has been published by the immutable Release workflow' \
             --force
-          gh pr edit "$release_pr" \
-            --repo "$REPOSITORY" \
-            --remove-label 'autorelease: pending' \
-            --add-label 'autorelease: tagged'
+          gh api --method DELETE \
+            "repos/$REPOSITORY/issues/$release_pr/labels/autorelease%3A%20pending" \
+            >/dev/null 2>&1 || true
+          gh api --method POST \
+            "repos/$REPOSITORY/issues/$release_pr/labels" \
+            -f 'labels[]=autorelease: tagged' \
+            >/dev/null
 
       - name: Record Release identity
         env:
