@@ -371,8 +371,14 @@ jobs:
               [[ "$(jq -r .releaseTag "$knowledge_lock")" == "$KNOWLEDGE_RELEASE_TAG" ]]
               [[ "$(jq -r .artifact.sha256 "$knowledge_lock")" == "$KNOWLEDGE_ARTIFACT_SHA256" ]]
               [[ "$(jq -r .manifest.sha256 "$knowledge_lock")" == "$KNOWLEDGE_MANIFEST_SHA256" ]]
-              scripts/data-products/fetch-knowledge-public-v1.sh \
-                .pds-runtime/knowledge-public-v1 "$knowledge_lock"
+              scripts/data-products/prepare-knowledge-public-v1.sh \
+                --runtime-root .pds-runtime/knowledge-public-v1 \
+                --lock "$knowledge_lock"
+              public_root=.pds-runtime/knowledge-public-v1/source
+              {
+                echo "NOTES_VAULT_ROOT=$public_root"
+                echo "NOTES_UPSTREAM_GENERATED=$public_root/generated"
+              } >> "$GITHUB_ENV"
 
               [[ "$(jq -r .producerRepository "$private_lock")" == 'BakerSean168/personal-infrastructure' ]]
               [[ "$(jq -r .sourceRevision "$private_lock")" == "$PRIVATE_INFRASTRUCTURE_SOURCE_REVISION" ]]
@@ -394,7 +400,9 @@ jobs:
               }
 
               echo "PDS_PRIVATE_INFRASTRUCTURE_BINDING=$contract_path" >> "$GITHUB_ENV"
-              PDS_PRIVATE_INFRASTRUCTURE_BINDING="$contract_path" \
+              NOTES_VAULT_ROOT="$public_root" \
+                NOTES_UPSTREAM_GENERATED="$public_root/generated" \
+                PDS_PRIVATE_INFRASTRUCTURE_BINDING="$contract_path" \
                 pnpm exec tsx --test scripts/private-infrastructure-binding.test.ts
               ;;
             digital-biome.release/v2)

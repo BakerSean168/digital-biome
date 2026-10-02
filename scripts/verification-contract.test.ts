@@ -143,8 +143,11 @@ test('production v3 consumes the pinned Personal Infrastructure runtime binding'
     /digital-biome\.release\/v3\)[\s\S]*?(?=\n {12}digital-biome\.release\/v2\))/,
   )?.[0];
   assert.ok(v3Block, 'v3 private runtime binding branch must exist');
+  assert.match(v3Block, /prepare-knowledge-public-v1\.sh/);
+  assert.match(v3Block, /public_root=\.pds-runtime\/knowledge-public-v1\/source/);
+  assert.match(v3Block, /NOTES_UPSTREAM_GENERATED=\$public_root\/generated/);
   assert.doesNotMatch(v3Block, /kb:index/);
-  assert.doesNotMatch(v3Block, /sync:content/);
+  assert.doesNotMatch(v3Block, /pnpm sync:content/);
   assert.doesNotMatch(v3Block, /private-thought-forest/);
 
   assert.match(
