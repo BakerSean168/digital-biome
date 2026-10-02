@@ -44,6 +44,10 @@ test('main integration builds from the immutable knowledge projection instead of
   assert.match(candidateWorkflow, /privateInfrastructure:/);
   assert.doesNotMatch(candidateWorkflow, /submodules: recursive/);
   assert.match(candidateWorkflow, /pages functions build functions/);
+  assert.match(candidateWorkflow, /--outdir "\$worker_dir"/);
+  assert.match(candidateWorkflow, /node --check "\$worker_dir\/index\.js"/);
+  assert.match(candidateWorkflow, /install -m 0644 "\$worker_dir\/index\.js" dist\/_worker\.js/);
+  assert.doesNotMatch(candidateWorkflow, /--outfile dist\/_worker\.js/);
   assert.match(candidateWorkflow, /digital-biome-pages\.tar\.gz/);
   assert.match(candidateWorkflow, /retention-days: 90/);
   assert.doesNotMatch(candidateWorkflow, /environment:\n {6}name: production/);

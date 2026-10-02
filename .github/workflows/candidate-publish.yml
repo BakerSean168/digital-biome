@@ -109,10 +109,24 @@ jobs:
       - name: Compile Pages Functions into the deployable artifact
         run: |
           set -euo pipefail
+          worker_dir="$(mktemp -d)"
+          trap 'rm -rf "$worker_dir"' EXIT
+
           pnpm exec wrangler pages functions build functions \
-            --outfile dist/_worker.js \
-            --output-routes-path dist/_routes.json \
+            --outdir "$worker_dir" \
+            --output-routes-path "$worker_dir/_routes.json" \
             --build-output-directory dist
+
+          test -s "$worker_dir/index.js"
+          test -s "$worker_dir/_routes.json"
+          node --check "$worker_dir/index.js"
+          if head -n 1 "$worker_dir/index.js" | grep -q '^------formdata-'; then
+            echo 'Wrangler emitted a multipart upload body instead of a Worker module' >&2
+            exit 1
+          fi
+
+          install -m 0644 "$worker_dir/index.js" dist/_worker.js
+          install -m 0644 "$worker_dir/_routes.json" dist/_routes.json
 
       - id: identity
         name: Record immutable candidate identity
