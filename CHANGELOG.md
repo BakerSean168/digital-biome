@@ -5,6 +5,25 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.7.0](https://github.com/BakerSean168/digital-biome/compare/v0.6.1...v0.7.0) (2026-10-02)
+
+
+### Features
+
+* **infra:** render from Personal Infrastructure projection ([7e20850](https://github.com/BakerSean168/digital-biome/commit/7e208501dec2aac5ecc5b699396852d46e2f8840))
+* **infra:** render from Personal Infrastructure projection ([4742b80](https://github.com/BakerSean168/digital-biome/commit/4742b800dfd3b6861db43f3fbaa5af79692a8284))
+
+
+### Bug Fixes
+
+* **ci:** read private infra projection through deploy key ([640f23a](https://github.com/BakerSean168/digital-biome/commit/640f23a6e6a4b2f715eca7148acd20b7ceef12e0))
+* **data:** verify producer tag without refetching deploy key ([29b028c](https://github.com/BakerSean168/digital-biome/commit/29b028c6733a5772a9a083aae84ea05c5f0dc188))
+* **data:** verify producer tag without refetching deploy key ([3a5aa11](https://github.com/BakerSean168/digital-biome/commit/3a5aa115052093eab10b378e82bbd77ee8b70e8c))
+* **release:** grant label finalizer write access ([034a2d1](https://github.com/BakerSean168/digital-biome/commit/034a2d1bd1c4167e38f41abcbef3311ea11970cc))
+* **release:** grant label finalizer write access ([e4fc2d2](https://github.com/BakerSean168/digital-biome/commit/e4fc2d2d239cd0789553befa76a7432b7d5e0af7))
+* **release:** update labels through REST API ([4fa3682](https://github.com/BakerSean168/digital-biome/commit/4fa368246bddcdf815b89ef193f099d7c715d2ff))
+* **release:** update labels through REST API ([46e00df](https://github.com/BakerSean168/digital-biome/commit/46e00df23b5f203c1c01f2e04e2181fecef6e7cf))
+
 ## [0.6.1](https://github.com/BakerSean168/digital-biome/compare/v0.6.0...v0.6.1) (2026-10-02)
 
 
