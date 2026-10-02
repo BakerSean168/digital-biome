@@ -4,15 +4,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v3';
-export const RELEASE_SCHEMA = 'digital-biome.release/v3';
-export const PREVIOUS_CANDIDATE_SCHEMA = 'digital-biome.candidate/v2';
-export const PREVIOUS_RELEASE_SCHEMA = 'digital-biome.release/v2';
+export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v4';
+export const RELEASE_SCHEMA = 'digital-biome.release/v4';
+export const PREVIOUS_CANDIDATE_SCHEMA = 'digital-biome.candidate/v3';
+export const PREVIOUS_RELEASE_SCHEMA = 'digital-biome.release/v3';
+export const V2_CANDIDATE_SCHEMA = 'digital-biome.candidate/v2';
+export const V2_RELEASE_SCHEMA = 'digital-biome.release/v2';
 export const LEGACY_CANDIDATE_SCHEMA = 'digital-biome.candidate/v1';
 export const LEGACY_RELEASE_SCHEMA = 'digital-biome.release/v1';
 
 const KNOWLEDGE_PRODUCER_REPOSITORY = 'BakerSean168/thought-forest';
-const PRIVATE_INFRASTRUCTURE_PRODUCER_REPOSITORY = 'BakerSean168/personal-infrastructure';
+const INFRASTRUCTURE_PRODUCER_REPOSITORY = 'BakerSean168/personal-infrastructure';
 const PRIVATE_INFRASTRUCTURE_CONTRACT_PATH =
   'bindings/digital-biome/private-infrastructure-v1.json';
 const SHA_RE = /^[0-9a-f]{40}$/i;
@@ -78,9 +80,7 @@ function validateKnowledgeIdentity(value: unknown): string[] {
     errors.push(`knowledge.producerRepository must be ${KNOWLEDGE_PRODUCER_REPOSITORY}`);
   }
   const sourceRevision = String(knowledge.sourceRevision ?? '');
-  if (!SHA_RE.test(sourceRevision)) {
-    errors.push('knowledge.sourceRevision must be a full Git SHA');
-  }
+  if (!SHA_RE.test(sourceRevision)) errors.push('knowledge.sourceRevision must be a full Git SHA');
   if (knowledge.releaseTag !== `knowledge-public-v1-${sourceRevision}`) {
     errors.push('knowledge.releaseTag must equal knowledge-public-v1-<sourceRevision>');
   }
@@ -93,15 +93,42 @@ function validateKnowledgeIdentity(value: unknown): string[] {
   return errors;
 }
 
+function validatePublicInfrastructureIdentity(value: unknown): string[] {
+  const errors: string[] = [];
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return ['publicInfrastructure must be an object'];
+  }
+  const identity = value as JsonRecord;
+  if (identity.producerRepository !== INFRASTRUCTURE_PRODUCER_REPOSITORY) {
+    errors.push(
+      `publicInfrastructure.producerRepository must be ${INFRASTRUCTURE_PRODUCER_REPOSITORY}`,
+    );
+  }
+  const sourceRevision = String(identity.sourceRevision ?? '');
+  if (!SHA_RE.test(sourceRevision)) {
+    errors.push('publicInfrastructure.sourceRevision must be a full Git SHA');
+  }
+  if (identity.releaseTag !== `infra-public-v2-${sourceRevision}`) {
+    errors.push('publicInfrastructure.releaseTag must equal infra-public-v2-<sourceRevision>');
+  }
+  if (!SHA256_RE.test(String(identity.artifactSha256 ?? ''))) {
+    errors.push('publicInfrastructure.artifactSha256 must be sha256:<64 hex>');
+  }
+  if (!SHA256_RE.test(String(identity.manifestSha256 ?? ''))) {
+    errors.push('publicInfrastructure.manifestSha256 must be sha256:<64 hex>');
+  }
+  return errors;
+}
+
 function validatePrivateInfrastructureIdentity(value: unknown): string[] {
   const errors: string[] = [];
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return ['privateInfrastructure must be an object'];
   }
   const identity = value as JsonRecord;
-  if (identity.producerRepository !== PRIVATE_INFRASTRUCTURE_PRODUCER_REPOSITORY) {
+  if (identity.producerRepository !== INFRASTRUCTURE_PRODUCER_REPOSITORY) {
     errors.push(
-      `privateInfrastructure.producerRepository must be ${PRIVATE_INFRASTRUCTURE_PRODUCER_REPOSITORY}`,
+      `privateInfrastructure.producerRepository must be ${INFRASTRUCTURE_PRODUCER_REPOSITORY}`,
     );
   }
   if (!SHA_RE.test(String(identity.sourceRevision ?? ''))) {
@@ -130,10 +157,15 @@ export function createCandidate(inputValue: unknown, generatedAt = new Date().to
   const input = asObject(inputValue, 'candidate input');
   const artifact = asObject(input.artifact, 'candidate artifact');
   const knowledge = asObject(input.knowledge, 'candidate knowledge');
+  const publicInfrastructure = asObject(
+    input.publicInfrastructure,
+    'candidate public infrastructure',
+  );
   const privateInfrastructure = asObject(
     input.privateInfrastructure,
     'candidate private infrastructure',
   );
+
   const candidate: JsonRecord = {
     schema: CANDIDATE_SCHEMA,
     gitSha: input.gitSha,
@@ -144,6 +176,13 @@ export function createCandidate(inputValue: unknown, generatedAt = new Date().to
       releaseTag: knowledge.releaseTag,
       artifactSha256: knowledge.artifactSha256,
       manifestSha256: knowledge.manifestSha256,
+    },
+    publicInfrastructure: {
+      producerRepository: publicInfrastructure.producerRepository,
+      sourceRevision: publicInfrastructure.sourceRevision,
+      releaseTag: publicInfrastructure.releaseTag,
+      artifactSha256: publicInfrastructure.artifactSha256,
+      manifestSha256: publicInfrastructure.manifestSha256,
     },
     privateInfrastructure: {
       producerRepository: privateInfrastructure.producerRepository,
@@ -166,9 +205,8 @@ function validateLegacyCandidate(candidate: JsonRecord): string[] {
   const errors: string[] = [];
   if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (!SHA_RE.test(String(candidate.vaultSha ?? ''))) {
+  if (!SHA_RE.test(String(candidate.vaultSha ?? '')))
     errors.push('vaultSha must be a full Git SHA');
-  }
   if (!SHA256_RE.test(String(candidate.assetIndexSha256 ?? ''))) {
     errors.push('assetIndexSha256 must be sha256:<64 hex>');
   }
@@ -177,7 +215,7 @@ function validateLegacyCandidate(candidate: JsonRecord): string[] {
   return errors;
 }
 
-function validatePreviousCandidate(candidate: JsonRecord): string[] {
+function validateV2Candidate(candidate: JsonRecord): string[] {
   const errors: string[] = [];
   if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
@@ -187,23 +225,27 @@ function validatePreviousCandidate(candidate: JsonRecord): string[] {
   return errors;
 }
 
+function validateV3Candidate(candidate: JsonRecord): string[] {
+  const errors = validateV2Candidate(candidate);
+  errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
+  return errors;
+}
+
 export function validateCandidate(value: unknown): string[] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return ['candidate must be an object'];
   }
   const candidate = value as JsonRecord;
-  if (candidate.schema === LEGACY_CANDIDATE_SCHEMA) {
-    return validateLegacyCandidate(candidate);
-  }
-  if (candidate.schema === PREVIOUS_CANDIDATE_SCHEMA) {
-    return validatePreviousCandidate(candidate);
-  }
+  if (candidate.schema === LEGACY_CANDIDATE_SCHEMA) return validateLegacyCandidate(candidate);
+  if (candidate.schema === V2_CANDIDATE_SCHEMA) return validateV2Candidate(candidate);
+  if (candidate.schema === PREVIOUS_CANDIDATE_SCHEMA) return validateV3Candidate(candidate);
 
   const errors: string[] = [];
   if (candidate.schema !== CANDIDATE_SCHEMA) errors.push(`schema must be ${CANDIDATE_SCHEMA}`);
   if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
   errors.push(...validateKnowledgeIdentity(candidate.knowledge));
+  errors.push(...validatePublicInfrastructureIdentity(candidate.publicInfrastructure));
   errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
   errors.push(...validateArtifact(candidate.artifact));
   errors.push(...validateDigest(candidate, 'candidate'));
@@ -224,27 +266,38 @@ export function createReleaseManifest(
   if (!/^\d+$/.test(candidateRunId)) throw new Error('candidate run ID must be numeric');
 
   const candidate = candidateValue as JsonRecord;
-  const legacy = candidate.schema === LEGACY_CANDIDATE_SCHEMA;
-  const previous = candidate.schema === PREVIOUS_CANDIDATE_SCHEMA;
+  const schema = candidate.schema;
+  const releaseSchema =
+    schema === LEGACY_CANDIDATE_SCHEMA
+      ? LEGACY_RELEASE_SCHEMA
+      : schema === V2_CANDIDATE_SCHEMA
+        ? V2_RELEASE_SCHEMA
+        : schema === PREVIOUS_CANDIDATE_SCHEMA
+          ? PREVIOUS_RELEASE_SCHEMA
+          : RELEASE_SCHEMA;
+
   const release: JsonRecord = {
-    schema: legacy ? LEGACY_RELEASE_SCHEMA : previous ? PREVIOUS_RELEASE_SCHEMA : RELEASE_SCHEMA,
+    schema: releaseSchema,
     version,
     tag,
     gitSha: candidate.gitSha,
     ciRunId: candidate.ciRunId,
     candidateRunId,
     candidateManifestDigest: candidate.digest,
-    ...(legacy
-      ? {
-          vaultSha: candidate.vaultSha,
-          assetIndexSha256: candidate.assetIndexSha256,
-        }
-      : previous
+    ...(schema === LEGACY_CANDIDATE_SCHEMA
+      ? { vaultSha: candidate.vaultSha, assetIndexSha256: candidate.assetIndexSha256 }
+      : schema === V2_CANDIDATE_SCHEMA
         ? { knowledge: candidate.knowledge }
-        : {
-            knowledge: candidate.knowledge,
-            privateInfrastructure: candidate.privateInfrastructure,
-          }),
+        : schema === PREVIOUS_CANDIDATE_SCHEMA
+          ? {
+              knowledge: candidate.knowledge,
+              privateInfrastructure: candidate.privateInfrastructure,
+            }
+          : {
+              knowledge: candidate.knowledge,
+              publicInfrastructure: candidate.publicInfrastructure,
+              privateInfrastructure: candidate.privateInfrastructure,
+            }),
     artifact: candidate.artifact,
     generatedAt,
   };
@@ -252,23 +305,24 @@ export function createReleaseManifest(
   return release;
 }
 
-function validateLegacyRelease(release: JsonRecord): string[] {
+function validateReleaseBase(release: JsonRecord): string[] {
   const errors: string[] = [];
-  if (!SEMVER_RE.test(String(release.version ?? ''))) {
+  if (!SEMVER_RE.test(String(release.version ?? '')))
     errors.push('version must be semantic version');
-  }
   if (release.tag !== `v${release.version}`) errors.push('tag must equal v<version>');
   if (!SHA_RE.test(String(release.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(release.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (!/^\d+$/.test(String(release.candidateRunId ?? ''))) {
+  if (!/^\d+$/.test(String(release.candidateRunId ?? '')))
     errors.push('candidateRunId must be numeric');
-  }
   if (!SHA256_RE.test(String(release.candidateManifestDigest ?? ''))) {
     errors.push('candidateManifestDigest must be sha256:<64 hex>');
   }
-  if (!SHA_RE.test(String(release.vaultSha ?? ''))) {
-    errors.push('vaultSha must be a full Git SHA');
-  }
+  return errors;
+}
+
+function validateLegacyRelease(release: JsonRecord): string[] {
+  const errors = validateReleaseBase(release);
+  if (!SHA_RE.test(String(release.vaultSha ?? ''))) errors.push('vaultSha must be a full Git SHA');
   if (!SHA256_RE.test(String(release.assetIndexSha256 ?? ''))) {
     errors.push('assetIndexSha256 must be sha256:<64 hex>');
   }
@@ -277,23 +331,17 @@ function validateLegacyRelease(release: JsonRecord): string[] {
   return errors;
 }
 
-function validatePreviousRelease(release: JsonRecord): string[] {
-  const errors: string[] = [];
-  if (!SEMVER_RE.test(String(release.version ?? ''))) {
-    errors.push('version must be semantic version');
-  }
-  if (release.tag !== `v${release.version}`) errors.push('tag must equal v<version>');
-  if (!SHA_RE.test(String(release.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
-  if (!/^\d+$/.test(String(release.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (!/^\d+$/.test(String(release.candidateRunId ?? ''))) {
-    errors.push('candidateRunId must be numeric');
-  }
-  if (!SHA256_RE.test(String(release.candidateManifestDigest ?? ''))) {
-    errors.push('candidateManifestDigest must be sha256:<64 hex>');
-  }
+function validateV2Release(release: JsonRecord): string[] {
+  const errors = validateReleaseBase(release);
   errors.push(...validateKnowledgeIdentity(release.knowledge));
   errors.push(...validateArtifact(release.artifact));
   errors.push(...validateDigest(release, 'release'));
+  return errors;
+}
+
+function validateV3Release(release: JsonRecord): string[] {
+  const errors = validateV2Release(release);
+  errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
   return errors;
 }
 
@@ -302,28 +350,14 @@ export function validateReleaseManifest(value: unknown): string[] {
     return ['release must be an object'];
   }
   const release = value as JsonRecord;
-  if (release.schema === LEGACY_RELEASE_SCHEMA) {
-    return validateLegacyRelease(release);
-  }
-  if (release.schema === PREVIOUS_RELEASE_SCHEMA) {
-    return validatePreviousRelease(release);
-  }
+  if (release.schema === LEGACY_RELEASE_SCHEMA) return validateLegacyRelease(release);
+  if (release.schema === V2_RELEASE_SCHEMA) return validateV2Release(release);
+  if (release.schema === PREVIOUS_RELEASE_SCHEMA) return validateV3Release(release);
 
-  const errors: string[] = [];
+  const errors = validateReleaseBase(release);
   if (release.schema !== RELEASE_SCHEMA) errors.push(`schema must be ${RELEASE_SCHEMA}`);
-  if (!SEMVER_RE.test(String(release.version ?? ''))) {
-    errors.push('version must be semantic version');
-  }
-  if (release.tag !== `v${release.version}`) errors.push('tag must equal v<version>');
-  if (!SHA_RE.test(String(release.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
-  if (!/^\d+$/.test(String(release.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (!/^\d+$/.test(String(release.candidateRunId ?? ''))) {
-    errors.push('candidateRunId must be numeric');
-  }
-  if (!SHA256_RE.test(String(release.candidateManifestDigest ?? ''))) {
-    errors.push('candidateManifestDigest must be sha256:<64 hex>');
-  }
   errors.push(...validateKnowledgeIdentity(release.knowledge));
+  errors.push(...validatePublicInfrastructureIdentity(release.publicInfrastructure));
   errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
   errors.push(...validateArtifact(release.artifact));
   errors.push(...validateDigest(release, 'release'));
@@ -401,12 +435,9 @@ function main() {
   if (command === 'validate') {
     if (!flags.file) throw new Error('validate requires --file');
     const value = readJson(flags.file) as JsonRecord;
-    const errors =
-      value.schema === CANDIDATE_SCHEMA ||
-      value.schema === PREVIOUS_CANDIDATE_SCHEMA ||
-      value.schema === LEGACY_CANDIDATE_SCHEMA
-        ? validateCandidate(value)
-        : validateReleaseManifest(value);
+    const errors = String(value.schema).startsWith('digital-biome.candidate/')
+      ? validateCandidate(value)
+      : validateReleaseManifest(value);
     if (errors.length) throw new Error(errors.join('; '));
     console.log(`DELIVERY_MANIFEST=PASS schema=${String(value.schema)}`);
     return;

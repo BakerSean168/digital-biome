@@ -84,6 +84,25 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - id: public-infra-lock
+        name: Resolve pinned public infrastructure revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(jq -r .sourceRevision data-products/infra-public-v2.lock.json)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pinned Personal Infrastructure projection source
+        uses: actions/checkout@v6
+        with:
+          repository: BakerSean168/personal-infrastructure
+          ssh-key: ${{ secrets.PDS_INFRA_PUBLIC_DEPLOY_KEY }}
+          ref: ${{ steps.public-infra-lock.outputs.revision }}
+          path: .pds-runtime/personal-infrastructure-public
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
@@ -96,10 +115,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install public infrastructure projection tooling
+        run: python3 -m pip install --disable-pip-version-check -r .pds-runtime/personal-infrastructure-public/requirements-deployment-registry.txt
+
       - name: Fetch and materialize pinned knowledge-public-v1
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
         run: scripts/data-products/prepare-knowledge-public-v1.sh
+
+      - name: Build and materialize pinned infra-public-v2
+        run: scripts/data-products/prepare-infra-public-v2.sh --producer-root .pds-runtime/personal-infrastructure-public
 
       - name: Build exact-SHA public artifact
         run: |
@@ -144,6 +169,11 @@ jobs:
           knowledge_release_tag="$(jq -r .releaseTag data-products/knowledge-public-v1.lock.json)"
           knowledge_artifact_sha256="$(jq -r .artifact.sha256 data-products/knowledge-public-v1.lock.json)"
           knowledge_manifest_sha256="$(jq -r .manifest.sha256 data-products/knowledge-public-v1.lock.json)"
+          public_infra_producer="$(jq -r .producerRepository data-products/infra-public-v2.lock.json)"
+          public_infra_source_sha="$(jq -r .sourceRevision data-products/infra-public-v2.lock.json)"
+          public_infra_release_tag="$(jq -r .releaseTag data-products/infra-public-v2.lock.json)"
+          public_infra_artifact_sha256="$(jq -r .artifact.sha256 data-products/infra-public-v2.lock.json)"
+          public_infra_manifest_sha256="$(jq -r .manifest.sha256 data-products/infra-public-v2.lock.json)"
           private_infra_producer="$(jq -r .producerRepository data-products/digital-biome-private-infrastructure-v1.lock.json)"
           private_infra_source_sha="$(jq -r .sourceRevision data-products/digital-biome-private-infrastructure-v1.lock.json)"
           private_infra_contract_path="$(jq -r .contractPath data-products/digital-biome-private-infrastructure-v1.lock.json)"
@@ -158,6 +188,11 @@ jobs:
             --arg knowledgeReleaseTag "$knowledge_release_tag" \
             --arg knowledgeArtifactSha256 "$knowledge_artifact_sha256" \
             --arg knowledgeManifestSha256 "$knowledge_manifest_sha256" \
+            --arg publicInfraProducer "$public_infra_producer" \
+            --arg publicInfraSourceSha "$public_infra_source_sha" \
+            --arg publicInfraReleaseTag "$public_infra_release_tag" \
+            --arg publicInfraArtifactSha256 "$public_infra_artifact_sha256" \
+            --arg publicInfraManifestSha256 "$public_infra_manifest_sha256" \
             --arg privateInfraProducer "$private_infra_producer" \
             --arg privateInfraSourceSha "$private_infra_source_sha" \
             --arg privateInfraContractPath "$private_infra_contract_path" \
@@ -174,6 +209,13 @@ jobs:
                 releaseTag:$knowledgeReleaseTag,
                 artifactSha256:$knowledgeArtifactSha256,
                 manifestSha256:$knowledgeManifestSha256
+              },
+              publicInfrastructure:{
+                producerRepository:$publicInfraProducer,
+                sourceRevision:$publicInfraSourceSha,
+                releaseTag:$publicInfraReleaseTag,
+                artifactSha256:$publicInfraArtifactSha256,
+                manifestSha256:$publicInfraManifestSha256
               },
               privateInfrastructure:{
                 producerRepository:$privateInfraProducer,

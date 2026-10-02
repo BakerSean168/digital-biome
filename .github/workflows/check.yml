@@ -58,6 +58,25 @@ jobs:
           token: ${{ steps.vault-token.outputs.token }}
           persist-credentials: false
 
+      - id: public-infra-lock
+        name: Resolve pinned public infrastructure revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(jq -r .sourceRevision data-products/infra-public-v2.lock.json)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pinned Personal Infrastructure projection source
+        uses: actions/checkout@v6
+        with:
+          repository: BakerSean168/personal-infrastructure
+          ssh-key: ${{ secrets.PDS_INFRA_PUBLIC_DEPLOY_KEY }}
+          ref: ${{ steps.public-infra-lock.outputs.revision }}
+          path: .pds-runtime/personal-infrastructure-public
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
@@ -70,10 +89,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install public infrastructure projection tooling
+        run: python3 -m pip install --disable-pip-version-check -r .pds-runtime/personal-infrastructure-public/requirements-deployment-registry.txt
+
       - name: Fetch and materialize pinned knowledge-public-v1
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
         run: scripts/data-products/prepare-knowledge-public-v1.sh
+
+      - name: Build and materialize pinned infra-public-v2
+        run: scripts/data-products/prepare-infra-public-v2.sh --producer-root .pds-runtime/personal-infrastructure-public
 
       - name: Run verification and production build gates
         env:

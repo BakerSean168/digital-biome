@@ -59,6 +59,9 @@ src/data/obsidian/
 # Generated index JSON - built by pnpm sync, do not commit
 src/data/indexes/
 
+# Producer-owned infrastructure projection - materialized from pinned infra-public-v2
+src/data/infrastructure/infra-public-v2.json
+
 # Synced vault assets - generated at build time, do not commit
 public/vault-assets/
 

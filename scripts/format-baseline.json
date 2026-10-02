@@ -96,8 +96,6 @@
     "src/pages/discover/index.astro": "142ad570f99bf2997fd6e76df6ff548be5432520c1eb68bbec073fdd0df71180",
     "src/pages/friends.astro": "9575c34646d9f6c6d78e0588ee17053945a446e27f48ac49e68aa6f610890e25",
     "src/pages/index.astro": "a675a7115e0b533f142e207e5e4461c7563d962f10d0531d7bd4a9355992c1c1",
-    "src/pages/infrastructure/[assetId].astro": "a9b6fbf99c9349a3edb8b76f90744b141008e3909d7d61b4e94c6e856dcc548f",
-    "src/pages/infrastructure/index.astro": "458a33eb5eac143076f237a6762dab06e8637982d54aa644e121bafd864a87ba",
     "src/pages/login.astro": "2a36754603f97d8e3cdae9653278b59c710fe18169ca8bf48812c38c02808e02",
     "src/pages/notes/[...slug].astro": "129571d137b9e8a15eb74b9462e07042faf3717276fbf7a9f36606a6f7710e47",
     "src/pages/notes/index.astro": "8b303ff869309a07e81ea185958d9ac381c8b7abd86c9021e22511f9f3b6e4a2",

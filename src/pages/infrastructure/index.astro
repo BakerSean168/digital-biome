@@ -1,35 +1,26 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import InfrastructureShowcase from '../../components/assets/InfrastructureShowcase.astro';
-import {
-  getInfrastructureDataset,
-  getTopologyFactCounts,
-  getTopologyFlows,
-  homelabFlowIds,
-  publicFleetFlowIds,
-} from '../../utils/infrastructure';
+import { getInfrastructureDataset, infrastructureFactCounts } from '../../utils/infrastructure';
 
-const { assetCards, resolvedNodes } = getInfrastructureDataset();
-const fleetFlows = getTopologyFlows(publicFleetFlowIds);
-const homelabFlows = getTopologyFlows(homelabFlowIds);
-const fleetFacts = getTopologyFactCounts(fleetFlows);
-const homelabFacts = getTopologyFactCounts(homelabFlows);
+const dataset = getInfrastructureDataset();
+const facts = infrastructureFactCounts();
 const heroFacts = [
-  '4 个公网区域：成都、香港、日本、韩国',
-  `${fleetFacts.flowCount} 条公网链路，覆盖控制面、业务面、代理面与展示面`,
-  `${homelabFacts.flowCount} 条家庭实验室链路，包含供电、网络、计算、虚拟化与服务层`,
-  `${assetCards.length} 个资产化节点，已接入详情页、入口和监控跳板`,
+  `${facts.fleetHostCount} 个当前公网计算节点来自 Personal Infrastructure`,
+  `${facts.homelabResourceCount} 个家庭实验室资源通过 infra-public-v2 投影`,
+  `${facts.connectionCount} 条显式基础设施关系由 Producer 维护`,
+  `${facts.resourceCount} 个 public-safe 资源，页面不再读取 Thought Forest 资产事实`,
 ];
-
 ---
 
 <BaseLayout title="Infrastructure" description="家庭网络与公网资产">
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
     <InfrastructureShowcase
       title="数字基础设施拓扑"
-      description="涵盖控制平面、业务节点、区域代理与家庭实验室架构的全景视角。"
+      description="由 Personal Infrastructure 作为唯一事实源，展示公网节点、受保护入口与家庭实验室资源。"
       heroFacts={heroFacts}
-      resolvedNodes={resolvedNodes}
+      resources={dataset.resources}
+      connections={dataset.connections}
       locale="zh"
     />
   </main>
