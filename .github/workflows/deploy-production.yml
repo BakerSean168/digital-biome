@@ -301,7 +301,6 @@ jobs:
           repositories: |
             digital-biome
             thought-forest
-            personal-infrastructure
           permission-contents: read
 
       - name: Checkout exact Release source
@@ -321,6 +320,17 @@ jobs:
           token: ${{ steps.vault-token.outputs.token }}
           ref: ${{ needs.verify-release.outputs.knowledge_source_revision }}
           path: .pds-runtime/private-thought-forest
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout exact v4 Personal Infrastructure public projection source
+        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v4'
+        uses: actions/checkout@v6
+        with:
+          repository: BakerSean168/personal-infrastructure
+          ssh-key: ${{ secrets.PERSONAL_INFRASTRUCTURE_DEPLOY_KEY }}
+          ref: ${{ needs.verify-release.outputs.public_infrastructure_source_revision }}
+          path: .pds-runtime/personal-infrastructure-public
           fetch-depth: 1
           persist-credentials: false
 
@@ -346,6 +356,10 @@ jobs:
 
       - name: Install deployment tooling
         run: pnpm install --frozen-lockfile
+
+      - name: Install v4 public infrastructure projection tooling
+        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v4'
+        run: python3 -m pip install --disable-pip-version-check -r .pds-runtime/personal-infrastructure-public/requirements-deployment-registry.txt
 
       - name: Install v2 private producer index tooling
         if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v2'
@@ -419,7 +433,8 @@ jobs:
                 [[ "$(jq -r .manifest.sha256 "$public_infra_lock")" == "$PUBLIC_INFRASTRUCTURE_MANIFEST_SHA256" ]]
                 scripts/data-products/prepare-infra-public-v2.sh \
                   --runtime-root .pds-runtime/infra-public-v2 \
-                  --lock "$public_infra_lock"
+                  --lock "$public_infra_lock" \
+                  --producer-root .pds-runtime/personal-infrastructure-public
                 public_infra_artifact=src/data/infrastructure/infra-public-v2.json
                 echo "PDS_PUBLIC_INFRASTRUCTURE_ARTIFACT=$public_infra_artifact" >> "$GITHUB_ENV"
               fi

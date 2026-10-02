@@ -34,14 +34,23 @@ test('the required check workflow runs for every pull request to main', () => {
 test('main integration builds from immutable knowledge and infrastructure projections', () => {
   assert.match(ciWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
   assert.match(ciWorkflow, /prepare-knowledge-public-v1\.sh/);
-  assert.match(ciWorkflow, /Fetch and materialize pinned infra-public-v2/);
-  assert.match(ciWorkflow, /prepare-infra-public-v2\.sh/);
+  assert.match(ciWorkflow, /Build and materialize pinned infra-public-v2/);
+  assert.match(ciWorkflow, /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/);
+  assert.match(
+    ciWorkflow,
+    /prepare-infra-public-v2\.sh --producer-root \.pds-runtime\/personal-infrastructure-public/,
+  );
   assert.doesNotMatch(ciWorkflow, /submodules: recursive/);
 
   assert.match(candidateWorkflow, /workflows: \['CI'\]/);
   assert.match(candidateWorkflow, /branches: \[main\]/);
   assert.match(candidateWorkflow, /Build immutable Pages candidate/);
   assert.match(candidateWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
+  assert.match(candidateWorkflow, /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/);
+  assert.match(
+    candidateWorkflow,
+    /prepare-infra-public-v2\.sh --producer-root \.pds-runtime\/personal-infrastructure-public/,
+  );
   assert.match(candidateWorkflow, /knowledgeArtifactSha256/);
   assert.match(candidateWorkflow, /infra-public-v2\.lock\.json/);
   assert.match(candidateWorkflow, /publicInfrastructure:/);
@@ -79,6 +88,14 @@ test('infrastructure sync pins only immutable Personal Infrastructure projection
   assert.match(infrastructureSyncWorkflow, /BakerSean168\/personal-infrastructure/);
   assert.match(infrastructureSyncWorkflow, /infra-public-v2\.json/);
   assert.match(infrastructureSyncWorkflow, /infra-public-v2\.manifest\.json/);
+  assert.match(
+    infrastructureSyncWorkflow,
+    /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/,
+  );
+  assert.match(infrastructureSyncWorkflow, /python3 scripts\/export_infra_public_v2\.py/);
+  assert.match(infrastructureSyncWorkflow, /refs\/tags\/\$release_tag/);
+  assert.doesNotMatch(infrastructureSyncWorkflow, /create-github-app-token/);
+  assert.doesNotMatch(infrastructureSyncWorkflow, /gh release download/);
   assert.match(infrastructureSyncWorkflow, /git add data-products\/infra-public-v2\.lock\.json/);
   assert.match(infrastructureSyncWorkflow, /gh pr create/);
   assert.doesNotMatch(infrastructureSyncWorkflow, /inventory\/public-infrastructure\.yaml/);
@@ -165,7 +182,9 @@ test('production v4 consumes public infra projection and pinned private RuntimeB
   );
   assert.match(step, /digital-biome\.release\/v4\|digital-biome\.release\/v3/);
   assert.match(step, /infra-public-v2\.lock\.json/);
+  assert.match(productionWorkflow, /path: \.pds-runtime\/personal-infrastructure-public/);
   assert.match(step, /prepare-infra-public-v2\.sh/);
+  assert.match(step, /--producer-root \.pds-runtime\/personal-infrastructure-public/);
   assert.match(step, /PUBLIC_INFRASTRUCTURE_ARTIFACT_SHA256/);
   assert.match(step, /digital-biome-private-infrastructure-v1\.lock\.json/);
   assert.match(step, /Personal Infrastructure runtime binding digest mismatch/);
