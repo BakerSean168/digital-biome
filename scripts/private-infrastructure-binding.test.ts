@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { parseInfraPublicV2 } from '../src/domain/infrastructure/infra-public-v2';
 import { parsePrivateInfrastructureBinding } from './export-private-infrastructure';
 
 function fixture() {
@@ -45,43 +46,41 @@ test('rejects wrong producer identity and embedded HTTP credentials', () => {
   );
 });
 
-test('materialized private binding covers all public privateRef keys when present', (t) => {
+test('private RuntimeBinding covers every privateRef exported by infra-public-v2', (t) => {
   const contractPath = path.resolve(
     process.env.PDS_PRIVATE_INFRASTRUCTURE_BINDING ||
       '.pds-runtime/personal-infrastructure/bindings/digital-biome/private-infrastructure-v1.json',
   );
-  if (!fs.existsSync(contractPath)) {
-    t.skip('private infrastructure binding is not materialized in this execution');
+  const publicProjectionPath = path.resolve(
+    process.env.PDS_PUBLIC_INFRASTRUCTURE_ARTIFACT ||
+      'src/data/infrastructure/infra-public-v2.json',
+  );
+  if (!fs.existsSync(contractPath) || !fs.existsSync(publicProjectionPath)) {
+    t.skip('private binding or infra-public-v2 is not materialized in this execution');
     return;
   }
 
   const payload = parsePrivateInfrastructureBinding(fs.readFileSync(contractPath, 'utf8'));
-  const generatedRoot = process.env.NOTES_UPSTREAM_GENERATED?.trim();
-  const assetIndexPath = generatedRoot
-    ? path.resolve(generatedRoot, 'knowledge-index', 'asset-index.json')
-    : path.resolve('src/data/indexes/asset-index.json');
-  const parsedAssetIndex = JSON.parse(fs.readFileSync(assetIndexPath, 'utf8')) as
-    | Array<{ links?: Array<{ privateRef?: string }> }>
-    | { entries?: Array<{ links?: Array<{ privateRef?: string }> }> };
-  const entries = Array.isArray(parsedAssetIndex)
-    ? parsedAssetIndex
-    : (parsedAssetIndex.entries ?? []);
-  const expected = new Set(
-    entries.flatMap((entry) =>
-      (entry.links ?? []).flatMap((link) => (link.privateRef ? [link.privateRef] : [])),
-    ),
-  );
-  for (const privateRef of expected) {
-    assert.ok(privateRef in payload.links, `runtime binding is missing ${privateRef}`);
+  const projection = parseInfraPublicV2(fs.readFileSync(publicProjectionPath, 'utf8'));
+
+  const expectedValueRefs = new Set<string>();
+  const expectedLinkRefs = new Set<string>();
+  for (const resource of projection.payload.resources) {
+    for (const ref of Object.values(resource.privateValues ?? {})) {
+      expectedValueRefs.add(ref);
+    }
+    for (const link of resource.links ?? []) {
+      if (link.privateRef) expectedLinkRefs.add(link.privateRef);
+    }
   }
 
-  for (const key of [
-    'host-aliyun-chengdu-dailyuse-vps.ip',
-    'host-azure-japan-singbox-vps.ip',
-    'host-azure-korea-singbox-vps.ip',
-    'host-oracle-osaka-amd-proxy-vps.ip',
-    'host-oracle-osaka-arm-development-vps.ip',
-  ]) {
-    assert.ok(key in payload.values, `runtime binding is missing ${key}`);
+  assert.ok(expectedValueRefs.size > 0, 'infra-public-v2 must expose stable private value refs');
+  assert.ok(expectedLinkRefs.size > 0, 'infra-public-v2 must expose stable private link refs');
+
+  for (const ref of expectedValueRefs) {
+    assert.ok(ref in payload.values, `runtime binding is missing value ref ${ref}`);
+  }
+  for (const ref of expectedLinkRefs) {
+    assert.ok(ref in payload.links, `runtime binding is missing link ref ${ref}`);
   }
 });

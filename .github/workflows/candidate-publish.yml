@@ -74,6 +74,7 @@ jobs:
           repositories: |
             digital-biome
             thought-forest
+            personal-infrastructure
           permission-contents: read
 
       - name: Checkout exact application revision
@@ -100,6 +101,11 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
         run: scripts/data-products/prepare-knowledge-public-v1.sh
+
+      - name: Fetch and materialize pinned infra-public-v2
+        env:
+          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
+        run: scripts/data-products/prepare-infra-public-v2.sh
 
       - name: Build exact-SHA public artifact
         run: |
@@ -144,6 +150,11 @@ jobs:
           knowledge_release_tag="$(jq -r .releaseTag data-products/knowledge-public-v1.lock.json)"
           knowledge_artifact_sha256="$(jq -r .artifact.sha256 data-products/knowledge-public-v1.lock.json)"
           knowledge_manifest_sha256="$(jq -r .manifest.sha256 data-products/knowledge-public-v1.lock.json)"
+          public_infra_producer="$(jq -r .producerRepository data-products/infra-public-v2.lock.json)"
+          public_infra_source_sha="$(jq -r .sourceRevision data-products/infra-public-v2.lock.json)"
+          public_infra_release_tag="$(jq -r .releaseTag data-products/infra-public-v2.lock.json)"
+          public_infra_artifact_sha256="$(jq -r .artifact.sha256 data-products/infra-public-v2.lock.json)"
+          public_infra_manifest_sha256="$(jq -r .manifest.sha256 data-products/infra-public-v2.lock.json)"
           private_infra_producer="$(jq -r .producerRepository data-products/digital-biome-private-infrastructure-v1.lock.json)"
           private_infra_source_sha="$(jq -r .sourceRevision data-products/digital-biome-private-infrastructure-v1.lock.json)"
           private_infra_contract_path="$(jq -r .contractPath data-products/digital-biome-private-infrastructure-v1.lock.json)"
@@ -158,6 +169,11 @@ jobs:
             --arg knowledgeReleaseTag "$knowledge_release_tag" \
             --arg knowledgeArtifactSha256 "$knowledge_artifact_sha256" \
             --arg knowledgeManifestSha256 "$knowledge_manifest_sha256" \
+            --arg publicInfraProducer "$public_infra_producer" \
+            --arg publicInfraSourceSha "$public_infra_source_sha" \
+            --arg publicInfraReleaseTag "$public_infra_release_tag" \
+            --arg publicInfraArtifactSha256 "$public_infra_artifact_sha256" \
+            --arg publicInfraManifestSha256 "$public_infra_manifest_sha256" \
             --arg privateInfraProducer "$private_infra_producer" \
             --arg privateInfraSourceSha "$private_infra_source_sha" \
             --arg privateInfraContractPath "$private_infra_contract_path" \
@@ -174,6 +190,13 @@ jobs:
                 releaseTag:$knowledgeReleaseTag,
                 artifactSha256:$knowledgeArtifactSha256,
                 manifestSha256:$knowledgeManifestSha256
+              },
+              publicInfrastructure:{
+                producerRepository:$publicInfraProducer,
+                sourceRevision:$publicInfraSourceSha,
+                releaseTag:$publicInfraReleaseTag,
+                artifactSha256:$publicInfraArtifactSha256,
+                manifestSha256:$publicInfraManifestSha256
               },
               privateInfrastructure:{
                 producerRepository:$privateInfraProducer,

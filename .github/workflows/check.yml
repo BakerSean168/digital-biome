@@ -50,6 +50,7 @@ jobs:
           repositories: |
             digital-biome
             thought-forest
+            personal-infrastructure
           permission-contents: read
 
       - name: Checkout
@@ -74,6 +75,11 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
         run: scripts/data-products/prepare-knowledge-public-v1.sh
+
+      - name: Fetch and materialize pinned infra-public-v2
+        env:
+          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
+        run: scripts/data-products/prepare-infra-public-v2.sh
 
       - name: Run verification and production build gates
         env:

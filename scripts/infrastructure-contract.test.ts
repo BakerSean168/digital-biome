@@ -2,75 +2,66 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { parseInfraPublicV2 } from '../src/domain/infrastructure/infra-public-v2';
 
-interface AssetLink {
-  url?: string;
-  privateRef?: string;
-  kind?: string;
+function loadProjection(t: { skip(message?: string): void }) {
+  const file = path.resolve('src/data/infrastructure/infra-public-v2.json');
+  if (!fs.existsSync(file)) {
+    t.skip('infra-public-v2 is not materialized in this execution');
+    return null;
+  }
+  return parseInfraPublicV2(fs.readFileSync(file, 'utf8'));
 }
 
-interface AssetItem {
-  assetId: string;
-  links?: AssetLink[];
-  monitor?: { url?: string };
-}
+test('Personal Infrastructure projection is authoritative for infrastructure presentation', (t) => {
+  const projection = loadProjection(t);
+  if (!projection) return;
 
-const PUBLIC_ENDPOINTS = {
-  'svc-memoflow-dailyuse': 'https://memoflow.bakersean.top/',
-} as const;
-
-function loadAssetIndex(generatedRoot: string): AssetItem[] {
-  const assetIndexPath = path.resolve(generatedRoot, 'knowledge-index', 'asset-index.json');
-  assert.ok(fs.existsSync(assetIndexPath), `Missing upstream asset index: ${assetIndexPath}`);
-  const parsed: unknown = JSON.parse(fs.readFileSync(assetIndexPath, 'utf8'));
-  assert.ok(Array.isArray(parsed), 'Upstream asset index must be an array.');
-  return parsed as AssetItem[];
-}
-
-function findAsset(assets: AssetItem[], assetId: string): AssetItem {
-  const asset = assets.find((item) => item.assetId === assetId);
-  assert.ok(asset, `Missing required infrastructure asset: ${assetId}`);
-  return asset;
-}
-
-function urlsFor(asset: AssetItem): Set<string> {
-  return new Set([
-    ...(asset.links ?? []).flatMap((link) => (link.url ? [link.url] : [])),
-    ...(asset.monitor?.url ? [asset.monitor.url] : []),
-  ]);
-}
-
-test('producer-owned public projection keeps protected infrastructure links redacted', (t) => {
-  const generatedRoot = path.resolve(
-    process.cwd(),
-    '.pds-runtime/knowledge-public-v1/source/generated',
-  );
-  if (!fs.existsSync(generatedRoot)) {
-    t.skip('knowledge-public-v1 runtime source is not materialized in this execution');
-    return;
+  const resources = projection.payload.resources;
+  const ids = new Set(resources.map((resource) => resource.id));
+  for (const required of [
+    'host-oracle-osaka-arm-development-vps',
+    'host-aliyun-chengdu-dailyuse-vps',
+    'host-n100-pve',
+    'net-home-lan',
+    'svc-homepage-dashboard',
+    'svc-nezha-panel',
+  ]) {
+    assert.ok(ids.has(required), `infra-public-v2 is missing ${required}`);
   }
 
-  const assets = loadAssetIndex(generatedRoot);
-  let protectedRefs = 0;
-  for (const asset of assets) {
-    for (const link of asset.links ?? []) {
-      if (!link.privateRef) continue;
-      protectedRefs += 1;
-      assert.equal(
-        link.url,
-        undefined,
-        `${asset.assetId}:${link.privateRef} leaked a protected URL`,
-      );
+  const memoflow = resources.find((resource) => resource.id === 'svc-memoflow-dailyuse');
+  assert.ok(
+    memoflow?.links?.some((link) => link.url === 'https://memoflow.bakersean.top/'),
+    'MemoFlow public endpoint must come from Personal Infrastructure projection',
+  );
+
+  let privateRefs = 0;
+  for (const resource of resources) {
+    for (const link of resource.links ?? []) {
+      if (link.privateRef) {
+        privateRefs += 1;
+        assert.equal(link.url, undefined, `${resource.id} leaked a protected link URL`);
+      }
     }
   }
-  assert.ok(protectedRefs > 0, 'expected protected link identities in the public projection');
+  assert.ok(privateRefs > 0, 'expected stable privateRef identities in infra-public-v2');
+});
 
-  for (const [assetId, expectedUrl] of Object.entries(PUBLIC_ENDPOINTS)) {
-    assert.ok(
-      urlsFor(findAsset(assets, assetId)).has(expectedUrl),
-      `${assetId} must preserve public endpoint ${expectedUrl}`,
-    );
-  }
+test('Digital Biome no longer owns infrastructure fact tables', () => {
+  const showcase = fs.readFileSync(
+    path.resolve('src/components/assets/InfrastructureShowcase.astro'),
+    'utf8',
+  );
+  const legacyTopology = fs.readFileSync(
+    path.resolve('src/data/infrastructure/family-topology.ts'),
+    'utf8',
+  );
+
+  assert.doesNotMatch(showcase, /const\s+vpsNodes\s*[:=]/);
+  assert.match(showcase, /Personal Infrastructure → infra-public-v2/);
+  assert.match(legacyTopology, /familyTopology:\s*TopologyFlow\[\]\s*=\s*\[\]/);
+  assert.doesNotMatch(legacyTopology, /Azure Japan|Aliyun Chengdu|N100 PVE 主机/);
 });
 
 test('the tracked subscription snapshot prevents an empty dashboard build', () => {
