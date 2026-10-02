@@ -19,6 +19,7 @@ concurrency:
 permissions:
   contents: write
   actions: read
+  issues: write
   pull-requests: read
 
 jobs:
@@ -307,6 +308,33 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.resolve.outputs.tag }}
         run: gh release edit "$RELEASE_TAG" --repo "$REPOSITORY" --draft=false
+
+      - name: Finalize release-please PR state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ needs.resolve.outputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_pr="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$REPOSITORY/commits/$RELEASE_SHA/pulls" \
+            --jq '[.[] | select(.merged_at != null) | select(.title | startswith("chore(main): release "))][0].number // empty')"
+          [[ "$release_pr" =~ ^[0-9]+$ ]] || {
+            echo 'could not resolve the merged release-please PR for this Release SHA' >&2
+            exit 1
+          }
+
+          gh label create 'autorelease: tagged' \
+            --repo "$REPOSITORY" \
+            --color ededed \
+            --description 'Release PR has been published by the immutable Release workflow' \
+            --force
+          gh pr edit "$release_pr" \
+            --repo "$REPOSITORY" \
+            --remove-label 'autorelease: pending' \
+            --add-label 'autorelease: tagged'
 
       - name: Record Release identity
         env:
