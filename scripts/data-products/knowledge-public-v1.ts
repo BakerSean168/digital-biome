@@ -12,6 +12,9 @@ export type KnowledgePublicNote = {
   title: string;
   aliases: string[];
   description?: string;
+  url?: string;
+  icon?: string;
+  category?: string;
   tags: string[];
   noteType?: string;
   status?: string;
@@ -95,6 +98,14 @@ function assertProjectionShape(projection: KnowledgePublicV1): void {
     assertSafeRelativePath(note.sourcePath, `${note.id}.sourcePath`);
     assertStringArray(note.aliases, `${note.id}.aliases`);
     assertStringArray(note.tags, `${note.id}.tags`);
+    for (const field of ['url', 'icon', 'category'] as const) {
+      if (note[field] !== undefined && typeof note[field] !== 'string') {
+        throw new Error(`knowledge-public-v1 note ${note.id}.${field} must be a string`);
+      }
+    }
+    if (note.url !== undefined && !/^https?:\/\//i.test(note.url)) {
+      throw new Error(`knowledge-public-v1 note ${note.id}.url must be public HTTP(S)`);
+    }
     if (seenIds.has(note.id)) throw new Error(`knowledge-public-v1 duplicate note id: ${note.id}`);
     if (seenSourcePaths.has(note.sourcePath)) {
       throw new Error(`knowledge-public-v1 duplicate source path: ${note.sourcePath}`);

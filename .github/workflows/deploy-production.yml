@@ -24,8 +24,13 @@ jobs:
       revision: ${{ steps.identity.outputs.revision }}
       release_tag: ${{ steps.identity.outputs.release_tag }}
       release_digest: ${{ steps.identity.outputs.release_digest }}
-      vault_sha: ${{ steps.identity.outputs.vault_sha }}
-      asset_index_sha256: ${{ steps.identity.outputs.asset_index_sha256 }}
+      manifest_schema: ${{ steps.identity.outputs.manifest_schema }}
+      knowledge_source_revision: ${{ steps.identity.outputs.knowledge_source_revision }}
+      knowledge_release_tag: ${{ steps.identity.outputs.knowledge_release_tag }}
+      knowledge_artifact_sha256: ${{ steps.identity.outputs.knowledge_artifact_sha256 }}
+      knowledge_manifest_sha256: ${{ steps.identity.outputs.knowledge_manifest_sha256 }}
+      legacy_vault_sha: ${{ steps.identity.outputs.legacy_vault_sha }}
+      legacy_asset_index_sha256: ${{ steps.identity.outputs.legacy_asset_index_sha256 }}
     steps:
       - id: published
         name: Resolve Published Release tag identity
@@ -135,8 +140,31 @@ jobs:
           revision="$(jq -r .gitSha "$manifest")"
           release_tag="$(jq -r .tag "$manifest")"
           release_digest="$(jq -r .digest "$manifest")"
-          vault_sha="$(jq -r .vaultSha "$manifest")"
-          asset_index_sha256="$(jq -r .assetIndexSha256 "$manifest")"
+          manifest_schema="$(jq -r .schema "$manifest")"
+
+          knowledge_source_revision=''
+          knowledge_release_tag=''
+          knowledge_artifact_sha256=''
+          knowledge_manifest_sha256=''
+          legacy_vault_sha=''
+          legacy_asset_index_sha256=''
+
+          case "$manifest_schema" in
+            digital-biome.release/v2)
+              knowledge_source_revision="$(jq -r .knowledge.sourceRevision "$manifest")"
+              knowledge_release_tag="$(jq -r .knowledge.releaseTag "$manifest")"
+              knowledge_artifact_sha256="$(jq -r .knowledge.artifactSha256 "$manifest")"
+              knowledge_manifest_sha256="$(jq -r .knowledge.manifestSha256 "$manifest")"
+              ;;
+            digital-biome.release/v1)
+              legacy_vault_sha="$(jq -r .vaultSha "$manifest")"
+              legacy_asset_index_sha256="$(jq -r .assetIndexSha256 "$manifest")"
+              ;;
+            *)
+              echo "unsupported Release manifest schema: $manifest_schema" >&2
+              exit 1
+              ;;
+          esac
 
           [[ "$release_tag" == "$REQUESTED_TAG" ]] || { echo 'release manifest tag mismatch' >&2; exit 1; }
           [[ "$revision" == "$TAG_SHA" ]] || { echo 'release manifest/tag SHA mismatch' >&2; exit 1; }
@@ -161,8 +189,13 @@ jobs:
             echo "revision=$revision"
             echo "release_tag=$release_tag"
             echo "release_digest=$release_digest"
-            echo "vault_sha=$vault_sha"
-            echo "asset_index_sha256=$asset_index_sha256"
+            echo "manifest_schema=$manifest_schema"
+            echo "knowledge_source_revision=$knowledge_source_revision"
+            echo "knowledge_release_tag=$knowledge_release_tag"
+            echo "knowledge_artifact_sha256=$knowledge_artifact_sha256"
+            echo "knowledge_manifest_sha256=$knowledge_manifest_sha256"
+            echo "legacy_vault_sha=$legacy_vault_sha"
+            echo "legacy_asset_index_sha256=$legacy_asset_index_sha256"
           } >> "$GITHUB_OUTPUT"
 
       - name: Verify main ancestry and exact source workflow provenance
@@ -263,10 +296,16 @@ jobs:
             --pattern digital-biome-pages.tar.gz \
             --dir reports/deploy
 
-      - name: Revalidate pinned Vault and private source indexes
+      - name: Revalidate knowledge projection and private deployment source
         env:
-          EXPECTED_VAULT_SHA: ${{ needs.verify-release.outputs.vault_sha }}
-          EXPECTED_ASSET_INDEX_SHA256: ${{ needs.verify-release.outputs.asset_index_sha256 }}
+          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
+          MANIFEST_SCHEMA: ${{ needs.verify-release.outputs.manifest_schema }}
+          KNOWLEDGE_SOURCE_REVISION: ${{ needs.verify-release.outputs.knowledge_source_revision }}
+          KNOWLEDGE_RELEASE_TAG: ${{ needs.verify-release.outputs.knowledge_release_tag }}
+          KNOWLEDGE_ARTIFACT_SHA256: ${{ needs.verify-release.outputs.knowledge_artifact_sha256 }}
+          KNOWLEDGE_MANIFEST_SHA256: ${{ needs.verify-release.outputs.knowledge_manifest_sha256 }}
+          LEGACY_VAULT_SHA: ${{ needs.verify-release.outputs.legacy_vault_sha }}
+          LEGACY_ASSET_INDEX_SHA256: ${{ needs.verify-release.outputs.legacy_asset_index_sha256 }}
         shell: bash
         run: |
           set -euo pipefail
@@ -274,17 +313,41 @@ jobs:
           pnpm exec tsx scripts/delivery/manifest.ts validate --file "$manifest"
 
           actual_vault_sha="$(git -C thought-forest rev-parse HEAD)"
-          [[ "$actual_vault_sha" == "$EXPECTED_VAULT_SHA" ]] || {
-            echo 'pinned Vault SHA does not match Release manifest' >&2
-            exit 1
-          }
 
-          pnpm build:upstream-indexes
-          actual_asset_index="sha256:$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
-          [[ "$actual_asset_index" == "$EXPECTED_ASSET_INDEX_SHA256" ]] || {
-            echo 'Vault asset index hash does not match Release manifest' >&2
-            exit 1
-          }
+          case "$MANIFEST_SCHEMA" in
+            digital-biome.release/v2)
+              lock=data-products/knowledge-public-v1.lock.json
+              [[ "$(jq -r .sourceRevision "$lock")" == "$KNOWLEDGE_SOURCE_REVISION" ]]
+              [[ "$(jq -r .releaseTag "$lock")" == "$KNOWLEDGE_RELEASE_TAG" ]]
+              [[ "$(jq -r .artifact.sha256 "$lock")" == "$KNOWLEDGE_ARTIFACT_SHA256" ]]
+              [[ "$(jq -r .manifest.sha256 "$lock")" == "$KNOWLEDGE_MANIFEST_SHA256" ]]
+
+              scripts/data-products/fetch-knowledge-public-v1.sh \
+                .pds-runtime/knowledge-public-v1 "$lock"
+
+              [[ "$actual_vault_sha" == "$KNOWLEDGE_SOURCE_REVISION" ]] || {
+                echo 'private Vault revision does not match the Release knowledge source revision' >&2
+                exit 1
+              }
+              pnpm build:upstream-indexes
+              ;;
+            digital-biome.release/v1)
+              [[ "$actual_vault_sha" == "$LEGACY_VAULT_SHA" ]] || {
+                echo 'pinned Vault SHA does not match legacy Release manifest' >&2
+                exit 1
+              }
+              pnpm build:upstream-indexes
+              actual_asset_index="sha256:$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
+              [[ "$actual_asset_index" == "$LEGACY_ASSET_INDEX_SHA256" ]] || {
+                echo 'Vault asset index hash does not match legacy Release manifest' >&2
+                exit 1
+              }
+              ;;
+            *)
+              echo "unsupported Release manifest schema: $MANIFEST_SCHEMA" >&2
+              exit 1
+              ;;
+          esac
 
           # These steps regenerate only private deployment inputs and validate contracts.
           # They do not rebuild the immutable public Pages artifact selected for production.

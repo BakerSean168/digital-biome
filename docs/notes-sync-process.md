@@ -1,23 +1,27 @@
 # 笔记同步与公开投影流程
 
-> 状态基线：2026-07-18
+> 状态基线：2026-10-02
 >
-> 入口：`pnpm sync`
+> CI / Candidate 入口：`scripts/data-products/prepare-knowledge-public-v1.sh`
 >
-> 实现：`scripts/sync-obsidian.ts` 与 `scripts/sync/`
+> 本地兼容入口：`pnpm sync`
+>
+> 实现：`scripts/data-products/`、`scripts/sync-obsidian.ts` 与 `scripts/sync/`
 
 ## 1. 目标
 
-同步流程不是简单复制文件。它负责把私有 `thought-forest` vault 转换为可发布的公开投影：
+同步流程不是简单复制文件。公开边界现在由 Thought Forest 作为 producer 负责：`knowledge-public-v1` 只包含允许公开的笔记、资产、图索引和被引用媒体，并携带精确 source revision。Digital Biome 负责验证并物化这个只读 data product，再生成站点自己的查询索引和页面输入。
 
-- 收集知识笔记、资产笔记、配置和媒体；
-- 校验并标准化 Markdown/frontmatter；
-- 重写 Obsidian 媒体路径；
-- 删除陈旧生成物；
-- 过滤 private/draft/运维内容；
-- 脱敏网络标识符和受保护链接；
-- 生成静态查询索引；
-- 融合上游完整 YAML 解析结果。
+CI / Candidate 的主链为：
+
+- 从 `data-products/knowledge-public-v1.lock.json` 读取 immutable producer Release 与 SHA-256；
+- 使用短期只读 GitHub App token 下载 `knowledge-public-v1.json` 和 manifest；
+- fail-closed 校验 producer、source revision、Release tag、artifact/manifest digest；
+- 在 `.pds-runtime/knowledge-public-v1/source/` 物化 legacy-compatible 只读 source；
+- 运行现有同步器，重写媒体路径并生成 `src/data` 查询索引；
+- Digital Biome 仍保留二次脱敏与泄漏扫描，作为 defense in depth，而不是承担 primary privacy conversion。
+
+本地开发仍可直接对 `thought-forest` 子模块运行 `pnpm sync`。该路径用于编辑联调和 production 私有 payload 兼容，不再是 CI / Candidate 的公开内容依赖。
 
 ## 2. 路径映射
 
@@ -25,23 +29,21 @@
 
 | 输入 | 输出 | 说明 |
 |---|---|---|
-| `thought-forest/z/**/*.md` | `src/data/obsidian/**/*.md` | 普通知识笔记 |
-| `thought-forest/assets/**/*.md` | `src/data/obsidian/assets/**/*.md` | host/service/tool/network 资产笔记 |
-| `thought-forest/config/**/*.md` | `src/data/obsidian/config/**/*.md` | 构建配置；不进入公开知识列表 |
-| `thought-forest/assets/**` 媒体 | `public/vault-assets/` | 公开静态资源 |
-| 上游 `generated/knowledge-index/*.json` | `src/data/indexes/*.json` | 合并/替换后的查询索引 |
+| `<selected-source>/z/**/*.md` | `src/data/obsidian/**/*.md` | 普通知识笔记 |
+| `<selected-source>/assets/**/*.md` | `src/data/obsidian/assets/**/*.md` | host/service/tool/network 资产笔记 |
+| `<selected-source>/config/**/*.md` | `src/data/obsidian/config/**/*.md` | 构建配置；不进入公开知识列表 |
+| `<selected-source>/sources/attachments/**` | `public/vault-assets/` | producer 允许公开且被引用的媒体 |
+| `<selected-source>/generated/knowledge-index/*.json` | `src/data/indexes/*.json` | 合并/替换后的查询索引 |
+
+CI / Candidate 中 `<selected-source>` 是 `.pds-runtime/knowledge-public-v1/source/`；本地兼容模式可以是 `thought-forest/`。
 
 `src/data/obsidian/`、`src/data/indexes/` 和 `public/vault-assets/` 都是 Git 忽略的生成物。
 
 ## 3. 上游索引解析顺序
 
-`notes.config.ts` 默认只读取当前所选 vault root 下的 `generated/`。默认 vault
-是仓库中的 `thought-forest` 子模块；若开发者显式设置 `NOTES_VAULT_ROOT`，索引
-也随该 vault 移动。`NOTES_UPSTREAM_GENERATED` 仅作为明确的开发覆盖项，不会
-自动搜索父目录、相邻克隆或其他工作区。
+`notes.config.ts` 只读取当前显式选择的 source root 及其 `generated/`，不会自动搜索父目录、相邻克隆或其他工作区。默认值仍指向 `thought-forest`，用于本地兼容；CI 在 verify step 显式把 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 指向已验证的 `.pds-runtime/knowledge-public-v1/source/`。
 
-`pnpm sync` 会先在当前子模块执行 `kb:index`，因此正常本地和 CI 构建都使用与
-锁定 Vault SHA 一致的索引。生产发布前必须确认：
+`prepare-knowledge-public-v1.sh` 在物化前先验证 committed lock 与 producer Release。`pnpm sync` 仍会对本地 `thought-forest` 路径重建 `kb:index`。两种模式最终都向同一 sync pipeline 提供 source layout，但 CI 不再读取私有 gitlink。发布前必须确认：
 
 ```text
 <resolved-generated>/knowledge-index/asset-index.json
@@ -188,20 +190,23 @@ pnpm build:only
 
 ## 8. 常见问题
 
-### 8.1 子模块未初始化
+### 8.1 CI 无法获取 `knowledge-public-v1`
+
+先检查 `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 SHA-256 是否一致，再检查只读 GitHub App 是否安装到 `digital-biome` 与 `thought-forest`。不要改成 mutable `latest` URL，也不要跳过 digest 校验。
+
+### 8.2 本地子模块未初始化 / 认证失败
+
+本地直接编辑或生成私有 deployment payload 时仍可使用：
 
 ```bash
 git submodule update --init --recursive
 ```
 
-### 8.2 私有子模块认证失败
-
-修复 GitHub 凭据或仓库权限。不要将 access token 写进 `.gitmodules`，也不要临时把 vault 改为公开。
+若私有子模块认证失败，修复 GitHub 凭据或仓库权限。不要将 access token 写进 `.gitmodules`，也不要临时把 vault 改为公开。
 
 ### 8.3 上游索引缺失
 
-先在当前选定的 `thought-forest` 运行知识索引生成命令。开发环境确需读取另一个
-已生成目录时，可显式设置 `NOTES_UPSTREAM_GENERATED`；生产工作流不得依赖该覆盖项。
+CI 应重新运行 `prepare-knowledge-public-v1.sh`，而不是手工制造 index。仅在本地兼容模式下，才在当前选定的 `thought-forest` 运行知识索引生成命令；开发环境确需读取另一个已生成目录时，可显式设置 `NOTES_UPSTREAM_GENERATED`。
 
 ### 8.4 重复 Content ID
 

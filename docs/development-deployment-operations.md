@@ -243,7 +243,7 @@ git status --short
 Cloudflare Dashboard 中生产与预览自动部署均为 Disabled。日常交付采用三段式 lifecycle：
 
 1. `CI` 验证 PR；合入 `main` 后 exact-SHA main CI 再次验证；
-2. `Publish Main Candidate` 从该 successful main CI 构建 immutable Pages artifact，并可选提升到 staging；
+2. `Publish Main Candidate` 从该 successful main CI 读取 committed `knowledge-public-v1` lock、验证并物化 immutable producer projection，再构建 immutable Pages artifact，并可选提升到 staging；
 3. 手动 `Prepare Release` 创建/更新 Release PR；Release PR 合并后，新的 main CI + Candidate 触发 `Release Publish`，普通 main commit 则 safe no-op；
 4. `Release Publish` 把 exact Candidate artifact 提升为 Published `vX.Y.Z`，不重新 build；
 5. 手动 `Deploy Production(vX.Y.Z)` 选择 Published Release，验证 provenance 后进入 `production` Environment；
@@ -281,8 +281,9 @@ pnpm exec wrangler pages deploy dist \
 工作流 artifact 与 job summary 应保存：
 
 - `git rev-parse HEAD`；
-- `git submodule status thought-forest`；
-- 上游索引生成时间或摘要；
+- `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 digest；
+- Production/private-payload 路径额外记录 `git submodule status thought-forest`；
+- 上游/物化索引生成时间或摘要；
 - `PRIVATE_INFRASTRUCTURE_JSON` 的 schema version 和 key 数量，不记录值；
 - 构建检查结果；
 - Cloudflare deployment ID。
@@ -498,7 +499,7 @@ Failed: error occurred while updating repository submodules
 7. 允许 GitHub Actions 使用当前仓库的 `GITHUB_TOKEN` 创建 PR 与 dispatch workflow；
 8. 保持 Cloudflare Git 自动 Production/Preview 构建关闭。
 
-`.github/workflows/sync-thought-forest-submodule.yml` 继续只用只读 App token 拉取 Vault，并用当前仓库 `GITHUB_TOKEN` 创建子模块更新 PR。Production 只消费 Published Release 中的 `release-manifest.json` 和 `digital-biome-pages.tar.gz`；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
+`.github/workflows/sync-knowledge-public-v1.yml` 是唯一的 Thought Forest consumer-sync authority：它只在 producer 的 immutable publication 成功后响应 dispatch，并在同一个固定分支/PR 中原子更新 `knowledge-public-v1` lock 与 production private-payload gitlink，使两者始终绑定同一 source revision。读取 Thought Forest 使用只读 App token，写 Digital Biome PR 使用当前仓库 `GITHUB_TOKEN`。Production 只部署 Published Release 中的 `release-manifest.json` 和 `digital-biome-pages.tar.gz`，不会重建 public artifact；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
 
 ## 15. 官方参考
 

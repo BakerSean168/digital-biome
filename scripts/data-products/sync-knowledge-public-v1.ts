@@ -22,8 +22,15 @@ async function main(): Promise<void> {
   const dryRun = process.argv.includes('--dry-run');
   const projection = parseKnowledgePublicV1(fs.readFileSync(artifactPath, 'utf8'));
 
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'pds-knowledge-consumer-'));
-  const sourceRoot = path.join(tempRoot, 'thought-forest-public');
+  const configuredSourceRoot = process.env.KNOWLEDGE_PUBLIC_V1_SOURCE_ROOT?.trim();
+  let tempRoot: string | undefined;
+  let sourceRoot: string;
+  if (configuredSourceRoot) {
+    sourceRoot = path.resolve(configuredSourceRoot);
+  } else {
+    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'pds-knowledge-consumer-'));
+    sourceRoot = path.join(tempRoot, 'thought-forest-public');
+  }
   const materialized = materializeKnowledgePublicV1Source(projection, sourceRoot);
 
   process.env.NOTES_VAULT_ROOT = sourceRoot;
@@ -40,10 +47,10 @@ async function main(): Promise<void> {
       throw new Error(`knowledge-public-v1 consumer sync completed with ${errorCount} error(s)`);
     }
     console.log(
-      `knowledge-public-v1 consumer=PASS revision=${materialized.sourceRevision} notes=${materialized.notes} assets=${materialized.assets} media=${materialized.media} mode=${dryRun ? 'dry-run' : 'materialize'}`,
+      `knowledge-public-v1 consumer=PASS revision=${materialized.sourceRevision} notes=${materialized.notes} assets=${materialized.assets} media=${materialized.media} mode=${dryRun ? 'dry-run' : 'materialize'} source=${sourceRoot}`,
     );
   } finally {
-    if (process.env.PDS_KEEP_KNOWLEDGE_CONSUMER_SOURCE !== '1') {
+    if (tempRoot && process.env.PDS_KEEP_KNOWLEDGE_CONSUMER_SOURCE !== '1') {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     } else {
       console.log(`knowledge-public-v1 consumer source preserved at ${sourceRoot}`);

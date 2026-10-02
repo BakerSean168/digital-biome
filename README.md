@@ -37,7 +37,7 @@ flowchart LR
     F --> G[Cloudflare Pages]
 ```
 
-The repository pins Thought Forest as a Git submodule for reproducible builds. During development, content is regenerated through the same indexing and synchronization pipeline used by CI rather than edited inside generated `src/data` output.
+CI and Candidate builds pin Thought Forest through `data-products/knowledge-public-v1.lock.json`, which identifies an immutable producer Release by exact source revision and SHA-256. The build downloads and validates that producer-owned public projection before materializing it into the existing sync pipeline. The private `thought-forest` gitlink is retained only for local authoring compatibility and release-pinned private deployment payloads during the remaining migration.
 
 ## Project showcase model
 
@@ -66,7 +66,7 @@ This keeps deployed services, source repositories, and portfolio presentation se
 
 - Node.js 22+
 - pnpm 10+
-- Git with submodule support
+- Git (submodule support is only required for direct local/private Vault workflows)
 
 ### Local development
 
@@ -102,8 +102,9 @@ src/
 └── view-models/        presentation adapters
 
 functions/              Cloudflare Pages Functions
-scripts/                sync, index, deployment and validation tooling
-thought-forest/         pinned knowledge-source submodule
+scripts/                sync, data-product, deployment and validation tooling
+data-products/           immutable producer projection locks
+thought-forest/         private Vault compatibility/private-deployment gitlink
 docs/                   architecture and operations documentation
 ```
 
@@ -127,7 +128,7 @@ Thought Forest owns the canonical knowledge and asset metadata; Digital Biome ow
 That separation is intentional:
 
 - knowledge remains usable from Obsidian even without the website;
-- the website can rebuild from a pinned knowledge revision;
+- CI and Candidate builds reproduce public content from an immutable `knowledge-public-v1` projection lock;
 - private/internal asset metadata can stay out of public output;
 - project cards can evolve without duplicating project facts in frontend code.
 

@@ -4,9 +4,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v1';
-export const RELEASE_SCHEMA = 'digital-biome.release/v1';
+export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v2';
+export const RELEASE_SCHEMA = 'digital-biome.release/v2';
+export const LEGACY_CANDIDATE_SCHEMA = 'digital-biome.candidate/v1';
+export const LEGACY_RELEASE_SCHEMA = 'digital-biome.release/v1';
 
+const KNOWLEDGE_PRODUCER_REPOSITORY = 'BakerSean168/thought-forest';
 const SHA_RE = /^[0-9a-f]{40}$/i;
 const SHA256_RE = /^sha256:[0-9a-f]{64}$/i;
 const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
@@ -60,15 +63,54 @@ function validateArtifact(artifact: unknown): string[] {
   return errors;
 }
 
+function validateKnowledgeIdentity(value: unknown): string[] {
+  const errors: string[] = [];
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return ['knowledge must be an object'];
+  }
+  const knowledge = value as JsonRecord;
+  if (knowledge.producerRepository !== KNOWLEDGE_PRODUCER_REPOSITORY) {
+    errors.push(`knowledge.producerRepository must be ${KNOWLEDGE_PRODUCER_REPOSITORY}`);
+  }
+  const sourceRevision = String(knowledge.sourceRevision ?? '');
+  if (!SHA_RE.test(sourceRevision)) {
+    errors.push('knowledge.sourceRevision must be a full Git SHA');
+  }
+  if (knowledge.releaseTag !== `knowledge-public-v1-${sourceRevision}`) {
+    errors.push('knowledge.releaseTag must equal knowledge-public-v1-<sourceRevision>');
+  }
+  if (!SHA256_RE.test(String(knowledge.artifactSha256 ?? ''))) {
+    errors.push('knowledge.artifactSha256 must be sha256:<64 hex>');
+  }
+  if (!SHA256_RE.test(String(knowledge.manifestSha256 ?? ''))) {
+    errors.push('knowledge.manifestSha256 must be sha256:<64 hex>');
+  }
+  return errors;
+}
+
+function validateDigest(value: JsonRecord, label: string): string[] {
+  if (!SHA256_RE.test(String(value.digest ?? ''))) {
+    return [`${label} digest must be sha256:<64 hex>`];
+  }
+  const expected = identityDigest(value);
+  return value.digest === expected ? [] : [`${label} digest mismatch: expected ${expected}`];
+}
+
 export function createCandidate(inputValue: unknown, generatedAt = new Date().toISOString()) {
   const input = asObject(inputValue, 'candidate input');
   const artifact = asObject(input.artifact, 'candidate artifact');
+  const knowledge = asObject(input.knowledge, 'candidate knowledge');
   const candidate: JsonRecord = {
     schema: CANDIDATE_SCHEMA,
     gitSha: input.gitSha,
     ciRunId: String(input.ciRunId ?? ''),
-    vaultSha: input.vaultSha,
-    assetIndexSha256: input.assetIndexSha256,
+    knowledge: {
+      producerRepository: knowledge.producerRepository,
+      sourceRevision: knowledge.sourceRevision,
+      releaseTag: knowledge.releaseTag,
+      artifactSha256: knowledge.artifactSha256,
+      manifestSha256: knowledge.manifestSha256,
+    },
     artifact: {
       file: artifact.file,
       sha256: artifact.sha256,
@@ -80,28 +122,37 @@ export function createCandidate(inputValue: unknown, generatedAt = new Date().to
   return candidate;
 }
 
+function validateLegacyCandidate(candidate: JsonRecord): string[] {
+  const errors: string[] = [];
+  if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
+  if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
+  if (!SHA_RE.test(String(candidate.vaultSha ?? ''))) {
+    errors.push('vaultSha must be a full Git SHA');
+  }
+  if (!SHA256_RE.test(String(candidate.assetIndexSha256 ?? ''))) {
+    errors.push('assetIndexSha256 must be sha256:<64 hex>');
+  }
+  errors.push(...validateArtifact(candidate.artifact));
+  errors.push(...validateDigest(candidate, 'candidate'));
+  return errors;
+}
+
 export function validateCandidate(value: unknown): string[] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return ['candidate must be an object'];
   }
   const candidate = value as JsonRecord;
+  if (candidate.schema === LEGACY_CANDIDATE_SCHEMA) {
+    return validateLegacyCandidate(candidate);
+  }
+
   const errors: string[] = [];
   if (candidate.schema !== CANDIDATE_SCHEMA) errors.push(`schema must be ${CANDIDATE_SCHEMA}`);
   if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (!SHA_RE.test(String(candidate.vaultSha ?? '')))
-    errors.push('vaultSha must be a full Git SHA');
-  if (!SHA256_RE.test(String(candidate.assetIndexSha256 ?? ''))) {
-    errors.push('assetIndexSha256 must be sha256:<64 hex>');
-  }
+  errors.push(...validateKnowledgeIdentity(candidate.knowledge));
   errors.push(...validateArtifact(candidate.artifact));
-  if (!SHA256_RE.test(String(candidate.digest ?? ''))) {
-    errors.push('digest must be sha256:<64 hex>');
-  } else {
-    const expected = identityDigest(candidate);
-    if (candidate.digest !== expected)
-      errors.push(`candidate digest mismatch: expected ${expected}`);
-  }
+  errors.push(...validateDigest(candidate, 'candidate'));
   return errors;
 }
 
@@ -119,16 +170,21 @@ export function createReleaseManifest(
   if (!/^\d+$/.test(candidateRunId)) throw new Error('candidate run ID must be numeric');
 
   const candidate = candidateValue as JsonRecord;
+  const legacy = candidate.schema === LEGACY_CANDIDATE_SCHEMA;
   const release: JsonRecord = {
-    schema: RELEASE_SCHEMA,
+    schema: legacy ? LEGACY_RELEASE_SCHEMA : RELEASE_SCHEMA,
     version,
     tag,
     gitSha: candidate.gitSha,
     ciRunId: candidate.ciRunId,
     candidateRunId,
     candidateManifestDigest: candidate.digest,
-    vaultSha: candidate.vaultSha,
-    assetIndexSha256: candidate.assetIndexSha256,
+    ...(legacy
+      ? {
+          vaultSha: candidate.vaultSha,
+          assetIndexSha256: candidate.assetIndexSha256,
+        }
+      : { knowledge: candidate.knowledge }),
     artifact: candidate.artifact,
     generatedAt,
   };
@@ -136,34 +192,57 @@ export function createReleaseManifest(
   return release;
 }
 
+function validateLegacyRelease(release: JsonRecord): string[] {
+  const errors: string[] = [];
+  if (!SEMVER_RE.test(String(release.version ?? ''))) {
+    errors.push('version must be semantic version');
+  }
+  if (release.tag !== `v${release.version}`) errors.push('tag must equal v<version>');
+  if (!SHA_RE.test(String(release.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
+  if (!/^\d+$/.test(String(release.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
+  if (!/^\d+$/.test(String(release.candidateRunId ?? ''))) {
+    errors.push('candidateRunId must be numeric');
+  }
+  if (!SHA256_RE.test(String(release.candidateManifestDigest ?? ''))) {
+    errors.push('candidateManifestDigest must be sha256:<64 hex>');
+  }
+  if (!SHA_RE.test(String(release.vaultSha ?? ''))) {
+    errors.push('vaultSha must be a full Git SHA');
+  }
+  if (!SHA256_RE.test(String(release.assetIndexSha256 ?? ''))) {
+    errors.push('assetIndexSha256 must be sha256:<64 hex>');
+  }
+  errors.push(...validateArtifact(release.artifact));
+  errors.push(...validateDigest(release, 'release'));
+  return errors;
+}
+
 export function validateReleaseManifest(value: unknown): string[] {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return ['release must be an object'];
   }
   const release = value as JsonRecord;
+  if (release.schema === LEGACY_RELEASE_SCHEMA) {
+    return validateLegacyRelease(release);
+  }
+
   const errors: string[] = [];
   if (release.schema !== RELEASE_SCHEMA) errors.push(`schema must be ${RELEASE_SCHEMA}`);
-  if (!SEMVER_RE.test(String(release.version ?? '')))
+  if (!SEMVER_RE.test(String(release.version ?? ''))) {
     errors.push('version must be semantic version');
+  }
   if (release.tag !== `v${release.version}`) errors.push('tag must equal v<version>');
   if (!SHA_RE.test(String(release.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(release.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (!/^\d+$/.test(String(release.candidateRunId ?? '')))
+  if (!/^\d+$/.test(String(release.candidateRunId ?? ''))) {
     errors.push('candidateRunId must be numeric');
+  }
   if (!SHA256_RE.test(String(release.candidateManifestDigest ?? ''))) {
     errors.push('candidateManifestDigest must be sha256:<64 hex>');
   }
-  if (!SHA_RE.test(String(release.vaultSha ?? ''))) errors.push('vaultSha must be a full Git SHA');
-  if (!SHA256_RE.test(String(release.assetIndexSha256 ?? ''))) {
-    errors.push('assetIndexSha256 must be sha256:<64 hex>');
-  }
+  errors.push(...validateKnowledgeIdentity(release.knowledge));
   errors.push(...validateArtifact(release.artifact));
-  if (!SHA256_RE.test(String(release.digest ?? ''))) {
-    errors.push('digest must be sha256:<64 hex>');
-  } else {
-    const expected = identityDigest(release);
-    if (release.digest !== expected) errors.push(`release digest mismatch: expected ${expected}`);
-  }
+  errors.push(...validateDigest(release, 'release'));
   return errors;
 }
 
@@ -174,7 +253,7 @@ export function releaseProvenanceMessage(value: unknown): string {
   const release = value as JsonRecord;
   const artifact = release.artifact as JsonRecord;
   return [
-    'digital-biome.release/v1',
+    String(release.schema),
     `release-manifest-digest: ${String(release.digest)}`,
     `artifact-sha256: ${String(artifact.sha256)}`,
     `candidate-manifest-digest: ${String(release.candidateManifestDigest)}`,
@@ -239,7 +318,9 @@ function main() {
     if (!flags.file) throw new Error('validate requires --file');
     const value = readJson(flags.file) as JsonRecord;
     const errors =
-      value.schema === CANDIDATE_SCHEMA ? validateCandidate(value) : validateReleaseManifest(value);
+      value.schema === CANDIDATE_SCHEMA || value.schema === LEGACY_CANDIDATE_SCHEMA
+        ? validateCandidate(value)
+        : validateReleaseManifest(value);
     if (errors.length) throw new Error(errors.join('; '));
     console.log(`DELIVERY_MANIFEST=PASS schema=${String(value.schema)}`);
     return;

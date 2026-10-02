@@ -14,6 +14,7 @@ const ciWorkflow = fixture('.github/workflows/check.yml');
 const candidateWorkflow = fixture('.github/workflows/candidate-publish.yml');
 const releaseWorkflow = fixture('.github/workflows/release-publish.yml');
 const productionWorkflow = fixture('.github/workflows/deploy-production.yml');
+const knowledgeSyncWorkflow = fixture('.github/workflows/sync-knowledge-public-v1.yml');
 
 test('verification discovers nested edge and infrastructure tests', () => {
   assert.equal(packageJson.scripts['test:edge'], "tsx --test 'edge/**/*.test.ts'");
@@ -28,14 +29,36 @@ test('the required check workflow runs for every pull request to main', () => {
   assert.match(ciWorkflow, / {2}workflow_dispatch:/);
 });
 
-test('main integration produces a candidate instead of deploying production', () => {
+test('main integration builds from the immutable knowledge projection instead of the private gitlink', () => {
+  assert.match(ciWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
+  assert.match(ciWorkflow, /prepare-knowledge-public-v1\.sh/);
+  assert.doesNotMatch(ciWorkflow, /submodules: recursive/);
+
   assert.match(candidateWorkflow, /workflows: \['CI'\]/);
   assert.match(candidateWorkflow, /branches: \[main\]/);
   assert.match(candidateWorkflow, /Build immutable Pages candidate/);
+  assert.match(candidateWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
+  assert.match(candidateWorkflow, /knowledgeArtifactSha256/);
+  assert.doesNotMatch(candidateWorkflow, /submodules: recursive/);
   assert.match(candidateWorkflow, /pages functions build functions/);
   assert.match(candidateWorkflow, /digital-biome-pages\.tar\.gz/);
   assert.match(candidateWorkflow, /retention-days: 90/);
   assert.doesNotMatch(candidateWorkflow, /environment:\n {6}name: production/);
+});
+
+test('producer publication updates an immutable consumer lock through a reviewable PR', () => {
+  assert.match(knowledgeSyncWorkflow, /knowledge-public-v1-published/);
+  assert.match(knowledgeSyncWorkflow, /automation\/knowledge-public-v1-sync/);
+  assert.match(knowledgeSyncWorkflow, /artifact_sha256/);
+  assert.match(knowledgeSyncWorkflow, /manifest_sha256/);
+  assert.match(knowledgeSyncWorkflow, /gh release download/);
+  assert.match(knowledgeSyncWorkflow, /data-products\/knowledge-public-v1\.lock\.json/);
+  assert.match(knowledgeSyncWorkflow, /git ls-tree HEAD thought-forest/);
+  assert.match(
+    knowledgeSyncWorkflow,
+    /git add data-products\/knowledge-public-v1\.lock\.json thought-forest/,
+  );
+  assert.match(knowledgeSyncWorkflow, /gh pr create/);
 });
 
 test('release publication promotes the exact candidate artifact without rebuilding', () => {
@@ -78,30 +101,41 @@ test('production server telemetry does not require a Nezha PAT', () => {
   assert.doesNotMatch(productionWorkflow, /NEZHA_PAT/);
 });
 
-test('production validates the pinned Vault before private deployment inputs', () => {
+test('production verifies the immutable knowledge projection before private deployment inputs', () => {
   const step = productionWorkflow.match(
-    / {6}- name: Revalidate pinned Vault and private source indexes\n[\s\S]*?(?=\n {6}- name: Validate production observability credentials)/,
+    / {6}- name: Revalidate knowledge projection and private deployment source\n[\s\S]*?(?=\n {6}- name: Validate production observability credentials)/,
   )?.[0];
-  assert.ok(step, 'private source verification step must exist');
+  assert.ok(step, 'knowledge/private source verification step must exist');
 
+  const projectionFetch = step.indexOf('fetch-knowledge-public-v1.sh');
+  const privateRevisionCheck = step.indexOf(
+    'private Vault revision does not match the Release knowledge source revision',
+  );
   const upstreamBuild = step.indexOf('pnpm build:upstream-indexes');
-  const hashCheck = step.indexOf('actual_asset_index');
   const syncContent = step.indexOf('pnpm sync:content');
   const infrastructureTests = step.indexOf('pnpm test:infrastructure');
 
-  assert.ok(upstreamBuild >= 0, 'deploy must rebuild the pinned upstream index');
   assert.ok(
-    hashCheck > upstreamBuild,
-    'deploy must verify the upstream asset hash after rebuilding it',
+    projectionFetch >= 0,
+    'deploy must re-fetch and verify the immutable public projection',
   );
   assert.ok(
-    syncContent > hashCheck,
-    'deploy must generate Digital Biome private inputs after hash verification',
+    privateRevisionCheck > projectionFetch,
+    'private deployment source must be pinned to the same producer revision after projection verification',
+  );
+  assert.ok(
+    upstreamBuild > privateRevisionCheck,
+    'deploy must rebuild the exact private source index',
+  );
+  assert.ok(
+    syncContent > upstreamBuild,
+    'deploy must generate private deployment inputs only after exact-source validation',
   );
   assert.ok(
     infrastructureTests > syncContent,
     'infrastructure contracts must run after generated indexes exist',
   );
+  assert.match(step, /digital-biome\.release\/v1[\s\S]*actual_asset_index/);
 });
 
 test('quality gates are part of the canonical verify contract', () => {
