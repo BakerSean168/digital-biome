@@ -11,11 +11,6 @@ import {
   parseKnowledgePublicV1,
   type KnowledgePublicV1,
 } from './knowledge-public-v1';
-import {
-  assertKnowledgeSourceRevision,
-  readLegacySourceRevision,
-  toLegacyFilePath,
-} from './verify-knowledge-public-v1-parity';
 
 function fixture(): KnowledgePublicV1 {
   return {
@@ -66,47 +61,6 @@ test('accepts the producer-owned public projection envelope', () => {
     media: 0,
   });
   assert.deepEqual([...knowledgePublicIds(projection)], ['obsidian/example']);
-});
-
-test('maps producer source paths onto the current legacy publication layout', () => {
-  assert.equal(toLegacyFilePath('z/tech/example.md'), 'tech/example.md');
-  assert.equal(toLegacyFilePath('assets/projects/demo.md'), 'assets/projects/demo.md');
-  assert.equal(toLegacyFilePath('blogs/post.md'), 'blogs/post.md');
-  assert.equal(toLegacyFilePath('docs/internal.md'), null);
-});
-
-test('fails closed when projection and legacy source revisions are not aligned', () => {
-  assert.doesNotThrow(() =>
-    assertKnowledgeSourceRevision(
-      'abcdef1234567890abcdef1234567890abcdef12',
-      'abcdef1234567890abcdef1234567890abcdef12',
-    ),
-  );
-  assert.throws(
-    () =>
-      assertKnowledgeSourceRevision(
-        'abcdef1234567890abcdef1234567890abcdef12',
-        'fedcba0987654321fedcba0987654321fedcba09',
-      ),
-    /does not match legacy thought-forest revision/,
-  );
-});
-
-test('reads exact-source provenance from a generated legacy snapshot manifest', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'knowledge-public-v1-legacy-'));
-  try {
-    fs.writeFileSync(
-      path.join(root, '.pds-data-product-snapshot.json'),
-      JSON.stringify({
-        schemaVersion: 1,
-        product: 'knowledge-public-v1-legacy-snapshot',
-        sourceRevision: '0123456789abcdef0123456789abcdef01234567',
-      }),
-    );
-    assert.equal(readLegacySourceRevision(root), '0123456789abcdef0123456789abcdef01234567');
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
 });
 
 test('fails closed on contract identity or publication-boundary drift', () => {

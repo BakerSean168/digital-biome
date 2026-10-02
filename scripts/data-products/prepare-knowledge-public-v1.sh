@@ -7,6 +7,9 @@ sync_args=()
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --)
+      shift
+      ;;
     --runtime-root)
       test "$#" -ge 2 || { echo "--runtime-root requires a value" >&2; exit 1; }
       runtime_root="$2"

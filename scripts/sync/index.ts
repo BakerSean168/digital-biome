@@ -13,11 +13,7 @@
 import path from 'node:path';
 import { notesConfig } from '../../notes.config';
 import { buildSourceLayout } from './config';
-import {
-  collectExpectedFiles,
-  syncFiles,
-  validateSourceFiles,
-} from './source-adapter';
+import { collectExpectedFiles, syncFiles, validateSourceFiles } from './source-adapter';
 import { syncAssets, detectMediaCollisions, collectMediaFiles } from './asset-transform';
 import { cleanStaleFiles } from './stale-cleaner';
 import { createStats, printSyncReport } from './sync-report';

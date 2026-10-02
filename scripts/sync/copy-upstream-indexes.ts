@@ -84,13 +84,11 @@ export function copyUpstreamLinkGraph(knowledgeIndexDir: string, indexDir: strin
 
   // Transform to local format
   const entries = upstream
-    .map(item => ({
+    .map((item) => ({
       sourceId: item.sourceId,
-      outgoingIds: item.outgoing
-        .map(o => o.resolvedId)
-        .filter((id): id is string => Boolean(id)),
+      outgoingIds: item.outgoing.map((o) => o.resolvedId).filter((id): id is string => Boolean(id)),
     }))
-    .filter(entry => entry.outgoingIds.length > 0);
+    .filter((entry) => entry.outgoingIds.length > 0);
 
   const output = {
     version: 1,
@@ -100,5 +98,7 @@ export function copyUpstreamLinkGraph(knowledgeIndexDir: string, indexDir: strin
   };
 
   fs.writeFileSync(localPath, JSON.stringify(output, null, 2), 'utf-8');
-  console.log(`  [copy-upstream-indexes] Replaced link-graph.json (${entries.length} entries with outgoing links)`);
+  console.log(
+    `  [copy-upstream-indexes] Replaced link-graph.json (${entries.length} entries with outgoing links)`,
+  );
 }

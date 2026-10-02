@@ -29,6 +29,9 @@ jobs:
       knowledge_release_tag: ${{ steps.identity.outputs.knowledge_release_tag }}
       knowledge_artifact_sha256: ${{ steps.identity.outputs.knowledge_artifact_sha256 }}
       knowledge_manifest_sha256: ${{ steps.identity.outputs.knowledge_manifest_sha256 }}
+      private_infrastructure_source_revision: ${{ steps.identity.outputs.private_infrastructure_source_revision }}
+      private_infrastructure_contract_path: ${{ steps.identity.outputs.private_infrastructure_contract_path }}
+      private_infrastructure_sha256: ${{ steps.identity.outputs.private_infrastructure_sha256 }}
       legacy_vault_sha: ${{ steps.identity.outputs.legacy_vault_sha }}
       legacy_asset_index_sha256: ${{ steps.identity.outputs.legacy_asset_index_sha256 }}
     steps:
@@ -146,10 +149,22 @@ jobs:
           knowledge_release_tag=''
           knowledge_artifact_sha256=''
           knowledge_manifest_sha256=''
+          private_infrastructure_source_revision=''
+          private_infrastructure_contract_path=''
+          private_infrastructure_sha256=''
           legacy_vault_sha=''
           legacy_asset_index_sha256=''
 
           case "$manifest_schema" in
+            digital-biome.release/v3)
+              knowledge_source_revision="$(jq -r .knowledge.sourceRevision "$manifest")"
+              knowledge_release_tag="$(jq -r .knowledge.releaseTag "$manifest")"
+              knowledge_artifact_sha256="$(jq -r .knowledge.artifactSha256 "$manifest")"
+              knowledge_manifest_sha256="$(jq -r .knowledge.manifestSha256 "$manifest")"
+              private_infrastructure_source_revision="$(jq -r .privateInfrastructure.sourceRevision "$manifest")"
+              private_infrastructure_contract_path="$(jq -r .privateInfrastructure.contractPath "$manifest")"
+              private_infrastructure_sha256="$(jq -r .privateInfrastructure.sha256 "$manifest")"
+              ;;
             digital-biome.release/v2)
               knowledge_source_revision="$(jq -r .knowledge.sourceRevision "$manifest")"
               knowledge_release_tag="$(jq -r .knowledge.releaseTag "$manifest")"
@@ -194,6 +209,9 @@ jobs:
             echo "knowledge_release_tag=$knowledge_release_tag"
             echo "knowledge_artifact_sha256=$knowledge_artifact_sha256"
             echo "knowledge_manifest_sha256=$knowledge_manifest_sha256"
+            echo "private_infrastructure_source_revision=$private_infrastructure_source_revision"
+            echo "private_infrastructure_contract_path=$private_infrastructure_contract_path"
+            echo "private_infrastructure_sha256=$private_infrastructure_sha256"
             echo "legacy_vault_sha=$legacy_vault_sha"
             echo "legacy_asset_index_sha256=$legacy_asset_index_sha256"
           } >> "$GITHUB_OUTPUT"
@@ -269,7 +287,7 @@ jobs:
           submodules: ${{ needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v1' && 'recursive' || 'false' }}
           persist-credentials: false
 
-      - name: Checkout exact private Thought Forest revision
+      - name: Checkout exact v2 private Thought Forest revision
         if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v2'
         uses: actions/checkout@v6
         with:
@@ -277,6 +295,17 @@ jobs:
           token: ${{ steps.vault-token.outputs.token }}
           ref: ${{ needs.verify-release.outputs.knowledge_source_revision }}
           path: .pds-runtime/private-thought-forest
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout exact v3 Personal Infrastructure runtime binding
+        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v3'
+        uses: actions/checkout@v6
+        with:
+          repository: BakerSean168/personal-infrastructure
+          ssh-key: ${{ secrets.PERSONAL_INFRASTRUCTURE_DEPLOY_KEY }}
+          ref: ${{ needs.verify-release.outputs.private_infrastructure_source_revision }}
+          path: .pds-runtime/personal-infrastructure
           fetch-depth: 1
           persist-credentials: false
 
@@ -321,6 +350,9 @@ jobs:
           KNOWLEDGE_RELEASE_TAG: ${{ needs.verify-release.outputs.knowledge_release_tag }}
           KNOWLEDGE_ARTIFACT_SHA256: ${{ needs.verify-release.outputs.knowledge_artifact_sha256 }}
           KNOWLEDGE_MANIFEST_SHA256: ${{ needs.verify-release.outputs.knowledge_manifest_sha256 }}
+          PRIVATE_INFRASTRUCTURE_SOURCE_REVISION: ${{ needs.verify-release.outputs.private_infrastructure_source_revision }}
+          PRIVATE_INFRASTRUCTURE_CONTRACT_PATH: ${{ needs.verify-release.outputs.private_infrastructure_contract_path }}
+          PRIVATE_INFRASTRUCTURE_SHA256: ${{ needs.verify-release.outputs.private_infrastructure_sha256 }}
           LEGACY_VAULT_SHA: ${{ needs.verify-release.outputs.legacy_vault_sha }}
           LEGACY_ASSET_INDEX_SHA256: ${{ needs.verify-release.outputs.legacy_asset_index_sha256 }}
         shell: bash
@@ -330,6 +362,41 @@ jobs:
           pnpm exec tsx scripts/delivery/manifest.ts validate --file "$manifest"
 
           case "$MANIFEST_SCHEMA" in
+            digital-biome.release/v3)
+              knowledge_lock=data-products/knowledge-public-v1.lock.json
+              private_lock=data-products/digital-biome-private-infrastructure-v1.lock.json
+              private_root=.pds-runtime/personal-infrastructure
+
+              [[ "$(jq -r .sourceRevision "$knowledge_lock")" == "$KNOWLEDGE_SOURCE_REVISION" ]]
+              [[ "$(jq -r .releaseTag "$knowledge_lock")" == "$KNOWLEDGE_RELEASE_TAG" ]]
+              [[ "$(jq -r .artifact.sha256 "$knowledge_lock")" == "$KNOWLEDGE_ARTIFACT_SHA256" ]]
+              [[ "$(jq -r .manifest.sha256 "$knowledge_lock")" == "$KNOWLEDGE_MANIFEST_SHA256" ]]
+              scripts/data-products/fetch-knowledge-public-v1.sh \
+                .pds-runtime/knowledge-public-v1 "$knowledge_lock"
+
+              [[ "$(jq -r .producerRepository "$private_lock")" == 'BakerSean168/personal-infrastructure' ]]
+              [[ "$(jq -r .sourceRevision "$private_lock")" == "$PRIVATE_INFRASTRUCTURE_SOURCE_REVISION" ]]
+              [[ "$(jq -r .contractPath "$private_lock")" == "$PRIVATE_INFRASTRUCTURE_CONTRACT_PATH" ]]
+              [[ "$(jq -r .sha256 "$private_lock")" == "$PRIVATE_INFRASTRUCTURE_SHA256" ]]
+
+              actual_private_sha="$(git -C "$private_root" rev-parse HEAD)"
+              [[ "$actual_private_sha" == "$PRIVATE_INFRASTRUCTURE_SOURCE_REVISION" ]] || {
+                echo 'Personal Infrastructure checkout does not match the Release runtime binding revision' >&2
+                exit 1
+              }
+
+              contract_path="$private_root/$PRIVATE_INFRASTRUCTURE_CONTRACT_PATH"
+              test -s "$contract_path"
+              actual_contract_sha256="sha256:$(sha256sum "$contract_path" | cut -d ' ' -f 1)"
+              [[ "$actual_contract_sha256" == "$PRIVATE_INFRASTRUCTURE_SHA256" ]] || {
+                echo 'Personal Infrastructure runtime binding digest mismatch' >&2
+                exit 1
+              }
+
+              echo "PDS_PRIVATE_INFRASTRUCTURE_BINDING=$contract_path" >> "$GITHUB_ENV"
+              PDS_PRIVATE_INFRASTRUCTURE_BINDING="$contract_path" \
+                pnpm exec tsx --test scripts/private-infrastructure-binding.test.ts
+              ;;
             digital-biome.release/v2)
               lock=data-products/knowledge-public-v1.lock.json
               private_root=.pds-runtime/private-thought-forest
@@ -403,10 +470,25 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
           AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
+          MANIFEST_SCHEMA: ${{ needs.verify-release.outputs.manifest_schema }}
         run: |
           set -euo pipefail
           payload_file="${RUNNER_TEMP}/private-infrastructure.json"
-          pnpm export:private -- --out "$payload_file"
+          case "$MANIFEST_SCHEMA" in
+            digital-biome.release/v3)
+              test -n "${PDS_PRIVATE_INFRASTRUCTURE_BINDING:-}"
+              pnpm export:private -- \
+                --contract "$PDS_PRIVATE_INFRASTRUCTURE_BINDING" \
+                --out "$payload_file"
+              ;;
+            digital-biome.release/v2|digital-biome.release/v1)
+              pnpm export:private -- --out "$payload_file"
+              ;;
+            *)
+              echo "unsupported Release manifest schema: $MANIFEST_SCHEMA" >&2
+              exit 1
+              ;;
+          esac
           pnpm exec wrangler pages secret put PRIVATE_INFRASTRUCTURE_JSON \
             --project-name digital-biome < "$payload_file"
           printf '%s' "$AI_USAGE_HUB_URL" | pnpm exec wrangler pages secret put AI_USAGE_HUB_URL \

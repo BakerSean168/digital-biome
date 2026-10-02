@@ -48,6 +48,12 @@ function parseStringRecord(value: unknown, validateLink: boolean): Record<string
       if (!ALLOWED_LINK_PROTOCOLS.has(url.protocol) || !url.hostname) {
         throw new PrivateInfrastructureConfigError();
       }
+      if (
+        url.password ||
+        ((url.protocol === 'http:' || url.protocol === 'https:') && url.username)
+      ) {
+        throw new PrivateInfrastructureConfigError();
+      }
     }
 
     result[key] = normalizedValue;

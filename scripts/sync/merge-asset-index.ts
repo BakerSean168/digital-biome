@@ -104,13 +104,13 @@ export function mergeAssetIndex(knowledgeIndexDir: string, indexDir: string): vo
 
   // Build lookup table: upstream assetId → upstream entry
   const upstreamById = new Map<string, UpstreamAssetItem>(
-    upstream.map(item => [item.assetId, item])
+    upstream.map((item) => [item.assetId, item]),
   );
 
   let mergedCount = 0;
   let missingCount = 0;
 
-  const mergedEntries = local.entries.map(entry => {
+  const mergedEntries = local.entries.map((entry) => {
     const assetId = entry['asset_id'] as string | undefined;
     if (!assetId) return entry;
 
@@ -169,6 +169,6 @@ export function mergeAssetIndex(knowledgeIndexDir: string, indexDir: string): vo
 
   console.log(
     `  [merge-asset-index] Merged ${mergedCount} assets from upstream` +
-    (missingCount > 0 ? ` (${missingCount} local assets not found in upstream)` : '')
+      (missingCount > 0 ? ` (${missingCount} local assets not found in upstream)` : ''),
   );
 }

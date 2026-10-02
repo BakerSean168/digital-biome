@@ -194,7 +194,7 @@ jobs:
           if [ -n "$open_pr" ]; then
             echo "knowledge-public-v1 sync PR #$open_pr updated in place."
           else
-            gh pr create               --base main               --head "$SYNC_BRANCH"               --title "chore(data): update knowledge-public-v1 to ${SOURCE_SHA:0:12}"               --body "Pins the immutable Thought Forest `knowledge-public-v1` projection to source revision `$SOURCE_SHA`. The public build and release provenance use this lock; the private producer checkout is resolved ephemerally only during production promotion. Merge only after CI validates the projection-backed build."
+            gh pr create               --base main               --head "$SYNC_BRANCH"               --title "chore(data): update knowledge-public-v1 to ${SOURCE_SHA:0:12}"               --body "Pins the immutable Thought Forest `knowledge-public-v1` projection to source revision `$SOURCE_SHA`. Public build provenance uses this lock; protected infrastructure runtime data is owned and pinned separately by Personal Infrastructure. Merge only after CI validates the projection-backed build."
           fi
 
       - name: Approve and wait for protected PR CI when required

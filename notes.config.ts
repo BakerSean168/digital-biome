@@ -46,10 +46,7 @@ export const notesConfig = {
      * Thought Forest 已将原始附件迁移到 sources/attachments；保留旧路径作为
      * 兼容回退，便于旧 checkout / 历史 submodule 仍可构建。
      */
-    mediaPath: [
-      vaultPath('sources/attachments'),
-      vaultPath('attachments/images'),
-    ],
+    mediaPath: [vaultPath('sources/attachments'), vaultPath('attachments/images')],
 
     /** 博客文章目录 (<selected-source>/blogs) */
     blogsPath: vaultPath('blogs'),
@@ -58,12 +55,7 @@ export const notesConfig = {
     include: ['**/*.md'],
 
     /** 要排除的文件/目录模式 */
-    exclude: [
-      '**/.git/**',
-      '**/node_modules/**',
-      '**/.obsidian/**',
-      '**/.trash/**',
-    ],
+    exclude: ['**/.git/**', '**/node_modules/**', '**/.obsidian/**', '**/.trash/**'],
   },
 
   output: {
@@ -76,8 +68,8 @@ export const notesConfig = {
 
   /**
    * Selected producer source generated/ directory config.
-   * Contains pre-built knowledge-index JSON files from the verified public projection
-   * or, for production-private workflows, an explicitly selected Thought Forest checkout.
+   * Contains pre-built knowledge-index JSON files from the verified public projection.
+   * Explicit external Thought Forest roots are development-only compatibility inputs;
    *
    * generatedPath is resolved automatically (see resolveUpstreamGeneratedPath above).
    * Override with NOTES_UPSTREAM_GENERATED env var if needed.

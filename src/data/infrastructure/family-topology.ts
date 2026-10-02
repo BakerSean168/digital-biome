@@ -1,11 +1,5 @@
 export type TopologyNodeKind =
-  | 'external'
-  | 'network'
-  | 'host'
-  | 'hypervisor'
-  | 'vm'
-  | 'service'
-  | 'tool';
+  'external' | 'network' | 'host' | 'hypervisor' | 'vm' | 'service' | 'tool';
 
 export type TopologyNodeStatus = 'active' | 'planned' | 'internal';
 
@@ -34,8 +28,9 @@ export const familyTopology: TopologyFlow[] = [
   {
     id: 'public-edge',
     eyebrow: 'Public Edge',
-    title: '公网控制平面与统一入口',
-    description: '这条链路负责域名代理、控制平面 VPS、订阅分发与节点监控，是你公网资产的统一入口层。',
+    title: '公网控制入口与运行监控',
+    description:
+      '这条链路负责域名代理、访问控制、订阅分发与节点监控；历史 Azure 香港控制平面已退役。',
     steps: [
       {
         id: 'internet',
@@ -69,12 +64,12 @@ export const familyTopology: TopologyFlow[] = [
         status: 'active',
       },
       {
-        id: 'azure-hk-vps',
-        title: 'Azure 香港控制平面 VPS',
+        id: 'oracle2-control-plane',
+        title: 'Oracle2 持久服务主机',
         kind: 'host',
-        assetId: 'host-azure-hk-vps',
-        description: '承载 Nezha、Sub-Store 和公网运维控制入口',
-        status: 'active',
+        assetId: 'host-oracle-osaka-arm-development-vps',
+        description: '当前承载 Sub-Store 等持久服务；私有运行细节由 Personal Infrastructure 管理',
+        status: 'internal',
       },
       {
         id: 'sub-store',
@@ -98,7 +93,8 @@ export const familyTopology: TopologyFlow[] = [
     id: 'public-dailyuse',
     eyebrow: 'Public Workload',
     title: '阿里云业务负载',
-    description: '这条链路代表你真正承载业务应用的公网主机与服务，目前以 DailyUse / Memoflow 为核心。',
+    description:
+      '这条链路代表你真正承载业务应用的公网主机与服务，目前以 DailyUse / Memoflow 为核心。',
     steps: [
       {
         id: 'public-edge-network-dailyuse',
@@ -295,7 +291,8 @@ export const familyTopology: TopologyFlow[] = [
     id: 'homelab-core',
     eyebrow: 'Homelab Core',
     title: '家庭服务运行主干',
-    description: '这条链路负责从 N100 宿主机进入 PVE 与 Debian 服务 VM，再进入家庭服务入口，是家庭服务运行层的主干。',
+    description:
+      '这条链路负责从 N100 宿主机进入 PVE 与 Debian 服务 VM，再进入家庭服务入口，是家庭服务运行层的主干。',
     steps: [
       {
         id: 'n100-host',
@@ -346,7 +343,8 @@ export const familyTopology: TopologyFlow[] = [
     id: 'home-network-edge',
     eyebrow: 'Home Edge',
     title: '家庭入口、路由与无线接入',
-    description: '这条链路表达从入户光猫、主路由、旁路由到家庭局域网、交换节点、TP-Link 设备与无线 AP 的网络控制关系。',
+    description:
+      '这条链路表达从入户光猫、主路由、旁路由到家庭局域网、交换节点、TP-Link 设备与无线 AP 的网络控制关系。',
     steps: [
       {
         id: 'home-optical-modem',
@@ -501,7 +499,8 @@ export const familyTopology: TopologyFlow[] = [
     id: 'home-nas-services',
     eyebrow: 'NAS Services',
     title: '家庭媒体与资源服务展开',
-    description: '这条链路把 fnOS 存储层继续展开成典型 NAS 服务路径，用来表达下载、桥接与媒体消费层的关系。',
+    description:
+      '这条链路把 fnOS 存储层继续展开成典型 NAS 服务路径，用来表达下载、桥接与媒体消费层的关系。',
     steps: [
       {
         id: 'fnos-vm-services',
@@ -561,10 +560,10 @@ export const familyTopology: TopologyFlow[] = [
 
 export const familyTopologyLinkedAssetIds = Array.from(
   new Set(
-    familyTopology.flatMap(flow =>
+    familyTopology.flatMap((flow) =>
       flow.steps
-        .map(step => step.assetId)
-        .filter((assetId): assetId is string => Boolean(assetId))
-    )
-  )
+        .map((step) => step.assetId)
+        .filter((assetId): assetId is string => Boolean(assetId)),
+    ),
+  ),
 );
