@@ -42,5 +42,5 @@ jobs:
             echo 'release-please did not return a Release PR head branch' >&2
             exit 1
           }
-          gh workflow run check.yml --ref "$release_branch"
+          gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
           echo "Dispatched CI for Release PR branch: $release_branch" >> "$GITHUB_STEP_SUMMARY"

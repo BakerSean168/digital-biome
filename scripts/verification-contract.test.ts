@@ -12,6 +12,7 @@ const packageJson = JSON.parse(fixture('package.json')) as {
 };
 const ciWorkflow = fixture('.github/workflows/check.yml');
 const candidateWorkflow = fixture('.github/workflows/candidate-publish.yml');
+const releasePleaseWorkflow = fixture('.github/workflows/release-please.yml');
 const releaseWorkflow = fixture('.github/workflows/release-publish.yml');
 const productionWorkflow = fixture('.github/workflows/deploy-production.yml');
 const knowledgeSyncWorkflow = fixture('.github/workflows/sync-knowledge-public-v1.yml');
@@ -69,6 +70,14 @@ test('Digital Biome no longer carries a Thought Forest gitlink', () => {
   assert.equal('build:upstream-indexes' in packageJson.scripts, false);
   assert.equal('pull-notes' in packageJson.scripts, false);
   assert.equal('dev:pull' in packageJson.scripts, false);
+});
+
+test('release preparation dispatches CI without requiring a checked-out git repository', () => {
+  assert.match(releasePleaseWorkflow, /workflow_dispatch:/);
+  assert.match(
+    releasePleaseWorkflow,
+    /gh workflow run check\.yml --repo "\$GITHUB_REPOSITORY" --ref "\$release_branch"/,
+  );
 });
 
 test('release publication promotes the exact candidate artifact without rebuilding', () => {
