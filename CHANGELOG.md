@@ -5,6 +5,35 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.6.0](https://github.com/BakerSean168/digital-biome/compare/v0.5.0...v0.6.0) (2026-10-02)
+
+
+### Features
+
+* **data:** add infrastructure public projection consumer ([f903925](https://github.com/BakerSean168/digital-biome/commit/f903925a5c22c33fa976128838bd1e38d12e6aad))
+* **data:** add knowledge public projection consumer ([65c6708](https://github.com/BakerSean168/digital-biome/commit/65c67088f2be7455714bfbb7cbd4fb1cbcf51a73))
+* **data:** add twin public projection consumer ([487d09b](https://github.com/BakerSean168/digital-biome/commit/487d09b8ec11a51bb2372fd6139cedbcfc52cdc9))
+* **data:** build from immutable knowledge projection ([fdf2d65](https://github.com/BakerSean168/digital-biome/commit/fdf2d65ec2ded0a836b6646015290024e697f520))
+* **data:** build from immutable knowledge projection ([5dbdfc5](https://github.com/BakerSean168/digital-biome/commit/5dbdfc5d6f95340567d386aa610806a15fcb06c6))
+* **data:** consume PDS public data products v1 ([fd07ee0](https://github.com/BakerSean168/digital-biome/commit/fd07ee021aac463b4b4deb90dc035ae62e9009e6))
+* **delivery:** cut production private runtime to Personal Infrastructure ([1955dec](https://github.com/BakerSean168/digital-biome/commit/1955decde297aea7644fac2a1c6231672fb1a56f))
+* **delivery:** own private infrastructure runtime contract ([fb14c68](https://github.com/BakerSean168/digital-biome/commit/fb14c684affc0f12cc59663e1bbfce4bb8e67634))
+* **nav:** add private JobSync shortcut ([a7e515a](https://github.com/BakerSean168/digital-biome/commit/a7e515a80494ac56b7cec2ee2e1df89f74763ef2))
+
+
+### Bug Fixes
+
+* **ci:** preserve candidate artifact after checkout ([251e070](https://github.com/BakerSean168/digital-biome/commit/251e070f8c816e3bed496eac83ac0032fa3c5389))
+* **ci:** preserve candidate artifact after checkout ([832b6fc](https://github.com/BakerSean168/digital-biome/commit/832b6fc87ef24c1194adab96b1dae2ef42b9c315))
+* **data:** enforce infrastructure public contract boundary ([0423696](https://github.com/BakerSean168/digital-biome/commit/0423696a83f97b36bb74a8b37e51269cfacb4a6b))
+* **delivery:** preserve legacy private rollback exporter ([cc1eeeb](https://github.com/BakerSean168/digital-biome/commit/cc1eeeb19ff44a632aaf2661a9b5e504d3793705))
+* **nav:** move JobSync shortcut into tools catalog ([0e5ad69](https://github.com/BakerSean168/digital-biome/commit/0e5ad695347a9af7141baedb98d7d3871680d432))
+* **nav:** replace JobSync with Job Harness ([891ccdd](https://github.com/BakerSean168/digital-biome/commit/891ccdd466af1cbcf77e7469c51cd1a664a7b212))
+* **release:** approve protected Release PR CI ([84b3998](https://github.com/BakerSean168/digital-biome/commit/84b39984d505d08e0d50ce30bde214ea5113e30b))
+* **release:** approve protected Release PR CI ([fa3592c](https://github.com/BakerSean168/digital-biome/commit/fa3592c6295d01638b8fbbfa288560d279507acb))
+* **release:** dispatch Release PR CI with explicit repository ([76fde5d](https://github.com/BakerSean168/digital-biome/commit/76fde5d4a5a53033448e72bd551080f72f160149))
+* **release:** dispatch Release PR CI with explicit repository ([da924d2](https://github.com/BakerSean168/digital-biome/commit/da924d232ee1dc764e2c72b1701504048c81968a))
+
 ## [Unreleased]
 
 ## [0.5.0] - 2026-09-11
