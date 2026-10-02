@@ -56,11 +56,18 @@ test('materialized private binding covers all public privateRef keys when presen
   }
 
   const payload = parsePrivateInfrastructureBinding(fs.readFileSync(contractPath, 'utf8'));
-  const assetIndex = JSON.parse(
-    fs.readFileSync(path.resolve('src/data/indexes/asset-index.json'), 'utf8'),
-  ) as { entries?: Array<{ links?: Array<{ privateRef?: string }> }> };
+  const generatedRoot = process.env.NOTES_UPSTREAM_GENERATED?.trim();
+  const assetIndexPath = generatedRoot
+    ? path.resolve(generatedRoot, 'knowledge-index', 'asset-index.json')
+    : path.resolve('src/data/indexes/asset-index.json');
+  const parsedAssetIndex = JSON.parse(fs.readFileSync(assetIndexPath, 'utf8')) as
+    | Array<{ links?: Array<{ privateRef?: string }> }>
+    | { entries?: Array<{ links?: Array<{ privateRef?: string }> }> };
+  const entries = Array.isArray(parsedAssetIndex)
+    ? parsedAssetIndex
+    : (parsedAssetIndex.entries ?? []);
   const expected = new Set(
-    (assetIndex.entries ?? []).flatMap((entry) =>
+    entries.flatMap((entry) =>
       (entry.links ?? []).flatMap((link) => (link.privateRef ? [link.privateRef] : [])),
     ),
   );
