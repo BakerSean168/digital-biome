@@ -72,12 +72,15 @@ test('Digital Biome no longer carries a Thought Forest gitlink', () => {
   assert.equal('dev:pull' in packageJson.scripts, false);
 });
 
-test('release preparation dispatches CI without requiring a checked-out git repository', () => {
+test('release preparation approves and waits for protected Release PR CI', () => {
   assert.match(releasePleaseWorkflow, /workflow_dispatch:/);
+  assert.match(releasePleaseWorkflow, /--event pull_request/);
+  assert.match(releasePleaseWorkflow, /actions\/runs\/\$run_id\/approve/);
   assert.match(
     releasePleaseWorkflow,
-    /gh workflow run check\.yml --repo "\$GITHUB_REPOSITORY" --ref "\$release_branch"/,
+    /gh run watch "\$run_id" --repo "\$GITHUB_REPOSITORY" --exit-status/,
   );
+  assert.doesNotMatch(releasePleaseWorkflow, /gh workflow run check\.yml/);
 });
 
 test('release publication promotes the exact candidate artifact without rebuilding', () => {

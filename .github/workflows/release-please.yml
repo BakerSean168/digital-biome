@@ -29,7 +29,7 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      - name: Dispatch CI for the Release PR head
+      - name: Approve and wait for protected Release PR CI
         if: steps.release.outputs.prs_created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -38,9 +38,46 @@ jobs:
         run: |
           set -euo pipefail
           release_branch="$(jq -r .headBranchName <<<"$PR_JSON")"
+          pr_number="$(jq -r .number <<<"$PR_JSON")"
           [[ -n "$release_branch" && "$release_branch" != null ]] || {
             echo 'release-please did not return a Release PR head branch' >&2
             exit 1
           }
-          gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
-          echo "Dispatched CI for Release PR branch: $release_branch" >> "$GITHUB_STEP_SUMMARY"
+          [[ "$pr_number" =~ ^[0-9]+$ ]] || {
+            echo 'release-please did not return a Release PR number' >&2
+            exit 1
+          }
+
+          head_sha="$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)"
+          [[ "$head_sha" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'Release PR head did not resolve to a full Git SHA' >&2
+            exit 1
+          }
+
+          run_id=''
+          conclusion=''
+          for attempt in $(seq 1 20); do
+            run_json="$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow check.yml \
+              --branch "$release_branch" \
+              --event pull_request \
+              --limit 10 \
+              --json databaseId,headSha,status,conclusion)"
+            run_id="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].databaseId // empty' <<<"$run_json")"
+            conclusion="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].conclusion // empty' <<<"$run_json")"
+            [ -n "$run_id" ] && break
+            sleep 2
+          done
+
+          test -n "$run_id" || {
+            echo 'protected pull_request CI run did not appear for the Release PR head' >&2
+            exit 1
+          }
+
+          if [ "$conclusion" = action_required ]; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve" > /dev/null
+          fi
+
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+          echo "Release PR #$pr_number CI passed for $head_sha." >> "$GITHUB_STEP_SUMMARY"
