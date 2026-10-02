@@ -130,10 +130,10 @@ Before the production Environment is mutated, the workflow verifies:
 
 Inside the `production` Environment gate it then:
 
-1. checks out the exact release source; for legacy v1 rollback only, Actions initializes the historical gitlink that still exists in that old source commit;
-2. for current v3 Releases, re-fetches the matching `knowledge-public-v1` Release, checks out the exact Personal Infrastructure revision through a production-scoped read-only deploy key, verifies the RuntimeBinding SHA-256, and validates consumer coverage;
-3. for v2 Releases, preserves the former ephemeral private Thought Forest checkout path; for legacy v1 Releases, preserves the historical Vault SHA + private asset-index hash path;
-4. renders only the encrypted private Pages binding from the verified Personal Infrastructure contract (or the historical rollback source for v1/v2);
+1. checks out the exact release source;
+2. for v4 and the supported v3 rollback schema, re-fetches the matching `knowledge-public-v1` Release, checks out the exact Personal Infrastructure revision through a production-scoped read-only deploy key, verifies the RuntimeBinding SHA-256, and validates consumer coverage;
+3. for v4, additionally verifies and materializes the pinned `infra-public-v2` producer projection;
+4. renders only the encrypted private Pages binding from the verified Personal Infrastructure contract;
 5. unpacks the already-built Release artifact;
 6. uploads it with Wrangler `pages deploy ... --no-bundle`;
 7. records the Cloudflare deployment identity;

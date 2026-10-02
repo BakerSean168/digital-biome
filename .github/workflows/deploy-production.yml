@@ -36,8 +36,6 @@ jobs:
       private_infrastructure_source_revision: ${{ steps.identity.outputs.private_infrastructure_source_revision }}
       private_infrastructure_contract_path: ${{ steps.identity.outputs.private_infrastructure_contract_path }}
       private_infrastructure_sha256: ${{ steps.identity.outputs.private_infrastructure_sha256 }}
-      legacy_vault_sha: ${{ steps.identity.outputs.legacy_vault_sha }}
-      legacy_asset_index_sha256: ${{ steps.identity.outputs.legacy_asset_index_sha256 }}
     steps:
       - id: published
         name: Resolve Published Release tag identity
@@ -160,8 +158,6 @@ jobs:
           private_infrastructure_source_revision=''
           private_infrastructure_contract_path=''
           private_infrastructure_sha256=''
-          legacy_vault_sha=''
-          legacy_asset_index_sha256=''
 
           case "$manifest_schema" in
             digital-biome.release/v4)
@@ -185,16 +181,6 @@ jobs:
               private_infrastructure_source_revision="$(jq -r .privateInfrastructure.sourceRevision "$manifest")"
               private_infrastructure_contract_path="$(jq -r .privateInfrastructure.contractPath "$manifest")"
               private_infrastructure_sha256="$(jq -r .privateInfrastructure.sha256 "$manifest")"
-              ;;
-            digital-biome.release/v2)
-              knowledge_source_revision="$(jq -r .knowledge.sourceRevision "$manifest")"
-              knowledge_release_tag="$(jq -r .knowledge.releaseTag "$manifest")"
-              knowledge_artifact_sha256="$(jq -r .knowledge.artifactSha256 "$manifest")"
-              knowledge_manifest_sha256="$(jq -r .knowledge.manifestSha256 "$manifest")"
-              ;;
-            digital-biome.release/v1)
-              legacy_vault_sha="$(jq -r .vaultSha "$manifest")"
-              legacy_asset_index_sha256="$(jq -r .assetIndexSha256 "$manifest")"
               ;;
             *)
               echo "unsupported Release manifest schema: $manifest_schema" >&2
@@ -237,8 +223,6 @@ jobs:
             echo "private_infrastructure_source_revision=$private_infrastructure_source_revision"
             echo "private_infrastructure_contract_path=$private_infrastructure_contract_path"
             echo "private_infrastructure_sha256=$private_infrastructure_sha256"
-            echo "legacy_vault_sha=$legacy_vault_sha"
-            echo "legacy_asset_index_sha256=$legacy_asset_index_sha256"
           } >> "$GITHUB_OUTPUT"
 
       - name: Verify main ancestry and exact source workflow provenance
@@ -309,18 +293,6 @@ jobs:
           token: ${{ steps.vault-token.outputs.token }}
           ref: ${{ needs.verify-release.outputs.revision }}
           fetch-depth: 0
-          submodules: ${{ needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v1' && 'recursive' || 'false' }}
-          persist-credentials: false
-
-      - name: Checkout exact v2 private Thought Forest revision
-        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v2'
-        uses: actions/checkout@v6
-        with:
-          repository: BakerSean168/thought-forest
-          token: ${{ steps.vault-token.outputs.token }}
-          ref: ${{ needs.verify-release.outputs.knowledge_source_revision }}
-          path: .pds-runtime/private-thought-forest
-          fetch-depth: 1
           persist-credentials: false
 
       - name: Checkout exact v4 Personal Infrastructure public projection source
@@ -361,14 +333,6 @@ jobs:
         if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v4'
         run: python3 -m pip install --disable-pip-version-check -r .pds-runtime/personal-infrastructure-public/requirements-deployment-registry.txt
 
-      - name: Install v2 private producer index tooling
-        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v2'
-        run: npm --prefix .pds-runtime/private-thought-forest ci --ignore-scripts
-
-      - name: Install legacy v1 Vault index tooling
-        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v1'
-        run: npm --prefix thought-forest ci --ignore-scripts
-
       - name: Download selected immutable Release assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -397,8 +361,6 @@ jobs:
           PRIVATE_INFRASTRUCTURE_SOURCE_REVISION: ${{ needs.verify-release.outputs.private_infrastructure_source_revision }}
           PRIVATE_INFRASTRUCTURE_CONTRACT_PATH: ${{ needs.verify-release.outputs.private_infrastructure_contract_path }}
           PRIVATE_INFRASTRUCTURE_SHA256: ${{ needs.verify-release.outputs.private_infrastructure_sha256 }}
-          LEGACY_VAULT_SHA: ${{ needs.verify-release.outputs.legacy_vault_sha }}
-          LEGACY_ASSET_INDEX_SHA256: ${{ needs.verify-release.outputs.legacy_asset_index_sha256 }}
         shell: bash
         run: |
           set -euo pipefail
@@ -465,53 +427,6 @@ jobs:
                 PDS_PUBLIC_INFRASTRUCTURE_ARTIFACT="$public_infra_artifact" \
                 pnpm exec tsx --test scripts/private-infrastructure-binding.test.ts
               ;;
-            digital-biome.release/v2)
-              lock=data-products/knowledge-public-v1.lock.json
-              private_root=.pds-runtime/private-thought-forest
-              [[ "$(jq -r .sourceRevision "$lock")" == "$KNOWLEDGE_SOURCE_REVISION" ]]
-              [[ "$(jq -r .releaseTag "$lock")" == "$KNOWLEDGE_RELEASE_TAG" ]]
-              [[ "$(jq -r .artifact.sha256 "$lock")" == "$KNOWLEDGE_ARTIFACT_SHA256" ]]
-              [[ "$(jq -r .manifest.sha256 "$lock")" == "$KNOWLEDGE_MANIFEST_SHA256" ]]
-
-              scripts/data-products/fetch-knowledge-public-v1.sh \
-                .pds-runtime/knowledge-public-v1 "$lock"
-
-              actual_private_sha="$(git -C "$private_root" rev-parse HEAD)"
-              [[ "$actual_private_sha" == "$KNOWLEDGE_SOURCE_REVISION" ]] || {
-                echo 'ephemeral private producer revision does not match the Release knowledge source revision' >&2
-                exit 1
-              }
-
-              npm --prefix "$private_root" run kb:index
-              {
-                echo "NOTES_VAULT_ROOT=$private_root"
-                echo "NOTES_UPSTREAM_GENERATED=$private_root/generated"
-                echo "PDS_PRIVATE_VAULT_ROOT=$private_root"
-              } >> "$GITHUB_ENV"
-              NOTES_VAULT_ROOT="$private_root" \
-                NOTES_UPSTREAM_GENERATED="$private_root/generated" \
-                PDS_PRIVATE_VAULT_ROOT="$private_root" \
-                pnpm sync:content
-              NOTES_VAULT_ROOT="$private_root" \
-                NOTES_UPSTREAM_GENERATED="$private_root/generated" \
-                PDS_PRIVATE_VAULT_ROOT="$private_root" \
-                pnpm test:infrastructure
-              ;;
-            digital-biome.release/v1)
-              actual_vault_sha="$(git -C thought-forest rev-parse HEAD)"
-              [[ "$actual_vault_sha" == "$LEGACY_VAULT_SHA" ]] || {
-                echo 'pinned Vault SHA does not match legacy Release manifest' >&2
-                exit 1
-              }
-              pnpm build:upstream-indexes
-              actual_asset_index="sha256:$(sha256sum thought-forest/generated/knowledge-index/asset-index.json | cut -d ' ' -f 1)"
-              [[ "$actual_asset_index" == "$LEGACY_ASSET_INDEX_SHA256" ]] || {
-                echo 'Vault asset index hash does not match legacy Release manifest' >&2
-                exit 1
-              }
-              pnpm sync:content
-              pnpm test:infrastructure
-              ;;
             *)
               echo "unsupported Release manifest schema: $MANIFEST_SCHEMA" >&2
               exit 1
@@ -548,9 +463,6 @@ jobs:
               pnpm export:private -- \
                 --contract "$PDS_PRIVATE_INFRASTRUCTURE_BINDING" \
                 --out "$payload_file"
-              ;;
-            digital-biome.release/v2|digital-biome.release/v1)
-              pnpm export:private:legacy -- --out "$payload_file"
               ;;
             *)
               echo "unsupported Release manifest schema: $MANIFEST_SCHEMA" >&2

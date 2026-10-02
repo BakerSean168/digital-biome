@@ -161,7 +161,7 @@ manual Deploy Production(vX.Y.Z)
 
 Candidate 阶段先验证 committed `knowledge-public-v1` lock 与 immutable producer Release，再完成 Astro/Pagefind 构建和 Pages Functions 编译，并生成带 SHA-256 的 `digital-biome-pages.tar.gz`。Release 只提升该 artifact；Production 使用 `--no-bundle` 上传同一 artifact，因此不会重建应用。
 
-Production 会重新验证 Release manifest 绑定的 `knowledge-public-v1` producer identity。当前 v3 Release 另外绑定 Personal Infrastructure 的 `digital-biome-private-infrastructure-v1` RuntimeBinding：工作流按 exact revision 检出私有 producer、校验 contract SHA-256，再渲染 `PRIVATE_INFRASTRUCTURE_JSON`。v2 / legacy v1 rollback 才保留历史 Thought Forest private-source 路径；这些步骤都属于部署配置，不改变已经发布的 public application artifact。
+Production 会重新验证 Release manifest 绑定的 `knowledge-public-v1` producer identity。当前 v4 Release 还绑定 `infra-public-v2`，而 v3/v4 都绑定 Personal Infrastructure 的 `digital-biome-private-infrastructure-v1` RuntimeBinding：工作流按 exact revision 检出 producer、校验 digest，再渲染 `PRIVATE_INFRASTRUCTURE_JSON`。历史 v1/v2 Thought Forest private-source 部署路径已经退休；这些步骤都属于部署配置，不改变已经发布的 public application artifact。
 
 首次启用前必须配置：
 

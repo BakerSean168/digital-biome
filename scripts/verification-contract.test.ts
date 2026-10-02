@@ -208,7 +208,7 @@ test('production v4 consumes public infra projection and pinned private RuntimeB
   assert.match(step, /private-infrastructure-binding\.test\.ts/);
 
   const currentBlock = step.match(
-    /digital-biome\.release\/v4\|digital-biome\.release\/v3\)[\s\S]*?(?=\n {12}digital-biome\.release\/v2\))/,
+    /digital-biome\.release\/v4\|digital-biome\.release\/v3\)[\s\S]*?(?=\n {12}\*\))/,
   )?.[0];
   assert.ok(currentBlock, 'v4/v3 producer-contract branch must exist');
   assert.match(currentBlock, /prepare-knowledge-public-v1\.sh/);
@@ -219,21 +219,18 @@ test('production v4 consumes public infra projection and pinned private RuntimeB
   assert.doesNotMatch(currentBlock, /pnpm sync:content/);
   assert.doesNotMatch(currentBlock, /private-thought-forest/);
 
-  assert.match(
-    productionWorkflow,
-    /digital-biome\.release\/v2[\s\S]*repository: BakerSean168\/thought-forest[\s\S]*path: \.pds-runtime\/private-thought-forest/,
-  );
-  assert.match(step, /digital-biome\.release\/v1[\s\S]*actual_asset_index/);
+  assert.doesNotMatch(productionWorkflow, /digital-biome\.release\/v2/);
+  assert.doesNotMatch(productionWorkflow, /digital-biome\.release\/v1/);
+  assert.doesNotMatch(productionWorkflow, /private-thought-forest/);
+  assert.doesNotMatch(productionWorkflow, /export:private:legacy/);
 
   const bindingStep = productionWorkflow.match(
     / {6}- name: Generate and update encrypted Pages bindings\n[\s\S]*?(?=\n {6}- name: Verify and unpack immutable Pages artifact)/,
   )?.[0];
   assert.ok(bindingStep, 'encrypted binding step must exist');
   assert.match(bindingStep, /--contract "\$PDS_PRIVATE_INFRASTRUCTURE_BINDING"/);
-  assert.match(
-    bindingStep,
-    /digital-biome\.release\/v2\|digital-biome\.release\/v1\)[\s\S]*pnpm export:private:legacy/,
-  );
+  assert.match(bindingStep, /digital-biome\.release\/v4\|digital-biome\.release\/v3/);
+  assert.doesNotMatch(bindingStep, /export:private:legacy/);
 });
 
 test('quality gates are part of the canonical verify contract', () => {
