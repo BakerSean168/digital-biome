@@ -111,8 +111,12 @@ test('release publication promotes the exact candidate artifact without rebuildi
   assert.match(releaseWorkflow, /issues: write/);
   assert.match(releaseWorkflow, /Finalize release-please PR state/);
   assert.match(releaseWorkflow, /commits\/\$RELEASE_SHA\/pulls/);
-  assert.match(releaseWorkflow, /--remove-label 'autorelease: pending'/);
-  assert.match(releaseWorkflow, /--add-label 'autorelease: tagged'/);
+  assert.match(releaseWorkflow, /issues\/\$release_pr\/labels\/autorelease%3A%20pending/);
+  assert.match(
+    releaseWorkflow,
+    /issues\/\$release_pr\/labels["']?[\s\S]*labels\[\]=autorelease: tagged/,
+  );
+  assert.doesNotMatch(releaseWorkflow, /gh pr edit/);
 });
 
 test('production is manual Release selection and does not rebuild application code', () => {
