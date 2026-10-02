@@ -109,6 +109,7 @@ test('release publication promotes the exact candidate artifact without rebuildi
   assert.doesNotMatch(releaseWorkflow, /pnpm build:only/);
   assert.doesNotMatch(releaseWorkflow, /pages functions build/);
   assert.match(releaseWorkflow, /issues: write/);
+  assert.match(releaseWorkflow, /pull-requests: write/);
   assert.match(releaseWorkflow, /Finalize release-please PR state/);
   assert.match(releaseWorkflow, /commits\/\$RELEASE_SHA\/pulls/);
   assert.match(releaseWorkflow, /issues\/\$release_pr\/labels\/autorelease%3A%20pending/);
