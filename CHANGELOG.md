@@ -5,6 +5,18 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.6.1](https://github.com/BakerSean168/digital-biome/compare/v0.6.0...v0.6.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **delivery:** build deployable Pages worker module ([0cd5111](https://github.com/BakerSean168/digital-biome/commit/0cd5111b3ddbfd4513dafeb0aaba5007d6b049ac))
+* **delivery:** build deployable Pages worker module ([9b7833b](https://github.com/BakerSean168/digital-biome/commit/9b7833b73fe5155587067d99bce49de038f2d38d))
+* **delivery:** prepare public projection before v3 binding checks ([975d71d](https://github.com/BakerSean168/digital-biome/commit/975d71d2c79319a1ac54febb3ddd6360051ce0b9))
+* **delivery:** prepare public projection before v3 binding checks ([6e705b7](https://github.com/BakerSean168/digital-biome/commit/6e705b722b50075fa56c97fe330c8af8867b7fc9))
+* **release:** finalize release-please labels after publish ([6262c48](https://github.com/BakerSean168/digital-biome/commit/6262c489336ddcaa0df6a6a2ffc81cfcb0c127e9))
+* **release:** finalize release-please labels after publish ([bd833ea](https://github.com/BakerSean168/digital-biome/commit/bd833eab50e0b81502cdfe4d56e5e7550c71e59f))
+
 ## [0.6.0](https://github.com/BakerSean168/digital-biome/compare/v0.5.0...v0.6.0) (2026-10-02)
 
 
