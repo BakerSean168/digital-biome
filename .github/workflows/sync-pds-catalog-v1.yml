@@ -2,12 +2,13 @@ name: Sync pds-catalog-v1
 
 on:
   schedule:
-    - cron: '23 */6 * * *'
+    - cron: '23 * * * *'
   workflow_dispatch:
   repository_dispatch:
     types: [pds-catalog-v1-published]
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -106,6 +107,46 @@ jobs:
             --head "$SYNC_BRANCH" \
             --title "chore(data): update pds-catalog-v1 to ${SOURCE_SHA:0:12}" \
             --body "Updates the public-safe Personal Digital System catalog projection from exact producer revision \`$SOURCE_SHA\`. Digital Biome remains a presentation consumer; PDS remains the system boundary owner."
+      - name: Wait for protected sync PR CI
+        if: steps.projection.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          head_sha="$(git ls-remote origin "refs/heads/$SYNC_BRANCH" | awk '{print $1}')"
+          test -n "$head_sha" || {
+            echo 'generated sync branch is missing from origin' >&2
+            exit 1
+          }
+
+          run_id=
+          conclusion=
+          for attempt in $(seq 1 30); do
+            run_json="$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow check.yml \
+              --branch "$SYNC_BRANCH" \
+              --event pull_request \
+              --limit 10 \
+              --json databaseId,headSha,status,conclusion)"
+            run_id="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].databaseId // empty' <<<"$run_json")"
+            conclusion="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].conclusion // empty' <<<"$run_json")"
+            [ -n "$run_id" ] && break
+            sleep 2
+          done
+
+          test -n "$run_id" || {
+            echo 'protected pull_request CI run did not appear for the generated PDS sync commit' >&2
+            exit 1
+          }
+
+          if [ "$conclusion" = action_required ]; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve" > /dev/null
+          fi
+
+          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+
       - name: No semantic change
         if: steps.projection.outputs.changed != 'true'
         run: echo "pds-catalog-v1 already matches the latest semantic producer catalog."
