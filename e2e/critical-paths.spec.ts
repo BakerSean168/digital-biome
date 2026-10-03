@@ -71,6 +71,18 @@ test('SiteSearch returns real Pagefind document results', async ({ page }) => {
   await expect(page.locator('#cmd-results')).toContainText(/typescript/i);
 });
 
+test('SiteSearch discovers launcher services without a separate asset-discovery page', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.keyboard.press('Control+k');
+  await page.locator('#cmd-input').fill('litellm');
+  await expect(page.locator('#cmd-results')).toContainText('[ SVC ]');
+  await expect(page.locator('#cmd-results')).toContainText('LiteLLM');
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/systems#service-svc-litellm-model-gateway$/);
+});
+
 test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category URL state', async ({
   page,
   request,

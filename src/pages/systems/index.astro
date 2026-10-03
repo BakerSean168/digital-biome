@@ -2,18 +2,28 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PersonalSystemsHub from '../../components/assets/PersonalSystemsHub.astro';
 import {
+  getPinnedPortalServices,
+  getPortalServers,
+  getPortalServices,
   getPublicSystemDomains,
-  getSystemQuickAccess,
   publicSystemFactCounts,
 } from '../../utils/personal-systems';
 
 const domains = getPublicSystemDomains();
-const quickAccess = getSystemQuickAccess();
+const servers = getPortalServers();
+const services = getPortalServices();
+const pinned = getPinnedPortalServices();
 const facts = publicSystemFactCounts();
 ---
 
-<BaseLayout title="Personal Systems" description="个人系统、服务、项目与数字资产控制面板">
+<BaseLayout title="Personal Systems" description="个人系统、服务器、服务与数字资产启动器">
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
-    <PersonalSystemsHub domains={domains} quickAccess={quickAccess} facts={facts} />
+    <PersonalSystemsHub
+      domains={domains}
+      servers={servers}
+      services={services}
+      pinned={pinned}
+      facts={facts}
+    />
   </main>
 </BaseLayout>
