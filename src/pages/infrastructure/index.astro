@@ -1,27 +1,16 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import InfrastructureShowcase from '../../components/assets/InfrastructureShowcase.astro';
-import { getInfrastructureDataset, infrastructureFactCounts } from '../../utils/infrastructure';
+import { getInfrastructureDataset } from '../../utils/infrastructure';
 
 const dataset = getInfrastructureDataset();
-const facts = infrastructureFactCounts();
-const heroFacts = [
-  `${facts.fleetHostCount} 个当前公网计算节点来自 Personal Infrastructure`,
-  `${facts.homelabResourceCount} 个家庭实验室资源通过 infra-public-v2 投影`,
-  `${facts.connectionCount} 条显式基础设施关系由 Producer 维护`,
-  `${facts.resourceCount} 个 public-safe 资源，页面不再读取 Thought Forest 资产事实`,
-];
 ---
 
-<BaseLayout
-  title="Infrastructure Detail"
-  description="Personal Systems 的运行基础设施与网络拓扑详情"
->
+<BaseLayout title="Infrastructure" description="Personal Systems 的运行基础设施与网络拓扑详情">
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
     <InfrastructureShowcase
-      title="运行基础设施 / Infrastructure"
-      description="Personal Systems 的基础设施子视图。Personal Infrastructure 仍是唯一事实源，Digital Biome 只负责展示。"
-      heroFacts={heroFacts}
+      title="Infrastructure"
+      description="Personal Systems 的运行基础设施视图。先看运行拓扑与关键入口，再进入完整资源清单；Personal Infrastructure 仍是唯一事实源。"
       resources={dataset.resources}
       connections={dataset.connections}
       locale="zh"

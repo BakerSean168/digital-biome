@@ -1,29 +1,29 @@
 ---
 import {
   Activity,
+  ArrowLeft,
+  ArrowRight,
+  Boxes,
   ExternalLink,
-  Lock,
+  LockKeyhole,
   Network,
   Server,
-  Shield,
-  Boxes,
-  Database,
-  Router,
+  ShieldCheck,
 } from '@lucide/astro';
 import type { InfrastructureConnection, InfrastructureResource } from '../../utils/infrastructure';
 
 interface Props {
   title: string;
   description: string;
-  heroFacts: string[];
   resources: Array<InfrastructureResource & { href?: string }>;
   connections: InfrastructureConnection[];
   locale?: 'zh' | 'en';
 }
 
-const { title, description, heroFacts, resources, connections, locale = 'zh' } = Astro.props;
+const { title, description, resources, connections, locale = 'zh' } = Astro.props;
 const currentPath = Astro.url.pathname;
 const resourceMap = new Map(resources.map((resource) => [resource.id, resource]));
+const activeResources = resources.filter((resource) => resource.status === 'active');
 const fleetHosts = resources.filter(
   (resource) =>
     resource.kind === 'host' &&
@@ -31,10 +31,12 @@ const fleetHosts = resources.filter(
     resource.groups.includes('public-fleet'),
 );
 const homelabResources = resources.filter((resource) => resource.groups.includes('homelab'));
-const homelabServices = homelabResources.filter((resource) => resource.kind === 'service');
+const homelabIds = new Set(homelabResources.map((resource) => resource.id));
+const homeConnections = connections.filter(
+  (connection) => homelabIds.has(connection.from) && homelabIds.has(connection.to),
+);
 const monitor = resourceMap.get('svc-nezha-panel');
 const control = resourceMap.get('svc-homepage-dashboard');
-
 const publicLink = (resource: InfrastructureResource | undefined, kinds: string[]) =>
   resource?.links?.find((link) => link.url && kinds.includes(link.kind));
 const privateLink = (resource: InfrastructureResource | undefined, kinds: string[]) =>
@@ -61,345 +63,396 @@ const statusLabel = (status: InfrastructureResource['status']) =>
     archived: 'ARCHIVED',
     decommissioning: 'DECOMMISSIONING',
   })[status];
+const statusTone = (status: InfrastructureResource['status']) =>
+  status === 'active'
+    ? 'text-emerald-300'
+    : status === 'planned'
+      ? 'text-amber-300'
+      : 'text-muted-foreground';
+const kindOrder: InfrastructureResource['kind'][] = ['host', 'service', 'network', 'platform'];
+const kindLabels: Record<InfrastructureResource['kind'], string> = {
+  host: 'Hosts',
+  service: 'Services',
+  network: 'Network',
+  platform: 'Platforms',
+};
+const resourcesByKind = kindOrder.map((kind) => ({
+  kind,
+  label: kindLabels[kind],
+  items: resources.filter((resource) => resource.kind === kind),
+}));
+const labels =
+  locale === 'en'
+    ? {
+        eyebrow: 'Infrastructure',
+        systems: 'Back to systems',
+        operations: 'Operational map',
+        operationsDescription:
+          'Current compute, home topology, and explicit producer-owned relationships.',
+        fleet: 'Public fleet',
+        home: 'Home path',
+        registry: 'Resource registry',
+        registryDescription:
+          'Complete public-safe inventory. Open a row for deeper resource details.',
+      }
+    : {
+        eyebrow: 'Infrastructure',
+        systems: '返回 Personal Systems',
+        operations: '运行拓扑',
+        operationsDescription: '先看计算节点、家庭链路与显式关系，再进入完整资源清单。',
+        fleet: '公网计算节点',
+        home: '家庭链路',
+        registry: '资源清单',
+        registryDescription: '完整 public-safe inventory；详情页负责更深的单资源信息。',
+      };
 ---
 
-<div class="flex flex-col gap-12 pb-16">
-  <section class="border-b border-border pb-10">
-    <div class="mb-4 flex flex-wrap items-center gap-2">
-      <span class="inline-block border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-mono tracking-widest text-primary uppercase">
-        {locale === 'en' ? 'INFRASTRUCTURE' : '数字基础设施'}
-      </span>
-      <span class="border border-border bg-card px-2 py-0.5 text-[10px] font-mono tracking-widest text-muted-foreground uppercase">
-        Personal Infrastructure → infra-public-v2
-      </span>
-    </div>
+<div class="pb-16">
+  <section class="border-b border-border/70 pb-8 pt-2">
+    <a
+      href="/systems"
+      class="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-primary"
+    >
+      <ArrowLeft size={12} /> {labels.systems}
+    </a>
 
-    <div class="flex flex-col gap-8">
-      <div>
-        <h1 class="text-3xl md:text-5xl font-mono tracking-tight text-foreground">{title}</h1>
-        <p class="mt-4 max-w-3xl text-sm font-mono leading-relaxed text-muted-foreground">
+    <div class="mt-5 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+      <div class="max-w-4xl">
+        <div class="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <span class="text-primary">{labels.eyebrow}</span>
+          <span aria-hidden="true">/</span>
+          <span>Personal Infrastructure → infra-public-v2</span>
+        </div>
+        <h1 class="mt-4 text-4xl font-semibold tracking-[-0.035em] text-foreground md:text-5xl">
+          {title}
+        </h1>
+        <p class="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-[15px]">
           {description}
         </p>
       </div>
-      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {heroFacts.map((fact) => (
-          <div class="border border-border bg-card/60 px-4 py-3 text-xs font-mono leading-5 text-muted-foreground">
-            {fact}
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
 
-  <section class="grid gap-6 md:grid-cols-2">
-    <div class="relative flex flex-col justify-between overflow-hidden rounded-sm border border-border bg-card p-6">
-      <div class="absolute right-0 top-0 border-b border-l border-primary/20 bg-primary/5 px-2 py-0.5 text-[8px] font-mono uppercase tracking-widest text-primary">
-        Public Status
-      </div>
-      <div class="space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary">
-            <Activity size={18} />
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-foreground">服务器实时监控</h3>
-            <p class="text-[10px] font-mono tracking-wider text-muted-foreground">
-              {monitorLink?.url ? new URL(monitorLink.url).hostname : 'PUBLIC_MONITOR'}
-            </p>
-          </div>
-        </div>
-        <p class="text-xs font-mono leading-relaxed text-muted-foreground">
-          监控入口与节点关系来自 Personal Infrastructure；Digital Biome 只负责展示。
-        </p>
-      </div>
-      <div class="mt-6 border-t border-border/50 pt-4">
-        {monitorLink?.url ? (
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+        {monitorLink?.url && (
           <a
             href={monitorLink.url}
             target="_blank"
             rel="noopener noreferrer"
-            class="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background py-2.5 text-xs font-mono tracking-widest text-foreground transition-colors hover:border-primary/50"
+            class="inline-flex items-center gap-1.5 text-primary hover:text-foreground"
           >
-            <span>[ 进入监控面板 ]</span>
-            <ExternalLink size={12} />
+            <Activity size={13} /> Monitor <ExternalLink size={10} />
           </a>
-        ) : (
-          <span class="block border border-border py-2.5 text-center text-xs font-mono text-muted-foreground">
-            [ MONITOR_UNAVAILABLE ]
-          </span>
         )}
-      </div>
-    </div>
-
-    <div class="relative flex flex-col justify-between overflow-hidden rounded-sm border border-border bg-card p-6">
-      <div class="absolute right-0 top-0 border-b border-l border-amber-500/20 bg-amber-500/5 px-2 py-0.5 text-[8px] font-mono uppercase tracking-widest text-amber-400">
-        Access Controlled
-      </div>
-      <div class="space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/5 text-amber-400">
-            <Lock size={18} />
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-foreground">私人基础设施控制中心</h3>
-            <p class="text-[10px] font-mono tracking-wider text-muted-foreground">
-              CF_ACCESS.PROTECTED
-            </p>
-          </div>
-        </div>
-        <p class="text-xs font-mono leading-relaxed text-muted-foreground">
-          私有入口只携带稳定 privateRef；真实地址通过受保护 RuntimeBinding 解锁。
-        </p>
-      </div>
-      <div class="mt-6 border-t border-border/50 pt-4">
-        {controlLink?.privateRef ? (
+        {controlLink?.privateRef && (
           <a
             href={`/login?next=${encodeURIComponent(currentPath)}`}
             data-private-link={controlLink.privateRef}
-            data-private-unlocked-label="[ 认证并进入控制台 ]"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex w-full items-center justify-center gap-2 rounded-sm border border-border bg-background py-2.5 text-xs font-mono tracking-widest text-foreground transition-colors hover:border-primary/50"
+            data-private-unlocked-label="Control plane"
+            class="inline-flex items-center gap-1.5 text-amber-300 hover:text-primary"
           >
-            <span data-private-link-label>[ 认证并进入控制台 ]</span>
-            <Shield size={12} />
+            <LockKeyhole size={13} /> <span data-private-link-label>Unlock control plane</span>
           </a>
-        ) : (
-          <span class="block border border-border py-2.5 text-center text-xs font-mono text-muted-foreground">
-            [ PRIVATE_REF_UNAVAILABLE ]
-          </span>
         )}
       </div>
     </div>
+
+    <dl class="mt-8 grid grid-cols-2 border-y border-border/50 md:grid-cols-5">
+      {[
+        ['Resources', resources.length],
+        ['Active', activeResources.length],
+        ['Public fleet', fleetHosts.length],
+        ['Homelab', homelabResources.length],
+        ['Relations', connections.length],
+      ].map(([label, value], index) => (
+        <div
+          class:list={[
+            'py-4 pr-4 sm:py-5',
+            index > 0 && 'sm:border-l sm:border-border/40 sm:pl-5',
+            index % 2 === 1 && 'border-l border-border/40 pl-4 sm:pl-5',
+          ]}
+        >
+          <dt class="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</dt>
+          <dd class="mt-1 text-2xl font-semibold tabular-nums text-foreground">{value}</dd>
+        </div>
+      ))}
+    </dl>
   </section>
 
-  <section class="flex flex-col gap-6">
-    <div class="flex items-center justify-between border-b border-border/40 pb-3">
-      <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">
-          公网 VPS 资产 / Public VPS Fleet
-        </h2>
-        <p class="mt-1 text-xs font-mono text-muted-foreground">
-          事实来自 infra-public-v2；页面不维护 VPS 清单。
-        </p>
-      </div>
-      <span class="rounded-sm border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-primary">
-        {fleetHosts.length} ACTIVE
-      </span>
-    </div>
+  <section
+    id="topology"
+    class="grid scroll-mt-24 border-b border-border/70 lg:grid-cols-[220px_minmax(0,1fr)]"
+  >
+    <header class="border-b border-border/50 py-8 pr-6 lg:border-b-0 lg:border-r">
+      <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-primary">Topology</div>
+      <h2 class="mt-2 text-xl font-semibold tracking-tight text-foreground">{labels.operations}</h2>
+      <p class="mt-2 text-xs leading-6 text-muted-foreground">{labels.operationsDescription}</p>
+    </header>
 
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-      {fleetHosts.map((host) => {
-        const services = hostedServices(host.id);
-        const ipRef = host.privateValues?.ip;
-        const hostMonitor = publicLink(host, ['monitor']);
-        return (
-          <article class="flex flex-col gap-4 rounded-sm border border-[#8B9A46]/35 bg-[#1A1B19] p-6 text-left transition-colors hover:border-primary/50">
-            <div class="flex items-start justify-between gap-4 border-b border-border/40 pb-4">
-              <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-[#8B9A46]/20 bg-[#8B9A46]/5 text-primary">
-                  <Server size={20} />
-                </div>
-                <div>
-                  <h3 class="text-lg font-bold leading-tight text-foreground">
-                    {host.provider ?? host.title}
-                  </h3>
-                  <p class="mt-0.5 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                    {host.role ?? 'Infrastructure Host'}
+    <div class="space-y-9 py-8 lg:pl-8">
+      <section>
+        <div class="flex items-center justify-between gap-4 border-b border-border/40 pb-2">
+          <h3 class="text-sm font-medium text-foreground">{labels.fleet}</h3>
+          <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            {fleetHosts.length} active
+          </span>
+        </div>
+        <div class="divide-y divide-border/30">
+          {fleetHosts.map((host) => {
+            const services = hostedServices(host.id);
+            const ipRef = host.privateValues?.ip;
+            const hostMonitor = publicLink(host, ['monitor']);
+            return (
+              <div class="grid gap-3 py-4 md:grid-cols-[minmax(0,1.15fr)_minmax(150px,0.65fr)_minmax(120px,0.5fr)_auto] md:items-center">
+                <div class="min-w-0">
+                  <a
+                    href={`/infrastructure/${host.id}`}
+                    class="text-sm font-medium text-foreground hover:text-primary"
+                  >
+                    {host.title}
+                  </a>
+                  <p class="mt-1 truncate text-xs text-muted-foreground">
+                    {host.role ?? host.provider ?? 'Infrastructure host'}
                   </p>
                 </div>
-              </div>
-              <div class="text-right text-[11px] font-mono leading-normal text-muted-foreground">
-                <p>
-                  Region: <span class="text-foreground">{host.region ?? '—'}</span>
-                </p>
-                <p>
-                  IP:{' '}
-                  {ipRef ? (
-                    <span class="text-foreground" data-private-value={ipRef}>
-                      LOCKED
-                    </span>
-                  ) : (
-                    <span class="text-foreground/60">HIDDEN</span>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 border-b border-border/20 py-2 font-mono md:grid-cols-5">
-              {[
-                ['CPU', host.details?.cpu],
-                ['Memory', host.details?.memory],
-                ['Storage', host.details?.storage],
-                ['OS', host.details?.os],
-                ['Traffic / BW', host.details?.network],
-              ].map(([label, value]) => (
-                <div>
-                  <span class="block text-[8px] uppercase tracking-wider text-muted-foreground">
-                    {label}
+                <div class="text-xs text-muted-foreground">
+                  <span class="block text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground">
+                    Region
                   </span>
-                  <span class="text-xs font-medium text-foreground/90">{value ?? '—'}</span>
+                  <span>{host.region ?? '—'}</span>
+                </div>
+                <div class="text-xs text-muted-foreground">
+                  <span class="block text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground">
+                    Services
+                  </span>
+                  <span>{services.length}</span>
+                </div>
+                <div class="flex items-center gap-3 text-[11px]">
+                  {ipRef && (
+                    <span class="font-mono text-muted-foreground" data-private-value={ipRef}>
+                      IP: LOCKED
+                    </span>
+                  )}
+                  {hostMonitor?.url && (
+                    <a
+                      href={hostMonitor.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-primary hover:text-foreground"
+                    >
+                      Monitor
+                    </a>
+                  )}
+                  <a
+                    href={`/infrastructure/${host.id}`}
+                    class="text-muted-foreground hover:text-foreground"
+                  >
+                    Inspect
+                  </a>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <div class="flex items-center justify-between gap-4 border-b border-border/40 pb-2">
+          <h3 class="text-sm font-medium text-foreground">{labels.home}</h3>
+          <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            {homeConnections.length} relations
+          </span>
+        </div>
+
+        <ol class="grid border-b border-border/30 md:grid-cols-4">
+          {homeNodes.map((node, index) => (
+            <li
+              class:list={[
+                'relative py-5 md:px-5',
+                index > 0 && 'border-t border-border/30 md:border-l md:border-t-0',
+              ]}
+            >
+              <div class="flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground">
+                <span>{String(index + 1).padStart(2, '0')}</span>
+                <span>{node.kind}</span>
+              </div>
+              <a
+                href={`/infrastructure/${node.id}`}
+                class="mt-2 block text-sm font-medium text-foreground hover:text-primary"
+              >
+                {node.title}
+              </a>
+              <p class="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                {node.description}
+              </p>
+              {index < homeNodes.length - 1 && (
+                <ArrowRight
+                  size={12}
+                  class="absolute -right-1.5 top-1/2 hidden -translate-y-1/2 text-primary md:block"
+                />
+              )}
+            </li>
+          ))}
+        </ol>
+
+        <div class="mt-5 grid gap-6 xl:grid-cols-2">
+          <div>
+            <h4 class="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              PVE virtual machines
+            </h4>
+            <div class="mt-2 divide-y divide-border/30 border-t border-border/30">
+              {vmNodes.map((node) => (
+                <a
+                  href={`/infrastructure/${node.id}`}
+                  class="grid gap-2 py-3 text-xs hover:text-primary sm:grid-cols-[minmax(0,1fr)_auto]"
+                >
+                  <span class="text-foreground">{node.title}</span>
+                  <span class="font-mono uppercase text-muted-foreground">
+                    {node.role ?? node.kind}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h4 class="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Explicit relationships
+            </h4>
+            <div class="mt-2 divide-y divide-border/30 border-t border-border/30">
+              {homeConnections.slice(0, 8).map((connection) => (
+                <div class="grid gap-1 py-3 text-xs sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+                  <span class="truncate text-foreground">
+                    {resourceMap.get(connection.from)?.title ?? connection.from}
+                  </span>
+                  <span class="font-mono text-[9px] uppercase text-tertiary-foreground">
+                    {connection.kind}
+                  </span>
+                  <span class="truncate text-right text-muted-foreground">
+                    {resourceMap.get(connection.to)?.title ?? connection.to}
+                  </span>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
 
-            <div class="flex flex-wrap gap-2">
-              <a
-                href={`/infrastructure/${host.id}`}
-                class="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 text-[10px] font-mono text-foreground hover:border-primary/50"
-              >
-                <Boxes size={11} /> Detail
-              </a>
-              {hostMonitor?.url && (
-                <a
-                  href={hostMonitor.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 text-[10px] font-mono text-foreground hover:border-primary/50"
-                >
-                  <Activity size={11} /> Monitor
-                </a>
+  <section id="inventory" class="grid scroll-mt-24 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <header class="border-b border-border/50 py-8 pr-6 lg:border-b-0 lg:border-r">
+      <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-primary">Inventory</div>
+      <h2 class="mt-2 text-xl font-semibold tracking-tight text-foreground">{labels.registry}</h2>
+      <p class="mt-2 text-xs leading-6 text-muted-foreground">{labels.registryDescription}</p>
+    </header>
+
+    <div class="lg:pl-8">
+      {resourcesByKind.map(({ kind, label, items }, index) => (
+        <details class="group border-b border-border/40 last:border-b-0" open={index < 2}>
+          <summary class="grid cursor-pointer list-none gap-3 py-5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden">
+            <div class="flex items-center gap-2">
+              {kind === 'host' ? (
+                <Server size={14} class="text-primary" />
+              ) : kind === 'network' ? (
+                <Network size={14} class="text-primary" />
+              ) : (
+                <Boxes size={14} class="text-primary" />
               )}
+              <span class="text-sm font-medium text-foreground group-open:text-primary">
+                {label}
+              </span>
             </div>
+            <span class="font-mono text-[10px] text-muted-foreground">
+              {items.length} resources
+            </span>
+            <span class="text-xs text-muted-foreground transition-transform group-open:rotate-90">
+              →
+            </span>
+          </summary>
 
-            {services.length > 0 && (
-              <div class="mt-1 flex flex-col gap-3">
-                <span class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Deployed Services / 运行服务
-                </span>
-                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {services.map((service) => {
-                    const open = service.links?.find((link) => link.url || link.privateRef);
-                    return (
-                      <div class="flex flex-col justify-between rounded-sm border border-border/50 bg-[#161715]/70 p-4">
-                        <div>
-                          <h4 class="text-xs font-bold text-foreground">{service.title}</h4>
-                          <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                            {service.description}
-                          </p>
+          <div class="overflow-x-auto pb-5">
+            <table class="w-full min-w-[760px] table-fixed text-left">
+              <thead>
+                <tr class="border-y border-border/30 text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground">
+                  <th class="w-[32%] py-2 pr-4 font-medium">Resource</th>
+                  <th class="w-[14%] py-2 pr-4 font-medium">Status</th>
+                  <th class="w-[20%] py-2 pr-4 font-medium">Role / provider</th>
+                  <th class="w-[20%] py-2 pr-4 font-medium">Placement</th>
+                  <th class="py-2 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border/25">
+                {items.map((resource) => {
+                  const open = resource.links?.find((link) => link.url || link.privateRef);
+                  return (
+                    <tr class="text-xs">
+                      <td class="py-3 pr-4">
+                        <a
+                          href={`/infrastructure/${resource.id}`}
+                          class="font-medium text-foreground hover:text-primary"
+                        >
+                          {resource.title}
+                        </a>
+                        <div class="mt-0.5 truncate font-mono text-[9px] text-tertiary-foreground">
+                          {resource.id}
                         </div>
-                        <div class="mt-3 border-t border-border/20 pt-3">
-                          {open?.url ? (
+                      </td>
+                      <td class={`py-3 pr-4 font-mono text-[10px] ${statusTone(resource.status)}`}>
+                        {statusLabel(resource.status)}
+                      </td>
+                      <td class="py-3 pr-4 text-muted-foreground">
+                        {resource.role ?? resource.provider ?? '—'}
+                      </td>
+                      <td class="py-3 pr-4 text-muted-foreground">
+                        {resource.region ??
+                          resource.hostResourceId ??
+                          resource.parentResourceId ??
+                          '—'}
+                      </td>
+                      <td class="py-3 text-right">
+                        <span class="inline-flex items-center gap-3">
+                          {open?.url && (
                             <a
                               href={open.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              class="text-[10px] font-mono text-primary"
+                              class="text-primary hover:text-foreground"
                             >
-                              [ OPEN ] ↗
+                              Open
                             </a>
-                          ) : open?.privateRef ? (
+                          )}
+                          {open?.privateRef && (
                             <a
                               href={`/login?next=${encodeURIComponent(currentPath)}`}
                               data-private-link={open.privateRef}
-                              data-private-unlocked-label="[ OPEN ]"
-                              class="text-[10px] font-mono text-muted-foreground hover:text-primary"
+                              data-private-unlocked-label="Open"
+                              class="inline-flex items-center gap-1 text-amber-300 hover:text-primary"
                             >
-                              <span data-private-link-label>[ LOCKED ]</span>
+                              <LockKeyhole size={10} /> <span data-private-link-label>Unlock</span>
                             </a>
-                          ) : (
-                            <span class="text-[10px] font-mono text-muted-foreground">
-                              [ NO_ENTRYPOINT ]
-                            </span>
                           )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </article>
-        );
-      })}
-    </div>
-  </section>
-
-  <section class="flex flex-col gap-6">
-    <div class="flex items-center justify-between border-b border-border/40 pb-3">
-      <div>
-        <h2 class="text-xl font-bold tracking-tight text-foreground">家庭实验室 / Homelab</h2>
-        <p class="mt-1 text-xs font-mono text-muted-foreground">
-          节点、宿主关系与链路均来自 Personal Infrastructure。
-        </p>
-      </div>
-      <span class="rounded-sm border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-primary">
-        {connections.length} RELATIONS
-      </span>
-    </div>
-
-    <div class="rounded-sm border border-[#8B9A46]/30 bg-[#1A1B19] p-5 md:p-7">
-      <div class="mb-5 flex items-center gap-2 text-xs font-mono text-muted-foreground">
-        <Network size={14} class="text-primary" />
-        <span>Physical path</span>
-      </div>
-      <div class="grid gap-3 md:grid-cols-4">
-        {homeNodes.map((node, index) => (
-          <div class="relative rounded-sm border border-border/60 bg-background/30 p-4">
-            <div class="mb-2 flex items-center justify-between">
-              <span class="text-[9px] font-mono uppercase tracking-widest text-primary">
-                {node.kind}
-              </span>
-              <span class="text-[8px] font-mono text-muted-foreground">
-                {statusLabel(node.status)}
-              </span>
-            </div>
-            <h3 class="text-sm font-semibold text-foreground">{node.title}</h3>
-            <p class="mt-2 text-[11px] leading-5 text-muted-foreground">{node.description}</p>
-            {index < homeNodes.length - 1 && (
-              <span class="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-primary md:block">
-                →
-              </span>
-            )}
+                          <a
+                            href={`/infrastructure/${resource.id}`}
+                            class="text-muted-foreground hover:text-foreground"
+                          >
+                            Detail
+                          </a>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
-    </div>
-
-    <div class="grid gap-6 lg:grid-cols-2">
-      <div class="rounded-sm border border-border bg-card/60 p-5">
-        <div class="mb-4 flex items-center gap-2">
-          <Router size={15} class="text-primary" />
-          <h3 class="text-sm font-semibold text-foreground">PVE Virtualization</h3>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          {vmNodes.map((node) => (
-            <a
-              href={`/infrastructure/${node.id}`}
-              class="rounded-sm border border-border/60 p-4 hover:border-primary/40"
-            >
-              <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                {node.role ?? node.kind}
-              </div>
-              <div class="mt-1 text-sm font-semibold text-foreground">{node.title}</div>
-              <div class="mt-2 text-[11px] leading-5 text-muted-foreground">{node.description}</div>
-            </a>
-          ))}
-        </div>
-      </div>
-
-      <div class="rounded-sm border border-border bg-card/60 p-5">
-        <div class="mb-4 flex items-center gap-2">
-          <Database size={15} class="text-primary" />
-          <h3 class="text-sm font-semibold text-foreground">Homelab Services</h3>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          {homelabServices.map((service) => (
-            <a
-              href={`/infrastructure/${service.id}`}
-              class="rounded-sm border border-border/60 p-4 hover:border-primary/40"
-            >
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-sm font-semibold text-foreground">{service.title}</span>
-                <span class="text-[8px] font-mono text-muted-foreground">
-                  {statusLabel(service.status)}
-                </span>
-              </div>
-              <p class="mt-2 text-[11px] leading-5 text-muted-foreground">{service.description}</p>
-            </a>
-          ))}
-        </div>
-      </div>
+        </details>
+      ))}
     </div>
   </section>
+
+  <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border/70 pt-6 text-xs text-muted-foreground">
+    <span class="inline-flex items-center gap-1.5">
+      <ShieldCheck size={12} class="text-primary" /> Public-safe facts only
+    </span>
+    <span>Source: Personal Infrastructure / infra-public-v2</span>
+    <span>Private targets resolve only after Access authentication</span>
+  </div>
 </div>
