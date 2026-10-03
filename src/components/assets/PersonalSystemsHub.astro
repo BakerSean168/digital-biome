@@ -1,19 +1,32 @@
 ---
-import { ArrowRight, ExternalLink, KeyRound, LockKeyhole } from '@lucide/astro';
+import { ArrowRight, ExternalLink, KeyRound, LockKeyhole, Server } from '@lucide/astro';
 import type { PdsCatalogDomain } from '../../domain/system/pds-catalog-v1';
-import type { SystemQuickAccess } from '../../utils/personal-systems';
+import type {
+  PortalServer,
+  PortalService,
+  PortalServiceCategory,
+} from '../../utils/personal-systems';
 
 interface Props {
   domains: PdsCatalogDomain[];
-  quickAccess: SystemQuickAccess[];
+  servers: PortalServer[];
+  services: PortalService[];
+  pinned: PortalService[];
   facts: {
     domainCount: number;
     cloudHostCount: number;
+    serviceCount: number;
   };
 }
 
-const { domains, quickAccess, facts } = Astro.props;
+const { domains, servers, services, pinned, facts } = Astro.props;
 const currentPath = Astro.url.pathname;
+const categories: Array<{ id: PortalServiceCategory; label: string }> = [
+  { id: 'apps', label: 'Apps & Products' },
+  { id: 'ai', label: 'AI & Agents' },
+  { id: 'ops', label: 'Operations' },
+  { id: 'homelab', label: 'Home Lab' },
+];
 const relationLabel = {
   canonical: 'Primary',
   transitional: 'Transition',
@@ -23,24 +36,27 @@ const relationLabel = {
 ---
 
 <div class="pb-14">
-  <section class="border-b border-border/70 pb-8 pt-2">
-    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-      <div class="max-w-3xl">
+  <section class="border-b border-border/70 pb-7 pt-2">
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div>
         <div class="text-xs text-primary">Personal Systems</div>
-        <h1 class="mt-3 text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl">
+        <h1 class="mt-2 text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl">
           个人系统
         </h1>
-        <p class="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
-          查看当前运行入口与系统边界。详细资产和运维信息按需展开。
-        </p>
-        <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-          <a href="/infrastructure" class="hover:text-primary">
-            <span class="font-medium text-foreground">{facts.cloudHostCount}</span> 台云服务器
+        <nav
+          class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground"
+          aria-label="Personal Systems overview"
+        >
+          <a href="#servers" class="hover:text-primary">
+            <strong class="font-medium text-foreground">{facts.cloudHostCount}</strong> Servers
           </a>
-          <span>
-            <span class="font-medium text-foreground">{facts.domainCount}</span> 个公开系统域
-          </span>
-        </div>
+          <a href="#services" class="hover:text-primary">
+            <strong class="font-medium text-foreground">{facts.serviceCount}</strong> Services
+          </a>
+          <a href="#registry" class="hover:text-primary">
+            <strong class="font-medium text-foreground">{facts.domainCount}</strong> Public Systems
+          </a>
+        </nav>
       </div>
 
       <div class="flex items-center gap-3 text-sm">
@@ -50,7 +66,7 @@ const relationLabel = {
             Public view
           </div>
           <div data-systems-access-description class="mt-0.5 text-xs text-muted-foreground">
-            Owner 内容保持锁定
+            Owner targets stay locked
           </div>
         </div>
         <a
@@ -64,142 +80,258 @@ const relationLabel = {
     </div>
   </section>
 
-  <section id="quick-access" class="border-b border-border/70 py-8 scroll-mt-24">
-    <div class="mb-4 flex items-end justify-between gap-4">
-      <div>
-        <h2 class="text-lg font-semibold text-foreground">常用入口</h2>
-        <p class="mt-1 text-sm text-muted-foreground">只保留高频服务，不展示完整资产目录。</p>
-      </div>
-      <a
-        href="/infrastructure"
-        class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
-      >
-        基础设施 <ArrowRight size={13} />
-      </a>
+  <section id="pinned" class="scroll-mt-24 border-b border-border/70 py-7">
+    <div class="mb-3 flex items-center justify-between gap-4">
+      <h2 class="text-base font-semibold text-foreground">Pinned</h2>
+      <span class="text-xs text-muted-foreground">高频入口</span>
     </div>
-
-    <div class="divide-y divide-border/40 border-y border-border/40">
-      {quickAccess.map(({ resource, access, url, privateRef }) => (
-        <div class="grid gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-5">
+    <div class="grid border-y border-border/40 sm:grid-cols-2 lg:grid-cols-3">
+      {pinned.map((service, index) => (
+        <div
+          class:list={[
+            'flex min-w-0 items-center justify-between gap-3 py-3.5',
+            index % 2 === 1 && 'sm:border-l sm:border-border/30 sm:pl-4',
+            index % 3 !== 0 && 'lg:border-l lg:border-border/30 lg:pl-4',
+          ]}
+        >
           <a
-            href={`/infrastructure/${resource.id}`}
-            class="min-w-0 truncate text-sm font-medium text-foreground hover:text-primary"
+            href={`/infrastructure/${service.resource.id}`}
+            class="truncate text-sm font-medium text-foreground hover:text-primary"
           >
-            {resource.title}
+            {service.resource.title}
           </a>
-          <div class="text-sm sm:text-right">
-            {url && (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1 text-primary hover:text-foreground"
-              >
-                Open <ExternalLink size={11} />
-              </a>
-            )}
-            {privateRef && (
-              <a
-                href={`/login?next=${encodeURIComponent(currentPath)}`}
-                data-private-link={privateRef}
-                data-private-unlocked-label="Open"
-                class="inline-flex items-center gap-1 text-amber-300 hover:text-primary"
-              >
-                <LockKeyhole size={11} /> <span data-private-link-label>Unlock</span>
-              </a>
-            )}
-            {!url && !privateRef && <span class="text-muted-foreground">{access}</span>}
-          </div>
+          {service.url ? (
+            <a
+              href={service.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="shrink-0 text-sm text-primary hover:text-foreground"
+            >
+              {service.actionLabel} ↗
+            </a>
+          ) : service.privateRef ? (
+            <a
+              href={`/login?next=${encodeURIComponent(currentPath)}`}
+              data-private-link={service.privateRef}
+              data-private-unlocked-label={service.actionLabel}
+              class="inline-flex shrink-0 items-center gap-1 text-sm text-amber-300 hover:text-primary"
+            >
+              <LockKeyhole size={11} /> <span data-private-link-label>Unlock</span>
+            </a>
+          ) : (
+            <a
+              href={`/infrastructure/${service.resource.id}`}
+              class="shrink-0 text-sm text-muted-foreground hover:text-primary"
+            >
+              Detail
+            </a>
+          )}
         </div>
       ))}
     </div>
   </section>
 
-  <section id="system-registry" class="py-8 scroll-mt-24">
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold text-foreground">系统边界</h2>
-      <p class="mt-1 text-sm text-muted-foreground">默认只看领域；仓库关系需要时再展开。</p>
+  <section id="servers" class="scroll-mt-24 border-b border-border/70 py-7">
+    <div class="mb-3 flex items-center justify-between gap-4">
+      <h2 class="text-base font-semibold text-foreground">Servers</h2>
+      <a
+        href="/infrastructure#topology"
+        class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+      >
+        Topology <ArrowRight size={12} />
+      </a>
     </div>
-
-    <div data-system-domain-grid class="divide-y divide-border/40 border-y border-border/40">
-      {domains.map((domain) => (
-        <details class="group">
-          <summary class="grid cursor-pointer list-none gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden">
-            <span class="text-sm font-medium text-foreground group-open:text-primary">
-              {domain.name}
-            </span>
-            <span class="text-sm text-muted-foreground">{domain.repositories.length} repos</span>
-            <span class="text-sm text-muted-foreground transition-transform group-open:rotate-90">
-              →
-            </span>
-          </summary>
-          <div class="pb-4 pl-4 sm:pl-6">
-            <div class="divide-y divide-border/30 border-t border-border/30">
-              {domain.repositories.map((repository) => (
-                <div class="flex items-center justify-between gap-4 py-3 text-sm">
-                  <div class="min-w-0">
-                    <span class="font-mono text-foreground">{repository.id}</span>
-                    <span class="ml-3 text-xs text-muted-foreground">
-                      {relationLabel[repository.relation]}
-                    </span>
-                  </div>
-                  {repository.webUrl ? (
-                    <a
-                      href={repository.webUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="shrink-0 text-primary hover:text-foreground"
-                    >
-                      GitHub ↗
-                    </a>
-                  ) : (
-                    <span class="text-muted-foreground">—</span>
-                  )}
-                </div>
-              ))}
+    <div class="divide-y divide-border/40 border-y border-border/40">
+      {servers.map(({ resource, serviceCount }) => (
+        <div class="grid gap-2 py-4 md:grid-cols-[minmax(0,1.25fr)_minmax(130px,0.65fr)_minmax(100px,0.5fr)_auto] md:items-center">
+          <div class="min-w-0">
+            <a
+              href={`/infrastructure/${resource.id}`}
+              class="text-sm font-medium text-foreground hover:text-primary"
+            >
+              {resource.title}
+            </a>
+            <div class="mt-0.5 text-xs text-muted-foreground">
+              {resource.role ?? resource.provider ?? 'Cloud server'}
             </div>
           </div>
-        </details>
+          <span class="text-sm text-muted-foreground">{resource.region ?? '—'}</span>
+          <span class="text-sm text-muted-foreground">{serviceCount} services</span>
+          <a
+            href={`/infrastructure/${resource.id}`}
+            class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+          >
+            <Server size={12} /> Detail
+          </a>
+        </div>
       ))}
-
-      <div data-owner-domain-gate class="flex items-center justify-between gap-4 py-4 text-sm">
-        <span class="text-muted-foreground">Owner-only systems 登录后载入</span>
-        <LockKeyhole size={13} class="text-muted-foreground" />
-      </div>
     </div>
   </section>
 
-  <nav class="flex flex-wrap gap-x-7 gap-y-3 border-t border-border/70 pt-6 text-sm">
-    <a href="/infrastructure" class="text-foreground hover:text-primary">
-      Infrastructure
-    </a>
-    <a href="/dev" class="text-foreground hover:text-primary">
-      Projects
-    </a>
-    <a href="/notes" class="text-foreground hover:text-primary">
-      Knowledge
-    </a>
-  </nav>
+  <section id="services" class="scroll-mt-24 border-b border-border/70 py-7">
+    <div class="mb-4">
+      <h2 class="text-base font-semibold text-foreground">Services</h2>
+      <p class="mt-1 text-sm text-muted-foreground">
+        是什么、运行在哪里、如何打开。调试端口与二级入口留在详情页。
+      </p>
+    </div>
+
+    <div class="space-y-7">
+      {categories.map((category) => {
+        const items = services.filter((service) => service.category === category.id);
+        if (items.length === 0) return null;
+        return (
+          <section>
+            <div class="mb-1 flex items-center justify-between gap-4">
+              <h3 class="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                {category.label}
+              </h3>
+              <span class="text-xs text-tertiary-foreground">{items.length}</span>
+            </div>
+            <div class="divide-y divide-border/35 border-y border-border/35">
+              {items.map((service) => (
+                <div
+                  id={`service-${service.resource.id}`}
+                  class="grid scroll-mt-24 gap-2 py-3.5 md:grid-cols-[minmax(0,1.1fr)_minmax(190px,0.8fr)_80px_auto] md:items-center"
+                >
+                  <a
+                    href={`/infrastructure/${service.resource.id}`}
+                    class="min-w-0 truncate text-sm font-medium text-foreground hover:text-primary"
+                  >
+                    {service.resource.title}
+                  </a>
+                  <span class="truncate text-sm text-muted-foreground">
+                    {service.host?.title ?? service.resource.role ?? '—'}
+                  </span>
+                  <span
+                    class:list={[
+                      'text-xs',
+                      service.access === 'public'
+                        ? 'text-emerald-300'
+                        : service.access === 'owner'
+                          ? 'text-amber-300'
+                          : 'text-muted-foreground',
+                    ]}
+                  >
+                    {service.access === 'public'
+                      ? 'Public'
+                      : service.access === 'owner'
+                        ? 'Owner'
+                        : 'Catalog'}
+                  </span>
+                  <div class="text-sm md:text-right">
+                    {service.url ? (
+                      <a
+                        href={service.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 text-primary hover:text-foreground"
+                      >
+                        {service.actionLabel} <ExternalLink size={11} />
+                      </a>
+                    ) : service.privateRef ? (
+                      <a
+                        href={`/login?next=${encodeURIComponent(`${currentPath}#service-${service.resource.id}`)}`}
+                        data-private-link={service.privateRef}
+                        data-private-unlocked-label={service.actionLabel}
+                        class="inline-flex items-center gap-1 text-amber-300 hover:text-primary"
+                      >
+                        <LockKeyhole size={11} />{' '}
+                        <span data-private-link-label>{service.actionLabel}</span>
+                      </a>
+                    ) : (
+                      <a
+                        href={`/infrastructure/${service.resource.id}`}
+                        class="text-muted-foreground hover:text-primary"
+                      >
+                        Detail
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  </section>
+
+  <section id="registry" class="scroll-mt-24 py-7">
+    <details class="group">
+      <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-2 [&::-webkit-details-marker]:hidden">
+        <div>
+          <h2 class="text-base font-semibold text-foreground group-open:text-primary">
+            System Registry
+          </h2>
+          <p class="mt-1 text-sm text-muted-foreground">Repo、Owner 与系统边界按需展开。</p>
+        </div>
+        <span class="text-sm text-muted-foreground transition-transform group-open:rotate-90">
+          →
+        </span>
+      </summary>
+
+      <div data-system-domain-grid class="mt-4 divide-y divide-border/40 border-y border-border/40">
+        {domains.map((domain) => (
+          <details class="group/domain">
+            <summary class="grid cursor-pointer list-none gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden">
+              <span class="text-sm font-medium text-foreground group-open/domain:text-primary">
+                {domain.name}
+              </span>
+              <span class="text-sm text-muted-foreground">{domain.repositories.length} repos</span>
+              <span class="text-sm text-muted-foreground transition-transform group-open/domain:rotate-90">
+                →
+              </span>
+            </summary>
+            <div class="pb-4 pl-4 sm:pl-6">
+              <div class="divide-y divide-border/30 border-t border-border/30">
+                {domain.repositories.map((repository) => (
+                  <div class="flex items-center justify-between gap-4 py-3 text-sm">
+                    <div class="min-w-0">
+                      <span class="font-mono text-foreground">{repository.id}</span>
+                      <span class="ml-3 text-xs text-muted-foreground">
+                        {relationLabel[repository.relation]}
+                      </span>
+                    </div>
+                    {repository.webUrl ? (
+                      <a
+                        href={repository.webUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="shrink-0 text-primary hover:text-foreground"
+                      >
+                        GitHub ↗
+                      </a>
+                    ) : (
+                      <span class="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </details>
+        ))}
+        <div data-owner-domain-gate class="flex items-center justify-between gap-4 py-4 text-sm">
+          <span class="text-muted-foreground">Owner-only systems 登录后载入</span>
+          <LockKeyhole size={13} class="text-muted-foreground" />
+        </div>
+      </div>
+    </details>
+  </section>
 </div>
 
 <script>
   type OwnerDomain = {
     id: string;
     name: string;
-    repositories: Array<{
-      id: string;
-      relation: string;
-      webUrl?: string;
-    }>;
+    repositories: Array<{ id: string; relation: string; webUrl?: string }>;
   };
-
   type OwnerSystemsPayload = {
     version: 1;
     access: 'owner';
     domains: OwnerDomain[];
     facts: Record<string, number>;
   };
-
   const relationLabels: Record<string, string> = {
     canonical: 'Primary',
     transitional: 'Transition',
@@ -219,28 +351,28 @@ const relationLabel = {
   }
 
   function renderOwnerDomain(domain: OwnerDomain): HTMLElement {
-    const details = element('details', 'group');
+    const details = element('details', 'group/domain');
     details.dataset.ownerSystemDomain = domain.id;
-
     const summary = element(
       'summary',
       'grid cursor-pointer list-none gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden',
     );
-    const title = element('span', 'text-sm font-medium text-foreground group-open:text-primary');
-    title.append(document.createTextNode(domain.name));
-    const owner = element('span', 'ml-2 text-xs text-amber-300', 'Owner');
-    title.append(owner);
+    const title = element(
+      'span',
+      'text-sm font-medium text-foreground group-open/domain:text-primary',
+      domain.name,
+    );
+    title.append(element('span', 'ml-2 text-xs text-amber-300', 'Owner'));
     summary.append(
       title,
       element('span', 'text-sm text-muted-foreground', `${domain.repositories.length} repos`),
       element(
         'span',
-        'text-sm text-muted-foreground transition-transform group-open:rotate-90',
+        'text-sm text-muted-foreground transition-transform group-open/domain:rotate-90',
         '→',
       ),
     );
     details.append(summary);
-
     const body = element('div', 'pb-4 pl-4 sm:pl-6');
     const list = element('div', 'divide-y divide-border/30 border-t border-border/30');
     for (const repository of domain.repositories) {
@@ -299,12 +431,10 @@ const relationLabel = {
         payload.authenticated !== true
       )
         return;
-
       label.textContent = 'Owner view';
-      description.textContent = '私有入口已可按需解锁';
+      description.textContent = '私有入口已可直接打开';
       action.href = '/cdn-cgi/access/logout';
       action.textContent = 'Sign out';
-
       const ownerResponse = await fetch('/api/private/systems', {
         credentials: 'same-origin',
         headers: { Accept: 'application/json' },
@@ -322,6 +452,5 @@ const relationLabel = {
       // Public mode remains the fail-closed default.
     }
   }
-
   void refreshSystemsAccessState();
 </script>

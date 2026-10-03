@@ -7,21 +7,29 @@ const systems = fs.readFileSync(
   path.resolve('src/components/assets/PersonalSystemsHub.astro'),
   'utf8',
 );
+const siteSearch = fs.readFileSync(path.resolve('src/components/common/SiteSearch.astro'), 'utf8');
+const launcherIndex = fs.readFileSync(
+  path.resolve('src/pages/data/system-launcher-index.json.ts'),
+  'utf8',
+);
 const infrastructure = fs.readFileSync(
   path.resolve('src/components/assets/InfrastructureShowcase.astro'),
   'utf8',
 );
 
-test('Personal Systems stays intentionally sparse and drill-down oriented', () => {
-  assert.match(systems, /常用入口/);
-  assert.match(systems, /系统边界/);
-  assert.match(systems, /<details/);
-  assert.match(systems, /data-system-domain-grid/);
+test('Personal Systems is a launcher, not a dashboard or card wall', () => {
+  assert.match(systems, /Pinned/);
+  assert.match(systems, /Servers/);
+  assert.match(systems, /Services/);
+  assert.match(systems, /System Registry/);
+  assert.match(systems, /Apps & Products/);
+  assert.match(systems, /AI & Agents/);
+  assert.match(systems, /Operations/);
+  assert.match(systems, /Home Lab/);
+  assert.match(systems, /data-private-link=/);
   assert.doesNotMatch(systems, /<table/);
   assert.doesNotMatch(systems, /Active services/);
-  assert.doesNotMatch(systems, /Repositories/);
   assert.doesNotMatch(systems, /Projections/);
-  assert.doesNotMatch(systems, /Projects<\/div>/);
   assert.doesNotMatch(systems, /grid gap-3 md:grid-cols-2 xl:grid-cols-3/);
 });
 
@@ -44,4 +52,10 @@ test('both system surfaces keep protected targets runtime-only', () => {
   assert.match(infrastructure, /data-private-value=/);
   assert.doesNotMatch(systems, /\.ts\.net/);
   assert.doesNotMatch(infrastructure, /\.ts\.net/);
+});
+
+test('global Search loads the small launcher index instead of bundling infrastructure data', () => {
+  assert.match(siteSearch, /\/data\/system-launcher-index\.json/);
+  assert.doesNotMatch(siteSearch, /from ['"]\.\.\/\.\.\/utils\/personal-systems/);
+  assert.match(launcherIndex, /getPortalServiceSearchIndex/);
 });

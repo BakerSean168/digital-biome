@@ -79,6 +79,17 @@
 
   type CommandResult = SearchNavigationCommand;
 
+  type ServiceResult = {
+    type: 'service';
+    label: 'SVC';
+    title: string;
+    desc: string;
+    href: string;
+    aliases: string[];
+    privateRef?: string;
+    pinned: boolean;
+  };
+
   type SearchResult = {
     type: 'search';
     label: string;
@@ -87,9 +98,11 @@
     href: string;
   };
 
-  type PaletteResult = CommandResult | SearchResult;
+  type PaletteResult = CommandResult | ServiceResult | SearchResult;
 
   const ROUTES: readonly CommandResult[] = SEARCH_NAVIGATION_INDEX;
+  let SERVICES: ServiceResult[] = [];
+  let serviceIndexPromise: Promise<void> | null = null;
 
   const searchModal = document.getElementById('search-modal');
   const searchTriggers = document.querySelectorAll('.search-trigger');
@@ -110,6 +123,102 @@
     searchStatus = 'success';
     renderSearchStatus();
   });
+
+  function isServiceResult(value: unknown): value is ServiceResult {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+    const item = value as Partial<ServiceResult>;
+    return (
+      item.type === 'service' &&
+      item.label === 'SVC' &&
+      typeof item.title === 'string' &&
+      typeof item.desc === 'string' &&
+      typeof item.href === 'string' &&
+      Array.isArray(item.aliases) &&
+      item.aliases.every((alias) => typeof alias === 'string') &&
+      (item.privateRef === undefined || typeof item.privateRef === 'string') &&
+      typeof item.pinned === 'boolean'
+    );
+  }
+
+  async function loadServiceIndex(): Promise<void> {
+    if (SERVICES.length > 0) return;
+    if (!serviceIndexPromise) {
+      serviceIndexPromise = (async () => {
+        try {
+          const response = await fetch('/data/system-launcher-index.json', {
+            headers: { Accept: 'application/json' },
+          });
+          if (!response.ok) return;
+          const payload: unknown = await response.json();
+          if (typeof payload !== 'object' || payload === null || !('services' in payload)) return;
+          const services = (payload as { services?: unknown }).services;
+          if (!Array.isArray(services) || !services.every(isServiceResult)) return;
+          SERVICES = services;
+        } catch {
+          // Navigation commands and Pagefind remain available without the service index.
+        }
+      })();
+    }
+    await serviceIndexPromise;
+  }
+
+  type PrivateInfrastructurePayload = {
+    version: 1;
+    links: Record<string, string>;
+  };
+
+  let privateServiceTargetsResolved = false;
+
+  function getAllowedPrivateHref(value: string): string | null {
+    try {
+      const url = new URL(value);
+      return ['http:', 'https:', 'ssh:'].includes(url.protocol) && url.hostname ? url.href : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isStringRecord(value: unknown): value is Record<string, string> {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value) &&
+      Object.values(value).every((item) => typeof item === 'string')
+    );
+  }
+
+  async function hydratePrivateServiceTargets(): Promise<void> {
+    await loadServiceIndex();
+    if (privateServiceTargetsResolved || !SERVICES.some((service) => service.privateRef)) return;
+    try {
+      const response = await fetch('/api/private/infrastructure', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+        redirect: 'manual',
+      });
+      if (!response.ok) return;
+      const payload: unknown = await response.json();
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        !('version' in payload) ||
+        payload.version !== 1 ||
+        !('links' in payload) ||
+        !isStringRecord(payload.links)
+      ) {
+        return;
+      }
+      const privatePayload = payload as PrivateInfrastructurePayload;
+      for (const service of SERVICES) {
+        if (!service.privateRef) continue;
+        const href = getAllowedPrivateHref(privatePayload.links[service.privateRef] || '');
+        if (href) service.href = href;
+      }
+      privateServiceTargetsResolved = true;
+    } catch {
+      // Logged-out visitors retain safe /systems anchors.
+    }
+  }
 
   function toSearchResult(item: PagefindResultData): SearchResult {
     const fallbackTitle =
@@ -165,7 +274,7 @@
       leftCol.className = 'flex items-center gap-3 min-w-0';
 
       const badge = document.createElement('span');
-      badge.className = `shrink-0 text-[9px] font-mono tracking-widest border border-border/50 px-1.5 py-0.5 rounded-sm ${item.type === 'cmd' ? 'text-primary border-primary/30 bg-primary/5' : 'text-muted-foreground'}`;
+      badge.className = `shrink-0 text-[9px] font-mono tracking-widest border border-border/50 px-1.5 py-0.5 rounded-sm ${item.type === 'cmd' ? 'text-primary border-primary/30 bg-primary/5' : item.type === 'service' ? 'text-amber-300 border-amber-300/30' : 'text-muted-foreground'}`;
       badge.textContent = `[ ${item.label} ]`;
       leftCol.appendChild(badge);
 
@@ -264,9 +373,14 @@
           route.alias?.some((alias) => alias.includes(lowerQuery))
         );
       });
-      results.push(...commandMatches);
+      const serviceMatches = SERVICES.filter(
+        (service) =>
+          service.title.toLowerCase().includes(lowerQuery) ||
+          service.aliases.some((alias) => alias.includes(lowerQuery)),
+      );
+      results.push(...commandMatches, ...serviceMatches);
     } else {
-      results.push(...ROUTES);
+      results.push(...ROUTES, ...SERVICES.filter((service) => service.pinned).slice(0, 6));
     }
 
     if (lowerQuery && !lowerQuery.startsWith('/')) {
@@ -293,6 +407,11 @@
       cmdInput.value = '';
       cmdInput.focus();
       void handleSearch(searchIntents.start(''));
+      void loadServiceIndex().then(() => {
+        if (searchModal?.classList.contains('hidden')) return;
+        void hydratePrivateServiceTargets();
+        void handleSearch(searchIntents.start(cmdInput.value));
+      });
     }
   }
 
