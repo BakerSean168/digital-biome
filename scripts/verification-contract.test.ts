@@ -145,6 +145,9 @@ test('PDS catalog sync imports only the producer-owned thin projection through a
     /git add data-products\/pds-catalog-v1\.lock\.json src\/data\/system\/pds-catalog-v1\.json/,
   );
   assert.match(pdsCatalogSyncWorkflow, /gh pr create/);
+  assert.match(pdsCatalogSyncWorkflow, /actions: write/);
+  assert.match(pdsCatalogSyncWorkflow, /actions\/runs\/\$run_id\/approve/);
+  assert.match(pdsCatalogSyncWorkflow, /gh run watch "\$run_id"/);
   assert.doesNotMatch(pdsCatalogSyncWorkflow, /catalog\/domains/);
 });
 
