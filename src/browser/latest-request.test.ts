@@ -4,7 +4,7 @@ import { createLatestRequest } from './latest-request';
 
 function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(value => {
+  const promise = new Promise<T>((value) => {
     resolve = value;
   });
   return { promise, resolve };
@@ -20,13 +20,13 @@ async function commitLatest<T>(
   if (request.isCurrent()) commit(value);
 }
 
-test('Discover commits only the latest search when the first resolves last', async () => {
+test('latest request commits only the newest async result', async () => {
   const controller = createLatestRequest();
   const first = deferred<string>();
   const second = deferred<string>();
   const committed: string[] = [];
-  const firstSearch = commitLatest(controller, first.promise, value => committed.push(value));
-  const secondSearch = commitLatest(controller, second.promise, value => committed.push(value));
+  const firstSearch = commitLatest(controller, first.promise, (value) => committed.push(value));
+  const secondSearch = commitLatest(controller, second.promise, (value) => committed.push(value));
 
   second.resolve('second');
   await secondSearch;
@@ -41,8 +41,8 @@ test('SiteSearch keeps loading and selection commits owned by the latest request
   const first = deferred<{ query: string; selectedIndex: number }>();
   const second = deferred<{ query: string; selectedIndex: number }>();
   const committed: Array<{ query: string; selectedIndex: number }> = [];
-  const firstSearch = commitLatest(controller, first.promise, value => committed.push(value));
-  const secondSearch = commitLatest(controller, second.promise, value => committed.push(value));
+  const firstSearch = commitLatest(controller, first.promise, (value) => committed.push(value));
+  const secondSearch = commitLatest(controller, second.promise, (value) => committed.push(value));
 
   second.resolve({ query: 'second', selectedIndex: 0 });
   await secondSearch;

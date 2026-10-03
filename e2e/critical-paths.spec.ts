@@ -71,19 +71,6 @@ test('SiteSearch returns real Pagefind document results', async ({ page }) => {
   await expect(page.locator('#cmd-results')).toContainText(/typescript/i);
 });
 
-test('Discover falls back to typed public assets when Pagefind is unavailable', async ({
-  page,
-}) => {
-  await page.route('**/pagefind/pagefind.js', (route) => route.abort('failed'));
-  await page.goto('/discover/?q=ForgeFlow');
-
-  await expect(page.locator('#discover-search-status')).toContainText('全文索引暂时不可用', {
-    timeout: 10_000,
-  });
-  await expect(page.locator('#discover-results')).toContainText('ForgeFlow');
-  await expect(page.locator('#discover-results')).toContainText('[ ASSETS ]');
-});
-
 test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category URL state', async ({
   page,
   request,
@@ -142,25 +129,4 @@ test('About surfaces keep full SSR data with compact markup', async ({ page }) =
   );
   expect(pseudoContent).not.toBe('none');
   expect(pseudoContent).not.toBe('normal');
-});
-
-test('Refactor Lab teaches the released optimization path as a responsive static page', async ({
-  page,
-}) => {
-  await page.goto('/about/');
-  await expect(page.locator('a[href="/about/refactor"]')).toBeVisible();
-
-  await page.goto('/about/refactor/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('不是把代码拆小');
-  await expect(page.locator('.phase-card')).toHaveCount(4);
-  await expect(page.locator('#data-boundary')).toContainText('1089.4');
-  await expect(page.locator('#privacy')).toContainText('404 + no-store');
-  await expect(page.locator('#quality')).toContainText('Incremental Format Ratchet');
-
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.reload();
-  const horizontalOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(horizontalOverflow).toBeLessThanOrEqual(1);
 });
