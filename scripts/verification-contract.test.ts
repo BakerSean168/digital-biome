@@ -17,6 +17,7 @@ const releaseWorkflow = fixture('.github/workflows/release-publish.yml');
 const productionWorkflow = fixture('.github/workflows/deploy-production.yml');
 const knowledgeSyncWorkflow = fixture('.github/workflows/sync-knowledge-public-v1.yml');
 const infrastructureSyncWorkflow = fixture('.github/workflows/sync-infra-public-v2.yml');
+const pdsCatalogSyncWorkflow = fixture('.github/workflows/sync-pds-catalog-v1.yml');
 
 test('verification discovers nested edge and infrastructure tests', () => {
   assert.equal(packageJson.scripts['test:edge'], "tsx --test 'edge/**/*.test.ts'");
@@ -129,6 +130,22 @@ test('infrastructure sync pins only immutable Personal Infrastructure projection
   assert.match(infrastructureSyncWorkflow, /git add data-products\/infra-public-v2\.lock\.json/);
   assert.match(infrastructureSyncWorkflow, /gh pr create/);
   assert.doesNotMatch(infrastructureSyncWorkflow, /inventory\/public-infrastructure\.yaml/);
+});
+
+test('PDS catalog sync imports only the producer-owned thin projection through a protected PR', () => {
+  assert.match(pdsCatalogSyncWorkflow, /pds-catalog-v1-published/);
+  assert.match(pdsCatalogSyncWorkflow, /automation\/pds-catalog-v1-sync/);
+  assert.match(pdsCatalogSyncWorkflow, /BakerSean168\/personal-digital-system/);
+  assert.match(pdsCatalogSyncWorkflow, /ssh-key: \$\{\{ secrets\.PDS_CATALOG_DEPLOY_KEY \}\}/);
+  assert.match(pdsCatalogSyncWorkflow, /export_pds_catalog\.py/);
+  assert.match(pdsCatalogSyncWorkflow, /verify_pds_catalog\.py/);
+  assert.match(pdsCatalogSyncWorkflow, /jq -cS '\.payload'/);
+  assert.match(
+    pdsCatalogSyncWorkflow,
+    /git add data-products\/pds-catalog-v1\.lock\.json src\/data\/system\/pds-catalog-v1\.json/,
+  );
+  assert.match(pdsCatalogSyncWorkflow, /gh pr create/);
+  assert.doesNotMatch(pdsCatalogSyncWorkflow, /catalog\/domains/);
 });
 
 test('Digital Biome no longer carries a Thought Forest gitlink', () => {

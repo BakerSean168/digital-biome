@@ -1,6 +1,6 @@
 ---
 import SiteSearch from './SiteSearch.astro';
-import { Search, Lock, LogOut } from '@lucide/astro';
+import { Search, Lock, LogOut, PanelsTopLeft } from '@lucide/astro';
 
 const currentPath = Astro.url.pathname;
 const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
@@ -11,6 +11,17 @@ const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
     class="flex h-10 items-center gap-3 rounded-sm border border-border bg-background/95 px-4 text-sm font-mono"
     aria-label="快捷操作"
   >
+    <a
+      href="/systems"
+      class="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+      title="Personal Systems"
+    >
+      <PanelsTopLeft size={14} class="text-primary" />
+      <span class="hidden text-xs sm:inline">[ SYSTEMS ]</span>
+    </a>
+
+    <div class="h-4 w-px bg-border/80"></div>
+
     <button
       class="search-trigger flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
       aria-label="打开搜索"

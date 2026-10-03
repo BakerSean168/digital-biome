@@ -3,9 +3,13 @@
 // Custom Command Palette: Merges command routing (/tools, /dev) and full-text search (Pagefind).
 ---
 
-<div id="search-modal" class="fixed inset-0 z-[100] hidden bg-background/80 backdrop-blur-sm transition-opacity" aria-hidden="true">
+<div
+  id="search-modal"
+  class="fixed inset-0 z-[100] hidden bg-background/80 backdrop-blur-sm transition-opacity"
+  aria-hidden="true"
+>
   <div class="fixed inset-0 z-[101] flex items-start justify-center pt-20 sm:pt-24">
-    <div 
+    <div
       id="search-container"
       class="w-full max-w-2xl overflow-hidden rounded-sm border border-border/80 bg-card/95 backdrop-blur-xl shadow-2xl transition-all sm:mx-6 flex flex-col"
       role="dialog"
@@ -14,10 +18,10 @@
     >
       <div class="relative flex items-center border-b border-border/50 px-4 py-4">
         <span class="text-primary/70 font-mono mr-3">&gt;</span>
-        <input 
-          id="cmd-input" 
-          type="text" 
-          class="w-full bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50" 
+        <input
+          id="cmd-input"
+          type="text"
+          class="w-full bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
           placeholder="Enter command or search query... (e.g. /tools, PVE)"
           autocomplete="off"
           spellcheck="false"
@@ -26,16 +30,26 @@
           <span class="inline-block w-2 h-4 bg-primary/70 animate-[pulse_1s_step-end_infinite]"></span>
         </div>
       </div>
-      
-      <div id="cmd-search-status" class="hidden px-4 py-2 text-xs font-mono text-amber-500" role="status" aria-live="polite"></div>
-      <div id="cmd-results" class="max-h-[60vh] overflow-y-auto p-2 scrollbar-hide">
-      </div>
-      
+
+      <div
+        id="cmd-search-status"
+        class="hidden px-4 py-2 text-xs font-mono text-amber-500"
+        role="status"
+        aria-live="polite"
+      ></div>
+      <div id="cmd-results" class="max-h-[60vh] overflow-y-auto p-2 scrollbar-hide"></div>
+
       <div class="border-t border-border/50 px-4 py-2 bg-muted/10 text-[10px] text-muted-foreground font-mono flex justify-between">
         <span class="flex gap-4">
-          <span><kbd class="border border-border/50 rounded px-1 text-[9px] mr-1">ESC</kbd>CLOSE</span>
-          <span><kbd class="border border-border/50 rounded px-1 text-[9px] mr-1">↑↓</kbd>NAVIGATE</span>
-          <span><kbd class="border border-border/50 rounded px-1 text-[9px] mr-1">↵</kbd>EXECUTE</span>
+          <span>
+            <kbd class="border border-border/50 rounded px-1 text-[9px] mr-1">ESC</kbd>CLOSE
+          </span>
+          <span>
+            <kbd class="border border-border/50 rounded px-1 text-[9px] mr-1">↑↓</kbd>NAVIGATE
+          </span>
+          <span>
+            <kbd class="border border-border/50 rounded px-1 text-[9px] mr-1">↵</kbd>EXECUTE
+          </span>
         </span>
         <span class="opacity-50 hidden sm:inline-block">SYS.COMMAND_CENTER</span>
       </div>
@@ -79,15 +93,77 @@
   type PaletteResult = CommandResult | SearchResult;
 
   const ROUTES: readonly CommandResult[] = [
-    { type: 'cmd', label: 'NAV', title: '首页 / Home', desc: 'Return to Digital Biome root', href: '/' },
-    { type: 'cmd', label: 'NAV', title: '博客文章 / Blog', desc: 'Blog posts and engineering logs', href: '/blog', alias: ['/blog', 'blog', 'posts'] },
-    { type: 'cmd', label: 'NAV', title: '友链网络 / Friends', desc: 'Friend links and community nodes', href: '/friends', alias: ['/friends', 'friends', 'links'] },
-    { type: 'cmd', label: 'NAV', title: '工具导航 / Tools', desc: 'External bookmarks and tools', href: '/tools', alias: ['/tools', 'tools', 'nav'] },
-    { type: 'cmd', label: 'NAV', title: '我的项目 / Dev', desc: 'Development showcase and apps', href: '/dev', alias: ['/dev', 'dev', 'projects'] },
-    { type: 'cmd', label: 'NAV', title: '基础设施 / Infrastructure', desc: 'Homelab and public fleet', href: '/infrastructure', alias: ['/infrastructure', 'lab', 'ops', 'services'] },
-    { type: 'cmd', label: 'NAV', title: '资产发现 / Discover', desc: 'Global index search', href: '/discover', alias: ['/discover', 'search'] },
-    { type: 'cmd', label: 'NAV', title: '知识笔记 / Notes', desc: 'Obsidian vault notes', href: '/notes', alias: ['/notes', 'mind'] },
-    { type: 'cmd', label: 'NAV', title: '关于宿主 / About', desc: 'Author profile', href: '/about', alias: ['/about', 'user'] },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '首页 / Home',
+      desc: 'Return to Digital Biome root',
+      href: '/',
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '博客文章 / Blog',
+      desc: 'Blog posts and engineering logs',
+      href: '/blog',
+      alias: ['/blog', 'blog', 'posts'],
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '友链网络 / Friends',
+      desc: 'Friend links and community nodes',
+      href: '/friends',
+      alias: ['/friends', 'friends', 'links'],
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '工具导航 / Tools',
+      desc: 'External bookmarks and tools',
+      href: '/tools',
+      alias: ['/tools', 'tools', 'nav'],
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '我的项目 / Dev',
+      desc: 'Development showcase and apps',
+      href: '/dev',
+      alias: ['/dev', 'dev', 'projects'],
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '个人系统 / Personal Systems',
+      desc: 'Services, projects, assets and infrastructure',
+      href: '/systems',
+      alias: ['/systems', '/infrastructure', 'systems', 'infra', 'lab', 'ops', 'services'],
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '资产发现 / Discover',
+      desc: 'Global index search',
+      href: '/discover',
+      alias: ['/discover', 'search'],
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '知识笔记 / Notes',
+      desc: 'Obsidian vault notes',
+      href: '/notes',
+      alias: ['/notes', 'mind'],
+    },
+    {
+      type: 'cmd',
+      label: 'NAV',
+      title: '关于宿主 / About',
+      desc: 'Author profile',
+      href: '/about',
+      alias: ['/about', 'user'],
+    },
   ];
 
   const searchModal = document.getElementById('search-modal');
@@ -111,7 +187,8 @@
   });
 
   function toSearchResult(item: PagefindResultData): SearchResult {
-    const fallbackTitle = item.url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
+    const fallbackTitle =
+      item.url.split('/').filter(Boolean).pop()?.replace(/-/g, ' ') || 'Untitled';
     return {
       type: 'search',
       label: 'DOC',
@@ -141,9 +218,10 @@
     if (currentResults.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'px-4 py-8 text-center font-mono text-xs text-muted-foreground';
-      empty.textContent = searchStatus === 'zero-match' || searchStatus === 'success'
-        ? 'SYS.WARN: NO_MATCH_FOUND'
-        : 'SYS.WARN: SEARCH_UNAVAILABLE';
+      empty.textContent =
+        searchStatus === 'zero-match' || searchStatus === 'success'
+          ? 'SYS.WARN: NO_MATCH_FOUND'
+          : 'SYS.WARN: SEARCH_UNAVAILABLE';
       resultsContainer.appendChild(empty);
       renderSearchStatus();
       return;
@@ -255,9 +333,11 @@
     searchStatus = 'success';
 
     if (lowerQuery) {
-      const commandMatches = ROUTES.filter(route => {
-        return route.title.toLowerCase().includes(lowerQuery)
-          || route.alias?.some(alias => alias.includes(lowerQuery));
+      const commandMatches = ROUTES.filter((route) => {
+        return (
+          route.title.toLowerCase().includes(lowerQuery) ||
+          route.alias?.some((alias) => alias.includes(lowerQuery))
+        );
       });
       results.push(...commandMatches);
     } else {
@@ -306,22 +386,22 @@
     document.body.style.overflow = '';
   }
 
-  searchTriggers.forEach(trigger => {
+  searchTriggers.forEach((trigger) => {
     trigger.addEventListener('click', openModal);
   });
 
-  searchModal?.addEventListener('click', event => {
+  searchModal?.addEventListener('click', (event) => {
     if (event.target === searchModal || event.target === searchModal.firstElementChild) {
       closeModal();
     }
   });
 
-  cmdInput?.addEventListener('input', event => {
+  cmdInput?.addEventListener('input', (event) => {
     const target = event.target as HTMLInputElement;
-    searchIntents.schedule(target.value, intent => void handleSearch(intent));
+    searchIntents.schedule(target.value, (intent) => void handleSearch(intent));
   });
 
-  document.addEventListener('keydown', event => {
+  document.addEventListener('keydown', (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
       event.preventDefault();
       if (searchModal?.classList.contains('hidden')) {
