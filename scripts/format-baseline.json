@@ -62,7 +62,6 @@
     "src/components/common/PrivateInfrastructureUnlock.astro": "76ddf5793411c76ffbf50449958436098874c479a081706e2c71dda2c438fba3",
     "src/components/common/ScrollingTagWall.astro": "564fccb34ce2b679e7450187f1bed5328428d6b2b5d04f871eef81b51f5f30a1",
     "src/components/common/SignalTitle.astro": "b52e146c4d7f546216187543a7aab33889a452da86871e043020121aeb9c5753",
-    "src/components/common/SiteSearch.astro": "ceea26318233067b5a0b8c9bbba0f84532bfc56199b8b2e86997a45c896f60ab",
     "src/components/common/ThemeIcon.astro": "ea27eae19b05bfbbef29dfff6e3bd51b9b27fdc99948b99d1c10cc7ed5d12ace",
     "src/components/common/scrolling-tag-wall.test.ts": "a9ece9e1314dbf6e2c02af32b11234e5835dea7ab8bb1129a28d14dfd44313e0",
     "src/components/dashboard/BiomeTree.astro": "4fda123b9547724d88db44ccbbc76358f634bc3f077b4c2de4552b8d89910780",

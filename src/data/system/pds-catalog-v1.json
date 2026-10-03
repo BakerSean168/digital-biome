@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "product": "pds-catalog-v1",
+  "generated": true,
+  "editable": false,
+  "producer": "pds://system/component/personal-digital-system",
+  "source": {
+    "repository": "https://github.com/BakerSean168/personal-digital-system.git",
+    "revision": "8b6396f9c86b3a067dc58db236bc876795128748"
+  },
+  "payload": {
+    "domains": [
+      {
+        "id": "agent-platform",
+        "name": "Agent Platform",
+        "repositories": [
+          {
+            "id": "agent-harness",
+            "relation": "canonical"
+          },
+          {
+            "id": "agent-skills",
+            "relation": "canonical"
+          },
+          {
+            "id": "dev-environment",
+            "relation": "transitional"
+          }
+        ],
+        "owns": [
+          "local-agent-capability-composition",
+          "reusable-agent-skills",
+          "distributed-capability-transport"
+        ]
+      },
+      {
+        "id": "infrastructure",
+        "name": "Infrastructure",
+        "repositories": [
+          {
+            "id": "personal-infrastructure",
+            "relation": "canonical"
+          }
+        ],
+        "projections": [
+          "infrahub",
+          "infra-public-v2"
+        ],
+        "owns": [
+          "hosts",
+          "virtual-machines",
+          "networks",
+          "network-devices",
+          "interfaces",
+          "infrastructure-hardware",
+          "deployment-bindings",
+          "infrastructure-recovery"
+        ]
+      },
+      {
+        "id": "knowledge",
+        "name": "Knowledge",
+        "repositories": [
+          {
+            "id": "thought-forest",
+            "relation": "canonical"
+          }
+        ],
+        "projections": [
+          "knowledge-public-v1"
+        ],
+        "owns": [
+          "durable-notes",
+          "explanations",
+          "how-to-guides",
+          "learning-records",
+          "knowledge-links"
+        ]
+      },
+      {
+        "id": "personal-config",
+        "name": "Personal Configuration",
+        "repositories": [
+          {
+            "id": "personal-config",
+            "relation": "canonical"
+          },
+          {
+            "id": "ssh-client-config",
+            "relation": "canonical"
+          },
+          {
+            "id": "nvim-config",
+            "relation": "canonical"
+          },
+          {
+            "id": "zsh-config",
+            "relation": "canonical"
+          },
+          {
+            "id": "tmux-config",
+            "relation": "canonical"
+          },
+          {
+            "id": "rime-config",
+            "relation": "canonical"
+          },
+          {
+            "id": "mihomo-rules",
+            "relation": "canonical"
+          },
+          {
+            "id": "dotfiles",
+            "relation": "archived"
+          }
+        ],
+        "principle": "Software-specific configuration is independently versioned; a thin profile layer composes it per host."
+      },
+      {
+        "id": "personal-twin",
+        "name": "Personal Twin",
+        "repositories": [
+          {
+            "id": "personal-twin",
+            "relation": "canonical"
+          }
+        ],
+        "owns": [
+          "room-measurements",
+          "spatial-entities",
+          "furniture-data",
+          "body-measurements",
+          "portable-3d-projections"
+        ]
+      },
+      {
+        "id": "presentation",
+        "name": "Presentation",
+        "repositories": [
+          {
+            "id": "digital-biome",
+            "relation": "canonical"
+          }
+        ],
+        "owns": [
+          "portal-ui",
+          "presentation-logic",
+          "public-view-models"
+        ],
+        "mustNotOwn": [
+          "upstream-infrastructure-facts",
+          "upstream-knowledge-facts",
+          "upstream-twin-facts"
+        ]
+      },
+      {
+        "id": "products",
+        "name": "Products",
+        "repositories": [
+          {
+            "id": "memoflow",
+            "relation": "canonical"
+          },
+          {
+            "id": "bodysense",
+            "relation": "canonical"
+          },
+          {
+            "id": "forgeflow",
+            "relation": "canonical"
+          },
+          {
+            "id": "job-harness",
+            "relation": "canonical"
+          },
+          {
+            "id": "video-craft-agent",
+            "relation": "canonical"
+          },
+          {
+            "id": "resume",
+            "relation": "archived"
+          },
+          {
+            "id": "jobsync",
+            "relation": "external"
+          }
+        ],
+        "catalogOwnedComponents": [
+          "job-apply-copilot"
+        ],
+        "principle": "Product repositories own application behavior and application-specific runtime definitions; infrastructure owns deployment placement/bindings."
+      }
+    ],
+    "repositories": [
+      {
+        "id": "agent-harness",
+        "domainId": "agent-platform",
+        "relation": "canonical"
+      },
+      {
+        "id": "agent-skills",
+        "domainId": "agent-platform",
+        "relation": "canonical"
+      },
+      {
+        "id": "bodysense",
+        "domainId": "products",
+        "relation": "canonical"
+      },
+      {
+        "id": "dev-environment",
+        "domainId": "agent-platform",
+        "relation": "transitional"
+      },
+      {
+        "id": "digital-biome",
+        "domainId": "presentation",
+        "relation": "canonical"
+      },
+      {
+        "id": "dotfiles",
+        "domainId": "personal-config",
+        "relation": "archived"
+      },
+      {
+        "id": "forgeflow",
+        "domainId": "products",
+        "relation": "canonical"
+      },
+      {
+        "id": "job-harness",
+        "domainId": "products",
+        "relation": "canonical"
+      },
+      {
+        "id": "jobsync",
+        "domainId": "products",
+        "relation": "external"
+      },
+      {
+        "id": "memoflow",
+        "domainId": "products",
+        "relation": "canonical"
+      },
+      {
+        "id": "mihomo-rules",
+        "domainId": "personal-config",
+        "relation": "canonical"
+      },
+      {
+        "id": "nvim-config",
+        "domainId": "personal-config",
+        "relation": "canonical"
+      },
+      {
+        "id": "personal-config",
+        "domainId": "personal-config",
+        "relation": "canonical"
+      },
+      {
+        "id": "personal-infrastructure",
+        "domainId": "infrastructure",
+        "relation": "canonical"
+      },
+      {
+        "id": "personal-twin",
+        "domainId": "personal-twin",
+        "relation": "canonical"
+      },
+      {
+        "id": "resume",
+        "domainId": "products",
+        "relation": "archived"
+      },
+      {
+        "id": "rime-config",
+        "domainId": "personal-config",
+        "relation": "canonical"
+      },
+      {
+        "id": "ssh-client-config",
+        "domainId": "personal-config",
+        "relation": "canonical"
+      },
+      {
+        "id": "thought-forest",
+        "domainId": "knowledge",
+        "relation": "canonical"
+      },
+      {
+        "id": "tmux-config",
+        "domainId": "personal-config",
+        "relation": "canonical"
+      },
+      {
+        "id": "video-craft-agent",
+        "domainId": "products",
+        "relation": "canonical"
+      },
+      {
+        "id": "zsh-config",
+        "domainId": "personal-config",
+        "relation": "canonical"
+      }
+    ],
+    "summary": {
+      "domainCount": 7,
+      "repositoryCount": 22,
+      "projectionCount": 3
+    }
+  }
+}

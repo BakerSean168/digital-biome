@@ -1,0 +1,362 @@
+---
+import {
+  ArrowUpRight,
+  Boxes,
+  CircleDot,
+  ExternalLink,
+  FolderGit2,
+  GitBranch,
+  KeyRound,
+  PanelsTopLeft,
+  LockKeyhole,
+  Network,
+  PackageOpen,
+  Server,
+  ShieldCheck,
+} from '@lucide/astro';
+import AssetSection from './AssetSection.astro';
+import type { AssetCard } from '../../types/notes';
+import type { PdsCatalogDomain } from '../../domain/system/pds-catalog-v1';
+import type { SystemQuickAccess } from '../../utils/personal-systems';
+
+interface Props {
+  domains: PdsCatalogDomain[];
+  quickAccess: SystemQuickAccess[];
+  projects: AssetCard[];
+  facts: {
+    domainCount: number;
+    repositoryCount: number;
+    projectionCount: number;
+    activeServiceCount: number;
+    activeHostCount: number;
+  };
+}
+
+const { domains, quickAccess, projects, facts } = Astro.props;
+const currentPath = Astro.url.pathname;
+const relationLabel = {
+  canonical: 'PRIMARY',
+  transitional: 'TRANSITION',
+  archived: 'ARCHIVE',
+  external: 'EXTERNAL',
+} as const;
+const domainAccent: Record<string, string> = {
+  products: 'text-sky-300 border-sky-400/20 bg-sky-400/5',
+  infrastructure: 'text-emerald-300 border-emerald-400/20 bg-emerald-400/5',
+  knowledge: 'text-violet-300 border-violet-400/20 bg-violet-400/5',
+  presentation: 'text-amber-300 border-amber-400/20 bg-amber-400/5',
+  'personal-twin': 'text-cyan-300 border-cyan-400/20 bg-cyan-400/5',
+  'personal-config': 'text-rose-300 border-rose-400/20 bg-rose-400/5',
+  'agent-platform': 'text-fuchsia-300 border-fuchsia-400/20 bg-fuchsia-400/5',
+};
+---
+
+<div class="space-y-12 pb-16">
+  <section class="relative overflow-hidden border-b border-border pb-10 pt-2">
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_18%_0%,rgba(139,154,70,0.12),transparent_34%),radial-gradient(circle_at_78%_12%,rgba(56,189,248,0.08),transparent_30%)]"></div>
+    <div class="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-end">
+      <div>
+        <div class="mb-4 flex flex-wrap items-center gap-2 font-mono text-[10px] tracking-widest uppercase">
+          <span class="border border-primary/25 bg-primary/10 px-2 py-1 text-primary">
+            PERSONAL.SYSTEMS
+          </span>
+          <span class="border border-border bg-card/70 px-2 py-1 text-muted-foreground">
+            PDS → DIGITAL BIOME
+          </span>
+        </div>
+        <h1 class="max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-foreground md:text-6xl">
+          一个入口，看清系统、服务、项目与运行资产。
+        </h1>
+        <p class="mt-5 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
+          Personal Digital System 只维护边界与连接关系；各领域仓库继续拥有自己的事实。Digital Biome
+          在这里把逻辑目录、项目入口和运行基础设施组合成一个可浏览的个人控制平面。
+        </p>
+      </div>
+
+      <div class="border border-border bg-card/55 p-5">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <div class="font-mono text-[9px] tracking-[0.2em] text-muted-foreground uppercase">
+              ACCESS MODE
+            </div>
+            <div data-systems-access-label class="mt-1 text-sm font-medium text-foreground">
+              PUBLIC VIEW
+            </div>
+          </div>
+          <div
+            data-systems-access-icon
+            class="flex h-9 w-9 items-center justify-center border border-border text-muted-foreground"
+          >
+            <KeyRound size={16} />
+          </div>
+        </div>
+        <p data-systems-access-description class="mt-4 text-xs leading-6 text-muted-foreground">
+          公共目录与安全展示字段可直接浏览；受保护入口需要 Cloudflare Access 身份。
+        </p>
+        <a
+          data-systems-access-action
+          href={`/login?next=${encodeURIComponent(currentPath)}`}
+          class="mt-4 inline-flex items-center gap-2 border border-border px-3 py-2 font-mono text-[10px] tracking-widest text-foreground transition-colors hover:border-primary/50 hover:text-primary"
+        >
+          <ShieldCheck size={12} /> [ OWNER ACCESS ]
+        </a>
+      </div>
+    </div>
+
+    <div class="relative mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      {[
+        ['DOMAINS', facts.domainCount],
+        ['REPOSITORIES', facts.repositoryCount],
+        ['PROJECTIONS', facts.projectionCount],
+        ['ACTIVE SERVICES', facts.activeServiceCount],
+        ['ACTIVE HOSTS', facts.activeHostCount],
+      ].map(([label, value]) => (
+        <div class="border border-border/70 bg-card/35 px-4 py-3">
+          <div class="font-mono text-[9px] tracking-widest text-muted-foreground">{label}</div>
+          <div class="mt-1 text-2xl font-semibold tracking-tight text-foreground">{value}</div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="space-y-5">
+    <div class="flex flex-col gap-3 border-b border-border/50 pb-4 md:flex-row md:items-end md:justify-between">
+      <div>
+        <div class="font-mono text-[9px] tracking-[0.22em] text-primary uppercase">
+          QUICK ACCESS
+        </div>
+        <h2 class="mt-1 text-2xl font-semibold tracking-tight text-foreground">服务与控制入口</h2>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          公开入口直接打开；Owner 入口只保存稳定 privateRef，认证后才解析真实地址。
+        </p>
+      </div>
+      <a
+        href="/infrastructure"
+        class="inline-flex items-center gap-2 font-mono text-xs text-primary hover:text-foreground"
+      >
+        [ INFRASTRUCTURE DETAIL ] <ArrowUpRight size={13} />
+      </a>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {quickAccess.map(({ resource, access, url, privateRef }) => (
+        <article class="group flex min-h-40 flex-col justify-between border border-border/70 bg-card/35 p-5 transition-colors hover:border-primary/45">
+          <div>
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground group-hover:text-primary">
+                  {resource.kind === 'platform' ? <PanelsTopLeft size={16} /> : <Boxes size={16} />}
+                </div>
+                <div class="min-w-0">
+                  <h3 class="truncate text-sm font-semibold text-foreground">{resource.title}</h3>
+                  <p class="mt-0.5 truncate font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                    {resource.role ?? resource.kind}
+                  </p>
+                </div>
+              </div>
+              <span
+                class:list={[
+                  'shrink-0 border px-2 py-0.5 font-mono text-[9px] tracking-widest',
+                  access === 'public' && 'border-emerald-400/20 text-emerald-300',
+                  access === 'owner' && 'border-amber-400/20 text-amber-300',
+                  access === 'catalog' && 'border-border text-muted-foreground',
+                ]}
+              >
+                {access === 'public' ? 'PUBLIC' : access === 'owner' ? 'OWNER' : 'CATALOG'}
+              </span>
+            </div>
+            <p class="mt-4 line-clamp-2 text-xs leading-6 text-muted-foreground">
+              {resource.description}
+            </p>
+          </div>
+
+          <div class="mt-5 flex items-center gap-3 border-t border-border/40 pt-3 font-mono text-[10px]">
+            <a
+              href={`/infrastructure/${resource.id}`}
+              class="text-muted-foreground hover:text-foreground"
+            >
+              DETAIL
+            </a>
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 text-primary"
+              >
+                OPEN <ExternalLink size={11} />
+              </a>
+            )}
+            {privateRef && (
+              <a
+                href={`/login?next=${encodeURIComponent(currentPath)}`}
+                data-private-link={privateRef}
+                data-private-unlocked-label="OPEN"
+                class="inline-flex items-center gap-1 text-amber-300 hover:text-primary"
+              >
+                <LockKeyhole size={11} /> <span data-private-link-label>UNLOCK</span>
+              </a>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="space-y-5">
+    <div class="border-b border-border/50 pb-4">
+      <div class="font-mono text-[9px] tracking-[0.22em] text-primary uppercase">SYSTEM MAP</div>
+      <h2 class="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+        PDS 领域与 Owner 边界
+      </h2>
+      <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+        这里展示的是连接层，不复制各仓库的业务事实。Repository 归属、Projection 和 Owns 关系来自
+        pds-catalog-v1。
+      </p>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      {domains.map((domain) => (
+        <article class="border border-border/70 bg-card/30 p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex min-w-0 items-center gap-3">
+              <div
+                class:list={[
+                  'flex h-10 w-10 shrink-0 items-center justify-center border',
+                  domainAccent[domain.id] ?? 'border-border text-muted-foreground',
+                ]}
+              >
+                {domain.id === 'infrastructure' ? (
+                  <Server size={17} />
+                ) : domain.id === 'knowledge' ? (
+                  <PackageOpen size={17} />
+                ) : domain.id === 'presentation' ? (
+                  <Network size={17} />
+                ) : (
+                  <FolderGit2 size={17} />
+                )}
+              </div>
+              <div>
+                <div class="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                  {domain.id}
+                </div>
+                <h3 class="mt-1 text-lg font-semibold text-foreground">{domain.name}</h3>
+              </div>
+            </div>
+            <span class="font-mono text-[10px] text-muted-foreground">
+              {domain.repositories.length} REPOS
+            </span>
+          </div>
+
+          {domain.principle && (
+            <p class="mt-4 text-xs leading-6 text-muted-foreground">{domain.principle}</p>
+          )}
+
+          <div class="mt-5 space-y-2">
+            {domain.repositories.map((repository) => (
+              <div class="flex items-center justify-between gap-3 border-t border-border/35 pt-2 text-xs">
+                <span class="inline-flex min-w-0 items-center gap-2 text-foreground">
+                  <GitBranch size={11} class="shrink-0 text-muted-foreground" />
+                  <span class="truncate font-mono">{repository.id}</span>
+                </span>
+                <span class="shrink-0 font-mono text-[9px] tracking-wider text-muted-foreground">
+                  {relationLabel[repository.relation]}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {(domain.projections?.length || domain.owns?.length) && (
+            <div class="mt-5 flex flex-wrap gap-1.5">
+              {domain.projections?.map((projection) => (
+                <span class="border border-primary/20 bg-primary/5 px-2 py-1 font-mono text-[9px] text-primary">
+                  PROJECTION:{projection}
+                </span>
+              ))}
+              {domain.owns?.slice(0, 5).map((owned) => (
+                <span class="border border-border px-2 py-1 font-mono text-[9px] text-muted-foreground">
+                  {owned}
+                </span>
+              ))}
+            </div>
+          )}
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <AssetSection
+    title="[ PRODUCTS & PROJECTS ]"
+    description="公开产品与项目继续由资产/知识投影提供展示内容；PDS 只提供它们在系统中的归属。"
+    href="/dev"
+    hrefLabel="完整项目页"
+    assets={projects}
+    emptyText="SYS.WARN: NO_PROJECTS_FOUND"
+    variant="project"
+  />
+
+  <section class="grid gap-4 md:grid-cols-3">
+    <a
+      href="/infrastructure"
+      class="group border border-border/70 bg-card/30 p-5 hover:border-primary/45"
+    >
+      <Server size={17} class="text-primary" />
+      <h3 class="mt-4 text-sm font-semibold text-foreground">Infrastructure</h3>
+      <p class="mt-2 text-xs leading-6 text-muted-foreground">
+        主机、网络、服务部署与拓扑的运行视图。
+      </p>
+      <span class="mt-4 inline-flex items-center gap-1 font-mono text-[10px] text-primary">
+        OPEN <ArrowUpRight size={11} />
+      </span>
+    </a>
+    <a href="/dev" class="group border border-border/70 bg-card/30 p-5 hover:border-primary/45">
+      <PackageOpen size={17} class="text-primary" />
+      <h3 class="mt-4 text-sm font-semibold text-foreground">Projects</h3>
+      <p class="mt-2 text-xs leading-6 text-muted-foreground">产品、项目、演示站点与代码入口。</p>
+      <span class="mt-4 inline-flex items-center gap-1 font-mono text-[10px] text-primary">
+        OPEN <ArrowUpRight size={11} />
+      </span>
+    </a>
+    <a href="/notes" class="group border border-border/70 bg-card/30 p-5 hover:border-primary/45">
+      <CircleDot size={17} class="text-primary" />
+      <h3 class="mt-4 text-sm font-semibold text-foreground">Knowledge</h3>
+      <p class="mt-2 text-xs leading-6 text-muted-foreground">知识笔记、原子概念和跨系统说明。</p>
+      <span class="mt-4 inline-flex items-center gap-1 font-mono text-[10px] text-primary">
+        OPEN <ArrowUpRight size={11} />
+      </span>
+    </a>
+  </section>
+</div>
+
+<script>
+  async function refreshSystemsAccessState() {
+    const label = document.querySelector<HTMLElement>('[data-systems-access-label]');
+    const description = document.querySelector<HTMLElement>('[data-systems-access-description]');
+    const action = document.querySelector<HTMLAnchorElement>('[data-systems-access-action]');
+    if (!label || !description || !action) return;
+    try {
+      const response = await fetch('/api/private/session', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+        redirect: 'manual',
+      });
+      if (!response.ok) return;
+      const payload: unknown = await response.json();
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        !('authenticated' in payload) ||
+        payload.authenticated !== true
+      )
+        return;
+      label.textContent = 'OWNER VIEW';
+      description.textContent =
+        'Cloudflare Access 已认证。页面会在客户端解锁授权的 privateRef 入口与受保护展示值。';
+      action.href = '/cdn-cgi/access/logout';
+      action.textContent = '[ SIGN OUT ]';
+    } catch {
+      // Public mode is the safe default.
+    }
+  }
+  void refreshSystemsAccessState();
+</script>

@@ -13,11 +13,14 @@ const heroFacts = [
 ];
 ---
 
-<BaseLayout title="Infrastructure" description="家庭网络与公网资产">
+<BaseLayout
+  title="Infrastructure Detail"
+  description="Personal Systems 的运行基础设施与网络拓扑详情"
+>
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
     <InfrastructureShowcase
-      title="数字基础设施拓扑"
-      description="由 Personal Infrastructure 作为唯一事实源，展示公网节点、受保护入口与家庭实验室资源。"
+      title="运行基础设施 / Infrastructure"
+      description="Personal Systems 的基础设施子视图。Personal Infrastructure 仍是唯一事实源，Digital Biome 只负责展示。"
       heroFacts={heroFacts}
       resources={dataset.resources}
       connections={dataset.connections}

@@ -37,7 +37,8 @@
     "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts",
     "lint": "biome lint --diagnostic-level=warn --error-on-warnings .",
     "format:check": "tsx scripts/check-format-ratchet.ts",
-    "quality": "pnpm lint && pnpm format:check"
+    "quality": "pnpm lint && pnpm format:check",
+    "verify:data-products:pds:lock": "tsx --test scripts/data-products/pds-catalog-v1-lock.test.ts src/domain/system/pds-catalog-v1.test.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",
