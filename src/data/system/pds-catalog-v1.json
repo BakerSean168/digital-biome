@@ -6,7 +6,7 @@
   "producer": "pds://system/component/personal-digital-system",
   "source": {
     "repository": "https://github.com/BakerSean168/personal-digital-system.git",
-    "revision": "8b6396f9c86b3a067dc58db236bc876795128748"
+    "revision": "21aceab6bd6c551bfae24f23a1637fe3847f5441"
   },
   "payload": {
     "domains": [
@@ -16,15 +16,24 @@
         "repositories": [
           {
             "id": "agent-harness",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/agent-harness",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "agent-skills",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/agent-skills",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "dev-environment",
-            "relation": "transitional"
+            "relation": "archived",
+            "webUrl": "https://github.com/BakerSean168/dev-environment",
+            "lifecycle": "archived",
+            "metadataState": "present"
           }
         ],
         "owns": [
@@ -39,7 +48,10 @@
         "repositories": [
           {
             "id": "personal-infrastructure",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/personal-infrastructure",
+            "lifecycle": "active",
+            "metadataState": "present"
           }
         ],
         "projections": [
@@ -63,7 +75,10 @@
         "repositories": [
           {
             "id": "thought-forest",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/thought-forest",
+            "lifecycle": "active",
+            "metadataState": "present"
           }
         ],
         "projections": [
@@ -83,35 +98,59 @@
         "repositories": [
           {
             "id": "personal-config",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/personal-config",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "ssh-client-config",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/ssh-client-config",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "nvim-config",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/nvim-config",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "zsh-config",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/zsh-config",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "tmux-config",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/tmux-config",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "rime-config",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/rime-config",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "mihomo-rules",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/mihomo-rules",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "dotfiles",
-            "relation": "archived"
+            "relation": "archived",
+            "webUrl": "https://github.com/BakerSean168/dotfiles",
+            "lifecycle": "archived",
+            "metadataState": "present"
           }
         ],
         "principle": "Software-specific configuration is independently versioned; a thin profile layer composes it per host."
@@ -122,7 +161,10 @@
         "repositories": [
           {
             "id": "personal-twin",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/personal-twin",
+            "lifecycle": "active",
+            "metadataState": "present"
           }
         ],
         "owns": [
@@ -139,7 +181,10 @@
         "repositories": [
           {
             "id": "digital-biome",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/digital-biome",
+            "lifecycle": "active",
+            "metadataState": "present"
           }
         ],
         "owns": [
@@ -159,31 +204,52 @@
         "repositories": [
           {
             "id": "memoflow",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/memoflow",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "bodysense",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/BodySense",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "forgeflow",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/forgeflow",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "job-harness",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/job-harness",
+            "lifecycle": "active",
+            "metadataState": "present"
           },
           {
             "id": "video-craft-agent",
-            "relation": "canonical"
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/video-craft-agent",
+            "lifecycle": "experimental",
+            "metadataState": "present"
           },
           {
             "id": "resume",
-            "relation": "archived"
+            "relation": "archived",
+            "webUrl": "https://github.com/BakerSean168/resume",
+            "lifecycle": "deprecated",
+            "metadataState": "present"
           },
           {
             "id": "jobsync",
-            "relation": "external"
+            "relation": "external",
+            "webUrl": "https://github.com/Gsync/jobsync",
+            "lifecycle": "archived",
+            "metadataState": "external-upstream"
           }
         ],
         "catalogOwnedComponents": [
@@ -196,112 +262,178 @@
       {
         "id": "agent-harness",
         "domainId": "agent-platform",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/agent-harness",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "agent-skills",
         "domainId": "agent-platform",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/agent-skills",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "bodysense",
         "domainId": "products",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/BodySense",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "dev-environment",
         "domainId": "agent-platform",
-        "relation": "transitional"
+        "relation": "archived",
+        "webUrl": "https://github.com/BakerSean168/dev-environment",
+        "lifecycle": "archived",
+        "metadataState": "present"
       },
       {
         "id": "digital-biome",
         "domainId": "presentation",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/digital-biome",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "dotfiles",
         "domainId": "personal-config",
-        "relation": "archived"
+        "relation": "archived",
+        "webUrl": "https://github.com/BakerSean168/dotfiles",
+        "lifecycle": "archived",
+        "metadataState": "present"
       },
       {
         "id": "forgeflow",
         "domainId": "products",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/forgeflow",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "job-harness",
         "domainId": "products",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/job-harness",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "jobsync",
         "domainId": "products",
-        "relation": "external"
+        "relation": "external",
+        "webUrl": "https://github.com/Gsync/jobsync",
+        "lifecycle": "archived",
+        "metadataState": "external-upstream"
       },
       {
         "id": "memoflow",
         "domainId": "products",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/memoflow",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "mihomo-rules",
         "domainId": "personal-config",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/mihomo-rules",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "nvim-config",
         "domainId": "personal-config",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/nvim-config",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "personal-config",
         "domainId": "personal-config",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/personal-config",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "personal-infrastructure",
         "domainId": "infrastructure",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/personal-infrastructure",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "personal-twin",
         "domainId": "personal-twin",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/personal-twin",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "resume",
         "domainId": "products",
-        "relation": "archived"
+        "relation": "archived",
+        "webUrl": "https://github.com/BakerSean168/resume",
+        "lifecycle": "deprecated",
+        "metadataState": "present"
       },
       {
         "id": "rime-config",
         "domainId": "personal-config",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/rime-config",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "ssh-client-config",
         "domainId": "personal-config",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/ssh-client-config",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "thought-forest",
         "domainId": "knowledge",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/thought-forest",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "tmux-config",
         "domainId": "personal-config",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/tmux-config",
+        "lifecycle": "active",
+        "metadataState": "present"
       },
       {
         "id": "video-craft-agent",
         "domainId": "products",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/video-craft-agent",
+        "lifecycle": "experimental",
+        "metadataState": "present"
       },
       {
         "id": "zsh-config",
         "domainId": "personal-config",
-        "relation": "canonical"
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/zsh-config",
+        "lifecycle": "active",
+        "metadataState": "present"
       }
     ],
     "summary": {

@@ -1,9 +1,9 @@
 {
   "product": "pds-catalog-v1",
   "producerRepository": "BakerSean168/personal-digital-system",
-  "sourceRevision": "8b6396f9c86b3a067dc58db236bc876795128748",
+  "sourceRevision": "21aceab6bd6c551bfae24f23a1637fe3847f5441",
   "artifact": {
     "path": "generated/pds-catalog-v1.json",
-    "sha256": "sha256:9be7481c7146dd5f509a921e651f24fa13f31a18864e36a4fa4db35c7033c988"
+    "sha256": "sha256:8db2de75c98c058abb4ac558ded669d5b11b27e485396524e500e8c28db00196"
   }
 }
