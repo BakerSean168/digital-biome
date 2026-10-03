@@ -1,9 +1,12 @@
 ---
 import SiteSearch from './SiteSearch.astro';
-import { Search, Lock, LogOut, PanelsTopLeft } from '@lucide/astro';
+import { Search, Lock, LogOut } from '@lucide/astro';
+import { HEADER_CONTROLS } from '../../config/navigation-policy';
 
 const currentPath = Astro.url.pathname;
 const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
+const showSearch = HEADER_CONTROLS.includes('search');
+const showAccess = HEADER_CONTROLS.includes('access');
 ---
 
 <div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 group">
@@ -11,47 +14,43 @@ const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
     class="flex h-10 items-center gap-3 rounded-sm border border-border bg-background/95 px-4 text-sm font-mono"
     aria-label="快捷操作"
   >
-    <a
-      href="/systems"
-      class="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-      title="Personal Systems"
-    >
-      <PanelsTopLeft size={14} class="text-primary" />
-      <span class="hidden text-xs sm:inline">[ SYSTEMS ]</span>
-    </a>
+    {showSearch && (
+      <button
+        data-header-control="search"
+        class="search-trigger flex cursor-pointer items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+        aria-label="打开搜索"
+        aria-haspopup="dialog"
+      >
+        <Search size={14} class="text-primary" />
+        <span class="text-xs">[ SEARCH ]</span>
+      </button>
+    )}
 
-    <div class="h-4 w-px bg-border/80"></div>
+    {showSearch && showAccess && <div class="h-4 w-px bg-border/80"></div>}
 
-    <button
-      class="search-trigger flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
-      aria-label="打开搜索"
-      aria-haspopup="dialog"
-    >
-      <Search size={14} class="text-primary" />
-      <span class="text-xs">[ SEARCH ]</span>
-    </button>
+    {showAccess && (
+      <span data-header-control="access" class="contents">
+        <a
+          data-auth-login
+          href={`/login?next=${encodeURIComponent(loginNext)}`}
+          class="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          title="使用 GitHub 身份登录"
+        >
+          <Lock size={12} />
+          <span>[ ACCESS ]</span>
+        </a>
 
-    <div class="h-4 w-px bg-border/80"></div>
-
-    <a
-      data-auth-login
-      href={`/login?next=${encodeURIComponent(loginNext)}`}
-      class="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-      title="使用 GitHub 身份登录"
-    >
-      <Lock size={12} />
-      <span>[ ACCESS ]</span>
-    </a>
-
-    <a
-      data-auth-logout
-      href="/cdn-cgi/access/logout"
-      class="hidden items-center gap-1.5 text-xs text-primary transition-colors hover:text-foreground"
-      title="退出 Cloudflare Access"
-    >
-      <LogOut size={12} />
-      <span>[ LOGOUT ]</span>
-    </a>
+        <a
+          data-auth-logout
+          href="/cdn-cgi/access/logout"
+          class="hidden items-center gap-1.5 text-xs text-primary transition-colors hover:text-foreground"
+          title="退出 Cloudflare Access"
+        >
+          <LogOut size={12} />
+          <span>[ LOGOUT ]</span>
+        </a>
+      </span>
+    )}
 
     <span data-auth-announcer class="sr-only" aria-live="polite"></span>
   </nav>
