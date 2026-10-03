@@ -17,41 +17,41 @@ export function getPublicSystemDomains(): PdsCatalogDomain[] {
 }
 
 export function getSystemQuickAccess(): SystemQuickAccess[] {
-  return getInfrastructureResources()
-    .filter(
-      (resource) =>
-        resource.status === 'active' &&
-        (resource.kind === 'service' || resource.kind === 'platform'),
-    )
-    .map((resource) => {
-      const link = resource.links?.find((candidate) => candidate.url || candidate.privateRef);
-      return {
+  const preferredIds = [
+    'svc-nezha-panel',
+    'svc-memoflow-dailyuse',
+    'svc-homepage-dashboard',
+    'svc-pve-panel',
+    'svc-sub-store',
+  ] as const;
+  const resources = new Map(
+    getInfrastructureResources().map((resource) => [resource.id, resource]),
+  );
+
+  return preferredIds.flatMap((resourceId) => {
+    const resource = resources.get(resourceId);
+    if (resource?.status !== 'active') return [];
+    const link = resource.links?.find((candidate) => candidate.url || candidate.privateRef);
+    return [
+      {
         resource,
         access: link?.url ? 'public' : link?.privateRef ? 'owner' : 'catalog',
         url: link?.url,
         privateRef: link?.privateRef,
-      } satisfies SystemQuickAccess;
-    })
-    .sort((a, b) => {
-      const rank = { public: 0, owner: 1, catalog: 2 } as const;
-      return rank[a.access] - rank[b.access] || a.resource.title.localeCompare(b.resource.title);
-    });
+      } satisfies SystemQuickAccess,
+    ];
+  });
 }
 
 function factCountsForDomains(domains: readonly PdsCatalogDomain[]) {
   const resources = getInfrastructureResources();
   return {
     domainCount: domains.length,
-    repositoryCount: domains.reduce((count, domain) => count + domain.repositories.length, 0),
-    projectionCount: domains.reduce(
-      (count, domain) => count + (domain.projections?.length ?? 0),
-      0,
-    ),
-    activeServiceCount: resources.filter(
-      (resource) => resource.status === 'active' && resource.kind === 'service',
-    ).length,
-    activeHostCount: resources.filter(
-      (resource) => resource.status === 'active' && resource.kind === 'host',
+    cloudHostCount: resources.filter(
+      (resource) =>
+        resource.kind === 'host' &&
+        resource.status === 'active' &&
+        resource.groups.includes('public-fleet'),
     ).length,
   };
 }

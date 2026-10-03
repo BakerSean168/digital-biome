@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PersonalSystemsHub from '../../components/assets/PersonalSystemsHub.astro';
-import { getProjectShowcaseAssets } from '../../utils/notes';
 import {
   getPublicSystemDomains,
   getSystemQuickAccess,
@@ -10,17 +9,11 @@ import {
 
 const domains = getPublicSystemDomains();
 const quickAccess = getSystemQuickAccess();
-const projects = getProjectShowcaseAssets();
 const facts = publicSystemFactCounts();
 ---
 
 <BaseLayout title="Personal Systems" description="个人系统、服务、项目与数字资产控制面板">
   <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
-    <PersonalSystemsHub
-      domains={domains}
-      quickAccess={quickAccess}
-      projects={projects}
-      facts={facts}
-    />
+    <PersonalSystemsHub domains={domains} quickAccess={quickAccess} facts={facts} />
   </main>
 </BaseLayout>
