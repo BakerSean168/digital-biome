@@ -12,15 +12,17 @@ const infrastructure = fs.readFileSync(
   'utf8',
 );
 
-test('Personal Systems uses hierarchical rows and tables instead of a card wall', () => {
-  assert.match(systems, /Quick access/);
-  assert.match(systems, /System registry/);
+test('Personal Systems stays intentionally sparse and drill-down oriented', () => {
+  assert.match(systems, /常用入口/);
+  assert.match(systems, /系统边界/);
   assert.match(systems, /<details/);
-  assert.match(systems, /<table/);
-  assert.match(systems, /divide-y divide-border/);
   assert.match(systems, /data-system-domain-grid/);
+  assert.doesNotMatch(systems, /<table/);
+  assert.doesNotMatch(systems, /Active services/);
+  assert.doesNotMatch(systems, /Repositories/);
+  assert.doesNotMatch(systems, /Projections/);
+  assert.doesNotMatch(systems, /Projects<\/div>/);
   assert.doesNotMatch(systems, /grid gap-3 md:grid-cols-2 xl:grid-cols-3/);
-  assert.doesNotMatch(systems, /AssetSection/);
 });
 
 test('Infrastructure prioritizes topology then compact registry', () => {

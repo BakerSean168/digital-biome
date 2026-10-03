@@ -1,392 +1,183 @@
 ---
-import {
-  ArrowRight,
-  ArrowUpRight,
-  ExternalLink,
-  GitBranch,
-  KeyRound,
-  LockKeyhole,
-  PackageOpen,
-  Server,
-  ShieldCheck,
-} from '@lucide/astro';
-import type { AssetCard } from '../../types/notes';
+import { ArrowRight, ExternalLink, KeyRound, LockKeyhole } from '@lucide/astro';
 import type { PdsCatalogDomain } from '../../domain/system/pds-catalog-v1';
 import type { SystemQuickAccess } from '../../utils/personal-systems';
 
 interface Props {
   domains: PdsCatalogDomain[];
   quickAccess: SystemQuickAccess[];
-  projects: AssetCard[];
   facts: {
     domainCount: number;
-    repositoryCount: number;
-    projectionCount: number;
-    activeServiceCount: number;
-    activeHostCount: number;
+    cloudHostCount: number;
   };
 }
 
-const { domains, quickAccess, projects, facts } = Astro.props;
+const { domains, quickAccess, facts } = Astro.props;
 const currentPath = Astro.url.pathname;
 const relationLabel = {
-  canonical: 'PRIMARY',
-  transitional: 'TRANSITION',
-  archived: 'ARCHIVE',
-  external: 'EXTERNAL',
+  canonical: 'Primary',
+  transitional: 'Transition',
+  archived: 'Archive',
+  external: 'External',
 } as const;
-const accessRank = { public: 0, owner: 1, catalog: 2 } as const;
-const sortedQuickAccess = [...quickAccess].sort(
-  (a, b) =>
-    accessRank[a.access] - accessRank[b.access] || a.resource.title.localeCompare(b.resource.title),
-);
-const featuredProjects = projects.slice(0, 6);
 ---
 
-<div class="pb-16">
+<div class="pb-14">
   <section class="border-b border-border/70 pb-8 pt-2">
-    <div class="flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-      <div class="max-w-4xl">
-        <div class="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          <span class="text-primary">Personal Systems</span>
-          <span aria-hidden="true">/</span>
-          <span>PDS → Digital Biome</span>
-        </div>
-        <h1 class="mt-4 text-4xl font-semibold tracking-[-0.035em] text-foreground md:text-5xl">
-          系统、服务与数字资产的统一入口
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <div class="max-w-3xl">
+        <div class="text-xs text-primary">Personal Systems</div>
+        <h1 class="mt-3 text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl">
+          个人系统
         </h1>
-        <p class="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-[15px]">
-          Personal Digital System
-          维护边界和连接关系；各领域仓库继续拥有自己的事实。这里负责把它们组合成一个可浏览、可跳转、按权限逐步展开的个人控制面。
+        <p class="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
+          查看当前运行入口与系统边界。详细资产和运维信息按需展开。
         </p>
+        <div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+          <a href="/infrastructure" class="hover:text-primary">
+            <span class="font-medium text-foreground">{facts.cloudHostCount}</span> 台云服务器
+          </a>
+          <span>
+            <span class="font-medium text-foreground">{facts.domainCount}</span> 个公开系统域
+          </span>
+        </div>
       </div>
 
-      <div class="flex shrink-0 items-center gap-3 border-l border-border/70 pl-4 xl:min-w-72">
-        <KeyRound size={15} class="text-muted-foreground" />
-        <div class="min-w-0 flex-1">
-          <div data-systems-access-label class="text-xs font-medium text-foreground">
-            PUBLIC VIEW
+      <div class="flex items-center gap-3 text-sm">
+        <KeyRound size={14} class="text-muted-foreground" />
+        <div>
+          <div data-systems-access-label class="font-medium text-foreground">
+            Public view
           </div>
-          <p
-            data-systems-access-description
-            class="mt-0.5 text-[11px] leading-5 text-muted-foreground"
-          >
-            仅展示 public-safe 目录与入口
-          </p>
+          <div data-systems-access-description class="mt-0.5 text-xs text-muted-foreground">
+            Owner 内容保持锁定
+          </div>
         </div>
         <a
           data-systems-access-action
           href={`/login?next=${encodeURIComponent(currentPath)}`}
-          class="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary transition-colors hover:text-foreground"
+          class="ml-2 text-primary hover:text-foreground"
         >
-          <ShieldCheck size={13} /> Owner
+          Owner
         </a>
       </div>
     </div>
-
-    <dl class="mt-8 grid grid-cols-2 border-y border-border/50 md:grid-cols-5">
-      {[
-        ['domainCount', 'Domains', facts.domainCount],
-        ['repositoryCount', 'Repositories', facts.repositoryCount],
-        ['projectionCount', 'Projections', facts.projectionCount],
-        ['activeServiceCount', 'Active services', facts.activeServiceCount],
-        ['activeHostCount', 'Active hosts', facts.activeHostCount],
-      ].map(([key, label, value], index) => (
-        <div
-          class:list={[
-            'py-4 pr-4 sm:py-5',
-            index > 0 && 'sm:border-l sm:border-border/40 sm:pl-5',
-            index % 2 === 1 && 'border-l border-border/40 pl-4 sm:pl-5',
-          ]}
-        >
-          <dt class="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</dt>
-          <dd
-            class="mt-1 text-2xl font-semibold tabular-nums text-foreground"
-            data-systems-fact={key}
-          >
-            {value}
-          </dd>
-        </div>
-      ))}
-    </dl>
   </section>
 
-  <section class="grid border-b border-border/70 lg:grid-cols-[220px_minmax(0,1fr)]">
-    <header class="border-b border-border/50 py-8 pr-6 lg:border-b-0 lg:border-r">
-      <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-primary">
-        Quick access
+  <section id="quick-access" class="border-b border-border/70 py-8 scroll-mt-24">
+    <div class="mb-4 flex items-end justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-semibold text-foreground">常用入口</h2>
+        <p class="mt-1 text-sm text-muted-foreground">只保留高频服务，不展示完整资产目录。</p>
       </div>
-      <h2 class="mt-2 text-xl font-semibold tracking-tight text-foreground">常用入口</h2>
-      <p class="mt-2 text-xs leading-6 text-muted-foreground">
-        Public 入口直接打开；Owner 入口在认证后解析真实目标。
-      </p>
       <a
         href="/infrastructure"
-        class="mt-5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+        class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
       >
-        Infrastructure <ArrowRight size={12} />
+        基础设施 <ArrowRight size={13} />
       </a>
-    </header>
+    </div>
 
-    <div class="divide-y divide-border/40 lg:pl-8">
-      {sortedQuickAccess.length > 0 ? (
-        sortedQuickAccess.map(({ resource, access, url, privateRef }) => (
-          <div class="group grid gap-3 py-4 md:grid-cols-[minmax(0,1.35fr)_minmax(180px,0.8fr)_auto] md:items-center">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <a
-                  href={`/infrastructure/${resource.id}`}
-                  class="truncate text-sm font-medium text-foreground hover:text-primary"
-                >
-                  {resource.title}
-                </a>
-                <span
-                  class:list={[
-                    'text-[9px] font-medium uppercase tracking-[0.14em]',
-                    access === 'public' && 'text-emerald-300',
-                    access === 'owner' && 'text-amber-300',
-                    access === 'catalog' && 'text-muted-foreground',
-                  ]}
-                >
-                  {access}
-                </span>
-              </div>
-              <p class="mt-1 line-clamp-1 text-xs text-muted-foreground">{resource.description}</p>
-            </div>
-            <div class="truncate font-mono text-[10px] uppercase tracking-[0.08em] text-tertiary-foreground">
-              {resource.role ?? resource.kind}
-            </div>
-            <div class="flex items-center gap-3 text-[11px]">
-              {url && (
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 text-primary hover:text-foreground"
-                >
-                  Open <ExternalLink size={11} />
-                </a>
-              )}
-              {privateRef && (
-                <a
-                  href={`/login?next=${encodeURIComponent(currentPath)}`}
-                  data-private-link={privateRef}
-                  data-private-unlocked-label="Open"
-                  class="inline-flex items-center gap-1 text-amber-300 hover:text-primary"
-                >
-                  <LockKeyhole size={11} /> <span data-private-link-label>Unlock</span>
-                </a>
-              )}
-              {!url && !privateRef && (
-                <a
-                  href={`/infrastructure/${resource.id}`}
-                  class="text-muted-foreground hover:text-foreground"
-                >
-                  Inspect
-                </a>
-              )}
-            </div>
+    <div class="divide-y divide-border/40 border-y border-border/40">
+      {quickAccess.map(({ resource, access, url, privateRef }) => (
+        <div class="grid gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-5">
+          <a
+            href={`/infrastructure/${resource.id}`}
+            class="min-w-0 truncate text-sm font-medium text-foreground hover:text-primary"
+          >
+            {resource.title}
+          </a>
+          <div class="text-sm sm:text-right">
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 text-primary hover:text-foreground"
+              >
+                Open <ExternalLink size={11} />
+              </a>
+            )}
+            {privateRef && (
+              <a
+                href={`/login?next=${encodeURIComponent(currentPath)}`}
+                data-private-link={privateRef}
+                data-private-unlocked-label="Open"
+                class="inline-flex items-center gap-1 text-amber-300 hover:text-primary"
+              >
+                <LockKeyhole size={11} /> <span data-private-link-label>Unlock</span>
+              </a>
+            )}
+            {!url && !privateRef && <span class="text-muted-foreground">{access}</span>}
           </div>
-        ))
-      ) : (
-        <p class="py-8 text-sm text-muted-foreground">暂无可用入口。</p>
-      )}
+        </div>
+      ))}
     </div>
   </section>
 
-  <section class="grid border-b border-border/70 lg:grid-cols-[220px_minmax(0,1fr)]">
-    <header class="border-b border-border/50 py-8 pr-6 lg:border-b-0 lg:border-r">
-      <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-primary">
-        System registry
-      </div>
-      <h2 class="mt-2 text-xl font-semibold tracking-tight text-foreground">领域与 Owner 边界</h2>
-      <p class="mt-2 text-xs leading-6 text-muted-foreground">
-        连接层只描述归属、关系与 projection，不复制业务事实。
-      </p>
-    </header>
+  <section id="system-registry" class="py-8 scroll-mt-24">
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-foreground">系统边界</h2>
+      <p class="mt-1 text-sm text-muted-foreground">默认只看领域；仓库关系需要时再展开。</p>
+    </div>
 
-    <div class="lg:pl-8" data-system-domain-grid>
-      {domains.map((domain, index) => (
-        <details class="group border-b border-border/40 last:border-b-0" open={index === 0}>
-          <summary class="grid cursor-pointer list-none gap-3 py-5 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center [&::-webkit-details-marker]:hidden">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-foreground group-open:text-primary">
-                  {domain.name}
-                </span>
-                <span class="font-mono text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground">
-                  {domain.id}
-                </span>
-              </div>
-              {domain.principle && (
-                <p class="mt-1 line-clamp-1 text-xs text-muted-foreground">{domain.principle}</p>
-              )}
-            </div>
-            <span class="font-mono text-[10px] text-muted-foreground">
-              {domain.repositories.length} repos
+    <div data-system-domain-grid class="divide-y divide-border/40 border-y border-border/40">
+      {domains.map((domain) => (
+        <details class="group">
+          <summary class="grid cursor-pointer list-none gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden">
+            <span class="text-sm font-medium text-foreground group-open:text-primary">
+              {domain.name}
             </span>
-            <span class="text-xs text-muted-foreground transition-transform group-open:rotate-90">
+            <span class="text-sm text-muted-foreground">{domain.repositories.length} repos</span>
+            <span class="text-sm text-muted-foreground transition-transform group-open:rotate-90">
               →
             </span>
           </summary>
-
-          <div class="pb-6 md:pl-5">
-            <div class="overflow-x-auto border-t border-border/30">
-              <table class="w-full min-w-[640px] table-fixed text-left">
-                <thead>
-                  <tr class="text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground">
-                    <th class="w-[42%] py-2 pr-4 font-medium">Repository</th>
-                    <th class="w-[22%] py-2 pr-4 font-medium">Relation</th>
-                    <th class="w-[20%] py-2 pr-4 font-medium">Lifecycle</th>
-                    <th class="py-2 text-right font-medium">Open</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-border/25">
-                  {domain.repositories.map((repository) => (
-                    <tr class="text-xs">
-                      <td class="py-3 pr-4 font-mono text-foreground">{repository.id}</td>
-                      <td class="py-3 pr-4 text-muted-foreground">
-                        {relationLabel[repository.relation]}
-                      </td>
-                      <td class="py-3 pr-4 uppercase text-muted-foreground">
-                        {repository.lifecycle ?? '—'}
-                      </td>
-                      <td class="py-3 text-right">
-                        {repository.webUrl ? (
-                          <a
-                            href={repository.webUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center gap-1 text-primary hover:text-foreground"
-                          >
-                            GitHub <ExternalLink size={10} />
-                          </a>
-                        ) : (
-                          <span class="text-tertiary-foreground">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div class="pb-4 pl-4 sm:pl-6">
+            <div class="divide-y divide-border/30 border-t border-border/30">
+              {domain.repositories.map((repository) => (
+                <div class="flex items-center justify-between gap-4 py-3 text-sm">
+                  <div class="min-w-0">
+                    <span class="font-mono text-foreground">{repository.id}</span>
+                    <span class="ml-3 text-xs text-muted-foreground">
+                      {relationLabel[repository.relation]}
+                    </span>
+                  </div>
+                  {repository.webUrl ? (
+                    <a
+                      href={repository.webUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="shrink-0 text-primary hover:text-foreground"
+                    >
+                      GitHub ↗
+                    </a>
+                  ) : (
+                    <span class="text-muted-foreground">—</span>
+                  )}
+                </div>
+              ))}
             </div>
-            {(domain.projections?.length || domain.owns?.length) && (
-              <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
-                {domain.projections?.map((projection) => (
-                  <span class="text-primary">projection:{projection}</span>
-                ))}
-                {domain.owns?.slice(0, 6).map((owned) => (
-                  <span>{owned}</span>
-                ))}
-              </div>
-            )}
           </div>
         </details>
       ))}
 
-      <div
-        data-owner-domain-gate
-        class="flex items-center justify-between gap-6 border-t border-border/40 py-5"
-      >
-        <div>
-          <div class="text-xs font-medium text-foreground">Owner-only systems</div>
-          <p class="mt-1 text-xs text-muted-foreground">
-            个人配置、Agent Platform 与 Twin 等目录在登录后动态加载。
-          </p>
-        </div>
-        <LockKeyhole size={14} class="shrink-0 text-muted-foreground" />
+      <div data-owner-domain-gate class="flex items-center justify-between gap-4 py-4 text-sm">
+        <span class="text-muted-foreground">Owner-only systems 登录后载入</span>
+        <LockKeyhole size={13} class="text-muted-foreground" />
       </div>
     </div>
   </section>
 
-  <section
-    id="projects"
-    class="grid scroll-mt-24 border-b border-border/70 lg:grid-cols-[220px_minmax(0,1fr)]"
-  >
-    <header class="border-b border-border/50 py-8 pr-6 lg:border-b-0 lg:border-r">
-      <div class="text-[10px] font-medium uppercase tracking-[0.18em] text-primary">Projects</div>
-      <h2 class="mt-2 text-xl font-semibold tracking-tight text-foreground">产品与项目</h2>
-      <p class="mt-2 text-xs leading-6 text-muted-foreground">
-        只保留高频跳转信息，完整项目资料进入专页。
-      </p>
-      <a
-        href="/dev"
-        class="mt-5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
-      >
-        View all <ArrowRight size={12} />
-      </a>
-    </header>
-
-    <div class="divide-y divide-border/40 lg:pl-8">
-      {featuredProjects.length > 0 ? (
-        featuredProjects.map((project) => {
-          const repo = project.links.find(
-            (link) => link.kind === 'repo' || link.kind === 'repository',
-          );
-          const live = project.links.find(
-            (link) => (link.kind === 'app' || link.kind === 'web') && link.url,
-          );
-          return (
-            <div class="grid gap-3 py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-              <div class="min-w-0">
-                <a
-                  href={project.href}
-                  class="text-sm font-medium text-foreground hover:text-primary"
-                >
-                  {project.title}
-                </a>
-                {project.description && (
-                  <p class="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                    {project.description}
-                  </p>
-                )}
-              </div>
-              <div class="flex items-center gap-3 text-[11px]">
-                {project.status && (
-                  <span class="uppercase text-muted-foreground">{project.status}</span>
-                )}
-                {live?.url && (
-                  <a
-                    href={live.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-primary hover:text-foreground"
-                  >
-                    Live
-                  </a>
-                )}
-                {repo?.url && (
-                  <a
-                    href={repo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                  >
-                    <GitBranch size={11} /> Repo
-                  </a>
-                )}
-              </div>
-            </div>
-          );
-        })
-      ) : (
-        <p class="py-8 text-sm text-muted-foreground">暂无公开项目。</p>
-      )}
-    </div>
-  </section>
-
-  <nav class="flex flex-wrap items-center gap-x-8 gap-y-3 pt-8 text-sm">
-    <a
-      href="/infrastructure"
-      class="inline-flex items-center gap-2 text-foreground hover:text-primary"
-    >
-      <Server size={14} /> Infrastructure
+  <nav class="flex flex-wrap gap-x-7 gap-y-3 border-t border-border/70 pt-6 text-sm">
+    <a href="/infrastructure" class="text-foreground hover:text-primary">
+      Infrastructure
     </a>
-    <a href="/dev" class="inline-flex items-center gap-2 text-foreground hover:text-primary">
-      <PackageOpen size={14} /> Projects
+    <a href="/dev" class="text-foreground hover:text-primary">
+      Projects
     </a>
-    <a href="/notes" class="inline-flex items-center gap-2 text-foreground hover:text-primary">
-      Knowledge <ArrowUpRight size={12} />
+    <a href="/notes" class="text-foreground hover:text-primary">
+      Knowledge
     </a>
   </nav>
 </div>
@@ -399,12 +190,7 @@ const featuredProjects = projects.slice(0, 6);
       id: string;
       relation: string;
       webUrl?: string;
-      lifecycle?: string;
-      metadataState?: string;
     }>;
-    projections?: string[];
-    owns?: string[];
-    principle?: string;
   };
 
   type OwnerSystemsPayload = {
@@ -415,10 +201,10 @@ const featuredProjects = projects.slice(0, 6);
   };
 
   const relationLabels: Record<string, string> = {
-    canonical: 'PRIMARY',
-    transitional: 'TRANSITION',
-    archived: 'ARCHIVE',
-    external: 'EXTERNAL',
+    canonical: 'Primary',
+    transitional: 'Transition',
+    archived: 'Archive',
+    external: 'External',
   };
 
   function element<K extends keyof HTMLElementTagNameMap>(
@@ -433,103 +219,52 @@ const featuredProjects = projects.slice(0, 6);
   }
 
   function renderOwnerDomain(domain: OwnerDomain): HTMLElement {
-    const details = element('details', 'group border-b border-border/40 last:border-b-0');
+    const details = element('details', 'group');
     details.dataset.ownerSystemDomain = domain.id;
 
     const summary = element(
       'summary',
-      'grid cursor-pointer list-none gap-3 py-5 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center [&::-webkit-details-marker]:hidden',
+      'grid cursor-pointer list-none gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden',
     );
-    const identity = element('div', 'min-w-0');
-    const titleLine = element('div', 'flex items-center gap-2');
-    titleLine.append(
-      element('span', 'text-sm font-medium text-foreground group-open:text-primary', domain.name),
-      element(
-        'span',
-        'font-mono text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground',
-        domain.id,
-      ),
-      element('span', 'text-[9px] uppercase tracking-[0.14em] text-amber-300', 'owner'),
-    );
-    identity.append(titleLine);
-    if (domain.principle)
-      identity.append(
-        element('p', 'mt-1 line-clamp-1 text-xs text-muted-foreground', domain.principle),
-      );
+    const title = element('span', 'text-sm font-medium text-foreground group-open:text-primary');
+    title.append(document.createTextNode(domain.name));
+    const owner = element('span', 'ml-2 text-xs text-amber-300', 'Owner');
+    title.append(owner);
     summary.append(
-      identity,
+      title,
+      element('span', 'text-sm text-muted-foreground', `${domain.repositories.length} repos`),
       element(
         'span',
-        'font-mono text-[10px] text-muted-foreground',
-        `${domain.repositories.length} repos`,
-      ),
-      element(
-        'span',
-        'text-xs text-muted-foreground transition-transform group-open:rotate-90',
+        'text-sm text-muted-foreground transition-transform group-open:rotate-90',
         '→',
       ),
     );
     details.append(summary);
 
-    const body = element('div', 'pb-6 md:pl-5');
-    const tableWrap = element('div', 'overflow-x-auto border-t border-border/30');
-    const table = element('table', 'w-full min-w-[640px] table-fixed text-left');
-    const thead = element('thead');
-    const headRow = element(
-      'tr',
-      'text-[9px] uppercase tracking-[0.14em] text-tertiary-foreground',
-    );
-    for (const [label, className] of [
-      ['Repository', 'w-[42%] py-2 pr-4 font-medium'],
-      ['Relation', 'w-[22%] py-2 pr-4 font-medium'],
-      ['Lifecycle', 'w-[20%] py-2 pr-4 font-medium'],
-      ['Open', 'py-2 text-right font-medium'],
-    ])
-      headRow.append(element('th', className, label));
-    thead.append(headRow);
-    const tbody = element('tbody', 'divide-y divide-border/25');
-
+    const body = element('div', 'pb-4 pl-4 sm:pl-6');
+    const list = element('div', 'divide-y divide-border/30 border-t border-border/30');
     for (const repository of domain.repositories) {
-      const row = element('tr', 'text-xs');
-      row.append(
-        element('td', 'py-3 pr-4 font-mono text-foreground', repository.id),
+      const row = element('div', 'flex items-center justify-between gap-4 py-3 text-sm');
+      const identity = element('div', 'min-w-0');
+      identity.append(
+        element('span', 'font-mono text-foreground', repository.id),
         element(
-          'td',
-          'py-3 pr-4 text-muted-foreground',
-          relationLabels[repository.relation] ?? repository.relation.toUpperCase(),
+          'span',
+          'ml-3 text-xs text-muted-foreground',
+          relationLabels[repository.relation] ?? repository.relation,
         ),
-        element('td', 'py-3 pr-4 uppercase text-muted-foreground', repository.lifecycle ?? '—'),
       );
-      const action = element('td', 'py-3 text-right');
+      row.append(identity);
       if (repository.webUrl) {
-        const link = element('a', 'text-primary hover:text-foreground', 'GitHub ↗');
+        const link = element('a', 'shrink-0 text-primary hover:text-foreground', 'GitHub ↗');
         link.href = repository.webUrl;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
-        action.append(link);
-      } else action.textContent = '—';
-      row.append(action);
-      tbody.append(row);
+        row.append(link);
+      }
+      list.append(row);
     }
-    table.append(thead, tbody);
-    tableWrap.append(table);
-    body.append(tableWrap);
-
-    const tokens = [
-      ...(domain.projections ?? []).map((value) => `projection:${value}`),
-      ...(domain.owns ?? []).slice(0, 6),
-    ];
-    if (tokens.length) {
-      const tokenLine = element(
-        'div',
-        'mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted-foreground',
-      );
-      for (const token of tokens)
-        tokenLine.append(
-          element('span', token.startsWith('projection:') ? 'text-primary' : '', token),
-        );
-      body.append(tokenLine);
-    }
+    body.append(list);
     details.append(body);
     return details;
   }
@@ -542,11 +277,6 @@ const featuredProjects = projects.slice(0, 6);
     for (const domain of payload.domains)
       grid.insertBefore(renderOwnerDomain(domain), gate ?? null);
     gate?.remove();
-
-    for (const [key, value] of Object.entries(payload.facts)) {
-      const target = document.querySelector<HTMLElement>(`[data-systems-fact="${key}"]`);
-      if (target && Number.isFinite(value)) target.textContent = String(value);
-    }
   }
 
   async function refreshSystemsAccessState() {
@@ -570,8 +300,8 @@ const featuredProjects = projects.slice(0, 6);
       )
         return;
 
-      label.textContent = 'OWNER VIEW';
-      description.textContent = '已认证；Owner-only 目录与 privateRef 已可按需加载';
+      label.textContent = 'Owner view';
+      description.textContent = '私有入口已可按需解锁';
       action.href = '/cdn-cgi/access/logout';
       action.textContent = 'Sign out';
 
@@ -589,8 +319,9 @@ const featuredProjects = projects.slice(0, 6);
         return;
       applyOwnerSystemsPayload(ownerPayload);
     } catch {
-      // Public mode is the safe default.
+      // Public mode remains the fail-closed default.
     }
   }
+
   void refreshSystemsAccessState();
 </script>
