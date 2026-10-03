@@ -17,7 +17,7 @@ For the current product phase, the global floating header has exactly two semant
 1. **Search** — opens the command/search palette and is the entry point for destination navigation, including Personal Systems.
 2. **Access** — represents authentication state and changes to Logout after Cloudflare Access authentication.
 
-No third destination button is allowed in the global header. Personal Systems, Projects, Notes, Tools, Blog, Discover, Infrastructure, and future destination surfaces belong in the Search navigation index rather than permanent header chrome.
+No third destination button is allowed in the global header. Personal Systems, Projects, Notes, Tools, Blog, Infrastructure, and future destination surfaces belong in the Search navigation index rather than permanent header chrome.
 
 The machine-readable policy lives in `src/config/navigation-policy.ts`:
 

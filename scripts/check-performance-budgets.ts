@@ -20,7 +20,6 @@ const PAGE_BUDGETS: readonly PageBudget[] = [
   { route: '/notes', file: 'notes/index.html', rawKiB: 200, gzipKiB: 60 },
   { route: '/about', file: 'about/index.html', rawKiB: 200, gzipKiB: 32 },
   { route: '/about/tags', file: 'about/tags/index.html', rawKiB: 220, gzipKiB: 24 },
-  { route: '/discover', file: 'discover/index.html', rawKiB: 64, gzipKiB: 20 },
   { route: '/tools', file: 'tools/index.html', rawKiB: 96, gzipKiB: 16 },
 ];
 
@@ -42,7 +41,7 @@ const ASSET_BUDGETS: readonly AssetBudget[] = [
 function collectFiles(directory: string): string[] {
   if (!fs.existsSync(directory)) return [];
 
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const filePath = path.join(directory, entry.name);
     return entry.isDirectory() ? collectFiles(filePath) : [filePath];
   });
@@ -71,12 +70,13 @@ function assertPageBudgets(): void {
     const gzipStatus = gzipBytes <= gzipLimit ? 'PASS' : 'FAIL';
 
     console.log(
-      `${budget.route} HTML: raw ${formatKiB(rawBytes)} / ${budget.rawKiB} KiB [${rawStatus}], `
-      + `gzip ${formatKiB(gzipBytes)} / ${budget.gzipKiB} KiB [${gzipStatus}]`,
+      `${budget.route} HTML: raw ${formatKiB(rawBytes)} / ${budget.rawKiB} KiB [${rawStatus}], ` +
+        `gzip ${formatKiB(gzipBytes)} / ${budget.gzipKiB} KiB [${gzipStatus}]`,
     );
 
     if (rawBytes > rawLimit) failures.push(`${budget.route} raw HTML exceeds ${budget.rawKiB} KiB`);
-    if (gzipBytes > gzipLimit) failures.push(`${budget.route} gzip HTML exceeds ${budget.gzipKiB} KiB`);
+    if (gzipBytes > gzipLimit)
+      failures.push(`${budget.route} gzip HTML exceeds ${budget.gzipKiB} KiB`);
   }
 
   if (failures.length > 0) {
@@ -95,8 +95,8 @@ function assertAssetBudgets(): void {
         ? fs.statSync(assetPath).size
         : null
       : files
-        .filter(filePath => path.extname(filePath) === budget.extension)
-        .reduce((total, filePath) => total + fs.statSync(filePath).size, 0);
+          .filter((filePath) => path.extname(filePath) === budget.extension)
+          .reduce((total, filePath) => total + fs.statSync(filePath).size, 0);
     const label = budget.label;
     const limit = budget.maxKiB * KIB;
     if (bytes === null) {
@@ -105,15 +105,20 @@ function assertAssetBudgets(): void {
     }
 
     const status = bytes <= limit ? 'PASS' : 'FAIL';
-    const gzipBytes = assetPath && budget.gzipKiB !== undefined
-      ? gzipSync(fs.readFileSync(assetPath)).byteLength
-      : null;
+    const gzipBytes =
+      assetPath && budget.gzipKiB !== undefined
+        ? gzipSync(fs.readFileSync(assetPath)).byteLength
+        : null;
     const gzipLimit = budget.gzipKiB === undefined ? null : budget.gzipKiB * KIB;
-    const gzipStatus = gzipBytes === null || gzipLimit === null || gzipBytes <= gzipLimit ? 'PASS' : 'FAIL';
-    const gzipReport = gzipBytes === null || budget.gzipKiB === undefined
-      ? ''
-      : `, gzip ${formatKiB(gzipBytes)} / ${budget.gzipKiB} KiB [${gzipStatus}]`;
-    console.log(`${label}: raw ${formatKiB(bytes)} / ${budget.maxKiB} KiB [${status}]${gzipReport}`);
+    const gzipStatus =
+      gzipBytes === null || gzipLimit === null || gzipBytes <= gzipLimit ? 'PASS' : 'FAIL';
+    const gzipReport =
+      gzipBytes === null || budget.gzipKiB === undefined
+        ? ''
+        : `, gzip ${formatKiB(gzipBytes)} / ${budget.gzipKiB} KiB [${gzipStatus}]`;
+    console.log(
+      `${label}: raw ${formatKiB(bytes)} / ${budget.maxKiB} KiB [${status}]${gzipReport}`,
+    );
     if (bytes > limit) failures.push(`${label} exceeds ${budget.maxKiB} KiB`);
     if (gzipBytes !== null && gzipLimit !== null && gzipBytes > gzipLimit) {
       failures.push(`${label} gzip exceeds ${budget.gzipKiB} KiB`);
@@ -132,14 +137,18 @@ function assertAboutMarkup(): void {
   if (!fs.existsSync(aboutPath) || !fs.existsSync(tagsPath) || !fs.existsSync(contributionsPath)) {
     throw new Error('About markup boundary inputs are missing.');
   }
-  const contributionPayload = JSON.parse(fs.readFileSync(contributionsPath, 'utf8')) as { contributions?: unknown[] };
-  const contributionDays = Array.isArray(contributionPayload.contributions) ? contributionPayload.contributions.length : 0;
-  assertAboutMarkupBoundary(
-    fs.readFileSync(aboutPath, 'utf8'),
-    fs.readFileSync(tagsPath, 'utf8'),
-    { contributionDays },
+  const contributionPayload = JSON.parse(fs.readFileSync(contributionsPath, 'utf8')) as {
+    contributions?: unknown[];
+  };
+  const contributionDays = Array.isArray(contributionPayload.contributions)
+    ? contributionPayload.contributions.length
+    : 0;
+  assertAboutMarkupBoundary(fs.readFileSync(aboutPath, 'utf8'), fs.readFileSync(tagsPath, 'utf8'), {
+    contributionDays,
+  });
+  console.log(
+    `about markup: ${contributionDays} compact contribution cells; tag directory remains full SSR`,
   );
-  console.log(`about markup: ${contributionDays} compact contribution cells; tag directory remains full SSR`);
 }
 
 function reportNotesCatalog(): void {
@@ -153,9 +162,10 @@ function reportNotesCatalog(): void {
   const catalogPayload: unknown = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
   assertNotesCatalogBoundary(notesHtml, catalogPayload);
 
-  console.log(`notes catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_NOTE_CARD_COUNT} SSR cards)`);
+  console.log(
+    `notes catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_NOTE_CARD_COUNT} SSR cards)`,
+  );
 }
-
 
 function reportToolsCatalog(): void {
   const catalogPath = path.join(DIST_DIR, 'data', 'tools-catalog.json');
@@ -168,7 +178,9 @@ function reportToolsCatalog(): void {
   const catalogPayload: unknown = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
   assertToolsCatalogBoundary(toolsHtml, catalogPayload);
 
-  console.log(`tools catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_TOOL_CARD_COUNT} SSR cards)`);
+  console.log(
+    `tools catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_TOOL_CARD_COUNT} SSR cards)`,
+  );
 }
 
 if (!fs.existsSync(DIST_DIR)) {

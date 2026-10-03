@@ -66,14 +66,6 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
   {
     type: 'cmd',
     label: 'NAV',
-    title: '资产发现 / Discover',
-    desc: 'Global index search',
-    href: '/discover',
-    alias: ['/discover', 'search'],
-  },
-  {
-    type: 'cmd',
-    label: 'NAV',
     title: '知识笔记 / Notes',
     desc: 'Obsidian vault notes',
     href: '/notes',

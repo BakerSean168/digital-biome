@@ -67,6 +67,11 @@ artifact measurements, not synthetic browser timing claims.
 
 ## [Unreleased]
 
+### Removed
+
+- Retired the temporary `/about/refactor` learning surface; its reusable lessons now live in `docs/refactor-retrospective-v0.1-v0.4.md` and the phase-specific refactor documents.
+- Retired `/discover`; global Search remains the canonical search/navigation surface, while asset browsing lives in `/systems`, `/infrastructure`, `/dev`, and `/notes`.
+
 ## [0.5.0] - 2026-09-11
 
 ### Added
