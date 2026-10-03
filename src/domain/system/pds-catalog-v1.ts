@@ -1,8 +1,13 @@
 export type PdsRepositoryRelation = 'canonical' | 'transitional' | 'archived' | 'external';
+export type PdsRepositoryLifecycle = 'active' | 'experimental' | 'deprecated' | 'archived';
+export type PdsRepositoryMetadataState = 'present' | 'external-upstream';
 
 export interface PdsCatalogRepositoryRef {
   id: string;
   relation: PdsRepositoryRelation;
+  webUrl?: string;
+  lifecycle?: PdsRepositoryLifecycle;
+  metadataState?: PdsRepositoryMetadataState;
 }
 
 export interface PdsCatalogDomain {
@@ -16,10 +21,8 @@ export interface PdsCatalogDomain {
   principle?: string;
 }
 
-export interface PdsCatalogRepository {
-  id: string;
+export interface PdsCatalogRepository extends PdsCatalogRepositoryRef {
   domainId: string;
-  relation: PdsRepositoryRelation;
 }
 
 export interface PdsCatalogV1 {
@@ -49,6 +52,13 @@ const RELATIONS = new Set<PdsRepositoryRelation>([
   'archived',
   'external',
 ]);
+const LIFECYCLES = new Set<PdsRepositoryLifecycle>([
+  'active',
+  'experimental',
+  'deprecated',
+  'archived',
+]);
+const METADATA_STATES = new Set<PdsRepositoryMetadataState>(['present', 'external-upstream']);
 
 function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -74,6 +84,33 @@ function optionalStringArray(value: unknown, label: string): string[] | undefine
   return value;
 }
 
+function assertOptionalRepositoryNavigation(value: Record<string, unknown>, label: string): void {
+  if (value.webUrl !== undefined) {
+    if (
+      typeof value.webUrl !== 'string' ||
+      !/^https:\/\/github\.com\/[^/]+\/[^/]+$/.test(value.webUrl)
+    ) {
+      throw new Error(`${label}.webUrl is invalid`);
+    }
+  }
+  if (value.lifecycle !== undefined) {
+    if (
+      typeof value.lifecycle !== 'string' ||
+      !LIFECYCLES.has(value.lifecycle as PdsRepositoryLifecycle)
+    ) {
+      throw new Error(`${label}.lifecycle is invalid`);
+    }
+  }
+  if (value.metadataState !== undefined) {
+    if (
+      typeof value.metadataState !== 'string' ||
+      !METADATA_STATES.has(value.metadataState as PdsRepositoryMetadataState)
+    ) {
+      throw new Error(`${label}.metadataState is invalid`);
+    }
+  }
+}
+
 function parseRepositoryRef(value: unknown, label: string): PdsCatalogRepositoryRef {
   assertRecord(value, label);
   assertNonEmptyString(value.id, `${label}.id`);
@@ -83,7 +120,8 @@ function parseRepositoryRef(value: unknown, label: string): PdsCatalogRepository
   ) {
     throw new Error(`${label}.relation is invalid`);
   }
-  return { id: value.id, relation: value.relation as PdsRepositoryRelation };
+  assertOptionalRepositoryNavigation(value, label);
+  return value as unknown as PdsCatalogRepositoryRef;
 }
 
 export function parsePdsCatalogV1(raw: string): PdsCatalogV1 {
@@ -152,6 +190,7 @@ export function parsePdsCatalogV1(raw: string): PdsCatalogV1 {
     ) {
       throw new Error(`${rawRepository.id}.relation is invalid`);
     }
+    assertOptionalRepositoryNavigation(rawRepository, `repository[${index}]`);
     if (repositoryIds.has(rawRepository.id)) {
       throw new Error(`duplicate repository id: ${rawRepository.id}`);
     }

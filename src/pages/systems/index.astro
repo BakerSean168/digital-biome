@@ -3,15 +3,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PersonalSystemsHub from '../../components/assets/PersonalSystemsHub.astro';
 import { getProjectShowcaseAssets } from '../../utils/notes';
 import {
-  getSystemDomains,
+  getPublicSystemDomains,
   getSystemQuickAccess,
-  systemFactCounts,
+  publicSystemFactCounts,
 } from '../../utils/personal-systems';
 
-const domains = getSystemDomains();
+const domains = getPublicSystemDomains();
 const quickAccess = getSystemQuickAccess();
 const projects = getProjectShowcaseAssets();
-const facts = systemFactCounts();
+const facts = publicSystemFactCounts();
 ---
 
 <BaseLayout title="Personal Systems" description="个人系统、服务、项目与数字资产控制面板">
