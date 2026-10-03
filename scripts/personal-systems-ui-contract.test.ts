@@ -12,6 +12,10 @@ const launcherIndex = fs.readFileSync(
   path.resolve('src/pages/data/system-launcher-index.json.ts'),
   'utf8',
 );
+const infrastructureDetail = fs.readFileSync(
+  path.resolve('src/pages/infrastructure/[assetId].astro'),
+  'utf8',
+);
 const infrastructure = fs.readFileSync(
   path.resolve('src/components/assets/InfrastructureShowcase.astro'),
   'utf8',
@@ -58,4 +62,17 @@ test('global Search loads the small launcher index instead of bundling infrastru
   assert.match(siteSearch, /\/data\/system-launcher-index\.json/);
   assert.doesNotMatch(siteSearch, /from ['"]\.\.\/\.\.\/utils\/personal-systems/);
   assert.match(launcherIndex, /getPortalServiceSearchIndex/);
+});
+
+test('Infrastructure detail keeps entrypoints prominent without returning to a card wall', () => {
+  assert.match(infrastructureDetail, /Entrypoints/);
+  assert.match(infrastructureDetail, /Facts/);
+  assert.match(infrastructureDetail, /Relationships/);
+  assert.match(infrastructureDetail, /data-private-link=/);
+  assert.match(infrastructureDetail, /data-private-value=/);
+  assert.match(infrastructureDetail, /data-private-link-value=/);
+  assert.doesNotMatch(infrastructureDetail, /rounded-\[28px\]/);
+  assert.doesNotMatch(infrastructureDetail, /bg-card\/70/);
+  assert.doesNotMatch(infrastructureDetail, /\bgetInfrastructureResource\b/);
+  assert.doesNotMatch(infrastructureDetail, /Layers3/);
 });

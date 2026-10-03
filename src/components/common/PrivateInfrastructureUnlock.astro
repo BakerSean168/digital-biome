@@ -7,10 +7,15 @@
 
   const valueTargets = document.querySelectorAll<HTMLElement>('[data-private-value]');
   const linkTargets = document.querySelectorAll<HTMLAnchorElement>('[data-private-link]');
+  const linkValueTargets = document.querySelectorAll<HTMLElement>('[data-private-link-value]');
 
   function isStringRecord(value: unknown): value is Record<string, string> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value) &&
-      Object.values(value).every(item => typeof item === 'string');
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value) &&
+      Object.values(value).every((item) => typeof item === 'string')
+    );
   }
 
   function isPrivatePayload(value: unknown): value is PrivateInfrastructurePayload {
@@ -29,7 +34,8 @@
   }
 
   async function unlockPrivateInfrastructure() {
-    if (valueTargets.length === 0 && linkTargets.length === 0) return;
+    if (valueTargets.length === 0 && linkTargets.length === 0 && linkValueTargets.length === 0)
+      return;
 
     try {
       const response = await fetch('/api/private/infrastructure', {
@@ -59,6 +65,12 @@
         if (label && target.dataset.privateUnlockedLabel) {
           label.textContent = target.dataset.privateUnlockedLabel;
         }
+      }
+
+      for (const target of linkValueTargets) {
+        const key = target.dataset.privateLinkValue;
+        const href = key ? getAllowedHref(payload.links[key] || '') : null;
+        if (href) target.textContent = href;
       }
     } catch {
       // Access failures intentionally leave all private fields locked.
