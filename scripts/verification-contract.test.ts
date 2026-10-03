@@ -38,6 +38,21 @@ test('retired infra-public-v1 consumer code is not part of the current applicati
   assert.doesNotMatch(JSON.stringify(packageJson.scripts), /infra-public-v1/);
 });
 
+test('retired twin-public-v1 consumer code is not part of the current application', () => {
+  for (const relative of [
+    './data-products/twin-public-v1.ts',
+    './data-products/twin-public-v1.test.ts',
+    './data-products/sync-twin-public-v1.ts',
+  ]) {
+    assert.equal(
+      existsSync(fileURLToPath(new URL(relative, import.meta.url))),
+      false,
+      `${relative} should remain retired`,
+    );
+  }
+  assert.doesNotMatch(JSON.stringify(packageJson.scripts), /twin-public-v1/);
+});
+
 test('the required check workflow runs for every pull request to main', () => {
   const pullRequestBlock = ciWorkflow.match(/ {2}pull_request:\n[\s\S]*?(?=\n\nconcurrency:)/)?.[0];
   assert.ok(pullRequestBlock);
