@@ -83,6 +83,33 @@ test('SiteSearch discovers launcher services without a separate asset-discovery 
   await expect(page).toHaveURL(/\/systems#service-svc-litellm-model-gateway$/);
 });
 
+test('Infrastructure detail reveals protected entrypoint URL only after private binding unlock', async ({
+  page,
+}) => {
+  const target = 'https://owner.example.test:10446/';
+  await page.route('**/api/private/infrastructure', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        version: 1,
+        values: {},
+        links: { 'svc-litellm-model-gateway.links.admin': target },
+      }),
+    });
+  });
+
+  await page.goto('/infrastructure/svc-litellm-model-gateway/');
+  const protectedLink = page
+    .locator('[data-private-link="svc-litellm-model-gateway.links.admin"]')
+    .first();
+  await expect(protectedLink).toHaveAttribute('href', target);
+  await expect(protectedLink.locator('[data-private-link-label]')).toHaveText('Open Admin');
+  await expect(
+    page.locator('[data-private-link-value="svc-litellm-model-gateway.links.admin"]'),
+  ).toHaveText(target);
+});
+
 test('Tools keeps 16 SSR cards, lazy-loads the full catalog, and honors category URL state', async ({
   page,
   request,

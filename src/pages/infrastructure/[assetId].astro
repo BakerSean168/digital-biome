@@ -1,9 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { ExternalLink, Lock, Server, Network, Boxes, Layers3 } from '@lucide/astro';
+import { ExternalLink, Lock, Network, Boxes, Server } from '@lucide/astro';
 import {
   getInfrastructureConnections,
-  getInfrastructureResource,
   getInfrastructureResources,
 } from '../../utils/infrastructure';
 import type { InfrastructureResource } from '../../utils/infrastructure';
@@ -21,7 +20,7 @@ interface Props {
   resource: InfrastructureResource;
 }
 
-const { resource } = Astro.props;
+const { resource } = Astro.props as Props;
 const currentPath = Astro.url.pathname;
 const allResources = getInfrastructureResources();
 const resourceMap = new Map(allResources.map((item) => [item.id, item]));
@@ -38,179 +37,54 @@ const relatedConnections = connections.filter(
   (connection) => connection.from === resource.id || connection.to === resource.id,
 );
 const detailEntries = Object.entries(resource.details ?? {});
-const kindIcon =
-  resource.kind === 'network'
-    ? Network
-    : resource.kind === 'service'
-      ? Boxes
-      : resource.kind === 'platform'
-        ? Layers3
-        : Server;
-const KindIcon = kindIcon;
+const KindIcon = resource.kind === 'network' ? Network : resource.kind === 'host' ? Server : Boxes;
+const factRows = [
+  resource.provider ? ['Provider', resource.provider] : null,
+  resource.region ? ['Region', resource.region] : null,
+  resource.role ? ['Role', resource.role] : null,
+  resource.hostRef ? ['Managed host', resource.hostRef] : null,
+  ...detailEntries.map(([label, value]) => [label, value] as const),
+].filter(Boolean) as Array<readonly [string, string]>;
 ---
 
 <BaseLayout title={resource.title} description={resource.description} type="article">
   <main class="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
-    <section class="mb-8 rounded-[28px] border border-border bg-card/80 p-7 md:p-9">
-      <div class="mb-5 flex flex-wrap items-center gap-2">
-        <span class="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-primary">
-          <KindIcon size={12} />
-          {resource.kind}
-        </span>
-        <span class="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-          {resource.status}
-        </span>
-        <span class="rounded-full border border-border px-3 py-1 text-xs font-mono text-muted-foreground">
-          {resource.id}
-        </span>
-        <span class="rounded-full border border-border px-3 py-1 text-[10px] font-mono text-muted-foreground">
-          OWNER: PERSONAL-INFRASTRUCTURE
-        </span>
-      </div>
+    <header class="border-b border-border/70 pb-8">
+      <a href="/infrastructure" class="text-xs text-muted-foreground hover:text-primary">
+        Infrastructure ←
+      </a>
 
-      <h1 class="text-4xl font-semibold tracking-tight text-foreground">{resource.title}</h1>
-      {resource.titleEn && resource.titleEn !== resource.title && (
-        <p class="mt-2 font-mono text-sm text-muted-foreground">{resource.titleEn}</p>
-      )}
-      <p class="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">{resource.description}</p>
-
-      <div class="mt-6 flex flex-wrap gap-2">
-        {resource.groups.map((group) => (
-          <span class="rounded-full bg-pane px-3 py-1 text-xs font-mono text-muted-foreground">
-            #{group}
-          </span>
-        ))}
-      </div>
-    </section>
-
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <div class="space-y-8">
-        <section class="rounded-[28px] border border-border bg-card/70 p-6">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Infrastructure Facts
-          </h2>
-          <div class="mt-5 grid gap-4 sm:grid-cols-2">
-            {resource.provider && (
-              <div class="rounded-sm border border-border/60 p-4">
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Provider
-                </div>
-                <div class="mt-1 text-sm text-foreground">{resource.provider}</div>
-              </div>
-            )}
-            {resource.region && (
-              <div class="rounded-sm border border-border/60 p-4">
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Region
-                </div>
-                <div class="mt-1 text-sm text-foreground">{resource.region}</div>
-              </div>
-            )}
-            {resource.role && (
-              <div class="rounded-sm border border-border/60 p-4">
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Role
-                </div>
-                <div class="mt-1 text-sm text-foreground">{resource.role}</div>
-              </div>
-            )}
-            {resource.hostRef && (
-              <div class="rounded-sm border border-border/60 p-4">
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Managed Host Ref
-                </div>
-                <div class="mt-1 text-sm font-mono text-foreground">{resource.hostRef}</div>
-              </div>
-            )}
-            {detailEntries.map(([label, value]) => (
-              <div class="rounded-sm border border-border/60 p-4">
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  {label}
-                </div>
-                <div class="mt-1 text-sm text-foreground">{value}</div>
-              </div>
-            ))}
-            {Object.entries(resource.privateValues ?? {}).map(([label, privateRef]) => (
-              <div class="rounded-sm border border-border/60 p-4">
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  {label}
-                </div>
-                <div class="mt-1 text-sm font-mono text-foreground" data-private-value={privateRef}>
-                  LOCKED
-                </div>
-              </div>
-            ))}
+      <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground">
+            <span class="inline-flex items-center gap-1.5 text-primary">
+              <KindIcon size={12} /> {resource.kind}
+            </span>
+            <span>{resource.status}</span>
+            <span class="font-mono">{resource.id}</span>
           </div>
-        </section>
+          <h1 class="mt-3 text-3xl font-semibold tracking-[-0.025em] text-foreground md:text-4xl">
+            {resource.title}
+          </h1>
+          {resource.titleEn && resource.titleEn !== resource.title && (
+            <p class="mt-1.5 text-sm text-muted-foreground">{resource.titleEn}</p>
+          )}
+          <p class="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
+            {resource.description}
+          </p>
+        </div>
 
-        <section class="rounded-[28px] border border-border bg-card/70 p-6">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Relationships
-          </h2>
-          <div class="mt-5 space-y-3">
-            {parent && (
-              <a
-                href={`/infrastructure/${parent.id}`}
-                class="block rounded-sm border border-border/60 p-4 transition-colors hover:border-primary/40"
-              >
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Parent / Host
-                </div>
-                <div class="mt-1 text-sm text-foreground">{parent.title}</div>
-              </a>
-            )}
-
-            {children.map((child) => (
-              <a
-                href={`/infrastructure/${child.id}`}
-                class="block rounded-sm border border-border/60 p-4 transition-colors hover:border-primary/40"
-              >
-                <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                  Child / Hosted Resource
-                </div>
-                <div class="mt-1 text-sm text-foreground">{child.title}</div>
-              </a>
-            ))}
-
-            {relatedConnections.map((connection) => {
-              const peerId = connection.from === resource.id ? connection.to : connection.from;
-              const peer = resourceMap.get(peerId);
-              return peer ? (
-                <a
-                  href={`/infrastructure/${peer.id}`}
-                  class="block rounded-sm border border-border/60 p-4 transition-colors hover:border-primary/40"
-                >
-                  <div class="text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
-                    {connection.kind}
-                  </div>
-                  <div class="mt-1 text-sm text-foreground">{peer.title}</div>
-                </a>
-              ) : null;
-            })}
-
-            {!parent && children.length === 0 && relatedConnections.length === 0 && (
-              <p class="text-sm text-muted-foreground">当前投影没有额外关系。</p>
-            )}
-          </div>
-        </section>
-      </div>
-
-      <aside class="space-y-4">
-        <section class="rounded-[28px] border border-border bg-card/70 p-5">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Entrypoints
-          </h2>
-          <div class="mt-4 flex flex-col gap-3">
-            {(resource.links ?? []).map((link) =>
+        {(resource.links ?? []).length > 0 && (
+          <div class="flex shrink-0 flex-wrap gap-2">
+            {(resource.links ?? []).slice(0, 2).map((link) =>
               link.url ? (
                 <a
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex items-center justify-between rounded-sm border border-border px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  class="inline-flex items-center gap-1.5 border border-border px-3 py-2 text-sm text-primary hover:border-primary/50 hover:text-foreground"
                 >
-                  <span>{link.label}</span>
-                  <ExternalLink size={13} />
+                  {link.label} <ExternalLink size={12} />
                 </a>
               ) : link.privateRef ? (
                 <a
@@ -219,30 +93,158 @@ const KindIcon = kindIcon;
                   data-private-unlocked-label={link.label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex items-center justify-between rounded-sm border border-border/50 px-4 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  class="inline-flex items-center gap-1.5 border border-border px-3 py-2 text-sm text-amber-300 hover:border-primary/50 hover:text-primary"
                 >
-                  <span data-private-link-label>{link.label}</span>
-                  <Lock size={13} />
+                  <Lock size={12} /> <span data-private-link-label>Unlock</span>
                 </a>
               ) : null,
             )}
-            {(resource.links ?? []).length === 0 && (
-              <p class="text-sm font-mono text-muted-foreground">[ NO_ENTRYPOINT ]</p>
+          </div>
+        )}
+      </div>
+    </header>
+
+    <div class="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-14">
+      <div class="space-y-10">
+        <section>
+          <div class="mb-3 flex items-center justify-between gap-4">
+            <h2 class="text-sm font-semibold text-foreground">Facts</h2>
+            <span class="text-xs text-muted-foreground">Personal Infrastructure</span>
+          </div>
+          <div class="divide-y divide-border/35 border-y border-border/40">
+            {factRows.map(([label, value]) => (
+              <div class="grid gap-1 py-3.5 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-6">
+                <div class="text-xs uppercase tracking-[0.1em] text-muted-foreground">{label}</div>
+                <div class="text-sm text-foreground">{value}</div>
+              </div>
+            ))}
+            {Object.entries(resource.privateValues ?? {}).map(([label, privateRef]) => (
+              <div class="grid gap-1 py-3.5 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-6">
+                <div class="text-xs uppercase tracking-[0.1em] text-muted-foreground">{label}</div>
+                <div class="font-mono text-sm text-foreground" data-private-value={privateRef}>
+                  LOCKED
+                </div>
+              </div>
+            ))}
+            {factRows.length === 0 && Object.keys(resource.privateValues ?? {}).length === 0 && (
+              <div class="py-4 text-sm text-muted-foreground">暂无额外事实。</div>
             )}
           </div>
         </section>
 
-        <section class="rounded-[28px] border border-border bg-card/70 p-5">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Provenance
-          </h2>
-          <p class="mt-4 text-xs font-mono leading-6 text-muted-foreground">
-            Canonical owner: Personal Infrastructure
-            <br />
-            Product: infra-public-v2
-            <br />
-            Consumer: Digital Biome
-          </p>
+        <section>
+          <h2 class="text-sm font-semibold text-foreground">Relationships</h2>
+          <div class="mt-3 divide-y divide-border/35 border-y border-border/40">
+            {parent && (
+              <a
+                href={`/infrastructure/${parent.id}`}
+                class="grid gap-1 py-3.5 sm:grid-cols-[160px_minmax(0,1fr)_auto] sm:items-center sm:gap-6 hover:text-primary"
+              >
+                <span class="text-xs uppercase tracking-[0.1em] text-muted-foreground">
+                  Parent / Host
+                </span>
+                <span class="text-sm text-foreground">{parent.title}</span>
+                <span class="text-xs text-muted-foreground">→</span>
+              </a>
+            )}
+            {children.map((child) => (
+              <a
+                href={`/infrastructure/${child.id}`}
+                class="grid gap-1 py-3.5 sm:grid-cols-[160px_minmax(0,1fr)_auto] sm:items-center sm:gap-6 hover:text-primary"
+              >
+                <span class="text-xs uppercase tracking-[0.1em] text-muted-foreground">
+                  Hosted resource
+                </span>
+                <span class="text-sm text-foreground">{child.title}</span>
+                <span class="text-xs text-muted-foreground">→</span>
+              </a>
+            ))}
+            {relatedConnections.map((connection) => {
+              const peerId = connection.from === resource.id ? connection.to : connection.from;
+              const peer = resourceMap.get(peerId);
+              return peer ? (
+                <a
+                  href={`/infrastructure/${peer.id}`}
+                  class="grid gap-1 py-3.5 sm:grid-cols-[160px_minmax(0,1fr)_auto] sm:items-center sm:gap-6 hover:text-primary"
+                >
+                  <span class="text-xs uppercase tracking-[0.1em] text-muted-foreground">
+                    {connection.kind}
+                  </span>
+                  <span class="text-sm text-foreground">{peer.title}</span>
+                  <span class="text-xs text-muted-foreground">→</span>
+                </a>
+              ) : null;
+            })}
+            {!parent && children.length === 0 && relatedConnections.length === 0 && (
+              <div class="py-4 text-sm text-muted-foreground">当前投影没有额外关系。</div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <aside class="space-y-8 lg:border-l lg:border-border/50 lg:pl-6">
+        <section>
+          <h2 class="text-sm font-semibold text-foreground">Entrypoints</h2>
+          <div class="mt-3 divide-y divide-border/35 border-y border-border/40">
+            {(resource.links ?? []).map((link) =>
+              link.url ? (
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="block py-3 hover:text-primary"
+                >
+                  <span class="flex items-center justify-between gap-4 text-sm text-foreground">
+                    <span>{link.label}</span>
+                    <ExternalLink size={12} />
+                  </span>
+                  <span class="mt-1 block truncate font-mono text-[11px] text-muted-foreground">
+                    {link.url}
+                  </span>
+                </a>
+              ) : link.privateRef ? (
+                <div class="py-3">
+                  <a
+                    href={`/login?next=${encodeURIComponent(currentPath)}`}
+                    data-private-link={link.privateRef}
+                    data-private-unlocked-label={link.label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex items-center justify-between gap-4 text-sm text-amber-300 hover:text-primary"
+                  >
+                    <span data-private-link-label>Unlock</span>
+                    <Lock size={12} />
+                  </a>
+                  <span
+                    data-private-link-value={link.privateRef}
+                    class="mt-1 block truncate font-mono text-[11px] text-muted-foreground"
+                  >
+                    LOCKED
+                  </span>
+                </div>
+              ) : null,
+            )}
+            {(resource.links ?? []).length === 0 && (
+              <div class="py-3 text-sm text-muted-foreground">No entrypoint</div>
+            )}
+          </div>
+        </section>
+
+        {resource.groups.length > 0 && (
+          <section>
+            <h2 class="text-sm font-semibold text-foreground">Groups</h2>
+            <div class="mt-3 flex flex-wrap gap-x-3 gap-y-2 text-xs text-muted-foreground">
+              {resource.groups.map((group) => (
+                <span>#{group}</span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section class="border-t border-border/40 pt-5 text-xs leading-6 text-muted-foreground">
+          <div>Owner · Personal Infrastructure</div>
+          <div>Projection · infra-public-v2</div>
+          <div>Consumer · Digital Biome</div>
         </section>
       </aside>
     </div>
