@@ -22,7 +22,6 @@
     "verify:data-products:infra:lock": "tsx scripts/data-products/verify-infra-public-v2-lock.ts",
     "sync:data-products:knowledge": "tsx scripts/data-products/sync-knowledge-public-v1.ts",
     "sync:data-products:infra": "tsx scripts/data-products/materialize-infra-public-v2.ts",
-    "sync:data-products:twin": "tsx scripts/data-products/sync-twin-public-v1.ts",
     "check:performance": "tsx scripts/check-performance-budgets.ts",
     "verify": "pnpm quality && pnpm check && pnpm check:edge && pnpm test:edge && pnpm test:unit && pnpm test:infrastructure",
     "verify:full": "pnpm verify && pnpm build:only && pnpm check:performance",
