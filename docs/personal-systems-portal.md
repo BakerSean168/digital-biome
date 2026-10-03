@@ -4,7 +4,7 @@ Digital Biome now treats `/systems` as the presentation surface for the Personal
 
 ## Ownership model
 
-- **Personal Digital System** owns only system/domain/repository boundaries and publishes `pds-catalog-v1`.
+- **Personal Digital System** owns system/domain/repository boundaries plus canonical repository navigation/lifecycle metadata and publishes `pds-catalog-v1`.
 - **Personal Infrastructure** owns runtime infrastructure facts and publishes `infra-public-v2` plus the protected RuntimeBinding.
 - **Thought Forest** owns knowledge facts and publishes `knowledge-public-v1`.
 - **Product repositories** own application behavior.
@@ -37,3 +37,16 @@ Cloudflare Access remains path/API policy enforcement. UI locks are only present
 ## Sync model
 
 The public-safe PDS catalog is materialized into Digital Biome by an automation PR. The workflow checks out the private PDS repository using a read-only deploy key, runs the producer-owned exporter at an exact Git revision, verifies the digest, and commits only the generated public-safe artifact plus its lock. Normal Digital Biome builds therefore do not need access to the private PDS repository.
+
+## Domain visibility policy
+
+Digital Biome owns a small presentation-only policy in `src/config/personal-systems-access.ts`:
+
+- `public` domains are rendered into the static `/systems` HTML;
+- `owner` domains are absent from public HTML and are loaded from `/api/private/systems` only after Cloudflare Access authentication;
+- `hidden` domains are omitted from both presentation surfaces;
+- unknown future domains fail closed to `owner` until explicitly classified.
+
+This policy deliberately stays out of Personal Digital System. PDS defines catalog truth; Digital Biome defines audience/presentation. The current public system map exposes Infrastructure, Knowledge, and Presentation. Products, Personal Configuration, Personal Twin, and Agent Platform are owner-only.
+
+Repository cards may expose a direct GitHub jump only when `pds-catalog-v1` carries the producer-owned `webUrl`. Digital Biome does not guess repository URLs from names.

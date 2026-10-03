@@ -105,15 +105,20 @@ const domainAccent: Record<string, string> = {
 
     <div class="relative mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {[
-        ['DOMAINS', facts.domainCount],
-        ['REPOSITORIES', facts.repositoryCount],
-        ['PROJECTIONS', facts.projectionCount],
-        ['ACTIVE SERVICES', facts.activeServiceCount],
-        ['ACTIVE HOSTS', facts.activeHostCount],
-      ].map(([label, value]) => (
+        ['domainCount', 'DOMAINS', facts.domainCount],
+        ['repositoryCount', 'REPOSITORIES', facts.repositoryCount],
+        ['projectionCount', 'PROJECTIONS', facts.projectionCount],
+        ['activeServiceCount', 'ACTIVE SERVICES', facts.activeServiceCount],
+        ['activeHostCount', 'ACTIVE HOSTS', facts.activeHostCount],
+      ].map(([key, label, value]) => (
         <div class="border border-border/70 bg-card/35 px-4 py-3">
           <div class="font-mono text-[9px] tracking-widest text-muted-foreground">{label}</div>
-          <div class="mt-1 text-2xl font-semibold tracking-tight text-foreground">{value}</div>
+          <div
+            class="mt-1 text-2xl font-semibold tracking-tight text-foreground"
+            data-systems-fact={key}
+          >
+            {value}
+          </div>
         </div>
       ))}
     </div>
@@ -210,12 +215,12 @@ const domainAccent: Record<string, string> = {
         PDS 领域与 Owner 边界
       </h2>
       <p class="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-        这里展示的是连接层，不复制各仓库的业务事实。Repository 归属、Projection 和 Owns 关系来自
-        pds-catalog-v1。
+        这里展示的是连接层，不复制各仓库的业务事实。Public View 只渲染明确公开的领域；登录 Owner
+        View 后再通过受保护 API 补充个人仓库与配置域。
       </p>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid gap-4 lg:grid-cols-2" data-system-domain-grid>
       {domains.map((domain) => (
         <article class="border border-border/70 bg-card/30 p-5">
           <div class="flex items-start justify-between gap-4">
@@ -255,12 +260,26 @@ const domainAccent: Record<string, string> = {
           <div class="mt-5 space-y-2">
             {domain.repositories.map((repository) => (
               <div class="flex items-center justify-between gap-3 border-t border-border/35 pt-2 text-xs">
-                <span class="inline-flex min-w-0 items-center gap-2 text-foreground">
-                  <GitBranch size={11} class="shrink-0 text-muted-foreground" />
-                  <span class="truncate font-mono">{repository.id}</span>
-                </span>
+                {repository.webUrl ? (
+                  <a
+                    href={repository.webUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex min-w-0 items-center gap-2 text-foreground hover:text-primary"
+                  >
+                    <GitBranch size={11} class="shrink-0 text-muted-foreground" />
+                    <span class="truncate font-mono">{repository.id}</span>
+                    <ExternalLink size={10} class="shrink-0 text-muted-foreground" />
+                  </a>
+                ) : (
+                  <span class="inline-flex min-w-0 items-center gap-2 text-foreground">
+                    <GitBranch size={11} class="shrink-0 text-muted-foreground" />
+                    <span class="truncate font-mono">{repository.id}</span>
+                  </span>
+                )}
                 <span class="shrink-0 font-mono text-[9px] tracking-wider text-muted-foreground">
                   {relationLabel[repository.relation]}
+                  {repository.lifecycle ? ` · ${repository.lifecycle.toUpperCase()}` : ''}
                 </span>
               </div>
             ))}
@@ -282,6 +301,20 @@ const domainAccent: Record<string, string> = {
           )}
         </article>
       ))}
+      <article
+        data-owner-domain-gate
+        class="flex min-h-44 flex-col justify-center border border-dashed border-border/70 bg-card/15 p-5"
+      >
+        <div class="font-mono text-[9px] tracking-[0.18em] text-muted-foreground uppercase">
+          OWNER ONLY
+        </div>
+        <h3 class="mt-2 text-sm font-semibold text-foreground">
+          个人仓库与配置域已从 Public View 隐藏
+        </h3>
+        <p class="mt-2 max-w-md text-xs leading-6 text-muted-foreground">
+          登录后通过受保护 API 加载；这些名称与关系不会写入公开页面 HTML。
+        </p>
+      </article>
     </div>
   </section>
 
@@ -329,6 +362,147 @@ const domainAccent: Record<string, string> = {
 </div>
 
 <script>
+  type OwnerDomain = {
+    id: string;
+    name: string;
+    repositories: Array<{
+      id: string;
+      relation: string;
+      webUrl?: string;
+      lifecycle?: string;
+      metadataState?: string;
+    }>;
+    projections?: string[];
+    owns?: string[];
+    principle?: string;
+  };
+
+  type OwnerSystemsPayload = {
+    version: 1;
+    access: 'owner';
+    domains: OwnerDomain[];
+    facts: Record<string, number>;
+  };
+
+  const relationLabels: Record<string, string> = {
+    canonical: 'PRIMARY',
+    transitional: 'TRANSITION',
+    archived: 'ARCHIVE',
+    external: 'EXTERNAL',
+  };
+
+  function element<K extends keyof HTMLElementTagNameMap>(
+    tag: K,
+    className?: string,
+    text?: string,
+  ): HTMLElementTagNameMap[K] {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function renderOwnerDomain(domain: OwnerDomain): HTMLElement {
+    const card = element('article', 'border border-amber-400/20 bg-amber-400/[0.025] p-5');
+    card.dataset.ownerSystemDomain = domain.id;
+
+    const head = element('div', 'flex items-start justify-between gap-4');
+    const identity = element('div', 'flex min-w-0 items-center gap-3');
+    const icon = element(
+      'div',
+      'flex h-10 w-10 shrink-0 items-center justify-center border border-amber-400/20 bg-amber-400/5 font-mono text-[10px] font-semibold uppercase text-amber-300',
+      domain.id.slice(0, 2),
+    );
+    const labels = element('div');
+    labels.append(
+      element(
+        'div',
+        'font-mono text-[9px] uppercase tracking-widest text-muted-foreground',
+        domain.id,
+      ),
+      element('h3', 'mt-1 text-lg font-semibold text-foreground', domain.name),
+    );
+    identity.append(icon, labels);
+    head.append(
+      identity,
+      element(
+        'span',
+        'shrink-0 border border-amber-400/20 px-2 py-0.5 font-mono text-[9px] tracking-wider text-amber-300',
+        'OWNER',
+      ),
+    );
+    card.append(head);
+
+    if (domain.principle) {
+      card.append(element('p', 'mt-4 text-xs leading-6 text-muted-foreground', domain.principle));
+    }
+
+    const repos = element('div', 'mt-5 space-y-2');
+    for (const repository of domain.repositories) {
+      const row = element(
+        'div',
+        'flex items-center justify-between gap-3 border-t border-border/35 pt-2 text-xs',
+      );
+      const repositoryLabel = repository.webUrl
+        ? element(
+            'a',
+            'min-w-0 truncate font-mono text-foreground hover:text-primary',
+            repository.id,
+          )
+        : element('span', 'min-w-0 truncate font-mono text-foreground', repository.id);
+      if (repositoryLabel instanceof HTMLAnchorElement && repository.webUrl) {
+        repositoryLabel.href = repository.webUrl;
+        repositoryLabel.target = '_blank';
+        repositoryLabel.rel = 'noopener noreferrer';
+      }
+      const status = relationLabels[repository.relation] ?? repository.relation.toUpperCase();
+      row.append(
+        repositoryLabel,
+        element(
+          'span',
+          'shrink-0 font-mono text-[9px] tracking-wider text-muted-foreground',
+          repository.lifecycle ? `${status} · ${repository.lifecycle.toUpperCase()}` : status,
+        ),
+      );
+      repos.append(row);
+    }
+    card.append(repos);
+
+    const tokens = [
+      ...(domain.projections ?? []).map((value) => `PROJECTION:${value}`),
+      ...(domain.owns ?? []).slice(0, 5),
+    ];
+    if (tokens.length) {
+      const list = element('div', 'mt-5 flex flex-wrap gap-1.5');
+      for (const token of tokens) {
+        list.append(
+          element(
+            'span',
+            token.startsWith('PROJECTION:')
+              ? 'border border-primary/20 bg-primary/5 px-2 py-1 font-mono text-[9px] text-primary'
+              : 'border border-border px-2 py-1 font-mono text-[9px] text-muted-foreground',
+            token,
+          ),
+        );
+      }
+      card.append(list);
+    }
+    return card;
+  }
+
+  function applyOwnerSystemsPayload(payload: OwnerSystemsPayload) {
+    const grid = document.querySelector<HTMLElement>('[data-system-domain-grid]');
+    if (!grid) return;
+    grid.querySelectorAll('[data-owner-system-domain]').forEach((node) => node.remove());
+    for (const domain of payload.domains) grid.append(renderOwnerDomain(domain));
+    document.querySelector<HTMLElement>('[data-owner-domain-gate]')?.remove();
+
+    for (const [key, value] of Object.entries(payload.facts)) {
+      const target = document.querySelector<HTMLElement>(`[data-systems-fact="${key}"]`);
+      if (target && Number.isFinite(value)) target.textContent = String(value);
+    }
+  }
+
   async function refreshSystemsAccessState() {
     const label = document.querySelector<HTMLElement>('[data-systems-access-label]');
     const description = document.querySelector<HTMLElement>('[data-systems-access-description]');
@@ -349,11 +523,26 @@ const domainAccent: Record<string, string> = {
         payload.authenticated !== true
       )
         return;
+
       label.textContent = 'OWNER VIEW';
       description.textContent =
-        'Cloudflare Access 已认证。页面会在客户端解锁授权的 privateRef 入口与受保护展示值。';
+        'Cloudflare Access 已认证。Owner-only 系统目录与 privateRef 会通过受保护 API 在浏览器中解锁。';
       action.href = '/cdn-cgi/access/logout';
       action.textContent = '[ SIGN OUT ]';
+
+      const ownerResponse = await fetch('/api/private/systems', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
+      if (!ownerResponse.ok) return;
+      const ownerPayload = (await ownerResponse.json()) as OwnerSystemsPayload;
+      if (
+        ownerPayload.version !== 1 ||
+        ownerPayload.access !== 'owner' ||
+        !Array.isArray(ownerPayload.domains)
+      )
+        return;
+      applyOwnerSystemsPayload(ownerPayload);
     } catch {
       // Public mode is the safe default.
     }

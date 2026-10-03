@@ -1,9 +1,6 @@
 import catalogData from '../data/system/pds-catalog-v1.json';
-import {
-  parsePdsCatalogV1,
-  type PdsCatalogDomain,
-  type PdsCatalogRepository,
-} from '../domain/system/pds-catalog-v1';
+import { parsePdsCatalogV1, type PdsCatalogDomain } from '../domain/system/pds-catalog-v1';
+import { publicSystemDomains } from '../config/personal-systems-access';
 import { getInfrastructureResources, type InfrastructureResource } from './infrastructure';
 
 const catalog = parsePdsCatalogV1(JSON.stringify(catalogData));
@@ -15,16 +12,8 @@ export interface SystemQuickAccess {
   privateRef?: string;
 }
 
-export function getPdsCatalog() {
-  return catalog;
-}
-
-export function getSystemDomains(): PdsCatalogDomain[] {
-  return [...catalog.payload.domains];
-}
-
-export function getSystemRepositories(): PdsCatalogRepository[] {
-  return [...catalog.payload.repositories];
+export function getPublicSystemDomains(): PdsCatalogDomain[] {
+  return publicSystemDomains(catalog.payload.domains);
 }
 
 export function getSystemQuickAccess(): SystemQuickAccess[] {
@@ -49,12 +38,15 @@ export function getSystemQuickAccess(): SystemQuickAccess[] {
     });
 }
 
-export function systemFactCounts() {
+function factCountsForDomains(domains: readonly PdsCatalogDomain[]) {
   const resources = getInfrastructureResources();
   return {
-    domainCount: catalog.payload.summary.domainCount,
-    repositoryCount: catalog.payload.summary.repositoryCount,
-    projectionCount: catalog.payload.summary.projectionCount,
+    domainCount: domains.length,
+    repositoryCount: domains.reduce((count, domain) => count + domain.repositories.length, 0),
+    projectionCount: domains.reduce(
+      (count, domain) => count + (domain.projections?.length ?? 0),
+      0,
+    ),
     activeServiceCount: resources.filter(
       (resource) => resource.status === 'active' && resource.kind === 'service',
     ).length,
@@ -62,4 +54,8 @@ export function systemFactCounts() {
       (resource) => resource.status === 'active' && resource.kind === 'host',
     ).length,
   };
+}
+
+export function publicSystemFactCounts() {
+  return factCountsForDomains(publicSystemDomains(catalog.payload.domains));
 }

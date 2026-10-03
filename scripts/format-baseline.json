@@ -6,7 +6,6 @@
     "edge/access.test.ts": "8f11c3cae7c0ab1ebf4263d3f3ba7c087f50e0e1863e522723442e7e4043c522",
     "edge/ai-usage-read-bridge.test.ts": "11820856cb3afc6f4469a0e0767f9c99b971aec98c71b964337a1432cc4711ad",
     "edge/observability.test.ts": "f13cb15c602b56a8c46e83a4e60acb71976bc26e7a6964504ec9ed400cf9eb92",
-    "edge/private-handlers.test.ts": "6d27cd2abcd3414a497a4ac4bc1f706643e594601d99ad9c2fbf182d0dfe5685",
     "edge/private-refs.ts": "5cf61cf0a67bf86f49762f20249d7ed93c49d884658dce87ddb7aab7c88b24ea",
     "functions/api/ai-usage.ts": "7e3da81235615859dcf94970aed1c01256342cb53ba1141c6a92460a7d01c285",
     "functions/api/private/_middleware.ts": "4131d4d8c7b2998cfa74da0651df792503e982604566229fbf98dceb5b02b0f4",

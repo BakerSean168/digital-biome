@@ -12,3 +12,23 @@ test('tracked pds-catalog-v1 is a valid thin system catalog projection', () => {
   assert.ok(catalog.payload.domains.some((domain) => domain.id === 'presentation'));
   assert.ok(catalog.payload.repositories.some((repository) => repository.id === 'digital-biome'));
 });
+
+test('pds-catalog-v1 accepts safe repository navigation metadata and rejects unsafe URLs', () => {
+  const enriched = structuredClone(catalogData) as any;
+  enriched.payload.domains[0].repositories[0].webUrl =
+    'https://github.com/BakerSean168/agent-harness';
+  enriched.payload.domains[0].repositories[0].lifecycle = 'active';
+  enriched.payload.domains[0].repositories[0].metadataState = 'present';
+  enriched.payload.repositories[0].webUrl = 'https://github.com/BakerSean168/agent-harness';
+  enriched.payload.repositories[0].lifecycle = 'active';
+  enriched.payload.repositories[0].metadataState = 'present';
+
+  const parsed = parsePdsCatalogV1(JSON.stringify(enriched));
+  assert.equal(
+    parsed.payload.domains[0]?.repositories[0]?.webUrl,
+    'https://github.com/BakerSean168/agent-harness',
+  );
+
+  enriched.payload.repositories[0].webUrl = 'javascript:alert(1)';
+  assert.throws(() => parsePdsCatalogV1(JSON.stringify(enriched)), /webUrl is invalid/);
+});
