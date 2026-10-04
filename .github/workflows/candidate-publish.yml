@@ -274,6 +274,33 @@ jobs:
             echo "Candidate remains valid, but main advanced to $current_main; staging promotion skipped." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - id: private-infra-lock
+        name: Resolve pinned private infrastructure binding
+        if: steps.freshness.outputs.eligible == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          revision="$(jq -r .sourceRevision data-products/digital-biome-private-infrastructure-v1.lock.json)"
+          contract_path="$(jq -r .contractPath data-products/digital-biome-private-infrastructure-v1.lock.json)"
+          sha256="$(jq -r .sha256 data-products/digital-biome-private-infrastructure-v1.lock.json)"
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$sha256" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ -n "$contract_path" ]]
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          echo "contract_path=$contract_path" >> "$GITHUB_OUTPUT"
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pinned private infrastructure binding source
+        if: steps.freshness.outputs.eligible == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: BakerSean168/personal-infrastructure
+          ssh-key: ${{ secrets.PDS_INFRA_PUBLIC_DEPLOY_KEY }}
+          ref: ${{ steps.private-infra-lock.outputs.revision }}
+          path: .pds-runtime/personal-infrastructure-private
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Setup pnpm
         if: steps.freshness.outputs.eligible == 'true'
         uses: pnpm/action-setup@v4
@@ -314,6 +341,19 @@ jobs:
           test -s release-package/dist/_worker.js
           test -s release-package/dist/_routes.json
 
+          private_binding=".pds-runtime/personal-infrastructure-private/${{ steps.private-infra-lock.outputs.contract_path }}"
+          test -s "$private_binding"
+          expected_private="${{ steps.private-infra-lock.outputs.sha256 }}"
+          actual_private="sha256:$(sha256sum "$private_binding" | cut -d ' ' -f 1)"
+          [[ "$actual_private" == "$expected_private" ]]
+          [[ "$(jq -r .privateInfrastructure.sourceRevision reports/candidate/candidate-manifest.json)" == "${{ steps.private-infra-lock.outputs.revision }}" ]]
+          [[ "$(jq -r .privateInfrastructure.sha256 reports/candidate/candidate-manifest.json)" == "$expected_private" ]]
+          mkdir -p tmp
+          pnpm exec tsx scripts/export-private-infrastructure.ts \
+            --contract "$private_binding" \
+            --out tmp/staging-private-infrastructure.json
+          test -s tmp/staging-private-infrastructure.json
+
       - name: Recheck main HEAD immediately before staging mutation
         if: steps.freshness.outputs.eligible == 'true'
         id: mutation-freshness
@@ -328,6 +368,21 @@ jobs:
             echo 'eligible=false' >> "$GITHUB_OUTPUT"
             echo "Main advanced to $current_main after staging preparation; mutation skipped." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Update encrypted Preview private binding
+        if: steps.mutation-freshness.outputs.eligible == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s tmp/staging-private-infrastructure.json
+          pnpm exec wrangler pages secret put PRIVATE_INFRASTRUCTURE_JSON \
+            --env preview \
+            --project-name digital-biome \
+            < tmp/staging-private-infrastructure.json
+          rm -f tmp/staging-private-infrastructure.json
 
       - name: Deploy verified candidate as preview branch
         if: steps.mutation-freshness.outputs.eligible == 'true'
