@@ -61,6 +61,8 @@
         if (!href) continue;
 
         target.href = href;
+        target.target = '_blank';
+        target.rel = 'noopener noreferrer';
         const label = target.querySelector<HTMLElement>('[data-private-link-label]');
         if (label && target.dataset.privateUnlockedLabel) {
           label.textContent = target.dataset.privateUnlockedLabel;

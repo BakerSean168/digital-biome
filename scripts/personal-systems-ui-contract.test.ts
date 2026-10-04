@@ -8,6 +8,10 @@ const systems = fs.readFileSync(
   'utf8',
 );
 const siteSearch = fs.readFileSync(path.resolve('src/components/common/SiteSearch.astro'), 'utf8');
+const privateUnlock = fs.readFileSync(
+  path.resolve('src/components/common/PrivateInfrastructureUnlock.astro'),
+  'utf8',
+);
 const launcherIndex = fs.readFileSync(
   path.resolve('src/pages/data/system-launcher-index.json.ts'),
   'utf8',
@@ -35,6 +39,11 @@ test('Personal Systems is a launcher, not a dashboard or card wall', () => {
   assert.doesNotMatch(systems, /Active services/);
   assert.doesNotMatch(systems, /Projections/);
   assert.doesNotMatch(systems, /grid gap-3 md:grid-cols-2 xl:grid-cols-3/);
+});
+
+test('resolved private launcher targets open externally by default', () => {
+  assert.match(privateUnlock, /target\.target = '_blank'/);
+  assert.match(privateUnlock, /target\.rel = 'noopener noreferrer'/);
 });
 
 test('Infrastructure prioritizes topology then compact registry', () => {

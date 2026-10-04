@@ -98,6 +98,21 @@ test('main integration builds from immutable knowledge and infrastructure projec
   assert.doesNotMatch(candidateWorkflow, /environment:\n {6}name: production/);
 });
 
+test('staging promotion refreshes the exact pinned private RuntimeBinding before deployment', () => {
+  const stagingBlock = candidateWorkflow.match(
+    / {2}deploy-staging:[\s\S]*?(?=\n {2}[a-zA-Z0-9_-]+:|$)/,
+  )?.[0];
+  assert.ok(stagingBlock, 'staging promotion job must exist');
+  assert.match(stagingBlock, /Resolve pinned private infrastructure binding/);
+  assert.match(stagingBlock, /digital-biome-private-infrastructure-v1\.lock\.json/);
+  assert.match(stagingBlock, /Checkout pinned private infrastructure binding source/);
+  assert.match(stagingBlock, /PDS_INFRA_PUBLIC_DEPLOY_KEY/);
+  assert.match(stagingBlock, /sha256sum "\$private_binding"/);
+  assert.match(stagingBlock, /export-private-infrastructure\.ts/);
+  assert.match(stagingBlock, /pages secret put PRIVATE_INFRASTRUCTURE_JSON/);
+  assert.match(stagingBlock, /--env preview/);
+});
+
 test('knowledge producer publication updates only its immutable consumer lock through a protected PR', () => {
   assert.match(knowledgeSyncWorkflow, /knowledge-public-v1-published/);
   assert.match(knowledgeSyncWorkflow, /automation\/knowledge-public-v1-sync/);
