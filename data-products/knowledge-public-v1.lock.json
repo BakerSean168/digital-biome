@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "protocolVersion": 1,
   "product": "knowledge-public-v1",
   "producerRepository": "BakerSean168/thought-forest",
   "sourceRevision": "d2e3b97a0326908eb47d0f8f05f28d771865581a",
@@ -11,5 +11,6 @@
   "manifest": {
     "name": "knowledge-public-v1.manifest.json",
     "sha256": "sha256:37f1036a4816a8c5514ba0f1b079f1170b24855b0f236ba4cd8a51e087478015"
-  }
+  },
+  "semanticSha256": "sha256:708c3c89420c9bec89f634fb02f3d3269ec2ec51e601f0b15de23fbb493ffe3b"
 }

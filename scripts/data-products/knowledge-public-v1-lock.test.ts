@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import test from 'node:test';
 import type { KnowledgePublicV1 } from './knowledge-public-v1';
+import { semanticSha256 } from './semantic-digest';
 import {
   parseKnowledgePublicV1Lock,
   verifyKnowledgePublicV1Artifact,
@@ -59,7 +60,8 @@ function manifest() {
 
 function lockRaw(artifactRaw: string, manifestRaw: string): string {
   return JSON.stringify({
-    schemaVersion: 1,
+    protocolVersion: 1,
+    semanticSha256: semanticSha256(JSON.parse(artifactRaw)),
     product: 'knowledge-public-v1',
     producerRepository: 'BakerSean168/thought-forest',
     sourceRevision: revision,
@@ -102,6 +104,40 @@ test('rejects transport drift and source revision drift', () => {
     () => verifyKnowledgePublicV1Artifact(changedLock, changedRaw),
     /source revision mismatch/,
   );
+});
+
+test('delegates Protocol-v1 identity and verifies semantic/manifest domain identity', () => {
+  const artifactRaw = JSON.stringify(projection());
+  const manifestRaw = JSON.stringify(manifest());
+  const value = JSON.parse(lockRaw(artifactRaw, manifestRaw));
+  for (const field of ['protocolVersion', 'semanticSha256']) {
+    const missing = { ...value };
+    delete missing[field];
+    assert.throws(() => parseKnowledgePublicV1Lock(JSON.stringify(missing)), /fields mismatch/);
+  }
+  const lock = parseKnowledgePublicV1Lock(JSON.stringify(value));
+  assert.throws(
+    () =>
+      verifyKnowledgePublicV1Artifact(
+        { ...lock, semanticSha256: `sha256:${'0'.repeat(64)}` },
+        artifactRaw,
+      ),
+    /semantic digest/,
+  );
+  for (const field of ['producer', 'contract'] as const) {
+    const forged = manifest();
+    if (field === 'producer') forged.spec.producer.ref = 'foreign';
+    else forged.spec.contract.version = 'v2';
+    const raw = JSON.stringify(forged);
+    assert.throws(
+      () =>
+        verifyKnowledgePublicV1Manifest(
+          { ...lock, manifest: { ...lock.manifest, sha256: sha(raw) } },
+          raw,
+        ),
+      /contract mismatch/,
+    );
+  }
 });
 
 test('rejects lock fields outside the consumer contract', () => {

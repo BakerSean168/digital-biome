@@ -125,10 +125,19 @@ jobs:
             echo "manifest_sha256=$manifest_sha256"
           } >> "$GITHUB_OUTPUT"
 
+      # Legacy event/manual rollback entrypoint. Never subscribes to the standard event.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
       - id: lock
         name: Build next consumer lock
         shell: bash
         env:
+          GH_TOKEN: ${{ steps.producer-token.outputs.token }}
           SOURCE_SHA: ${{ steps.target.outputs.source_sha }}
           RELEASE_TAG: ${{ steps.target.outputs.release_tag }}
           ARTIFACT_SHA256: ${{ steps.projection.outputs.artifact_sha256 }}
@@ -137,21 +146,9 @@ jobs:
           set -euo pipefail
 
           next_lock="$RUNNER_TEMP/knowledge-public-v1.lock.json"
-          jq -n             --arg sourceRevision "$SOURCE_SHA"             --arg releaseTag "$RELEASE_TAG"             --arg artifactSha256 "$ARTIFACT_SHA256"             --arg manifestSha256 "$MANIFEST_SHA256"             '{
-              schemaVersion: 1,
-              product: "knowledge-public-v1",
-              producerRepository: "BakerSean168/thought-forest",
-              sourceRevision: $sourceRevision,
-              releaseTag: $releaseTag,
-              artifact: {
-                name: "knowledge-public-v1.json",
-                sha256: $artifactSha256
-              },
-              manifest: {
-                name: "knowledge-public-v1.manifest.json",
-                sha256: $manifestSha256
-              }
-            }' > "$next_lock"
+          pnpm exec tsx scripts/data-products/update-lock.ts shadow knowledge-public-v1 "$RELEASE_TAG" > "$next_lock"
+          jq -e --arg artifact "$ARTIFACT_SHA256" --arg manifest "$MANIFEST_SHA256" \
+            '.artifact.sha256 == $artifact and .manifest.sha256 == $manifest' "$next_lock" > /dev/null
 
           if [ -f data-products/knowledge-public-v1.lock.json ] &&
              cmp -s data-products/knowledge-public-v1.lock.json "$next_lock"; then
@@ -194,7 +191,7 @@ jobs:
           if [ -n "$open_pr" ]; then
             echo "knowledge-public-v1 sync PR #$open_pr updated in place."
           else
-            gh pr create               --base main               --head "$SYNC_BRANCH"               --title "chore(data): update knowledge-public-v1 to ${SOURCE_SHA:0:12}"               --body "Pins the immutable Thought Forest `knowledge-public-v1` projection to source revision `$SOURCE_SHA`. Public build provenance uses this lock; protected infrastructure runtime data is owned and pinned separately by Personal Infrastructure. Merge only after CI validates the projection-backed build."
+            gh pr create               --base main               --head "$SYNC_BRANCH"               --title "chore(data): update knowledge-public-v1 to ${SOURCE_SHA:0:12}"               --body "Pins the immutable Thought Forest knowledge-public-v1 projection to source revision $SOURCE_SHA. Public build provenance uses this lock; protected infrastructure runtime data is owned and pinned separately by Personal Infrastructure. Merge only after CI validates the projection-backed build."
           fi
 
       - name: Approve and wait for protected PR CI when required
@@ -208,7 +205,7 @@ jobs:
           run_id=''
           conclusion=''
 
-          for attempt in $(seq 1 20); do
+          for _attempt in $(seq 1 20); do
             run_json="$(gh run list \
               --repo "$GITHUB_REPOSITORY" \
               --workflow check.yml \

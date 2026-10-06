@@ -1,0 +1,28 @@
+{
+  "description": "UTF-8 compact recursively sorted JSON, no trailing newline. Object order and provenance do not matter; array order does. This is a digest-only fixture, not a catalog payload fixture.",
+  "canonical": "{\"payload\":{\"items\":[{\"a\":true,\"z\":null},{\"name\":\"知识/目录\",\"rank\":2}],\"label\":\"catalog\"},\"producer\":\"pds://system/component/personal-digital-system\",\"product\":\"pds-catalog-v1\",\"schemaVersion\":1}",
+  "sha256": "sha256:ad30e6d4f15971d2a8888ba44dd142ff25a119e3f06541e3748797639f944d76",
+  "equivalent_artifacts": [
+    {
+      "schemaVersion": 1,
+      "product": "pds-catalog-v1",
+      "producer": "pds://system/component/personal-digital-system",
+      "generated": true,
+      "editable": false,
+      "source": {"repository": "https://github.com/BakerSean168/personal-digital-system.git", "revision": "0123456789abcdef0123456789abcdef01234567"},
+      "payload": {"label": "catalog", "items": [{"z": null, "a": true}, {"rank": 2, "name": "知识/目录"}]}
+    },
+    {
+      "payload": {"items": [{"a": true, "z": null}, {"name": "知识/目录", "rank": 2}], "label": "catalog"},
+      "producer": "pds://system/component/personal-digital-system",
+      "product": "pds-catalog-v1",
+      "schemaVersion": 1,
+      "generated": true,
+      "editable": false,
+      "source": {"revision": "fedcba9876543210fedcba9876543210fedcba98", "repository": "https://github.com/BakerSean168/personal-digital-system.git"},
+      "generatedAt": "2026-10-06T00:00:00Z",
+      "releaseTag": "pds-catalog-v1-fedcba9876543210fedcba9876543210fedcba98",
+      "transport": {"runId": 42, "artifactSha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+    }
+  ]
+}

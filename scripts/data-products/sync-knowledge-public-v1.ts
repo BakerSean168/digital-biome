@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { materializeKnowledgePublicV1Source, parseKnowledgePublicV1 } from './knowledge-public-v1';
 
 function resolveArtifactPath(): string {
@@ -15,6 +16,24 @@ function resolveArtifactPath(): string {
     );
   }
   return path.resolve(configured);
+}
+
+export async function syncKnowledgeSource(
+  sourceRoot: string,
+  dryRun: boolean,
+  withFavicons: boolean,
+): Promise<void> {
+  process.env.NOTES_VAULT_ROOT = sourceRoot;
+  process.env.NOTES_UPSTREAM_GENERATED = path.join(sourceRoot, 'generated');
+  const { runSync } = await import('../sync/index');
+  const errorCount = await runSync({ dryRun, withFavicons });
+  if (!dryRun) {
+    const { generateSubscriptionsJson } = await import('../sync/build-subscriptions');
+    generateSubscriptionsJson();
+  }
+  if (errorCount > 0) {
+    throw new Error(`knowledge-public-v1 consumer sync completed with ${errorCount} error(s)`);
+  }
 }
 
 async function main(): Promise<void> {
@@ -34,19 +53,8 @@ async function main(): Promise<void> {
   }
   const materialized = materializeKnowledgePublicV1Source(projection, sourceRoot);
 
-  process.env.NOTES_VAULT_ROOT = sourceRoot;
-  process.env.NOTES_UPSTREAM_GENERATED = path.join(sourceRoot, 'generated');
-
   try {
-    const { runSync } = await import('../sync/index');
-    const errorCount = await runSync({ dryRun, withFavicons });
-    if (!dryRun) {
-      const { generateSubscriptionsJson } = await import('../sync/build-subscriptions');
-      generateSubscriptionsJson();
-    }
-    if (errorCount > 0) {
-      throw new Error(`knowledge-public-v1 consumer sync completed with ${errorCount} error(s)`);
-    }
+    await syncKnowledgeSource(sourceRoot, dryRun, withFavicons);
     console.log(
       `knowledge-public-v1 consumer=PASS revision=${materialized.sourceRevision} notes=${materialized.notes} assets=${materialized.assets} media=${materialized.media} mode=${dryRun ? 'dry-run' : 'materialize'} source=${sourceRoot}`,
     );
@@ -59,7 +67,9 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
