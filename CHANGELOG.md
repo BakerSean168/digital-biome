@@ -5,6 +5,43 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.8.0](https://github.com/BakerSean168/digital-biome/compare/v0.7.0...v0.8.0) (2026-10-06)
+
+
+### Features
+
+* **data-products:** add public protocol v1 verification foundation ([dd7f0c8](https://github.com/BakerSean168/digital-biome/commit/dd7f0c85d0f51bed70b0db8ed0f329d73ab34125))
+* **data-products:** read and verify exact immutable GitHub Releases ([ce12c06](https://github.com/BakerSean168/digital-biome/commit/ce12c06efb1058c8093bd4ef85a8dbfbf227f883))
+* **data-products:** share knowledge event and reconciliation PR flow ([03fb74b](https://github.com/BakerSean168/digital-biome/commit/03fb74bdcf24b428d6e0a090b75c2d4aace9bfac))
+* **data-products:** unify immutable knowledge consumption ([f37007d](https://github.com/BakerSean168/digital-biome/commit/f37007d3767ebafeaa549cd0c64b35af6dad5fae))
+* **knowledge:** migrate verified lock and stage materialization safely ([2aa52fd](https://github.com/BakerSean168/digital-biome/commit/2aa52fd926bb3b78e5a99db86691cd5397f3c31e))
+* **portal:** add fail-closed systems access policy ([795f32a](https://github.com/BakerSean168/digital-biome/commit/795f32a34db145f9b4e6018cd15fb3da163b4629))
+* **portal:** add fail-closed systems access policy ([b4c0898](https://github.com/BakerSean168/digital-biome/commit/b4c08985efd02a6019485c2851b253e46d44e39c))
+* **portal:** add Personal Systems hub ([7a37906](https://github.com/BakerSean168/digital-biome/commit/7a37906c58ede372678a08b840acdc48e126960f))
+* **portal:** add Personal Systems hub ([72d97fa](https://github.com/BakerSean168/digital-biome/commit/72d97fa20e2ef3912657581336aa9d11bef2a210))
+* **portal:** refine Personal Systems visual hierarchy ([fc69b3b](https://github.com/BakerSean168/digital-biome/commit/fc69b3becd72c6988e037c6cebbe3fa6afd3ba65))
+* **portal:** refine systems visual hierarchy ([e6670e8](https://github.com/BakerSean168/digital-biome/commit/e6670e8e35c8038a1de63fc81e77165e2cace30e))
+* **portal:** simplify Personal Systems around current assets ([548187d](https://github.com/BakerSean168/digital-biome/commit/548187d94cae2272cbadae790b4b15356f69c236))
+* **portal:** simplify Personal Systems landing page ([33c2f03](https://github.com/BakerSean168/digital-biome/commit/33c2f03a676fc3f008c9be3a0ee554f11d0a88e9))
+* **portal:** turn Personal Systems into a launcher ([0b8903e](https://github.com/BakerSean168/digital-biome/commit/0b8903e9382f4a82e434ce456c73b0f7b5f1e781))
+* **portal:** turn Personal Systems into a personal launcher ([bd27f77](https://github.com/BakerSean168/digital-biome/commit/bd27f77a5a60fc321f1ce03aa2c62f6528eb0958))
+* **ui:** add shared TUI and GUI presentation modes ([848189a](https://github.com/BakerSean168/digital-biome/commit/848189a552bdad6b35219cd032d6237d001fe671))
+* **ui:** deliver shared TUI and GUI modes across Digital Biome ([34fc428](https://github.com/BakerSean168/digital-biome/commit/34fc428f3dc407f6bcf5e9aec29c669f241ffd71))
+
+
+### Bug Fixes
+
+* **data-products:** reject unexpected manifest fields ([fd091a4](https://github.com/BakerSean168/digital-biome/commit/fd091a42be386e4edd91d399daed50e8845f8ca8))
+* **data-products:** share strict manifest validation ([9bb680d](https://github.com/BakerSean168/digital-biome/commit/9bb680da4ee8180d2561ee7e5740820cd7c3b8a3))
+* **data:** make PDS catalog sync self-verifying ([c82f379](https://github.com/BakerSean168/digital-biome/commit/c82f3799c6153595d538c57bdfb0aaafd3d0539e))
+* **data:** make PDS catalog sync self-verifying ([6eaad69](https://github.com/BakerSean168/digital-biome/commit/6eaad6915d1bac41e5b9bd991e82efaf1081cfda))
+* **nav:** keep global header to Search and Access ([9f9b308](https://github.com/BakerSean168/digital-biome/commit/9f9b308dc943bf22bab0c4710e853572755f2a11))
+* **nav:** keep header to search and access ([05c98d0](https://github.com/BakerSean168/digital-biome/commit/05c98d08b8415a4ceab2f06dae4f681d4c7179ef))
+* open private launchers in new tabs ([4d04e30](https://github.com/BakerSean168/digital-biome/commit/4d04e30317b522fe7fc62c34b98793d173bd6b47))
+* **portal:** open private launchers externally ([a795079](https://github.com/BakerSean168/digital-biome/commit/a7950797fba6c9c616b2aec6f4bc90f8a7818dec))
+* **ui:** preserve composition and reading context across modes ([0d55523](https://github.com/BakerSean168/digital-biome/commit/0d55523b3bc99a6e0b4545959fa2e392f0b22003))
+* **ui:** retain About section anchors within definition lists ([2006cca](https://github.com/BakerSean168/digital-biome/commit/2006ccae89c0cb07cb8c330231768cd3c16d406c))
+
 ## [0.7.0](https://github.com/BakerSean168/digital-biome/compare/v0.6.1...v0.7.0) (2026-10-02)
 
 

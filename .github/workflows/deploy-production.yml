@@ -557,6 +557,20 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+      - name: Smoke test public note detail
+        shell: bash
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://digital-biome.pages.dev' }}
+        run: |
+          set -euo pipefail
+          public_note_file="$(find release-package/dist/notes/obsidian -type f -name index.html -print -quit)"
+          test -n "$public_note_file"
+          public_note="${public_note_file#release-package/dist}"
+          public_note="${public_note%index.html}"
+          public_note="$(node -e 'process.stdout.write(process.argv[1].split("/").map(encodeURIComponent).join("/"))' "$public_note")"
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            "$PRODUCTION_URL${public_note}?ui=gui" > /dev/null
+
       - name: Smoke test public site and telemetry contracts
         shell: bash
         env:
@@ -565,6 +579,7 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
             "$PRODUCTION_URL/" > /dev/null
+
 
           ai_usage_file="$(mktemp)"
           servers_file="$(mktemp)"

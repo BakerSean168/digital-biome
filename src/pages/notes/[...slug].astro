@@ -27,12 +27,7 @@ const { Content, headings } = await render(entry);
 const { title, description, tags, created, updated } = entry.data;
 ---
 
-<NotesLayout
-  title={title}
-  description={description || ''}
-  headings={headings}
-  currentSlug={slug}
->
+<NotesLayout title={title} description={description || ''} headings={headings} currentSlug={slug}>
   <header class="mb-8 pb-4 border-b border-border">
     <a
       href="/notes"
@@ -47,9 +42,9 @@ const { title, description, tags, created, updated } = entry.data;
   {tags?.length > 0 && (
     <div class="flex gap-2 flex-wrap mb-6">
       {tags.map((tag: string) => {
-        const display = tag.includes('/') ? tag.split('/').join(' / ') : tag;
+        const display = tag.includes('/') ? tag.split('/').pop() : tag;
         return (
-          <span class="text-xs px-2.5 py-1 bg-primary/10 text-primary rounded-md border border-primary/20" title={tag}>
+          <span class="text-xs py-1 text-muted-foreground" title={tag}>
             #{display}
           </span>
         );
@@ -57,16 +52,18 @@ const { title, description, tags, created, updated } = entry.data;
     </div>
   )}
 
-  <div class="prose prose-neutral dark:prose-invert max-w-none 
+  <div
+    class="prose prose-neutral dark:prose-invert max-w-none
               prose-a:text-primary prose-a:no-underline hover:prose-a:underline
               prose-headings:font-bold prose-headings:text-foreground
               prose-h2:border-b prose-h2:border-border prose-h2:pb-2 prose-h2:mt-10
               prose-p:text-foreground/90
-              prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
+              prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-sm prose-code:before:content-none prose-code:after:content-none
               prose-pre:bg-card prose-pre:border prose-pre:border-border
               prose-blockquote:border-l-primary prose-blockquote:bg-primary/5 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:not-italic prose-blockquote:text-muted-foreground
-              prose-img:rounded-lg prose-img:border prose-img:border-border
-              prose-hr:border-border">
+              prose-img:rounded-sm prose-img:border prose-img:border-border
+              prose-hr:border-border"
+  >
     <Content />
   </div>
 
@@ -77,4 +74,3 @@ const { title, description, tags, created, updated } = entry.data;
     </footer>
   )}
 </NotesLayout>
-

@@ -1,131 +1,23 @@
 ---
-import NotesLayout from '../../layouts/NotesLayout.astro';
-import SignalTitle from '../../components/common/SignalTitle.astro';
-import { Search } from '@lucide/astro';
-import { getLangFromUrl, useTranslations } from '../../i18n/utils';
-import { getPublicNotes } from '../../utils/notes';
-import { sortNoteCatalog, toNoteCatalogItem } from '../../view-models/note-list-item';
-
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const allNotes = await getPublicNotes();
-const notes = sortNoteCatalog(allNotes.map(note => toNoteCatalogItem(note)));
-const initialNotes = notes.slice(0, 12);
-const totalCount = notes.length;
-const i18nStrings = {
-  totalCount: t('notes.totalCount'),
-  searchCount: t('notes.searchCount'),
-  uncategorized: t('notes.uncategorized'),
-};
+import TerminalLayout from '../../layouts/TerminalLayout.astro';
+import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
+import LibraryTabs from '../../components/terminal/LibraryTabs.astro';
+import { terminalNotes } from '../../repositories/terminal-repository';
+const notes = await terminalNotes();
 ---
 
-<NotesLayout title="Notes" description={t('notes.description')} showSidebar={false} showToc={false}>
-  <section
-    id="notes-page"
-    class="max-w-6xl mx-auto px-4 md:px-6 py-12"
-    data-total-count={totalCount}
-    data-initial-count={initialNotes.length}
-    data-notes-i18n={JSON.stringify(i18nStrings)}
-  >
-    <div class="mb-10">
-      <SignalTitle as="h1" class="text-4xl font-bold font-mono tracking-wider text-foreground mb-4 uppercase" title={t('notes.title')} />
-      <h2 class="text-xl font-medium text-foreground mb-2">{t('notes.subtitle')}</h2>
-      <p class="text-sm text-muted-foreground font-mono">{t('notes.description')}</p>
-    </div>
-
-    <div class="flex flex-col md:flex-row gap-4 mb-10">
-      <div class="relative flex-1 max-w-2xl">
-        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-          <Search class="text-muted-foreground" size={18} />
-        </div>
-        <input
-          id="title-search"
-          type="search"
-          placeholder={t('notes.searchPlaceholder')}
-          autocomplete="off"
-          class="w-full pl-4 pr-12 py-3 bg-background border border-border text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
-        />
-      </div>
-
-      <div class="relative w-full md:w-80 flex flex-wrap items-center gap-2 px-3 py-2 bg-background border border-border focus-within:border-primary/50 transition-colors cursor-text" id="tag-input-wrapper">
-        <div id="tag-container" class="flex flex-wrap gap-2"></div>
-        <input
-          id="tag-search"
-          type="text"
-          placeholder={t('notes.tagPlaceholder')}
-          autocomplete="off"
-          class="flex-1 min-w-[100px] bg-transparent border-none text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 p-0 m-0"
-        />
-      </div>
-    </div>
-
-    <div class="flex items-center justify-between gap-4 mb-4">
-      <div id="result-status" class="text-xs text-muted-foreground">
-        <span id="result-count">
-          {t('notes.totalCount').replace('{total}', String(totalCount)).replace('{count}', String(initialNotes.length))}
-        </span>
-      </div>
-      <button
-        id="clear-filters"
-        type="button"
-        class="hidden shrink-0 px-3 py-1.5 border border-border hover:bg-card transition-colors text-xs font-mono tracking-widest"
-      >
-        [ CLEAR_FILTERS ]
-      </button>
-    </div>
-
-    <div id="catalog-error" class="hidden mb-6 border border-amber-500/20 bg-amber-500/5 p-4 text-sm font-mono text-amber-500" role="alert" aria-live="assertive">
-      <span>笔记目录暂时不可用，请重试。</span>
-      <button id="retry-catalog" type="button" class="ml-4 border border-amber-500/40 px-3 py-1 text-xs hover:border-amber-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">[ 重试 ]</button>
-    </div>
-
-    <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {initialNotes.map(note => (
-        <a
-          href={note.href}
-          class="group flex flex-col p-6 bg-transparent border border-border transition-all duration-300 hover:border-primary/40 hover:bg-card/40"
-          data-note-card
-          data-note-id={note.id}
-        >
-          <div class="mb-4 flex flex-wrap gap-2">
-            {note.tags.length > 0 ? note.tags.map(tag => (
-              <span
-                class="inline-block px-2 py-0.5 border border-border text-[10px] font-mono text-muted-foreground cursor-pointer hover:border-primary/40 transition-colors"
-                data-card-tag={tag}
-                title={tag}
-              >#{tag.includes('/') ? tag.split('/').pop() : tag}</span>
-            )) : (
-              <span class="inline-block px-2 py-0.5 border border-border text-[10px] font-mono text-muted-foreground">{t('notes.uncategorized')}</span>
-            )}
-          </div>
-          <h3 class="text-lg font-serif text-foreground mb-3 line-clamp-1 group-hover:text-primary transition-colors">{note.title}</h3>
-          <p class="text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed flex-grow">{note.description}</p>
-          <div class="flex items-center gap-1.5 text-xs text-muted-foreground mt-auto">
-            <span aria-hidden="true">◷</span>
-            <span>{note.date}</span>
-          </div>
-        </a>
-      ))}
-    </div>
-
-    <div id="load-more-sentinel" class="w-full h-20 mt-8 flex items-center justify-center hidden">
-      <div class="flex items-center gap-2 text-muted-foreground">
-        <span class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-        </span>
-        <span class="text-sm">{t('notes.loadMore')}</span>
-      </div>
-    </div>
-
-    <div id="empty-msg" class="hidden text-center py-20 text-muted-foreground">
-      <p>{t('notes.noMatch')}</p>
-    </div>
-  </section>
-</NotesLayout>
-
-<script>
-  import { initializeNotesList } from '../../browser/notes-list';
-
-  initializeNotesList();
-</script>
+<TerminalLayout title="Notes" description="持续生长的知识笔记。">
+  <h1 data-page-title class="sr-only">
+    知识笔记
+  </h1>
+  <LibraryTabs />
+  <p class="mb-5 text-muted-foreground">知识笔记 · 概念、方法与学习的连接。</p>
+  <ObjectBrowser
+    contextPath="/notes"
+    items={notes.slice(0, 12)}
+    total={notes.length}
+    catalog="/data/terminal/notes.json"
+    label="知识笔记"
+    queryParam="tag"
+  />
+</TerminalLayout>

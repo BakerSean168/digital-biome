@@ -29,36 +29,43 @@ const showContext = Boolean(currentSlug);
 const showOutline = showContext && showToc;
 const gridCols = showContext
   ? showOutline
-    ? 'lg:grid-cols-[20%_55%_25%]'
-    : 'lg:grid-cols-[20%_minmax(0,1fr)]'
+    ? 'lg:grid-cols-[minmax(0,2fr)_minmax(0,5.5fr)_minmax(0,2.5fr)]'
+    : 'lg:grid-cols-[minmax(0,2fr)_minmax(0,8fr)]'
   : 'lg:grid-cols-1';
 ---
 
 <BaseLayout title={title} description={description} bodyClass="bg-background text-foreground">
-  <div class={`max-w-[1600px] mx-auto min-h-[calc(100vh-120px)] grid gap-8 px-4 sm:px-6 lg:px-12 grid-cols-1 ${gridCols} relative pt-24 pb-32`}>
-    
+  <div
+    class={`max-w-[1600px] mx-auto min-h-[calc(100vh-120px)] grid gap-8 px-4 sm:px-6 lg:px-12 grid-cols-1 ${gridCols} relative pt-6 pb-8`}
+  >
     <!-- Left Column: Upstream & Downstream -->
     {showContext && (
-    <aside class="hidden lg:flex flex-col py-10 sticky top-[100px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar gap-8">
-      <div>
-        <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">上游脉络</div>
-        <Backlinks currentSlug={currentSlug} />
-      </div>
-      <div>
-        <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">下游管理</div>
-        <OutgoingLinks currentSlug={currentSlug} />
-      </div>
-      {showSidebar && (
-        <div class="mt-4 pt-4 border-t border-border/30">
-          <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">所有笔记</div>
-          <NotesSidebar currentSlug={currentSlug} />
+      <aside class="hidden lg:flex flex-col py-4 sticky top-6 h-fit max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar gap-8">
+        <div>
+          <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
+            链接到这里
+          </div>
+          <Backlinks currentSlug={currentSlug} />
         </div>
-      )}
-    </aside>
+        <div>
+          <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
+            相关笔记
+          </div>
+          <OutgoingLinks currentSlug={currentSlug} />
+        </div>
+        {showSidebar && (
+          <div class="mt-4 pt-4 border-t border-border/30">
+            <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
+              所有笔记
+            </div>
+            <NotesSidebar currentSlug={currentSlug} />
+          </div>
+        )}
+      </aside>
     )}
 
     <!-- Middle Column: The Core -->
-    <main class="py-10 min-w-0 w-full mx-auto relative">      
+    <main class="py-4 min-w-0 w-full mx-auto relative">
       <article class="w-full text-text-main leading-[1.8] font-serif text-lg prose prose-invert max-w-none prose-headings:font-serif prose-headings:text-text-main prose-h1:text-4xl prose-h1:font-bold prose-h1:mb-12 prose-h2:text-2xl prose-p:text-text-main prose-li:text-text-main prose-strong:text-text-main prose-a:text-primary prose-a:no-underline hover:prose-a:bg-primary/10 prose-code:font-mono prose-code:text-sm prose-pre:bg-[#1A1B19] prose-pre:border prose-pre:border-[#2C2D2A]">
         <slot />
       </article>
@@ -66,81 +73,10 @@ const gridCols = showContext
 
     <!-- Right Column: Table of Contents / Outline -->
     {showOutline && (
-    <aside class="hidden lg:flex flex-col py-10 sticky top-[100px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto pl-8 custom-scrollbar">
-      <div class="text-xs font-mono tracking-widest text-text-muted mb-6 border-b border-border/50 pb-2 text-right">大纲</div>
-      {hasToc && <TableOfContents headings={headings} />}
-      
-      <!-- Visual representation of floating spores for backlinks/tags -->
-      <div class="mt-8 opacity-80">
-        <div class="text-[10px] font-mono mb-3 text-right text-text-muted">图谱动态</div>
-        <div class="flex flex-wrap gap-2 justify-end">
-          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full select-none text-text-muted">#wabi-sabi</span>
-          <span class="px-3 py-1 bg-background border border-border text-[11px] rounded-full select-none text-text-muted">#architecture</span>
-        </div>
-      </div>
-    </aside>
+      <aside class="hidden lg:flex flex-col py-4 sticky top-6 h-fit max-h-[calc(100vh-120px)] overflow-y-auto pl-8 custom-scrollbar">
+        {hasToc && <TableOfContents headings={headings} />}
+      </aside>
     )}
   </div>
   <WikilinkPreview />
 </BaseLayout>
-
-
-<script>
-  // Auto-apply signal-decode to main h1 in notes
-  const h1 = document.querySelector('article h1');
-  if (h1 && !h1.classList.contains('signal-decode')) {
-    const text = h1.textContent || '';
-    h1.classList.add('signal-decode', 'relative', 'inline-block');
-    h1.setAttribute('data-text', text);
-    const accessibleText = document.createElement('span');
-    accessibleText.className = 'opacity-0 pointer-events-none';
-    accessibleText.textContent = text;
-
-    const visualText = document.createElement('span');
-    visualText.className = 'absolute inset-0 whitespace-nowrap font-mono tracking-widest text-muted-foreground signal-text';
-    visualText.setAttribute('aria-hidden', 'true');
-    visualText.textContent = text;
-
-    h1.replaceChildren(accessibleText, visualText);
-    
-    // Scramble effect
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
-    const el = visualText;
-    if (el) {
-      let iterations = 0;
-      const interval = setInterval(() => {
-        el.textContent = text.split('').map((_letter, index) => {
-          if (index < iterations) {
-            return text[index];
-          }
-          return chars[Math.floor(Math.random() * chars.length)];
-        }).join('');
-        
-        if (iterations >= text.length) {
-          clearInterval(interval);
-          el.textContent = text;
-          el.style.opacity = '0';
-          el.style.transition = 'opacity 0.2s ease-out';
-        }
-        iterations += 1/4;
-      }, 30);
-    }
-  }
-</script>
-
-<style>
-  /* Optional: Custom thin scrollbar for sidebars */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 2px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 4px;
-  }
-  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: var(--color-primary);
-  }
-</style>
