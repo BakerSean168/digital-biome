@@ -14,7 +14,7 @@
 
 - 保留 postbuild 生成的规则，Wrangler 仅提供 Worker module。编译前后以 SHA-256 校验规则没有变化；缺少规则即失败。
 - `scripts/pages-artifact.test.ts` 在隔离目录运行真实 Candidate shell step 和真实 Wrangler，包含公开静态笔记与受保护路径规则。修复前它观察到规则被替换而失败，修复后通过，不使用模拟编译器。
-- Staging 和 Production smoke 从该次 archive 的公开 Notes catalog 取真实详情链接，要求详情成功响应。
+- Staging 和 Production smoke 从该次 archive 实际存在的公开 Notes HTML 取真实详情链接，要求详情成功响应；不依赖 v0.8 才出现的 terminal catalog，以兼容历史回滚。针对无 catalog、中文/空格路径和缺失笔记的情况增加回归。
 - Search E2E 兼容 Cloudflare 的末尾斜杠规范化，继续严格要求原有模式参数和服务锚点。
 - 不修改受保护笔记处理器、Access 策略或公开投影；不通过开放所有 Functions 路由解决问题。
 

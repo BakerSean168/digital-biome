@@ -414,10 +414,13 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
             "$STAGING_URL/" > /dev/null
-          public_note="$(jq -er '.[0].href' release-package/dist/data/terminal/notes.json)"
-          [[ "$public_note" == /notes/obsidian/* ]]
+          public_note_file="$(find release-package/dist/notes/obsidian -type f -name index.html -print -quit)"
+          test -n "$public_note_file"
+          public_note="${public_note_file#release-package/dist}"
+          public_note="${public_note%index.html}"
+          public_note="$(node -e 'process.stdout.write(process.argv[1].split("/").map(encodeURIComponent).join("/"))' "$public_note")"
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
-            "$STAGING_URL${public_note}/?ui=gui" > /dev/null
+            "$STAGING_URL${public_note}?ui=gui" > /dev/null
 
       - name: Record staging promotion
         if: steps.mutation-freshness.outputs.eligible == 'true'

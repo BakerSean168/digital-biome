@@ -7,6 +7,61 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { parse } from 'yaml';
 
+test('Production detail smoke supports historical archives without terminal catalogs', () => {
+  const repo = fileURLToPath(new URL('../', import.meta.url));
+  const workflow = parse(
+    fs.readFileSync(path.join(repo, '.github/workflows/deploy-production.yml'), 'utf8'),
+  );
+  const smoke = Object.values(workflow.jobs)
+    .flatMap((job) => (job as { steps: { name?: string; run?: string }[] }).steps)
+    .find((step) => step.name === 'Smoke test public note detail');
+  assert.equal(typeof smoke?.run, 'string');
+  assert.ok(smoke?.run);
+  const script = smoke.run;
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'biome-pages-smoke-'));
+  try {
+    fs.mkdirSync(path.join(root, 'bin'));
+    fs.writeFileSync(
+      path.join(root, 'bin/curl'),
+      '#!/bin/bash\nprintf "%s\\n" "$@" > "$SMOKE_ARGS"\n',
+      {
+        mode: 0o755,
+      },
+    );
+    const environment = {
+      ...process.env,
+      PATH: `${path.join(root, 'bin')}:${process.env.PATH}`,
+      PRODUCTION_URL: 'https://biome.example.test',
+      SMOKE_ARGS: path.join(root, 'curl-args'),
+    };
+    // No catalog of either generation: use the actual immutable HTML route.
+    const noteDir = path.join(root, 'release-package/dist/notes/obsidian/旧笔记 with spaces');
+    fs.mkdirSync(noteDir, { recursive: true });
+    fs.writeFileSync(path.join(noteDir, 'index.html'), '<h1>Public note</h1>');
+    execFileSync('bash', ['-c', script], {
+      cwd: root,
+      env: environment,
+      timeout: 10_000,
+      stdio: 'pipe',
+    });
+    assert.equal(
+      fs.readFileSync(environment.SMOKE_ARGS, 'utf8').trim().split('\n').at(-1),
+      'https://biome.example.test/notes/obsidian/%E6%97%A7%E7%AC%94%E8%AE%B0%20with%20spaces/?ui=gui',
+    );
+    fs.rmSync(noteDir, { recursive: true });
+    assert.throws(() =>
+      execFileSync('bash', ['-c', script], {
+        cwd: root,
+        env: environment,
+        timeout: 10_000,
+        stdio: 'pipe',
+      }),
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('Candidate compilation preserves the exact public/private invocation boundary', () => {
   const repo = fileURLToPath(new URL('../', import.meta.url));
   const workflow = parse(
