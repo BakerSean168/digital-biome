@@ -1,0 +1,157 @@
+name: Sync data products
+
+on:
+  repository_dispatch:
+    types: [data-product-published]
+  workflow_dispatch:
+    inputs:
+      product:
+        description: Exact product ID (only knowledge-public-v1 is enabled)
+        required: true
+        type: string
+      release_tag:
+        description: Exact immutable product Release tag
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      reconcile:
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: data-product-knowledge-public-v1
+      cancel-in-progress: false
+    env:
+      SYNC_BRANCH: automation/data-product-knowledge-public-v1
+      LOCK_PATH: data-products/knowledge-public-v1.lock.json
+    steps:
+      - name: Checkout consumer main only
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create short-lived Thought Forest read token
+        id: producer-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: thought-forest
+          permission-contents: read
+
+      - name: Verify publication and update only the enabled lock
+        id: lock
+        env:
+          GH_TOKEN: ${{ steps.producer-token.outputs.token }}
+          RECONCILE: ${{ inputs.reconcile || false }}
+        run: |
+          set -euo pipefail
+          if [ "$RECONCILE" = true ]; then
+            mode=reconcile
+          elif [ "$GITHUB_EVENT_NAME" = repository_dispatch ]; then
+            mode=event
+          elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            mode=manual
+          else
+            echo 'Unsupported data-product trigger' >&2
+            exit 1
+          fi
+          # Payload fields are read and validated as unknown JSON by Protocol-v1 code.
+          pnpm exec tsx scripts/data-products/update-lock.ts "$mode"
+
+      - name: Create or refresh the fixed lock-only branch and PR
+        if: steps.lock.outputs.changed == 'true'
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REVISION: ${{ steps.lock.outputs.source_revision }}
+          RELEASE_TAG: ${{ steps.lock.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          next="$RUNNER_TEMP/knowledge-next.lock.json"
+          cp "$LOCK_PATH" "$next"
+          git restore -- "$LOCK_PATH"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          previous="$(git rev-parse --verify "refs/remotes/origin/$SYNC_BRANCH" 2>/dev/null || true)"
+          reuse=false
+          if [ -n "$previous" ] && [ "$(git diff --name-only origin/main "$previous")" = "$LOCK_PATH" ]; then
+            git show "$previous:$LOCK_PATH" > "$RUNNER_TEMP/knowledge-pending.lock.json"
+            if cmp -s "$next" "$RUNNER_TEMP/knowledge-pending.lock.json"; then reuse=true; fi
+          fi
+          if [ "$reuse" = true ]; then
+            git checkout --detach "$previous"
+          else
+            git switch -C "$SYNC_BRANCH" origin/main
+            cp "$next" "$LOCK_PATH"
+            git add -- "$LOCK_PATH"
+            git commit -m "chore(data): pin knowledge-public-v1 to ${SOURCE_REVISION:0:12}"
+          fi
+          test "$(git diff --name-only origin/main HEAD)" = "$LOCK_PATH"
+          test -z "$(git status --porcelain)"
+          head_sha="$(git rev-parse HEAD)"
+          gh auth setup-git
+          if [ "$reuse" != true ]; then
+            git push --force-with-lease="refs/heads/$SYNC_BRANCH:$previous" origin "HEAD:refs/heads/$SYNC_BRANCH"
+          fi
+          title="chore(data): update knowledge-public-v1 to ${SOURCE_REVISION:0:12}"
+          body="Verified immutable Thought Forest Release: $RELEASE_TAG. Protocol-v1 transport, manifest, tag commit and semantic digests passed. This PR changes only the knowledge lock. Manual review/merge required; no auto-merge."
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$pr" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$SYNC_BRANCH" --title "$title" --body "$body"
+            pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number')"
+          else
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$pr" -f title="$title" -f body="$body" > /dev/null
+          fi
+          test "$(gh pr view "$pr" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$head_sha"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for exact-head protected CI (never merge)
+        if: steps.lock.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          # GITHUB_TOKEN pushes/PRs do not reliably emit pull_request runs. Explicitly
+          # dispatch the existing protected check.yml, not a second CI/gate workflow.
+          gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$SYNC_BRANCH"
+          run_id=''
+          for _attempt in $(seq 1 60); do
+            test "$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$HEAD_SHA"
+            run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow check.yml --branch "$SYNC_BRANCH" --event workflow_dispatch --limit 20 --json databaseId,headSha --jq ".[] | select(.headSha == \"$HEAD_SHA\") | .databaseId" | head -n 1)"
+            [ -n "$run_id" ] && break
+            sleep 5
+          done
+          test -n "$run_id" || { echo 'Exact-head protected CI did not appear' >&2; exit 1; }
+          timeout 35m gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
+          gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json headSha,conclusion,event > "$RUNNER_TEMP/ci-result.json"
+          jq -e --arg sha "$HEAD_SHA" '.headSha == $sha and .conclusion == "success" and .event == "workflow_dispatch"' "$RUNNER_TEMP/ci-result.json"
+          test "$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$HEAD_SHA"
+          echo "Exact-head CI passed for PR #$PR_NUMBER at $HEAD_SHA. Manual merge required." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report verified no-op
+        if: steps.lock.outputs.changed != 'true'
+        run: echo 'Verified knowledge publication already matches the committed lock; no PR mutation.' >> "$GITHUB_STEP_SUMMARY"

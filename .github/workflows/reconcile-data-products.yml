@@ -1,0 +1,18 @@
+name: Reconcile data products
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  knowledge:
+    uses: ./.github/workflows/sync-data-products.yml
+    with:
+      reconcile: true
+    secrets: inherit
