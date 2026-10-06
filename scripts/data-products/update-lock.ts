@@ -18,7 +18,7 @@ import {
 export function enabledProduct(product: unknown) {
   const definition = publicDataProducts.find((d) => d.product === product);
   if (!definition) throw new Error('Unknown public product');
-  if (definition.product !== 'knowledge-public-v1')
+  if (!definition.genericConsumption)
     throw new Error(`${definition.product} is not yet enabled for generic consumption`);
   return definition;
 }
@@ -56,7 +56,7 @@ export async function computeNextLock(
   };
 }
 
-export function updateKnowledgeLock(
+export function updatePublicDataProductLock(
   next: Awaited<ReturnType<typeof computeNextLock>>,
   root = process.cwd(),
 ): boolean {
@@ -64,10 +64,12 @@ export function updateKnowledgeLock(
   if (next.lockPath !== definition.lockPath) throw new Error('Unexpected lock write path');
   const lockPath = path.join(root, definition.lockPath);
   const current = parsePublicDataProductLock(JSON.parse(fs.readFileSync(lockPath, 'utf8')));
-  enabledProduct(current.product);
+  if (current.product !== definition.product) throw new Error('Current lock product mismatch');
   if (canonicalLockIdentity(current) === next.publication.canonicalIdentity) return false;
+  if (current.releaseTag === next.publication.identity.releaseTag)
+    throw new Error('Immutable Release identity drift');
   // A single file is the entire mutation boundary; verification precedes any write.
-  const stage = fs.mkdtempSync(path.join(path.dirname(lockPath), '.knowledge-lock-'));
+  const stage = fs.mkdtempSync(path.join(path.dirname(lockPath), '.data-product-lock-'));
   const temporary = path.join(stage, 'next.json');
   try {
     fs.writeFileSync(temporary, next.serialized, { flag: 'wx' });
@@ -79,7 +81,10 @@ export function updateKnowledgeLock(
 }
 
 async function main() {
-  const mode = process.argv[2];
+  const args = process.argv.slice(2);
+  const routeOnly = args[0] === 'route';
+  if (routeOnly) args.shift();
+  const [mode, product, tag] = args;
   let value: unknown;
   let requestMode = mode;
   if (mode === 'event') {
@@ -94,11 +99,23 @@ async function main() {
     value = event.inputs;
     requestMode = 'exact';
   } else if (mode === 'reconcile') {
-    value = { product: 'knowledge-public-v1' };
+    value = { product };
   } else if (mode === 'shadow') {
-    value = { product: process.argv[3], release_tag: process.argv[4] };
+    value = { product, release_tag: tag };
     requestMode = 'exact';
-  } else throw new Error('usage: update-lock.ts event|manual|reconcile|shadow [product tag]');
+  } else
+    throw new Error('usage: update-lock.ts [route] event|manual|reconcile|shadow [product tag]');
+  // Route before issuing a producer token. Every output is registry-owned, not event text.
+  const request = parseSyncRequest(requestMode, value);
+  if (routeOnly) {
+    const definition = enabledProduct(request.product);
+    if (!process.env.GITHUB_OUTPUT) throw new Error('Route requires GITHUB_OUTPUT');
+    fs.appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `mode=${mode}\nproduct=${definition.product}\nproducer_repository=${definition.producerRepository.split('/')[1]}\nbranch=automation/data-product-${definition.product}\nlock_path=${definition.lockPath}\n`,
+    );
+    return;
+  }
   const next = await computeNextLock(
     requestMode,
     value,
@@ -111,7 +128,7 @@ async function main() {
     );
     return;
   }
-  const changed = updateKnowledgeLock(next);
+  const changed = updatePublicDataProductLock(next);
   const identity = next.publication.identity;
   console.log(
     `verification=PASS changed=${changed} product=${identity.product} release=${identity.releaseTag} semantic=${identity.semanticSha256}`,

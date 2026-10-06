@@ -138,6 +138,7 @@ export async function readPublicDataProductRelease(
       if (matches.length !== 1)
         throw new Error(`Release publication asset missing/duplicate: ${name}`);
       const asset = matches[0];
+      if (asset.state !== 'uploaded') throw new Error('Release asset is not fully uploaded');
       if (
         typeof asset.size !== 'number' ||
         !Number.isSafeInteger(asset.size) ||

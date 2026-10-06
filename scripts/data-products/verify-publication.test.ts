@@ -5,6 +5,7 @@ import {
   verifyKnowledgePublicV1Manifest,
 } from './knowledge-public-v1-lock';
 import { publicDataProducts } from './registry';
+import { parseInfraPublicV2Lock, verifyInfraPublicV2Manifest } from './infra-public-v2-lock';
 import { semanticSha256, sha256 } from './semantic-digest';
 import { verifyPublication } from './verify-publication';
 
@@ -225,6 +226,13 @@ for (const definition of publicDataProducts) {
         () => verifyPublication({ ...input, identity: { kind: 'event', value: event } }),
         { message: expected },
       );
+      if (definition.product === 'infra-public-v2') {
+        const infraLock = parseInfraPublicV2Lock(JSON.stringify(lock));
+        assert.throws(
+          () => verifyInfraPublicV2Manifest(infraLock, input.manifest.bytes.toString('utf8')),
+          { message: expected },
+        );
+      }
       if (definition.product === 'knowledge-public-v1') {
         const knowledgeLock = parseKnowledgePublicV1Lock(JSON.stringify(lock));
         assert.throws(

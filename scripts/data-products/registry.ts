@@ -7,6 +7,7 @@ import { parseInfraPublicV2 } from '../../src/domain/infrastructure/infra-public
 export const publicDataProducts = Object.freeze([
   Object.freeze({
     product: 'knowledge-public-v1',
+    genericConsumption: true,
     producerRepository: 'BakerSean168/thought-forest',
     producer: 'pds://system/component/thought-forest',
     artifactName: 'knowledge-public-v1.json',
@@ -22,6 +23,7 @@ export const publicDataProducts = Object.freeze([
   } as const),
   Object.freeze({
     product: 'pds-catalog-v1',
+    genericConsumption: false,
     producerRepository: 'BakerSean168/personal-digital-system',
     producer: 'pds://system/component/personal-digital-system',
     artifactName: 'pds-catalog-v1.json',
@@ -38,6 +40,7 @@ export const publicDataProducts = Object.freeze([
   } as const),
   Object.freeze({
     product: 'infra-public-v2',
+    genericConsumption: true,
     producerRepository: 'BakerSean168/personal-infrastructure',
     producer: 'pds://system/component/personal-infrastructure',
     artifactName: 'infra-public-v2.json',
@@ -49,7 +52,7 @@ export const publicDataProducts = Object.freeze([
     lockPath: 'data-products/infra-public-v2.lock.json',
     buildTime: true,
     parseArtifact: parseInfraPublicV2,
-    materializer: 'scripts/data-products/materialize-infra-public-v2.ts',
+    materializer: 'scripts/data-products/materialize-infra-public-v2.ts#materializeInfraPublicV2',
   } as const),
 ]);
 
