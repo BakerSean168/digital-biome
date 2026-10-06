@@ -33,7 +33,7 @@
 
 ## 剩余顺序与验收
 
-1. 数据栈最终代码审查、前端+数据联合完整门禁和浏览器回归。
+1. 数据栈最终代码审查、前端+数据联合完整门禁和浏览器回归已完成；外部配置恢复后重跑精确 head 的 CI。
 2. App scope恢复后重新执行 exact-head CI，按 #122 → #124 → #125 → automation 的顺序合并；consumer就绪后合并 producer PR。
 3. 关闭被新锁消费替代的旧 projection PR #120；先取得三个产品 event/reconciliation运行证据，再退休兼容入口。
 4. 运行 main CI → Candidate → application Release → Production，记录 source / run / manifest / archive / deployment 身份并实测页面和Access边界。
@@ -51,7 +51,7 @@
 - `production-content`环境已建立，分支策略只允许main，无required reviewer；凭据未配置。两个自动开关显式设置为false。
 - 0.8.0 application Release准备PR #127已通过CI；发布与生产结果单独记录，不能由上述本地结果推定。
 
-## 前端 application 0.8.0 已交付
+## 前端 application 0.8.0 已部署；最终验收发现路由缺陷
 
 数据App scope阻塞期间，已完成的前端独立走既有稳定 application 发布通道：PR #123 与 Release PR #127 已合并。
 
@@ -64,3 +64,15 @@
 - Archive: `sha256:6049d9d16a05317a0007eaf5b81971dee6976d58b9c2f213f7480357abfe0fee`，66,229,325 bytes。已下载比对Release manifest与部署记录，部署过程中没有重建。
 
 Production workflow已通过页面、telemetry API和未登录私有API边界smoke。真实登录后的用户交互不以模拟测试代替。
+
+
+## 生产验收后的修复与栈同步
+
+v0.8.0 最终公网浏览器测试为14通过/2失败，不能把初步smoke成功当成完整交付：Search测试未兼容Cloudflare尾斜杠；公开笔记真实返回404。archive中HTML存在，根因是Candidate用Wrangler的宽泛路由规则覆盖postbuild精确规则。修复详见 `docs/pages-routing-incident.md`。
+
+- 修复PR #128已合并 `10b3001`，真实Wrangler打包回归先红后绿；完整本地门禁通过，真实Pages Worker环境16项浏览器测试通过；双轴复审通过。
+- Release PR #129已合并，0.8.1 source `f7e432c0bd39efbdf4599da4dbcda6746bdbc0c1`；发布与部署还需单独核实。
+- main的前端及路由修复已顺序同步进全部数据PR，无冲突：#122 `b0ebe3c` → #124 `8d6fbc3` → #125 `0ae3d46` → #126 `48b9759`。
+- #126新增自动内容部署公开详情smoke；26项相关测试及quality通过，双轴复审通过。旧脚本在“目录正常/私有401/详情404”场景中误判成功，回归已复现并修复。
+- 联合集成分支也已纳入修复。后续合并不能恢复Wrangler自动路由覆盖行为。
+- #122新head CI `37523332853`仍在创建App token时422，未进入测试；`production-content` secrets查询仍为空。两个自动开关继续关闭。
