@@ -37,7 +37,7 @@ data-products/           # Immutable producer projection locks
 - **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步。
 - **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm check` 进行 Astro、内容和 TypeScript 诊断。
 - **可复用验证门禁**：`pnpm verify` 运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
-- **提交前运行完整门禁**：CI/Candidate 路径先用 `scripts/data-products/prepare-knowledge-public-v1.sh` 验证并物化 committed lock，再运行 `pnpm verify:full`；`pnpm sync` 现在同样从 committed lock 拉取并验证 public projection；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
+- **提交前运行完整门禁**：CI/Candidate 路径先用 `pnpm sync:data-products` 验证并物化 knowledge、infra、PDS 三份 committed public lock，再运行 `pnpm verify:full`；`pnpm sync` 是同一入口，生成 ignored public projection（含 `src/data/system/pds-catalog-v1.json`），不检出 producer source 或运行 exporter；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
 
 ## Context Workflow
 
