@@ -5,9 +5,8 @@
     links: Record<string, string>;
   }
 
-  const valueTargets = document.querySelectorAll<HTMLElement>('[data-private-value]');
-  const linkTargets = document.querySelectorAll<HTMLAnchorElement>('[data-private-link]');
-  const linkValueTargets = document.querySelectorAll<HTMLElement>('[data-private-link-value]');
+  let cachedPayload: PrivateInfrastructurePayload | undefined;
+  let pending: Promise<void> | undefined;
 
   function isStringRecord(value: unknown): value is Record<string, string> {
     return (
@@ -33,20 +32,27 @@
     }
   }
 
-  async function unlockPrivateInfrastructure() {
+  async function hydrate() {
+    const valueTargets = document.querySelectorAll<HTMLElement>('[data-private-value]');
+    const linkTargets = document.querySelectorAll<HTMLAnchorElement>('[data-private-link]');
+    const linkValueTargets = document.querySelectorAll<HTMLElement>('[data-private-link-value]');
     if (valueTargets.length === 0 && linkTargets.length === 0 && linkValueTargets.length === 0)
       return;
 
     try {
-      const response = await fetch('/api/private/infrastructure', {
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json' },
-        redirect: 'manual',
-      });
-      if (!response.ok) return;
+      if (!cachedPayload) {
+        const response = await fetch('/api/private/infrastructure', {
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json' },
+          redirect: 'manual',
+        });
+        if (!response.ok) return;
 
-      const payload: unknown = await response.json();
-      if (!isPrivatePayload(payload)) return;
+        const payload: unknown = await response.json();
+        if (!isPrivatePayload(payload)) return;
+        cachedPayload = payload;
+      }
+      const payload = cachedPayload;
 
       for (const target of valueTargets) {
         const key = target.dataset.privateValue;
@@ -67,6 +73,8 @@
         if (label && target.dataset.privateUnlockedLabel) {
           label.textContent = target.dataset.privateUnlockedLabel;
         }
+        const direct = target.querySelector('[data-object-direct]');
+        if (direct) direct.textContent = '打开 ↗';
       }
 
       for (const target of linkValueTargets) {
@@ -79,5 +87,18 @@
     }
   }
 
+  function unlockPrivateInfrastructure() {
+    if (!pending)
+      pending = hydrate().finally(() => {
+        pending = undefined;
+      });
+    return pending;
+  }
+  document.addEventListener('biome:objects-rendered', () => {
+    // A pending initial request may have captured older nodes. Refresh after it settles.
+    void unlockPrivateInfrastructure().then(() => {
+      if (cachedPayload) void hydrate();
+    });
+  });
   void unlockPrivateInfrastructure();
 </script>

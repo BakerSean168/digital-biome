@@ -7,16 +7,41 @@
   id="wikilink-preview-card"
   class="fixed hidden z-[999] w-72 md:w-80 bg-card/95 backdrop-blur-md border border-border p-4 rounded-xl shadow-xl transition-all duration-200 pointer-events-none select-none text-left opacity-0"
 >
-  <div id="wikilink-preview-loading" class="flex items-center gap-2 text-xs text-muted-foreground py-2">
-    <svg class="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  <div
+    id="wikilink-preview-loading"
+    class="flex items-center gap-2 text-xs text-muted-foreground py-2"
+  >
+    <svg
+      class="animate-spin h-4 w-4 text-primary"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        class="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        stroke-width="4"
+      ></circle>
+      <path
+        class="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      ></path>
     </svg>
     <span class="font-mono text-[10px]">PREVIEW_LOADING...</span>
   </div>
   <div id="wikilink-preview-content" class="hidden">
-    <h5 id="wikilink-preview-title" class="text-xs font-bold text-foreground mb-1.5 font-mono tracking-wide border-b border-border pb-1"></h5>
-    <p id="wikilink-preview-desc" class="text-[11px] text-muted-foreground leading-relaxed line-clamp-4 m-0 font-mono"></p>
+    <h5
+      id="wikilink-preview-title"
+      class="text-xs font-bold text-foreground mb-1.5 font-mono tracking-wide border-b border-border pb-1"
+    ></h5>
+    <p
+      id="wikilink-preview-desc"
+      class="text-[11px] text-muted-foreground leading-relaxed line-clamp-4 m-0 font-mono"
+    ></p>
   </div>
 </div>
 
@@ -33,10 +58,19 @@
   let showTimeout: any = null;
   let hideTimeout: any = null;
 
+  document.getElementById('site-content')?.addEventListener(
+    'scroll',
+    () => {
+      if (showTimeout) clearTimeout(showTimeout);
+      hidePreview();
+    },
+    { passive: true },
+  );
+
   function registerWikilinks() {
     const wikilinks = document.querySelectorAll('.wikilink') as NodeListOf<HTMLAnchorElement>;
 
-    wikilinks.forEach(link => {
+    wikilinks.forEach((link) => {
       // Avoid duplicate bindings
       if (link.dataset.previewBound) return;
       link.dataset.previewBound = 'true';
@@ -56,7 +90,7 @@
       link.addEventListener('mouseleave', () => {
         if (showTimeout) clearTimeout(showTimeout);
         activeHoverLink = null;
-        
+
         hideTimeout = setTimeout(() => {
           hidePreview();
         }, 200); // 200ms grace period
@@ -72,18 +106,18 @@
     if (!href) return;
 
     const rect = link.getBoundingClientRect();
-    const top = rect.bottom + window.scrollY + 6;
-    const left = Math.max(10, Math.min(window.innerWidth - 330, rect.left + window.scrollX - 40));
+    const top = Math.min(rect.bottom + 6, window.innerHeight - 220);
+    const left = Math.max(10, Math.min(window.innerWidth - 330, rect.left - 40));
 
     previewCard.style.top = `${top}px`;
     previewCard.style.left = `${left}px`;
     previewCard.classList.remove('hidden');
-    
+
     // Trigger transition reflow
     void previewCard.offsetWidth;
     previewCard.classList.remove('opacity-0');
     previewCard.classList.add('opacity-100');
-    
+
     // Show loading initially
     previewLoading.classList.remove('hidden');
     previewContent.classList.add('hidden');
@@ -120,17 +154,19 @@
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error('Network error');
-      
+
       const htmlText = await response.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlText, 'text/html');
-      
+
       // Extract title and first prose paragraph
-      const titleEl = doc.querySelector('article h1') || doc.querySelector('h1') || doc.querySelector('title');
+      const titleEl =
+        doc.querySelector('article h1') || doc.querySelector('h1') || doc.querySelector('title');
       const title = titleEl ? titleEl.textContent?.trim() : 'Untitled Note';
-      
+
       // Find first paragraph inside prose article
-      const proseContainer = doc.querySelector('.prose') || doc.querySelector('article') || doc.body;
+      const proseContainer =
+        doc.querySelector('.prose') || doc.querySelector('article') || doc.body;
       let desc = '';
       if (proseContainer) {
         // Filter out empty paragraphs
@@ -143,7 +179,7 @@
           }
         }
       }
-      
+
       if (!desc) {
         desc = '[ NO_DATA ] 未解析到该神经元的有效预览切片。';
       } else if (desc.length > 160) {
@@ -152,7 +188,7 @@
 
       const cleanData = {
         title: title || '未命名笔记',
-        desc: desc
+        desc: desc,
       };
 
       cache.set(url, cleanData);
@@ -165,7 +201,7 @@
       console.error('Failed to fetch wikilink preview:', err);
       const fallbackData = {
         title: url.split('/').pop()?.replace(/-/g, ' ') || '笔记预览',
-        desc: '无法加载预览内容。'
+        desc: '无法加载预览内容。',
       };
       cache.set(url, fallbackData);
       if (activeHoverLink && activeHoverLink.getAttribute('href') === url) {

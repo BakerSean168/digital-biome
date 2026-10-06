@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { assertNotesCatalogBoundary, INITIAL_NOTE_CARD_COUNT } from './notes-catalog-boundary';
+import { INITIAL_NOTE_CARD_COUNT } from './notes-catalog-boundary';
 import { assertAboutMarkupBoundary } from './about-markup-boundary';
 import { assertPagefindRuntimeSurface } from './pagefind-runtime-surface';
-import { assertToolsCatalogBoundary } from './tools-catalog-boundary';
+import { assertTerminalCatalogBoundary } from './terminal-catalog-boundary';
 import { INITIAL_TOOL_CARD_COUNT } from '../src/view-models/tools-catalog';
 
 type PageBudget = {
@@ -34,6 +34,8 @@ type AssetBudget = {
 const ASSET_BUDGETS: readonly AssetBudget[] = [
   { label: 'dist JavaScript', extension: '.js', maxKiB: 100 },
   { label: 'dist CSS', extension: '.css', maxKiB: 190 },
+  { label: 'terminal notes catalog', file: 'data/terminal/notes.json', maxKiB: 1600 },
+  { label: 'terminal external catalog', file: 'data/terminal/external.json', maxKiB: 400 },
   { label: 'notes catalog', file: 'data/notes-catalog.json', maxKiB: 1400 },
   { label: 'tools catalog', file: 'data/tools-catalog.json', maxKiB: 80, gzipKiB: 24 },
 ];
@@ -133,16 +135,11 @@ function assertAssetBudgets(): void {
 function assertAboutMarkup(): void {
   const aboutPath = path.join(DIST_DIR, 'about', 'index.html');
   const tagsPath = path.join(DIST_DIR, 'about', 'tags', 'index.html');
-  const contributionsPath = path.resolve('src/data/github-contributions.json');
-  if (!fs.existsSync(aboutPath) || !fs.existsSync(tagsPath) || !fs.existsSync(contributionsPath)) {
+
+  if (!fs.existsSync(aboutPath) || !fs.existsSync(tagsPath)) {
     throw new Error('About markup boundary inputs are missing.');
   }
-  const contributionPayload = JSON.parse(fs.readFileSync(contributionsPath, 'utf8')) as {
-    contributions?: unknown[];
-  };
-  const contributionDays = Array.isArray(contributionPayload.contributions)
-    ? contributionPayload.contributions.length
-    : 0;
+  const contributionDays = 0;
   assertAboutMarkupBoundary(fs.readFileSync(aboutPath, 'utf8'), fs.readFileSync(tagsPath, 'utf8'), {
     contributionDays,
   });
@@ -152,7 +149,7 @@ function assertAboutMarkup(): void {
 }
 
 function reportNotesCatalog(): void {
-  const catalogPath = path.join(DIST_DIR, 'data', 'notes-catalog.json');
+  const catalogPath = path.join(DIST_DIR, 'data', 'terminal', 'notes.json');
   const notesPath = path.join(DIST_DIR, 'notes', 'index.html');
   if (!fs.existsSync(catalogPath) || !fs.existsSync(notesPath)) {
     throw new Error('Notes catalog or /notes HTML is missing from dist.');
@@ -160,7 +157,7 @@ function reportNotesCatalog(): void {
 
   const notesHtml = fs.readFileSync(notesPath, 'utf8');
   const catalogPayload: unknown = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
-  assertNotesCatalogBoundary(notesHtml, catalogPayload);
+  assertTerminalCatalogBoundary(notesHtml, catalogPayload, 'note', INITIAL_NOTE_CARD_COUNT);
 
   console.log(
     `notes catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_NOTE_CARD_COUNT} SSR cards)`,
@@ -168,7 +165,7 @@ function reportNotesCatalog(): void {
 }
 
 function reportToolsCatalog(): void {
-  const catalogPath = path.join(DIST_DIR, 'data', 'tools-catalog.json');
+  const catalogPath = path.join(DIST_DIR, 'data', 'terminal', 'external.json');
   const toolsPath = path.join(DIST_DIR, 'tools', 'index.html');
   if (!fs.existsSync(catalogPath) || !fs.existsSync(toolsPath)) {
     throw new Error('Tools catalog or /tools HTML is missing from dist.');
@@ -176,7 +173,7 @@ function reportToolsCatalog(): void {
 
   const toolsHtml = fs.readFileSync(toolsPath, 'utf8');
   const catalogPayload: unknown = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
-  assertToolsCatalogBoundary(toolsHtml, catalogPayload);
+  assertTerminalCatalogBoundary(toolsHtml, catalogPayload, 'external', INITIAL_TOOL_CARD_COUNT);
 
   console.log(
     `tools catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_TOOL_CARD_COUNT} SSR cards)`,

@@ -30,10 +30,26 @@ const lang = getLangFromUrl(Astro.url);
 ---
 
 <!doctype html>
-<html lang={lang} class="dark">
+<html lang={lang} class="dark" data-ui="tui">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      // Before first paint; kept dependency-free so static pages do not flash modes.
+      (() => {
+        const valid = (value) => value === 'gui' || value === 'tui';
+        const requested = new URLSearchParams(location.search).get('ui');
+        let saved;
+        try {
+          saved = localStorage.getItem('digital-biome.ui-mode');
+        } catch {}
+        document.documentElement.dataset.ui = valid(requested)
+          ? requested
+          : valid(saved)
+            ? saved
+            : 'tui';
+      })();
+    </script>
     <meta name="description" content={description} />
     <meta name="author" content={SITE_AUTHOR} />
 
@@ -44,21 +60,21 @@ const lang = getLangFromUrl(Astro.url);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap"
       media="print"
       onload="this.setAttribute('media', 'all')"
     />
     <noscript>
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600;700&display=swap"
       />
     </noscript>
 
     <link rel="canonical" href={fullUrl} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-    <meta name="theme-color" content="#151614" />
+    <meta name="theme-color" content="#0b0e0c" />
     <meta name="robots" content="index, follow" />
 
     <meta property="og:type" content={type} />
@@ -74,15 +90,19 @@ const lang = getLangFromUrl(Astro.url);
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={siteUrl + image} />
   </head>
-  <body class={`font-sans ${bodyClass || ''}`}>
+  <body class={`terminal-site ${bodyClass || ''}`}>
+    <div
+      id="site-content"
+      class="min-h-0 flex-1 overflow-auto overscroll-contain"
+      tabindex="-1"
+      aria-label="页面内容"
+    >
+      <slot />
+    </div>
     {showHeader && <Header />}
-    <slot />
     <PrivateInfrastructureUnlock />
+    <script>
+      import '../browser/ui-mode';
+    </script>
   </body>
 </html>
-
-<style is:global>
-  html {
-    color-scheme: light dark;
-  }
-</style>

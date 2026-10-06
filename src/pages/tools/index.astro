@@ -1,23 +1,108 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import BookmarkGrid from '../../components/dashboard/BookmarkGrid.astro';
-import SignalTitle from '../../components/common/SignalTitle.astro';
+import TerminalLayout from '../../layouts/TerminalLayout.astro';
+import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
+import { terminalInfrastructure, terminalExternal } from '../../repositories/terminal-repository';
+const resources = terminalInfrastructure();
+const external = terminalExternal();
+const groups = [
+  {
+    id: 'services',
+    label: 'services',
+    description:
+      '自托管服务与应用。Access 标记的入口需要身份验证；状态来自资源登记，不代表实时健康。',
+    items: resources.filter((item) => item.kind === 'service'),
+  },
+  {
+    id: 'external',
+    label: 'external',
+    description: '收藏的外部工具、网站与资源。',
+    items: external,
+  },
+  {
+    id: 'hosts',
+    label: 'hosts',
+    description: '承载服务的主机与设备。',
+    items: resources.filter((item) => item.kind === 'host'),
+  },
+  {
+    id: 'network',
+    label: 'network',
+    description: '连接个人基础设施的网络与平台。',
+    items: resources.filter((item) => item.kind === 'network' || item.kind === 'platform'),
+  },
+];
 ---
 
-<BaseLayout title="Tools" description="公开工具资产列表">
-  <main class="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
-    <section class="space-y-8">
-      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between border-b border-border pb-6">
-        <div>
-          <SignalTitle as="h1" class="text-3xl font-bold font-mono tracking-wider text-foreground uppercase" title="[ EXTERNAL_TOOLS ]" />
-          <p class="mt-3 max-w-3xl text-xs leading-relaxed text-muted-foreground font-mono">
-            // 本模块索引在笔记知识网络中沉淀与引用的外部工具、资源网站及设计资产。
-          </p>
-        </div>
-      </div>
-
-      <BookmarkGrid />
+<TerminalLayout title="Tools" description="服务、外部资源、主机与网络的统一入口。">
+  <header data-ui-only="gui" class="mb-8">
+    <h1 class="text-[32px]">Tools</h1>
+    <p class="mt-3 text-muted-foreground">找到用途，再到达入口。</p>
+  </header>
+  <h1 data-ui-only="tui" class="sr-only">
+    Tools 与服务
+  </h1>
+  <nav aria-label="资源类型" class="content-tabs mb-3 flex flex-wrap gap-3" data-tools-tabs>
+    {groups.map((group, i) => (
+      <a
+        href={`#${group.id}`}
+        data-tools-tab={group.id}
+        data-terminal-tab={i + 1}
+        aria-current={i === 0 ? 'true' : 'false'}
+        class="border border-border px-3 py-0.5 text-muted-foreground aria-[current=true]:border-primary aria-[current=true]:text-primary"
+      >
+        <span data-ui-only="tui">
+          {i + 1} {group.label}
+        </span>
+        <span data-ui-only="gui">
+          {['服务', '外部资源', '主机', '网络'][i]}{' '}
+          <span class="hidden md:inline">{group.label}</span>
+        </span>
+      </a>
+    ))}
+  </nav>
+  {groups.map((group) => (
+    <section id={group.id} data-tools-panel class="mb-8 scroll-mt-5">
+      <h2 class="sr-only">{group.label}</h2>
+      <p data-tools-description class="mb-5 text-muted-foreground">
+        {group.description}
+      </p>
+      <ObjectBrowser
+        items={group.items.slice(0, group.id === 'external' ? 16 : 12)}
+        total={group.items.length}
+        catalog={
+          group.items.length > (group.id === 'external' ? 16 : 12)
+            ? `/data/terminal/${group.id}.json`
+            : undefined
+        }
+        label={group.label}
+        contextPath={`/tools#${group.id}`}
+      />
     </section>
-  </main>
-</BaseLayout>
-
+  ))}
+</TerminalLayout>
+<script>
+  const tabs = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-tools-tab]'));
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-tools-panel]'));
+  function activate() {
+    const id = location.hash.slice(1);
+    const active = panels.some((panel) => panel.id === id) ? id : 'services';
+    panels.forEach((panel) => {
+      panel.hidden = panel.id !== active;
+      if (!panel.hidden)
+        panel.querySelector('[data-object-browser]')?.dispatchEvent(new Event('terminal-activate'));
+    });
+    tabs.forEach((tab) =>
+      tab.setAttribute('aria-current', String(tab.dataset.toolsTab === active)),
+    );
+  }
+  tabs.forEach((tab) =>
+    tab.addEventListener('click', (event) => {
+      event.preventDefault();
+      history.pushState(history.state, '', tab.getAttribute('href'));
+      activate();
+    }),
+  );
+  window.addEventListener('popstate', activate);
+  window.addEventListener('hashchange', activate);
+  activate();
+</script>

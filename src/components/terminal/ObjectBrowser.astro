@@ -1,0 +1,194 @@
+---
+import type { TerminalObject } from '../../view-models/terminal-object';
+interface Props {
+  items: TerminalObject[];
+  total?: number;
+  catalog?: string;
+  label?: string;
+  filter?: boolean;
+  queryParam?: string;
+  contextPath?: string;
+}
+const {
+  items,
+  total = items.length,
+  catalog,
+  label = '对象',
+  filter = true,
+  queryParam,
+  contextPath = Astro.url.pathname,
+} = Astro.props;
+const first = items[0];
+---
+
+<section
+  data-object-browser
+  data-context-path={contextPath}
+  data-query-param={queryParam}
+  data-catalog={catalog}
+  data-total={total}
+  aria-label={label}
+>
+  {filter && (
+    <>
+      <div data-filter-bar class="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
+        <label class="flex min-w-0 items-center gap-2">
+          <kbd data-ui-only="tui">i</kbd>
+          <input
+            data-object-filter
+            type="search"
+            placeholder="搜索名称或用途"
+            aria-label="文本筛选"
+            class="min-w-0 w-40 border-b border-border bg-transparent py-1 text-foreground focus:border-primary sm:w-52"
+          />
+        </label>
+        <button
+          data-facet-trigger
+          type="button"
+          class="shrink-0 whitespace-nowrap hover:text-primary"
+        >
+          <kbd data-ui-only="tui" class="border border-border px-1">
+            f
+          </kbd>{' '}
+          筛选
+        </button>
+        <span data-object-count aria-live="polite" class="shrink-0 whitespace-nowrap">
+          {items.length} / {total}
+        </span>
+      </div>
+      <div
+        data-facet-chips
+        class="flex flex-wrap gap-2 text-xs text-muted-foreground not-empty:mb-3"
+      ></div>
+    </>
+  )}
+  <div data-browser-columns class="grid gap-7 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+    <div class="min-w-0">
+      <div
+        data-object-list
+        class="max-h-[45dvh] overflow-y-auto border-t border-border md:max-h-none md:overflow-visible"
+      >
+        {items.map((item, index) => (
+          <a
+            href={item.href}
+            target={/^https?:/.test(item.href) ? '_blank' : undefined}
+            rel={/^https?:/.test(item.href) ? 'noopener noreferrer' : undefined}
+            data-private-link={item.privateRef}
+            data-object-row
+            data-terminal-kind={['note', 'external'].includes(item.kind) ? item.kind : undefined}
+            data-terminal-id={['note', 'external'].includes(item.kind) ? item.id : undefined}
+            data-object={JSON.stringify({
+              ...item,
+              title: undefined,
+              description: undefined,
+              facets:
+                item.facets && Object.values(item.facets).some((values) => values.length)
+                  ? Object.fromEntries(
+                      Object.entries(item.facets).filter(([, values]) => values.length),
+                    )
+                  : undefined,
+            })}
+            aria-current={index === 0 ? 'true' : 'false'}
+            class="terminal-row"
+          >
+            <span class="terminal-pointer" aria-hidden="true">
+              &gt;
+            </span>
+            <span data-object-symbol class="text-muted-foreground" aria-hidden="true">
+              {item.kind === 'note' ? '§' : item.kind === 'blog' ? '¶' : ':'}
+            </span>
+            <strong data-object-title>{item.title}</strong>
+            <span class="terminal-description">{item.description}</span>
+            <span class="terminal-meta">
+              {item.privateRef ? 'Access · ' : ''}
+              {item.meta}
+            </span>
+            <span data-object-direct data-ui-only="gui">
+              {item.privateRef ? 'Access' : /^https?:/.test(item.href) ? '打开 ↗' : '查看 →'}
+            </span>
+          </a>
+        ))}
+      </div>
+      <p
+        data-object-empty
+        class:list={['py-5 text-muted-foreground', items.length > 0 && 'hidden']}
+      >
+        没有匹配的内容。
+      </p>
+      <button
+        data-object-more
+        type="button"
+        class:list={[
+          'my-4 text-xs text-primary hover:underline',
+          total <= items.length && 'hidden',
+        ]}
+      >
+        加载更多
+      </button>
+      <p data-object-error role="alert" class="hidden py-3 text-amber-300">
+        目录加载失败。
+        <button data-object-retry type="button" class="underline">
+          重试
+        </button>
+      </p>
+    </div>
+    <aside
+      data-object-preview
+      class="min-w-0 self-start border-t border-border pt-3 md:sticky md:top-4 md:border-t-0 md:border-l md:pt-2 md:pl-6"
+      aria-label="所选对象预览"
+    >
+      {first && (
+        <>
+          <h2 class="text-lg font-semibold text-primary">{first.title}</h2>
+          <p class="mt-3 text-xs text-muted-foreground">
+            {first.kind} · {first.meta}
+          </p>
+          <p class="mt-3 break-words">{first.description}</p>
+          <p class="mt-3 text-xs text-muted-foreground">
+            {first.tags.map((tag) => tag.split('/').pop()).join(' · ')}
+          </p>
+          <a
+            class="mt-5 inline-block text-primary"
+            href={first.href}
+            data-private-link={first.privateRef}
+            target={/^https?:/.test(first.href) ? '_blank' : undefined}
+            rel="noopener noreferrer"
+          >
+            {first.privateRef ? 'Access →' : '打开 ↗'}
+          </a>
+          {first.relations.length > 0 && (
+            <div class="mt-5 border-t border-border pt-3">
+              <h3 class="mb-2 text-xs text-muted-foreground">关联</h3>
+              {first.relations.map((link, i) => (
+                <a
+                  data-object-relation
+                  class="block py-1 hover:text-primary"
+                  href={link.href}
+                  target={/^https?:/.test(link.href) ? '_blank' : undefined}
+                  rel="noopener noreferrer"
+                >
+                  [{i + 1}] {link.title}
+                </a>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </aside>
+  </div>
+  <dialog
+    data-object-detail
+    aria-label="对象详情"
+    class="m-auto max-h-[80dvh] w-[calc(100%-32px)] max-w-lg overflow-auto border border-border bg-background p-6 text-foreground backdrop:bg-black/70"
+  >
+    <form method="dialog" class="mb-5 flex justify-end">
+      <button aria-label="关闭详情" class="min-h-11 px-3">
+        关闭
+      </button>
+    </form>
+  </dialog>
+</section>
+<script>
+  import { initializeObjectBrowsers } from '../../browser/terminal-objects';
+  initializeObjectBrowsers();
+</script>
