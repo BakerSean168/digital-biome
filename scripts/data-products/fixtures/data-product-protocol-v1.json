@@ -1,0 +1,52 @@
+{
+  "event": {
+    "protocol_version": 1,
+    "product": "pds-catalog-v1",
+    "producer_repository": "BakerSean168/personal-digital-system",
+    "source_revision": "0123456789abcdef0123456789abcdef01234567",
+    "release_tag": "pds-catalog-v1-0123456789abcdef0123456789abcdef01234567",
+    "artifact": {"name": "pds-catalog-v1.json", "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    "manifest": {"name": "pds-catalog-v1.manifest.json", "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+    "semantic_sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "lock": {
+    "protocolVersion": 1,
+    "product": "knowledge-public-v1",
+    "producerRepository": "BakerSean168/thought-forest",
+    "sourceRevision": "0123456789abcdef0123456789abcdef01234567",
+    "releaseTag": "knowledge-public-v1-0123456789abcdef0123456789abcdef01234567",
+    "artifact": {"name": "knowledge-public-v1.json", "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    "manifest": {"name": "knowledge-public-v1.manifest.json", "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+    "semanticSha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "invalid_events": [
+    {
+      "name": "foreign producer for catalog product",
+      "payload": {
+        "protocol_version": 1,
+        "product": "pds-catalog-v1",
+        "producer_repository": "BakerSean168/thought-forest",
+        "source_revision": "0123456789abcdef0123456789abcdef01234567",
+        "release_tag": "pds-catalog-v1-0123456789abcdef0123456789abcdef01234567",
+        "artifact": {"name": "pds-catalog-v1.json", "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+        "manifest": {"name": "pds-catalog-v1.manifest.json", "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+        "semantic_sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    }
+  ],
+  "invalid_locks": [
+    {
+      "name": "mutable release is not an identity",
+      "payload": {
+        "protocolVersion": 1,
+        "product": "knowledge-public-v1",
+        "producerRepository": "BakerSean168/thought-forest",
+        "sourceRevision": "0123456789abcdef0123456789abcdef01234567",
+        "releaseTag": "latest",
+        "artifact": {"name": "knowledge-public-v1.json", "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+        "manifest": {"name": "knowledge-public-v1.manifest.json", "sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+        "semanticSha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    }
+  ]
+}
