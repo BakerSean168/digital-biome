@@ -1,6 +1,6 @@
 # Unified Data Product + Content Delivery 实施方案
 
-> 状态：Approved plan，尚未开始代码迁移
+> 状态：实施中。三产品消费与 v5 已实现并通过本地门禁；自动内容通道已实现、默认关闭。受保护 CI / 生产激活仍待凭据配置和实际运行证据。详见 `data-product-takeover-status.md`。
 > 日期：2026-10-06
 > 关联决策：ADR-0005、PDS ADR-0006、PDS Data Product Protocol v1
 

@@ -138,7 +138,8 @@ jobs:
           ci_run_id="$(jq -r .ciRunId "$candidate")"
           ci_json="$(gh api "repos/$REPOSITORY/actions/runs/$ci_run_id")"
           [[ "$(jq -r .name <<<"$ci_json")" == CI ]] || { echo 'candidate source run is not CI' >&2; exit 1; }
-          [[ "$(jq -r .event <<<"$ci_json")" == push ]] || { echo 'candidate source CI is not push' >&2; exit 1; }
+          [[ "$(jq -r .path <<<"$ci_json")" == .github/workflows/check.yml ]] || { echo 'CI workflow path mismatch' >&2; exit 1; }
+          [[ "$(jq -r .event <<<"$ci_json")" =~ ^(push|workflow_dispatch)$ ]] || { echo 'candidate source CI trigger is not supported' >&2; exit 1; }
           [[ "$(jq -r .head_branch <<<"$ci_json")" == main ]] || { echo 'candidate source CI is not main' >&2; exit 1; }
           [[ "$(jq -r .head_sha <<<"$ci_json")" == "$CANDIDATE_SHA" ]] || {
             echo 'candidate source CI SHA mismatch' >&2

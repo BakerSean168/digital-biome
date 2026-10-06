@@ -249,7 +249,8 @@ jobs:
           ci_run_id="$(jq -r .ciRunId "$manifest")"
           ci_json="$(gh api "repos/$REPOSITORY/actions/runs/$ci_run_id")"
           [[ "$(jq -r .name <<<"$ci_json")" == CI ]] || { echo 'release source run is not CI' >&2; exit 1; }
-          [[ "$(jq -r .event <<<"$ci_json")" == push ]] || { echo 'release source CI is not push' >&2; exit 1; }
+          [[ "$(jq -r .path <<<"$ci_json")" == .github/workflows/check.yml ]] || { echo 'CI workflow path mismatch' >&2; exit 1; }
+          [[ "$(jq -r .event <<<"$ci_json")" =~ ^(push|workflow_dispatch)$ ]] || { echo 'release source CI trigger is not supported' >&2; exit 1; }
           [[ "$(jq -r .head_branch <<<"$ci_json")" == main ]] || { echo 'release source CI is not main' >&2; exit 1; }
           [[ "$(jq -r .head_sha <<<"$ci_json")" == "$RELEASE_SHA" ]] || { echo 'release source CI SHA mismatch' >&2; exit 1; }
           [[ "$(jq -r .conclusion <<<"$ci_json")" == success ]] || { echo 'release source CI did not succeed' >&2; exit 1; }
