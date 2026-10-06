@@ -181,6 +181,49 @@ for (const definition of publicDataProducts) {
     }
   });
 
+  for (const section of [
+    'root',
+    'metadata',
+    'spec',
+    'spec.producer',
+    'spec.contract',
+    'spec.source',
+    'spec.artifact',
+  ] as const) {
+    test(`${definition.product}: rejects unexpected manifest ${section} fields with matching byte digest`, () => {
+      const { manifest, input, lock } = fixture(definition);
+      const sections = {
+        root: manifest,
+        metadata: manifest.metadata,
+        spec: manifest.spec,
+        'spec.producer': manifest.spec.producer,
+        'spec.contract': manifest.spec.contract,
+        'spec.source': manifest.spec.source,
+        'spec.artifact': manifest.spec.artifact,
+      };
+      Object.assign(sections[section], { unexpected: 'not allowed by the manifest schema' });
+      input.manifest.bytes = Buffer.from(JSON.stringify(manifest));
+      lock.manifest.sha256 = sha256(input.manifest.bytes);
+      const event = {
+        protocol_version: 1,
+        product: lock.product,
+        producer_repository: lock.producerRepository,
+        source_revision: lock.sourceRevision,
+        release_tag: lock.releaseTag,
+        artifact: lock.artifact,
+        manifest: lock.manifest,
+        semantic_sha256: lock.semanticSha256,
+      };
+      const label = section === 'root' ? 'manifest' : `manifest ${section.replace('spec.', '')}`;
+      const expected = new RegExp(`^${label} fields mismatch$`);
+      assert.throws(() => verifyPublication(input), { message: expected });
+      assert.throws(
+        () => verifyPublication({ ...input, identity: { kind: 'event', value: event } }),
+        { message: expected },
+      );
+    });
+  }
+
   test(`${definition.product}: rejects null manifest sections and invalid UTF-8`, () => {
     for (const section of ['producer', 'contract', 'source', 'artifact']) {
       const { manifest, input, lock } = fixture(definition);

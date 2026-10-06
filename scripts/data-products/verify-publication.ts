@@ -1,5 +1,6 @@
 import { getPublicDataProduct, type PublicDataProductDefinition } from './registry';
 import {
+  assertExactKeys,
   assertRecord,
   canonicalLockIdentity,
   parseDataProductPublished,
@@ -32,14 +33,26 @@ function verifyManifest(
   lock: PublicDataProductLock,
   definition: PublicDataProductDefinition,
 ): void {
+  // PDS contracts/data-product-manifest-v1.schema.json closes every object.
   assertRecord(value, 'manifest');
+  assertExactKeys(value, ['apiVersion', 'kind', 'metadata', 'spec'], 'manifest');
   assertRecord(value.metadata, 'manifest metadata');
+  assertExactKeys(value.metadata, ['id'], 'manifest metadata');
   assertRecord(value.spec, 'manifest spec');
   const spec = value.spec;
+  assertExactKeys(spec, ['producer', 'contract', 'source', 'artifact'], 'manifest spec');
   assertRecord(spec.producer, 'manifest producer');
+  assertExactKeys(spec.producer, ['ref'], 'manifest producer');
   assertRecord(spec.contract, 'manifest contract');
+  assertExactKeys(spec.contract, ['name', 'version'], 'manifest contract');
   assertRecord(spec.source, 'manifest source');
+  assertExactKeys(spec.source, ['repository', 'revision'], 'manifest source');
   assertRecord(spec.artifact, 'manifest artifact');
+  assertExactKeys(
+    spec.artifact,
+    ['path', 'mediaType', 'generated', 'editable'],
+    'manifest artifact',
+  );
   if (
     value.apiVersion !== 'pds/v1alpha1' ||
     value.kind !== 'DataProductManifest' ||
