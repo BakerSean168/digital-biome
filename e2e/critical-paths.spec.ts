@@ -63,7 +63,7 @@ test('Search returns real Pagefind content and service navigation', async ({ pag
   await page.locator('#cmd-input').fill('litellm');
   await expect(page.locator('#cmd-results')).toContainText('LiteLLM');
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/systems\?ui=gui#service-svc-litellm-model-gateway$/);
+  await expect(page).toHaveURL(/\/systems\/?\?ui=gui#service-svc-litellm-model-gateway$/);
 });
 
 test('Tools bounds external SSR to 16 and lazy-loads the shared catalog', async ({

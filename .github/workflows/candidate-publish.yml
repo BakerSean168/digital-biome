@@ -136,6 +136,8 @@ jobs:
           set -euo pipefail
           worker_dir="$(mktemp -d)"
           trap 'rm -rf "$worker_dir"' EXIT
+          test -s dist/_routes.json
+          sha256sum dist/_routes.json > "$worker_dir/routes.sha256"
 
           pnpm exec wrangler pages functions build functions \
             --outdir "$worker_dir" \
@@ -151,7 +153,9 @@ jobs:
           fi
 
           install -m 0644 "$worker_dir/index.js" dist/_worker.js
-          install -m 0644 "$worker_dir/_routes.json" dist/_routes.json
+          # Postbuild owns invocation rules. Wrangler's generated manifest routes
+          # every public note into the protected-note tombstone Function.
+          sha256sum --check "$worker_dir/routes.sha256"
 
       - id: identity
         name: Record immutable candidate identity
@@ -410,6 +414,13 @@ jobs:
           set -euo pipefail
           curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
             "$STAGING_URL/" > /dev/null
+          public_note_file="$(find release-package/dist/notes/obsidian -type f -name index.html -print -quit)"
+          test -n "$public_note_file"
+          public_note="${public_note_file#release-package/dist}"
+          public_note="${public_note%index.html}"
+          public_note="$(node -e 'process.stdout.write(process.argv[1].split("/").map(encodeURIComponent).join("/"))' "$public_note")"
+          curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+            "$STAGING_URL${public_note}?ui=gui" > /dev/null
 
       - name: Record staging promotion
         if: steps.mutation-freshness.outputs.eligible == 'true'
