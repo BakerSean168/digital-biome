@@ -71,8 +71,17 @@ Production workflow已通过页面、telemetry API和未登录私有API边界smo
 v0.8.0 最终公网浏览器测试为14通过/2失败，不能把初步smoke成功当成完整交付：Search测试未兼容Cloudflare尾斜杠；公开笔记真实返回404。archive中HTML存在，根因是Candidate用Wrangler的宽泛路由规则覆盖postbuild精确规则。修复详见 `docs/pages-routing-incident.md`。
 
 - 修复PR #128已合并 `10b3001`，真实Wrangler打包回归先红后绿；完整本地门禁通过，真实Pages Worker环境16项浏览器测试通过；双轴复审通过。
-- Release PR #129已合并，0.8.1 source `f7e432c0bd39efbdf4599da4dbcda6746bdbc0c1`；发布与部署还需单独核实。
+- Release PR #129已合并，0.8.1 source `f7e432c0bd39efbdf4599da4dbcda6746bdbc0c1`；已完成发布与部署，完整证据如下。
 - main的前端及路由修复已顺序同步进全部数据PR，无冲突：#122 `b0ebe3c` → #124 `8d6fbc3` → #125 `0ae3d46` → #126 `48b9759`。
 - #126新增自动内容部署公开详情smoke；26项相关测试及quality通过，双轴复审通过。旧脚本在“目录正常/私有401/详情404”场景中误判成功，回归已复现并修复。
 - 联合集成分支也已纳入修复。后续合并不能恢复Wrangler自动路由覆盖行为。
 - #122新head CI `37523332853`仍在创建App token时422，未进入测试；`production-content` secrets查询仍为空。两个自动开关继续关闭。
+
+
+## 0.8.1 已验证交付
+
+- main CI `37523871537` → Candidate/staging `37524412073` → Release publish `37524858587` → Production `37525004208`，全部成功。
+- Source `f7e432c0bd39efbdf4599da4dbcda6746bdbc0c1`；archive SHA-256 `73866b87f4f1e6456fa3f212fbdecfec2ac5e0b127a4bce4ce6bd79e568c7105`，66,225,857 bytes；Release manifest SHA-256 `48068b4ed4d3c183bc19fe544a515fe3dac3308973433144433dfc3e69b7cd25`。
+- Cloudflare deployment `b2d70583-a0f8-4b12-aa41-965ee76872a9`，URL `https://b2d70583.digital-biome.pages.dev`；公开域名 `https://bakersean.top`。
+- 分别下载Candidate/Release archive比对身份，并逐字段比对deployment record；公开笔记200，底栏v0.8.1/f7e432c0，生产16项Chromium回归全部通过。
+- 应用继续使用既有v4发布契约。数据栈仍等待上述App安装范围和content环境secret配置，未合并启用。授权浏览器场景中的模拟响应不代替真实登录或手机软键盘验收。
