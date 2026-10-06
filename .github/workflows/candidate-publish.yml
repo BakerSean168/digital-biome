@@ -142,64 +142,27 @@ jobs:
           artifact=digital-biome-pages.tar.gz
           tar -czf "$artifact" dist
 
-          knowledge_source_sha="$(jq -r .sourceRevision data-products/knowledge-public-v1.lock.json)"
-          knowledge_release_tag="$(jq -r .releaseTag data-products/knowledge-public-v1.lock.json)"
-          knowledge_artifact_sha256="$(jq -r .artifact.sha256 data-products/knowledge-public-v1.lock.json)"
-          knowledge_manifest_sha256="$(jq -r .manifest.sha256 data-products/knowledge-public-v1.lock.json)"
-          public_infra_producer="$(jq -r .producerRepository data-products/infra-public-v2.lock.json)"
-          public_infra_source_sha="$(jq -r .sourceRevision data-products/infra-public-v2.lock.json)"
-          public_infra_release_tag="$(jq -r .releaseTag data-products/infra-public-v2.lock.json)"
-          public_infra_artifact_sha256="$(jq -r .artifact.sha256 data-products/infra-public-v2.lock.json)"
-          public_infra_manifest_sha256="$(jq -r .manifest.sha256 data-products/infra-public-v2.lock.json)"
-          private_infra_producer="$(jq -r .producerRepository data-products/digital-biome-private-infrastructure-v1.lock.json)"
-          private_infra_source_sha="$(jq -r .sourceRevision data-products/digital-biome-private-infrastructure-v1.lock.json)"
-          private_infra_contract_path="$(jq -r .contractPath data-products/digital-biome-private-infrastructure-v1.lock.json)"
-          private_infra_sha256="$(jq -r .sha256 data-products/digital-biome-private-infrastructure-v1.lock.json)"
           artifact_hash="$(sha256sum "$artifact" | cut -d ' ' -f 1)"
           artifact_bytes="$(stat -c '%s' "$artifact")"
-
           jq -n \
             --arg gitSha "$REVISION" \
             --arg ciRunId "$CI_RUN_ID" \
-            --arg knowledgeSourceSha "$knowledge_source_sha" \
-            --arg knowledgeReleaseTag "$knowledge_release_tag" \
-            --arg knowledgeArtifactSha256 "$knowledge_artifact_sha256" \
-            --arg knowledgeManifestSha256 "$knowledge_manifest_sha256" \
-            --arg publicInfraProducer "$public_infra_producer" \
-            --arg publicInfraSourceSha "$public_infra_source_sha" \
-            --arg publicInfraReleaseTag "$public_infra_release_tag" \
-            --arg publicInfraArtifactSha256 "$public_infra_artifact_sha256" \
-            --arg publicInfraManifestSha256 "$public_infra_manifest_sha256" \
-            --arg privateInfraProducer "$private_infra_producer" \
-            --arg privateInfraSourceSha "$private_infra_source_sha" \
-            --arg privateInfraContractPath "$private_infra_contract_path" \
-            --arg privateInfraSha256 "$private_infra_sha256" \
+            --slurpfile knowledge data-products/knowledge-public-v1.lock.json \
+            --slurpfile pds data-products/pds-catalog-v1.lock.json \
+            --slurpfile infra data-products/infra-public-v2.lock.json \
+            --slurpfile privateBinding data-products/digital-biome-private-infrastructure-v1.lock.json \
             --arg file "$artifact" \
             --arg artifactSha256 "sha256:$artifact_hash" \
             --argjson bytes "$artifact_bytes" \
             '{
               gitSha:$gitSha,
               ciRunId:$ciRunId,
-              knowledge:{
-                producerRepository:"BakerSean168/thought-forest",
-                sourceRevision:$knowledgeSourceSha,
-                releaseTag:$knowledgeReleaseTag,
-                artifactSha256:$knowledgeArtifactSha256,
-                manifestSha256:$knowledgeManifestSha256
+              dataProducts:{
+                "knowledge-public-v1":$knowledge[0],
+                "pds-catalog-v1":$pds[0],
+                "infra-public-v2":$infra[0]
               },
-              publicInfrastructure:{
-                producerRepository:$publicInfraProducer,
-                sourceRevision:$publicInfraSourceSha,
-                releaseTag:$publicInfraReleaseTag,
-                artifactSha256:$publicInfraArtifactSha256,
-                manifestSha256:$publicInfraManifestSha256
-              },
-              privateInfrastructure:{
-                producerRepository:$privateInfraProducer,
-                sourceRevision:$privateInfraSourceSha,
-                contractPath:$privateInfraContractPath,
-                sha256:$privateInfraSha256
-              },
+              privateBindings:{"digital-biome-private-infrastructure-v1":$privateBinding[0]},
               artifact:{file:$file,sha256:$artifactSha256,bytes:$bytes}
             }' > reports/candidate/input.json
 
@@ -323,8 +286,8 @@ jobs:
           expected_private="${{ steps.private-infra-lock.outputs.sha256 }}"
           actual_private="sha256:$(sha256sum "$private_binding" | cut -d ' ' -f 1)"
           [[ "$actual_private" == "$expected_private" ]]
-          [[ "$(jq -r .privateInfrastructure.sourceRevision reports/candidate/candidate-manifest.json)" == "${{ steps.private-infra-lock.outputs.revision }}" ]]
-          [[ "$(jq -r .privateInfrastructure.sha256 reports/candidate/candidate-manifest.json)" == "$expected_private" ]]
+          [[ "$(jq -r '.privateBindings["digital-biome-private-infrastructure-v1"].sourceRevision' reports/candidate/candidate-manifest.json)" == "${{ steps.private-infra-lock.outputs.revision }}" ]]
+          [[ "$(jq -r '.privateBindings["digital-biome-private-infrastructure-v1"].sha256' reports/candidate/candidate-manifest.json)" == "$expected_private" ]]
           mkdir -p tmp
           pnpm exec tsx scripts/export-private-infrastructure.ts \
             --contract "$private_binding" \

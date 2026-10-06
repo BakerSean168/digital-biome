@@ -2,11 +2,10 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 import {
-  CANDIDATE_SCHEMA,
+  V4_CANDIDATE_SCHEMA as CANDIDATE_SCHEMA,
   PREVIOUS_CANDIDATE_SCHEMA,
   PREVIOUS_RELEASE_SCHEMA,
-  RELEASE_SCHEMA,
-  createCandidate,
+  V4_RELEASE_SCHEMA as RELEASE_SCHEMA,
   createReleaseManifest,
   releaseProvenanceMessage,
   validateCandidate,
@@ -81,6 +80,11 @@ function artifact() {
     sha256: hash,
     bytes: 123,
   };
+}
+
+// Historical immutable v4 shape. New production code only writes v5.
+function createCandidate(input: Record<string, unknown>, generatedAt = '2026-10-02T00:00:00.000Z') {
+  return withDigest({ schema: CANDIDATE_SCHEMA, ...input, generatedAt });
 }
 
 test('v4 candidate and release preserve knowledge, public/private infrastructure, and artifact identities', () => {
@@ -173,13 +177,13 @@ test('retired v1/v2 delivery schemas are rejected', () => {
   for (const schema of ['digital-biome.candidate/v1', 'digital-biome.candidate/v2']) {
     assert.match(
       validateCandidate({ schema }).join('; '),
-      /schema must be digital-biome\.candidate\/v4/,
+      /schema must be digital-biome\.candidate\/v5/,
     );
   }
   for (const schema of ['digital-biome.release/v1', 'digital-biome.release/v2']) {
     assert.match(
       validateReleaseManifest({ schema }).join('; '),
-      /schema must be digital-biome\.release\/v4/,
+      /schema must be digital-biome\.release\/v5/,
     );
   }
 });

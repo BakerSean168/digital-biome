@@ -3,9 +3,21 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  assertExactKeys,
+  assertRecord,
+  parsePublicDataProductLock,
+} from '../data-products/lock-v1';
+import { publicDataProducts } from '../data-products/registry';
+import {
+  DIGITAL_BIOME_PRIVATE_INFRASTRUCTURE_PRODUCT,
+  parseDigitalBiomePrivateInfrastructureLock,
+} from '../data-products/private-infrastructure-lock';
 
-export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v4';
-export const RELEASE_SCHEMA = 'digital-biome.release/v4';
+export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v5';
+export const V4_CANDIDATE_SCHEMA = 'digital-biome.candidate/v4';
+export const RELEASE_SCHEMA = 'digital-biome.release/v5';
+export const V4_RELEASE_SCHEMA = 'digital-biome.release/v4';
 export const PREVIOUS_CANDIDATE_SCHEMA = 'digital-biome.candidate/v3';
 export const PREVIOUS_RELEASE_SCHEMA = 'digital-biome.release/v3';
 
@@ -149,51 +161,62 @@ function validateDigest(value: JsonRecord, label: string): string[] {
   return value.digest === expected ? [] : [`${label} digest mismatch: expected ${expected}`];
 }
 
+function parseInputs(value: JsonRecord) {
+  assertRecord(value.dataProducts, 'dataProducts');
+  assertExactKeys(
+    value.dataProducts,
+    publicDataProducts.map((product) => product.product),
+    'dataProducts',
+  );
+  const inputs = value.dataProducts;
+  const dataProducts = Object.fromEntries(
+    publicDataProducts.map((definition) => {
+      const lock = parsePublicDataProductLock(inputs[definition.product]);
+      if (lock.product !== definition.product)
+        throw new Error('dataProducts key/identity mismatch');
+      return [definition.product, lock];
+    }),
+  );
+  assertRecord(value.privateBindings, 'privateBindings');
+  assertExactKeys(
+    value.privateBindings,
+    [DIGITAL_BIOME_PRIVATE_INFRASTRUCTURE_PRODUCT],
+    'privateBindings',
+  );
+  const binding = parseDigitalBiomePrivateInfrastructureLock(
+    JSON.stringify(value.privateBindings[DIGITAL_BIOME_PRIVATE_INFRASTRUCTURE_PRODUCT]),
+  );
+  return {
+    dataProducts,
+    privateBindings: { [DIGITAL_BIOME_PRIVATE_INFRASTRUCTURE_PRODUCT]: binding },
+  };
+}
+
+function validateV5Inputs(value: JsonRecord): string[] {
+  try {
+    parseInputs(value);
+    if (['knowledge', 'publicInfrastructure', 'privateInfrastructure'].some((key) => key in value))
+      return ['v5 must not duplicate product identities in legacy fields'];
+    return [];
+  } catch (error) {
+    return [error instanceof Error ? error.message : 'Invalid v5 inputs'];
+  }
+}
+
 export function createCandidate(inputValue: unknown, generatedAt = new Date().toISOString()) {
   const input = asObject(inputValue, 'candidate input');
   const artifact = asObject(input.artifact, 'candidate artifact');
-  const knowledge = asObject(input.knowledge, 'candidate knowledge');
-  const publicInfrastructure = asObject(
-    input.publicInfrastructure,
-    'candidate public infrastructure',
-  );
-  const privateInfrastructure = asObject(
-    input.privateInfrastructure,
-    'candidate private infrastructure',
-  );
-
   const candidate: JsonRecord = {
     schema: CANDIDATE_SCHEMA,
     gitSha: input.gitSha,
     ciRunId: String(input.ciRunId ?? ''),
-    knowledge: {
-      producerRepository: knowledge.producerRepository,
-      sourceRevision: knowledge.sourceRevision,
-      releaseTag: knowledge.releaseTag,
-      artifactSha256: knowledge.artifactSha256,
-      manifestSha256: knowledge.manifestSha256,
-    },
-    publicInfrastructure: {
-      producerRepository: publicInfrastructure.producerRepository,
-      sourceRevision: publicInfrastructure.sourceRevision,
-      releaseTag: publicInfrastructure.releaseTag,
-      artifactSha256: publicInfrastructure.artifactSha256,
-      manifestSha256: publicInfrastructure.manifestSha256,
-    },
-    privateInfrastructure: {
-      producerRepository: privateInfrastructure.producerRepository,
-      sourceRevision: privateInfrastructure.sourceRevision,
-      contractPath: privateInfrastructure.contractPath,
-      sha256: privateInfrastructure.sha256,
-    },
-    artifact: {
-      file: artifact.file,
-      sha256: artifact.sha256,
-      bytes: Number(artifact.bytes),
-    },
+    ...parseInputs(input),
+    artifact: { file: artifact.file, sha256: artifact.sha256, bytes: Number(artifact.bytes) },
     generatedAt,
   };
   candidate.digest = identityDigest(candidate);
+  const errors = validateCandidate(candidate);
+  if (errors.length) throw new Error(errors.join('; '));
   return candidate;
 }
 
@@ -216,12 +239,16 @@ export function validateCandidate(value: unknown): string[] {
   if (candidate.schema === PREVIOUS_CANDIDATE_SCHEMA) return validateV3Candidate(candidate);
 
   const errors: string[] = [];
-  if (candidate.schema !== CANDIDATE_SCHEMA) errors.push(`schema must be ${CANDIDATE_SCHEMA}`);
+  if (![CANDIDATE_SCHEMA, V4_CANDIDATE_SCHEMA].includes(String(candidate.schema)))
+    errors.push(`schema must be ${CANDIDATE_SCHEMA} or an accepted rollback schema`);
   if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  errors.push(...validateKnowledgeIdentity(candidate.knowledge));
-  errors.push(...validatePublicInfrastructureIdentity(candidate.publicInfrastructure));
-  errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
+  if (candidate.schema === CANDIDATE_SCHEMA) errors.push(...validateV5Inputs(candidate));
+  else {
+    errors.push(...validateKnowledgeIdentity(candidate.knowledge));
+    errors.push(...validatePublicInfrastructureIdentity(candidate.publicInfrastructure));
+    errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
+  }
   errors.push(...validateArtifact(candidate.artifact));
   errors.push(...validateDigest(candidate, 'candidate'));
   return errors;
@@ -243,7 +270,11 @@ export function createReleaseManifest(
   const candidate = candidateValue as JsonRecord;
   const schema = candidate.schema;
   const releaseSchema =
-    schema === PREVIOUS_CANDIDATE_SCHEMA ? PREVIOUS_RELEASE_SCHEMA : RELEASE_SCHEMA;
+    schema === PREVIOUS_CANDIDATE_SCHEMA
+      ? PREVIOUS_RELEASE_SCHEMA
+      : schema === V4_CANDIDATE_SCHEMA
+        ? V4_RELEASE_SCHEMA
+        : RELEASE_SCHEMA;
 
   const release: JsonRecord = {
     schema: releaseSchema,
@@ -253,16 +284,18 @@ export function createReleaseManifest(
     ciRunId: candidate.ciRunId,
     candidateRunId,
     candidateManifestDigest: candidate.digest,
-    ...(schema === PREVIOUS_CANDIDATE_SCHEMA
-      ? {
-          knowledge: candidate.knowledge,
-          privateInfrastructure: candidate.privateInfrastructure,
-        }
-      : {
-          knowledge: candidate.knowledge,
-          publicInfrastructure: candidate.publicInfrastructure,
-          privateInfrastructure: candidate.privateInfrastructure,
-        }),
+    ...(schema === CANDIDATE_SCHEMA
+      ? { dataProducts: candidate.dataProducts, privateBindings: candidate.privateBindings }
+      : schema === PREVIOUS_CANDIDATE_SCHEMA
+        ? {
+            knowledge: candidate.knowledge,
+            privateInfrastructure: candidate.privateInfrastructure,
+          }
+        : {
+            knowledge: candidate.knowledge,
+            publicInfrastructure: candidate.publicInfrastructure,
+            privateInfrastructure: candidate.privateInfrastructure,
+          }),
     artifact: candidate.artifact,
     generatedAt,
   };
@@ -302,10 +335,14 @@ export function validateReleaseManifest(value: unknown): string[] {
   if (release.schema === PREVIOUS_RELEASE_SCHEMA) return validateV3Release(release);
 
   const errors = validateReleaseBase(release);
-  if (release.schema !== RELEASE_SCHEMA) errors.push(`schema must be ${RELEASE_SCHEMA}`);
-  errors.push(...validateKnowledgeIdentity(release.knowledge));
-  errors.push(...validatePublicInfrastructureIdentity(release.publicInfrastructure));
-  errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
+  if (![RELEASE_SCHEMA, V4_RELEASE_SCHEMA].includes(String(release.schema)))
+    errors.push(`schema must be ${RELEASE_SCHEMA} or an accepted rollback schema`);
+  if (release.schema === RELEASE_SCHEMA) errors.push(...validateV5Inputs(release));
+  else {
+    errors.push(...validateKnowledgeIdentity(release.knowledge));
+    errors.push(...validatePublicInfrastructureIdentity(release.publicInfrastructure));
+    errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
+  }
   errors.push(...validateArtifact(release.artifact));
   errors.push(...validateDigest(release, 'release'));
   return errors;
