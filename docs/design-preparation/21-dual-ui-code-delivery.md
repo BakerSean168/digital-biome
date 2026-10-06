@@ -2,6 +2,8 @@
 
 日期：2026-10-06。实现分支 `feat/dual-ui`，集成起点 `f37007d`。本文件记录实现与验证，合并、候选、生产发布分别记录，不能互相替代。
 
+最终生产结果与统一数据链剩余配置见 [生产交付与数据交接](22-production-delivery-and-data-handoff.md)：前端 v0.8.1 已部署，生产16项浏览器回归通过。
+
 ## 产品与页面
 
 - Home：身份、Library / Projects / Tools 导航、分开的 Blog / Notes 与少量常用服务。
