@@ -4,15 +4,15 @@
 
 ## 已完成的代码
 
-| 部分                           | 位置                            | 验证 / 状态                                                                  |
-| ------------------------------ | ------------------------------- | ---------------------------------------------------------------------------- |
-| TUI / GUI 前端                 | Digital Biome PR #123           | 已合入 main `34fc428f`；完整门禁、16项浏览器回归、双轴复审通过               |
-| Knowledge 通用消费             | PR #121                         | 已合入 main                                                                  |
-| Infra immutable consumer       | PR #122                         | 包含在 `c604f81` 栈的双轴复审通过；CI受 App scope 阻塞                       |
-| PDS materializer / prepare-all | PR #124                         | 同上；三份真实 Release 本地下载与物化通过                                    |
-| Candidate / Release v5         | PR #125                         | 全三产品身份和独立私有绑定；27项交付测试、完整门禁通过；新 Production 不重建 |
-| PDS producer                   | personal-digital-system PR #16  | `478d897`：48项测试、CI与双轴复审通过；待 consumer 协同激活                  |
-| Infra producer                 | personal-infrastructure PR #112 | 既有 `55248d1` CI绿色；原作者已三轮审查；待 consumer 协同激活                |
+| 部分                           | 位置                            | 验证 / 状态                                                                                   |
+| ------------------------------ | ------------------------------- | --------------------------------------------------------------------------------------------- |
+| TUI / GUI 前端                 | Digital Biome PR #123           | 已合入 main `34fc428f`；完整门禁、16项浏览器回归、双轴复审通过                                |
+| Knowledge 通用消费             | PR #121                         | 已合入 main                                                                                   |
+| Infra immutable consumer       | PR #122                         | 包含在 `c604f81` 栈的双轴复审通过；CI受 App scope 阻塞                                        |
+| PDS materializer / prepare-all | PR #124                         | 同上；三份真实 Release 本地下载与物化通过                                                     |
+| Candidate / Release v5         | PR #125                         | 全三产品身份和独立私有绑定；27项交付测试、完整门禁通过；新 Production 不重建                  |
+| PDS producer                   | personal-digital-system PR #16  | `478d897`：48项测试、CI与双轴复审通过；待 consumer 协同激活                                   |
+| Infra producer                 | personal-infrastructure PR #112 | `7403d04`：补 main/前进来源/串行化/有界历史守卫；49项测试及双轴复审通过；待 consumer 协同激活 |
 
 不把“已经写完”当成统一链路已上线。尚未删除需要兼容或尚无替代运行证据的旧入口和凭据。
 
@@ -50,3 +50,17 @@
 - PDS producer最终代码 `478d897` 双轴复审及48项测试、GitHub CI通过；补齐20页限制与POSIX文件写入上限。
 - `production-content`环境已建立，分支策略只允许main，无required reviewer；凭据未配置。两个自动开关显式设置为false。
 - 0.8.0 application Release准备PR #127已通过CI；发布与生产结果单独记录，不能由上述本地结果推定。
+
+## 前端 application 0.8.0 已交付
+
+数据App scope阻塞期间，已完成的前端独立走既有稳定 application 发布通道：PR #123 与 Release PR #127 已合并。
+
+- Source: `7ed9597fc1e64c9447a1564a04435e71afa369d5`。
+- main CI: `37518825666`；Candidate: `37519276544`；Release publish: `37519783594`。
+- Release: `v0.8.0`，当前仍是 v4交付契约；尚未把待合并v5数据栈宣布上线。
+- Production workflow: `37520002785`，成功。
+- Pages deployment: `1b22db0e-697e-4103-8fc3-2a365fdfbb4b`。
+- Public URL: `https://bakersean.top`。
+- Archive: `sha256:6049d9d16a05317a0007eaf5b81971dee6976d58b9c2f213f7480357abfe0fee`，66,229,325 bytes。已下载比对Release manifest与部署记录，部署过程中没有重建。
+
+Production workflow已通过页面、telemetry API和未登录私有API边界smoke。真实登录后的用户交互不以模拟测试代替。
