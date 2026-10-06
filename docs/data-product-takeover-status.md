@@ -40,3 +40,13 @@
 5. 自动内容环境配置后，以开关关闭观察 → 开启 → 真实 lock-only更新证明自动上线；补 dropped-event恢复与回滚演练。
 
 私有端点只在 producer RuntimeBinding更新、公共投影语义不变时不产生新的公共 Release；因此不触发静态 Candidate。直接修改 consumer private lock不进入自动内容通道。未来如需要独立自动私有绑定更新，须保留授权、覆盖校验和生产secret边界，不能混入本通道。
+
+## 联合验证与复审
+
+- 前端 main 与完整数据栈在隔离 integration worktree 无冲突合并。
+- 三份 committed public locks 重新下载和物化后，`pnpm verify:full`通过；34项edge、129项unit、218项脚本测试通过，无跳过（装载了精确私有binding）。
+- 独立3项真实私有引用覆盖通过；16项生产构建Chromium回归通过。Tools83.0KiB/gzip13.7KiB，JS61.1KiB，CSS128.9KiB，未放宽预算。
+- v5代码 `c604f81` 双轴审查通过。自动通道最终代码 `ae2daba` 双轴复审通过；补齐下载/解压/内存上限，以及smoke失败后保留已完成部署的身份与结果。
+- PDS producer最终代码 `478d897` 双轴复审及48项测试、GitHub CI通过；补齐20页限制与POSIX文件写入上限。
+- `production-content`环境已建立，分支策略只允许main，无required reviewer；凭据未配置。两个自动开关显式设置为false。
+- 0.8.0 application Release准备PR #127已通过CI；发布与生产结果单独记录，不能由上述本地结果推定。
