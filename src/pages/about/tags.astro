@@ -1,8 +1,6 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { SITE_NAME } from '../../constants';
+import TerminalLayout from '../../layouts/TerminalLayout.astro';
 import { getAllNoteTags } from '../../utils/notes';
-
 const allTagsMap = getAllNoteTags();
 const filteredTags = Array.from(allTagsMap.entries())
   .filter(([tag]) => {
@@ -12,89 +10,22 @@ const filteredTags = Array.from(allTagsMap.entries())
   .sort((a, b) => b[1] - a[1]);
 ---
 
-<BaseLayout title={`标签墙 | ${SITE_NAME}`} description="所有笔记标签">
-  <main class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-    <div class="mb-10 text-center">
-      <h1 class="text-4xl font-bold text-foreground mb-4">标签墙</h1>
-      <p class="text-muted-foreground">这里展示了数字花园中所有的知识维度节点。</p>
-    </div>
-
-    <div class="rounded-2xl bg-card border border-border p-6 sm:p-10 shadow-sm">
-      <div class="tag-directory" data-tag-directory data-tag-count={filteredTags.length}>
-        {filteredTags.map(([tag, count]) => (
-          <a href={`/notes?tag=${encodeURIComponent(tag)}`} class="tag-chip">
-            {tag}
-            <span class="tag-chip-count">{count}</span>
-          </a>
-        ))}
-        {filteredTags.length === 0 && (
-          <p class="text-muted-foreground py-10 text-center w-full">暂无标签</p>
-        )}
-      </div>
-    </div>
-  </main>
-</BaseLayout>
-
-<style>
-  .tag-directory {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75rem;
-  }
-
-  .tag-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 9999px;
-    background: var(--bg-secondary);
-    color: var(--text-main);
-    font-size: 0.875rem;
-    text-decoration: none;
-    transition: border-color 180ms ease, background-color 180ms ease;
-  }
-
-  .tag-chip::before {
-    content: '#';
-    color: var(--primary);
-    opacity: 0.8;
-    transition: opacity 180ms ease;
-  }
-
-  .tag-chip:hover,
-  .tag-chip:focus-visible {
-    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
-    background: color-mix(in srgb, var(--primary) 5%, var(--bg-secondary));
-  }
-
-  .tag-chip:hover::before,
-  .tag-chip:focus-visible::before {
-    opacity: 1;
-  }
-
-  .tag-chip:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-  }
-
-  .tag-chip-count {
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.375rem;
-    background: var(--bg);
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    transition: background-color 180ms ease;
-  }
-
-  .tag-chip:hover .tag-chip-count,
-  .tag-chip:focus-visible .tag-chip-count {
-    background: color-mix(in srgb, var(--primary) 10%, var(--bg));
-  }
-
-  @media (min-width: 768px) {
-    .tag-directory { gap: 1rem; }
-  }
-</style>
+<TerminalLayout title="Tags" description="按标签浏览知识笔记">
+  <h1 data-page-title class="mb-2 text-lg text-primary">
+    Library / Tags
+  </h1>
+  <p class="mb-5 text-muted-foreground">按知识维度浏览笔记。悬停标签查看完整路径。</p>
+  <div
+    class="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4"
+    data-tag-directory
+    data-tag-count={filteredTags.length}
+  >
+    {filteredTags.map(([tag, count]) => (
+      <a href={`/notes?tag=${encodeURIComponent(tag)}`} class="tag-chip" title={tag}>
+        <span class="truncate">{tag.split('/').pop()}</span>
+        <span class="text-muted-foreground">{count}</span>
+      </a>
+    ))}
+    {filteredTags.length === 0 && <p class="text-muted-foreground">暂无标签。</p>}
+  </div>
+</TerminalLayout>

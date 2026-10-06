@@ -9,11 +9,11 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   i18n: {
-    defaultLocale: "zh",
-    locales: ["zh"],
+    defaultLocale: 'zh',
+    locales: ['zh'],
     routing: {
-      prefixDefaultLocale: false
-    }
+      prefixDefaultLocale: false,
+    },
   },
 
   site: process.env.PUBLIC_SITE_URL || 'https://bakersean.top/',
@@ -21,22 +21,24 @@ export default defineConfig({
   outDir: './dist',
   publicDir: './public',
 
-  integrations: [
-    sitemap(),
-  ],
+  integrations: [sitemap()],
+
+  server: {
+    allowedHosts: process.env.BIOME_PREVIEW_HOST ? [process.env.BIOME_PREVIEW_HOST] : [],
+  },
 
   vite: {
     ssr: {
-      external: ['svgo']
+      external: ['svgo'],
     },
 
     resolve: {
       alias: {
         '@components': './src/components',
-      }
+      },
     },
 
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
   },
 
   markdown: {
@@ -50,6 +52,6 @@ export default defineConfig({
       remarkNormalizeCodeLang,
       [remarkWikilinks, { notesRoot: './src/data/obsidian' }],
     ],
-    rehypePlugins: []
-  }
+    rehypePlugins: [],
+  },
 });

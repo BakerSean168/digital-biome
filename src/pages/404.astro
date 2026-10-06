@@ -1,62 +1,22 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { Terminal, Unplug } from '@lucide/astro';
+import TerminalLayout from '../layouts/TerminalLayout.astro';
 ---
 
-<BaseLayout 
-  title="404 - Connection Lost" 
-  description="SYS.404: 神经元连接丢失 (Connection Lost)"
-  showHeader={false}
->
-  <main class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
-    <!-- 背景网格与微弱的光晕 -->
-    <div class="absolute inset-0 biome-grid pointer-events-none opacity-20"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
-
-    <!-- 弹窗容器 -->
-    <div class="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden">
-      <!-- 终端顶栏 -->
-      <div class="h-10 bg-background/50 border-b border-border flex items-center px-4 justify-between">
-        <div class="flex items-center gap-2 text-[10px] font-mono text-muted-foreground tracking-widest">
-          <span class="w-2 h-2 bg-red-500/80 animate-pulse"></span>
-          <span>[ TERMINAL_OVERRIDE ]</span>
-        </div>
-        <div class="flex items-center gap-2 text-[10px] font-mono text-muted-foreground tracking-widest">
-          <Terminal size={12} />
-          <span>SYS.ERR.404</span>
-        </div>
-      </div>
-
-      <!-- 内容区 -->
-      <div class="p-8 md:p-12 flex flex-col items-center text-center">
-        <div class="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6 text-red-500 animate-pulse">
-          <Unplug size={28} />
-        </div>
-        
-        <h1 class="font-mono text-6xl font-bold tracking-tighter text-foreground sm:text-8xl">
-          404
-        </h1>
-        <div class="font-mono text-sm uppercase tracking-widest text-muted-foreground mb-10">
-          SYS.404: CONNECTION_LOST
-        </div>
-        
-        <div class="mb-10">
-          <p class="font-mono text-sm leading-relaxed text-muted-foreground">
-            未找到目标神经元。<br/>
-            可能已被裁剪，或尚未从数字土壤中生长出来。
-          </p>
-        </div>
-
-        <a 
-          href="/" 
-          class="group relative inline-flex items-center justify-center gap-2 px-8 py-3 bg-background border border-border rounded-full overflow-hidden transition-all hover:border-primary/50 hover:shadow-[0_0_20px_rgba(139,154,70,0.2)]"
-        >
-          <div class="absolute inset-0 bg-primary/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-          <span class="relative z-10 font-mono text-sm tracking-widest text-foreground group-hover:text-primary transition-colors">
-            [ REBOOT_SYSTEM ]
-          </span>
-        </a>
-      </div>
+<TerminalLayout title="404" description="没有找到这个页面">
+  <section class="max-w-[720px]">
+    <h1 data-page-title class="mb-3 text-lg text-primary">
+      404 · Page not found
+    </h1>
+    <p class="text-muted-foreground">
+      没有找到这个页面。链接可能已改变，你可以返回首页或搜索内容。
+    </p>
+    <div class="mt-6 flex gap-6">
+      <a href="/" class="text-primary">
+        Home →
+      </a>
+      <button class="search-trigger text-primary" aria-haspopup="dialog">
+        Search /
+      </button>
     </div>
-  </main>
-</BaseLayout>
+  </section>
+</TerminalLayout>

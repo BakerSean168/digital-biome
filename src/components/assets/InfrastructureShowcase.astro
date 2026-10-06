@@ -187,7 +187,7 @@ const labels =
       <p class="mt-2 text-xs leading-6 text-muted-foreground">{labels.operationsDescription}</p>
     </header>
 
-    <div class="space-y-9 py-8 lg:pl-8">
+    <div class="min-w-0 space-y-9 py-8 lg:pl-8">
       <section>
         <div class="flex items-center justify-between gap-4 border-b border-border/40 pb-2">
           <h3 class="text-sm font-medium text-foreground">{labels.fleet}</h3>
@@ -344,7 +344,7 @@ const labels =
       <p class="mt-2 text-xs leading-6 text-muted-foreground">{labels.registryDescription}</p>
     </header>
 
-    <div class="lg:pl-8">
+    <div class="min-w-0 lg:pl-8">
       {resourcesByKind.map(({ kind, label, items }, index) => (
         <details class="group border-b border-border/40 last:border-b-0" open={index < 2}>
           <summary class="grid cursor-pointer list-none gap-3 py-5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden">

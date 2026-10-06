@@ -1,0 +1,22 @@
+---
+const active = Astro.url.pathname.startsWith('/blog') ? 'blog' : 'notes';
+---
+
+<nav aria-label="写作内容类型" class="content-tabs mb-3 flex items-center gap-3">
+  {['blog', 'notes'].map((kind, i) => (
+    <a
+      href={`/${kind}`}
+      data-terminal-tab={i + 1}
+      aria-current={active === kind ? 'page' : undefined}
+      class:list={[
+        'border px-3 py-0.5',
+        active === kind
+          ? 'border-primary text-primary'
+          : 'border-border text-muted-foreground hover:text-foreground',
+      ]}
+    >
+      <span data-ui-only="tui">{i + 1} </span>
+      {kind}
+    </a>
+  ))}
+</nav>
