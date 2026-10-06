@@ -145,7 +145,11 @@ const first = items[0];
           </p>
           <p class="mt-3 break-words">{first.description}</p>
           <p class="mt-3 text-xs text-muted-foreground">
-            {first.tags.map((tag) => tag.split('/').pop()).join(' · ')}
+            {first.tags.map((tag) => (
+              <span title={tag} class="mr-2">
+                {tag.split('/').pop()}
+              </span>
+            ))}
           </p>
           <a
             class="mt-5 inline-block text-primary"

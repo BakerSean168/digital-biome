@@ -67,7 +67,9 @@ for (const button of buttons) {
       const b = node.getBoundingClientRect();
       return b.height > 0 && b.bottom > top + 16;
     });
-    const offset = anchor?.getBoundingClientRect().top ?? top;
+    const logical = anchor?.closest<HTMLElement>('[data-reading-anchor]') ?? anchor;
+    const readingKey = logical?.dataset.readingAnchor;
+    const offset = (logical?.getBoundingClientRect().top ?? top) - top;
     let persisted = false;
     try {
       localStorage.setItem(UI_MODE_STORAGE_KEY, mode);
@@ -82,8 +84,14 @@ for (const button of buttons) {
     );
     setMode(mode);
     requestAnimationFrame(() => {
-      if (content && anchor?.getClientRects().length)
-        content.scrollTop += anchor.getBoundingClientRect().top - offset;
+      const current = readingKey
+        ? Array.from(content?.querySelectorAll<HTMLElement>('[data-reading-anchor]') ?? []).find(
+            (node) => node.dataset.readingAnchor === readingKey && node.getClientRects().length,
+          )
+        : anchor;
+      if (content && current?.getClientRects().length)
+        content.scrollTop +=
+          current.getBoundingClientRect().top - content.getBoundingClientRect().top - offset;
       button.focus({ preventScroll: true });
     });
   });

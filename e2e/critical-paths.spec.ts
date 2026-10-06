@@ -245,13 +245,15 @@ test('Reading keeps its visible heading on mode change and TOC tracks decorated 
   const heading = headings.nth(1);
   const id = await heading.getAttribute('id');
   await heading.evaluate((element) => element.scrollIntoView({ block: 'start' }));
-  const before = await heading.evaluate((element) => element.getBoundingClientRect().top);
+  const position = () =>
+    heading.evaluate(
+      (element) =>
+        element.getBoundingClientRect().top -
+        (document.getElementById('site-content')?.getBoundingClientRect().top ?? 0),
+    );
+  const before = await position();
   await page.locator('[data-ui-mode-choice="tui"]').click();
-  await expect
-    .poll(async () =>
-      Math.abs((await heading.evaluate((element) => element.getBoundingClientRect().top)) - before),
-    )
-    .toBeLessThan(4);
+  await expect.poll(async () => Math.abs((await position()) - before)).toBeLessThan(4);
   await page.locator('[data-ui-mode-choice="gui"]').click();
   const link = page
     .locator('[data-table-of-contents] a')
@@ -264,4 +266,95 @@ test('Reading keeps its visible heading on mode change and TOC tracks decorated 
     .toBe(true);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.locator('#site-content').evaluate((element) => element.scrollWidth)).toBe(390);
+});
+
+test('IME confirmation stays in input and Search close keeps native Enter behavior', async ({
+  page,
+}) => {
+  await page.goto('/tools?ui=gui');
+  const input = page.locator(query);
+  await input.focus();
+  const cancelled = await input.evaluate(
+    (element) =>
+      !element.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          isComposing: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+  );
+  expect(cancelled).toBe(false);
+  await expect(input).toBeFocused();
+  await page.keyboard.press('Control+k');
+  const url = page.url();
+  await page.locator('#cmd-input').evaluate((element) =>
+    element.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Enter',
+        isComposing: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  );
+  await expect(page.locator('#search-modal')).toBeVisible();
+  expect(page.url()).toBe(url);
+  await page.locator('#cmd-close').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#search-modal')).not.toBeVisible();
+  expect(page.url()).toBe(url);
+});
+
+test('Modified Tools tab clicks leave browser navigation intact', async ({ page }) => {
+  await page.goto('/tools?ui=gui#services');
+  for (const modifier of ['ctrlKey', 'metaKey']) {
+    const prevented = await page.locator('[data-tools-tab="external"]').evaluate((element, key) => {
+      let suppressed = false;
+      element.addEventListener(
+        'click',
+        (event) => {
+          suppressed = event.defaultPrevented;
+          // Observe application handling, then keep this synthetic event from navigating.
+          event.preventDefault();
+        },
+        { once: true },
+      );
+      element.dispatchEvent(
+        new MouseEvent('click', { [key]: true, bubbles: true, cancelable: true }),
+      );
+      return suppressed;
+    }, modifier);
+    expect(prevented).toBe(false);
+    expect(new URL(page.url()).hash).toBe('#services');
+  }
+});
+
+test('About retains full content and a shared reading anchor across mobile modes', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/about?ui=gui');
+  await expect(
+    page.locator('[data-ui-only="gui"] [data-reading-anchor="about-content"]'),
+  ).toContainText('Notes');
+  await expect(
+    page.locator('[data-ui-only="gui"] [data-reading-anchor="about-content"]'),
+  ).toContainText('Blog');
+  const key = '[data-reading-anchor="about-practice"]:visible';
+  await page.locator(key).evaluate((element) => element.scrollIntoView({ block: 'start' }));
+  const position = () =>
+    page
+      .locator(key)
+      .evaluate(
+        (element) =>
+          element.getBoundingClientRect().top -
+          (document.getElementById('site-content')?.getBoundingClientRect().top ?? 0),
+      );
+  const before = await position();
+  await page.locator('[data-ui-mode-choice="tui"]').click();
+  await expect.poll(async () => Math.abs((await position()) - before)).toBeLessThan(4);
+  await page.locator('[data-ui-mode-choice="gui"]').click();
+  await expect.poll(async () => Math.abs((await position()) - before)).toBeLessThan(4);
 });

@@ -144,6 +144,15 @@ export function initializeObjectBrowsers() {
         item.privateRef && source.getAttribute('href')?.startsWith('/login')
           ? 'Access →'
           : '打开 ↗';
+      const tags = element(
+        'p',
+        'object-detail-tags mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground',
+      );
+      for (const tag of item.tags) {
+        const token = element('span', '', tag.split('/').pop());
+        token.title = tag;
+        tags.append(token);
+      }
       preview.replaceChildren(
         element('h2', 'text-lg font-semibold text-primary', item.title),
         element(
@@ -152,11 +161,7 @@ export function initializeObjectBrowsers() {
           `${item.kind} · ${item.meta}`,
         ),
         element('p', 'object-detail-description mt-3 break-words', item.description),
-        element(
-          'p',
-          'object-detail-tags mt-3 text-xs text-muted-foreground',
-          item.tags.map((tag) => tag.split('/').pop()).join(' · '),
-        ),
+        tags,
         open,
       );
       if (item.relations.length) {
@@ -269,6 +274,7 @@ export function initializeObjectBrowsers() {
       if (row) select(rows.indexOf(row));
     });
     input?.addEventListener('keydown', (event) => {
+      if (event.isComposing || event.keyCode === 229) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         generation++;

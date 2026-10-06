@@ -1,6 +1,24 @@
 ---
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
 import { SOCIAL_LINKS } from '../../constants';
+const areas = [
+  {
+    title: 'Notes',
+    href: '/notes',
+    description: '知识笔记。概念、方法和学习过程，持续补充、彼此连接。',
+  },
+  { title: 'Blog', href: '/blog', description: '博客文章。相对完整的叙述、工程记录与个人思考。' },
+  {
+    title: 'Projects',
+    href: '/dev',
+    description: '我做过和正在做的作品，从问题、实现到可访问的成果。',
+  },
+  {
+    title: 'Tools',
+    href: '/tools',
+    description: '自托管服务、外部资源、主机和网络。找到用途，再到达入口。',
+  },
+];
 ---
 
 <TerminalLayout
@@ -8,22 +26,23 @@ import { SOCIAL_LINKS } from '../../constants';
   description="BakerSean 与 Digital Biome：个人知识、作品和基础设施的关联。"
 >
   <article data-ui-only="gui" class="gui-about">
-    <header>
+    <header data-reading-anchor="about-title">
       <p class="mb-5 text-sm text-primary">About</p>
       <h1 class="text-2xl leading-normal md:text-[32px]">构建系统，也记录系统之外的生活。</h1>
       <p class="mt-5 text-muted-foreground">BakerSean</p>
     </header>
     <div class="gui-about-columns">
       <div>
-        <p class="max-w-[38em] text-muted-foreground md:text-lg">
-          这里是我的个人数字生态。它连接知识、写作、项目与正在使用的资源，让我看清自己拥有什么。
+        <p data-reading-anchor="about-intro" class="max-w-[38em] text-muted-foreground md:text-lg">
+          这里是 Digital
+          Biome，我的个人数字生态。它把知识、写作、项目与正在使用的资源放在一起，让我看清自己拥有什么，也让你了解我在思考和构建什么。
         </p>
-        <section class="mt-10 md:mt-16">
+        <section data-reading-anchor="about-practice" class="mt-10 md:mt-16">
           <h2 class="text-lg md:text-2xl">我在做什么</h2>
           <p class="mt-6 leading-relaxed text-muted-foreground md:text-lg">
             学习、编程，搭建自己的数字基础设施。
             <br />
-            把一次次探索沉淀成笔记，把想法做成可使用的项目。
+            把一次次探索沉淀成笔记，把想法做成可使用的项目，再让这些工具融入日常。
           </p>
           <p class="mt-6 leading-relaxed text-muted-foreground">
             我关心知识之间的联系，也关心系统如何长期可靠地运行。
@@ -31,8 +50,23 @@ import { SOCIAL_LINKS } from '../../constants';
             这片数字生态随着实践慢慢生长。
           </p>
         </section>
+        <section data-reading-anchor="about-content" class="mt-10 md:mt-16">
+          <h2 class="mb-6 text-lg md:text-2xl">这里有什么</h2>
+          <dl class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-5 gap-y-5 text-sm">
+            {areas.map((area) => (
+              <>
+                <dt>
+                  <a href={area.href} class="hover:text-primary">
+                    {area.title}
+                  </a>
+                </dt>
+                <dd class="text-muted-foreground">{area.description}</dd>
+              </>
+            ))}
+          </dl>
+        </section>
       </div>
-      <aside>
+      <aside data-reading-anchor="about-ecosystem">
         <h2 class="mb-6 text-lg">背后的生态</h2>
         <dl class="space-y-6">
           <div>
@@ -62,27 +96,32 @@ import { SOCIAL_LINKS } from '../../constants';
         </dl>
       </aside>
     </div>
-    <nav aria-label="更多关于我" class="mt-10 flex flex-wrap gap-6 text-primary">
+    <nav
+      data-reading-anchor="about-contact"
+      aria-label="更多关于我"
+      class="mt-10 flex flex-wrap gap-6 text-primary"
+    >
       <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
         GitHub ↗
       </a>
       <a href="/friends">Friends →</a>
       <a href="/about/tags">知识标签 →</a>
     </nav>
-    <p class="mt-12 text-sm text-muted-foreground">
-      公开内容可以直接阅读；个人服务通过 Access 访问。
+    <p data-reading-anchor="about-access" class="mt-12 text-sm text-muted-foreground">
+      公开内容可以直接阅读。部分服务仅供个人使用，需要通过 Access
+      验证身份。页面展示入口，访问权限由服务与认证系统负责。
     </p>
   </article>
   <article data-ui-only="tui" class="max-w-[720px] space-y-7">
-    <header>
+    <header data-reading-anchor="about-title">
       <h1 class="text-3xl font-semibold">BakerSean</h1>
       <p class="mt-2 text-muted-foreground">构建系统，也记录系统之外的生活。</p>
     </header>
-    <p>
+    <p data-reading-anchor="about-intro">
       这里是 Digital
       Biome，我的个人数字生态。它把知识、写作、项目与正在使用的资源放在一起，让我看清自己拥有什么，也让你了解我在思考和构建什么。
     </p>
-    <section>
+    <section data-reading-anchor="about-practice">
       <h2 class="mb-3 text-primary">
         <span class="text-muted-foreground">## </span>我在做什么
       </h2>
@@ -93,38 +132,24 @@ import { SOCIAL_LINKS } from '../../constants';
         我关心知识之间的联系，也关心系统如何长期可靠地运行。这片数字生态随着我的实践慢慢生长。
       </p>
     </section>
-    <section>
+    <section data-reading-anchor="about-content">
       <h2 class="mb-3 text-primary">
         <span class="text-muted-foreground">## </span>这里有什么
       </h2>
       <dl class="grid grid-cols-[90px_1fr] gap-x-5 gap-y-3 sm:grid-cols-[150px_1fr]">
-        <dt>
-          <a class="text-primary" href="/notes">
-            Notes
-          </a>
-        </dt>
-        <dd>知识笔记。概念、方法和学习过程，持续补充、彼此连接。</dd>
-        <dt>
-          <a class="text-primary" href="/blog">
-            Blog
-          </a>
-        </dt>
-        <dd>博客文章。相对完整的叙述、工程记录与个人思考。</dd>
-        <dt>
-          <a class="text-primary" href="/dev">
-            Projects
-          </a>
-        </dt>
-        <dd>我做过和正在做的作品，从问题、实现到可访问的成果。</dd>
-        <dt>
-          <a class="text-primary" href="/tools">
-            Tools
-          </a>
-        </dt>
-        <dd>自托管服务、外部资源、主机和网络。找到用途，再到达入口。</dd>
+        {areas.map((area) => (
+          <>
+            <dt>
+              <a class="text-primary" href={area.href}>
+                {area.title}
+              </a>
+            </dt>
+            <dd>{area.description}</dd>
+          </>
+        ))}
       </dl>
     </section>
-    <section>
+    <section data-reading-anchor="about-ecosystem">
       <h2 class="mb-3 text-primary">
         <span class="text-muted-foreground">## </span>背后的生态
       </h2>
@@ -138,7 +163,7 @@ import { SOCIAL_LINKS } from '../../constants';
         </a>
       </p>
     </section>
-    <section>
+    <section data-reading-anchor="about-access">
       <h2 class="mb-3 text-primary">
         <span class="text-muted-foreground">## </span>公开与私有
       </h2>
@@ -147,7 +172,7 @@ import { SOCIAL_LINKS } from '../../constants';
         验证身份。页面展示入口，访问权限由服务与认证系统负责。
       </p>
     </section>
-    <section>
+    <section data-reading-anchor="about-contact">
       <h2 class="mb-3 text-primary">
         <span class="text-muted-foreground">## </span>找到我
       </h2>

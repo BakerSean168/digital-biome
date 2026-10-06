@@ -13,6 +13,8 @@ const destinations: Record<string, string> = {
 document.addEventListener('keydown', (event) => {
   const target = event.target as HTMLElement;
   if (
+    event.isComposing ||
+    event.keyCode === 229 ||
     event.ctrlKey ||
     event.metaKey ||
     event.altKey ||

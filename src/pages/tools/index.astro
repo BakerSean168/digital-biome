@@ -97,6 +97,7 @@ const groups = [
   }
   tabs.forEach((tab) =>
     tab.addEventListener('click', (event) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       history.pushState(history.state, '', tab.getAttribute('href'));
       activate();

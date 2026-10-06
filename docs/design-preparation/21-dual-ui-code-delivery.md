@@ -68,3 +68,13 @@ Infra PR 的 GitHub App read scope 阻塞、PDS consumer 未提交 PR，以及�
 - 预览 host 仅在显式设置 `BIOME_PREVIEW_HOST` 时加入允许列表；没有放开任意 Host。
 
 本地证据在 `.artifacts/dual-ui/`，不作为发布产物。真实发布身份仍需经 PR/CI/Candidate/Production 顺序记录。
+
+## 双轴审查修复
+
+审查基线：`f37007d...848189a`。
+
+**规范轴**：Search 关闭按钮 Enter 被拦截、Tools 的 Ctrl/Cmd 点击被拦截、对象标签叶名称缺少完整路径提示。分别限定 Search 输入键盘处理范围、保留修改键的原生链接行为、为静态及动态标签增加完整路径 title。
+
+**规格轴**：输入法确认被当成快捷键、About GUI 缺少完整内容、About 的两份布局无法直接复用 DOM 阅读锚点。分别忽略 composing/229 键事件、共用完整内容目录、以具名语义锚点映射两种文章布局，并按内容容器相对位置恢复。
+
+修复后 Chromium 扩展为 **14项全部通过**：新增输入法与关闭按钮、修改键不拦截、手机 About 双向阅读位置验收。浏览器自动化不能模拟真实手机软键盘，此项仍需设备验收，未声称已覆盖。
