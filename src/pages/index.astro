@@ -1,58 +1,82 @@
 ---
-/**
- * 首页 - 数字化生命群落 & 生态树 (Basalt & Moss Edition)
- */
-import BaseLayout from '../layouts/BaseLayout.astro';
-import BiomeTree from '../components/dashboard/BiomeTree.astro';
-import { SITE_NAME } from '../constants';
+import TerminalLayout from '../layouts/TerminalLayout.astro';
+import ObjectBrowser from '../components/terminal/ObjectBrowser.astro';
+import GuiHome from '../components/common/GuiHome.astro';
+import {
+  terminalNotes,
+  terminalBlogs,
+  terminalProjects,
+  terminalInfrastructure,
+  terminalExternal,
+} from '../repositories/terminal-repository';
+import { getPinnedPortalServices } from '../utils/personal-systems';
+const notes = await terminalNotes();
+const blogs = terminalBlogs();
+const resources = terminalInfrastructure();
+const projects = terminalProjects();
+const pinned = getPinnedPortalServices();
+const recent = [...notes.slice(0, 3), ...blogs.slice(0, 2)].sort((a, b) =>
+  b.meta.localeCompare(a.meta),
+);
 ---
 
-<BaseLayout title={SITE_NAME} bodyClass="h-screen w-screen overflow-hidden bg-background relative text-foreground">
-  <!-- Wabi-Sabi Noise Overlay (Organic Texture) -->
-  <div class="absolute inset-0 -z-10 opacity-[0.03] pointer-events-none mix-blend-overlay" style="background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E');"></div>
-  
-  <!-- Subtle dark vignette to focus center -->
-  <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(21,22,20,0.8)_100%)]"></div>
-
-  <main class="relative w-full h-full flex items-center justify-center">
-    
-    <!-- Center Absolute Graph (The Seed) -->
-    <div class="relative z-10 w-full max-w-5xl scale-90 md:scale-100 flex justify-center items-center">
-      <!-- We reuse BiomeTree but rely on the new CSS variables and neural-pulse classes in global.css -->
-      <BiomeTree />
-    </div>
-
-    <!-- Top Right Telemetry (Telemetry Data) -->
-    <div class="absolute top-8 right-8 text-right font-mono text-[10px] text-muted-foreground leading-relaxed flex flex-col items-end opacity-60">
-      <div class="flex items-center gap-2 mb-1">
-        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-soft"></span>
-        <span>SYS.TELEMETRY_ACTIVE</span>
+<TerminalLayout
+  title="Digital Biome"
+  description="BakerSean 的个人数字生态：知识、写作、项目与服务。"
+>
+  <GuiHome notes={notes} blogs={blogs} pinned={pinned} />
+  <section data-ui-only="tui">
+    <header class="mb-6 flex items-center gap-5 md:gap-6">
+      <img src="/images/biome-mark.svg" width="76" height="76" alt="" class="shrink-0" />
+      <div>
+        <h1 class="text-[34px] leading-tight font-semibold">BakerSean</h1>
+        <p class="mt-2 max-w-[46em]">
+          Digital
+          Biome：我的个人数字生态。写下的、做出的、运行着的和收藏的，在同一个索引里互相关联。
+        </p>
+        <p class="mt-2 text-xs text-muted-foreground">
+          公开分享与个人使用。需要身份验证的服务通过 Access 访问。
+        </p>
       </div>
-      <div>UPTIME: 99.98%</div>
-      <div>NODES_INDEXED: 1042</div>
-      <div class="text-border">HASH: 7f8a9b2</div>
-      <div class="mt-2 pt-2 border-t border-border/50 text-[9px] text-tertiary-foreground">
-        ATMOSPHERE: STABLE
-      </div>
-    </div>
-
-    <!-- Bottom Left Identity Block (The Root) -->
-    <div class="absolute bottom-10 left-10 flex flex-col items-start z-20">
-      <h1 class="font-sans font-bold text-4xl tracking-tighter text-foreground mb-1">BakerSean</h1>
-      <div class="font-mono text-xs text-muted-foreground tracking-widest uppercase mb-2">
-        DIGITAL BIOME v2.0 // Wabi-Sabi
-      </div>
-      <div class="font-mono text-[11px] text-primary/80 flex items-center gap-1.5">
-        <span class="opacity-70">AWAITING_INPUT</span>
-        <span class="inline-block w-2 h-3.5 bg-primary/70 animate-[pulse_1s_step-end_infinite]"></span>
-      </div>
-
-      <!-- Scheme A: Terminal tools shortcut -->
-      <a href="/tools" class="mt-4 font-mono text-[10px] tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 group">
-        <span class="opacity-60 group-hover:opacity-100 transition-opacity">&gt; ./tools --list</span>
-        <span class="opacity-0 group-hover:opacity-100 transition-opacity">↵</span>
+    </header>
+    <nav aria-label="探索数字生态" class="mb-4 flex flex-wrap justify-start gap-x-8 gap-y-3">
+      <a class="hover:text-primary" href="/notes">
+        [gl] library　
+        <span class="text-muted-foreground">
+          {notes.length} 篇笔记 · {blogs.length} 篇文章
+        </span>
       </a>
+      <a class="hover:text-primary" href="/dev">
+        [gp] projects　<span class="text-muted-foreground">{projects.length} 个作品</span>
+      </a>
+      <a class="hover:text-primary" href="/tools">
+        [gt] tools　
+        <span class="text-muted-foreground">
+          {resources.filter((item) => item.kind === 'service').length} 服务 ·{' '}
+          {terminalExternal().length} 外部资源
+        </span>
+      </a>
+      <a class="hover:text-primary" href="/about">
+        [ga] about
+      </a>
+    </nav>
+    <p class="mb-4 text-xs text-muted-foreground">知识持续积累，作品逐步生长，系统服务于日常。</p>
+    <div class="mb-5 flex flex-wrap gap-x-5 gap-y-2">
+      <span class="text-muted-foreground">常用</span>
+      {pinned.map((service) => (
+        <a
+          href={service.url ?? `/login?next=%2F`}
+          data-private-link={service.privateRef}
+          target={service.url ? '_blank' : undefined}
+          rel="noopener noreferrer"
+          class="hover:text-primary"
+        >
+          {service.resource.title}
+          {service.privateRef ? ' · Access' : ' ↗'}
+        </a>
+      ))}
     </div>
-    
-  </main>
-</BaseLayout>
+    <h2 class="mb-2 text-xs text-muted-foreground">最近</h2>
+    <ObjectBrowser items={recent} filter={false} label="最近的笔记与文章" />
+  </section>
+</TerminalLayout>

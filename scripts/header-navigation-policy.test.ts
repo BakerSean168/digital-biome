@@ -22,7 +22,7 @@ test('global header policy contains exactly Search and Access', () => {
 test('Personal Systems remains directly discoverable from Search navigation', () => {
   const systems = SEARCH_NAVIGATION_INDEX.find((entry) => entry.href === '/systems');
   assert.ok(systems, 'Personal Systems must remain indexed in Search');
-  assert.equal(systems.title, '个人系统 / Personal Systems');
+  assert.equal(systems.title, 'Personal System');
   assert.ok(systems.alias?.includes('/infrastructure'));
   assert.ok(systems.alias?.includes('systems'));
   assert.ok(systems.alias?.includes('infra'));
