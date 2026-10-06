@@ -62,7 +62,9 @@ for (const button of buttons) {
     const content = document.getElementById('site-content');
     const top = content?.getBoundingClientRect().top ?? 0;
     const anchor = Array.from(
-      content?.querySelectorAll<HTMLElement>('h1,h2,h3,p,[data-object-row]') ?? [],
+      content?.querySelectorAll<HTMLElement>(
+        '[data-reading-anchor],h1,h2,h3,p,[data-object-row]',
+      ) ?? [],
     ).find((node) => {
       const b = node.getBoundingClientRect();
       return b.height > 0 && b.bottom > top + 16;

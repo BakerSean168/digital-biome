@@ -358,3 +358,46 @@ test('About retains full content and a shared reading anchor across mobile modes
   await page.locator('[data-ui-mode-choice="gui"]').click();
   await expect.poll(async () => Math.abs((await position()) - before)).toBeLessThan(4);
 });
+
+test('About switches modes while reading inside a definition list', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 650 });
+  await page.goto('/about?ui=gui');
+  const section = page.locator('[data-reading-anchor="about-content"]:visible');
+  await section.evaluate((element) => {
+    element.scrollIntoView({ block: 'start' });
+    const content = document.getElementById('site-content');
+    if (content) content.scrollTop += 60;
+  });
+  const position = () =>
+    section.evaluate(
+      (element) =>
+        element.getBoundingClientRect().top -
+        (document.getElementById('site-content')?.getBoundingClientRect().top ?? 0),
+    );
+  const before = await position();
+  await page.locator('[data-ui-mode-choice="tui"]').click();
+  await expect.poll(async () => Math.abs((await position()) - before)).toBeLessThan(4);
+});
+
+test('About keeps the reading section visible when the shorter mode reaches its scroll limit', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/about?ui=gui');
+  await page.locator('[data-reading-anchor="about-content"]:visible').evaluate((element) => {
+    element.scrollIntoView({ block: 'start' });
+    const content = document.getElementById('site-content');
+    if (content) content.scrollTop += 60;
+  });
+  await page.locator('[data-ui-mode-choice="tui"]').click();
+  await expect(page.locator('[data-reading-anchor="about-content"]:visible')).toBeInViewport();
+  await expect
+    .poll(() =>
+      page
+        .locator('#site-content')
+        .evaluate((element) =>
+          Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop),
+        ),
+    )
+    .toBeLessThan(2);
+});
