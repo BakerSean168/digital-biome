@@ -13,9 +13,14 @@ export function assertAboutMarkupBoundary(
 ): void {
   const contributionCells = count(aboutHtml, /class="contribution-cell"/g);
   if (contributionCells !== options.contributionDays) {
-    throw new Error(`Expected ${options.contributionDays} compact contribution cells, found ${contributionCells}.`);
+    throw new Error(
+      `Expected ${options.contributionDays} compact contribution cells, found ${contributionCells}.`,
+    );
   }
-  if (!aboutHtml.includes('data-heatmap-grid') || !aboutHtml.includes('role="img"')) {
+  if (
+    options.contributionDays > 0 &&
+    (!aboutHtml.includes('data-heatmap-grid') || !aboutHtml.includes('role="img"'))
+  ) {
     throw new Error('Contribution heatmap must retain one labelled semantic owner.');
   }
 

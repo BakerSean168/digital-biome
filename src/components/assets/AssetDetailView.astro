@@ -14,171 +14,188 @@ interface Props {
 const { entry, Content, relatedAssets = [], subTopology = [] } = Astro.props;
 const { title, description, asset_type, asset_id, tags = [], links = [], monitor } = entry.data;
 const currentPath = Astro.url.pathname;
-const isProtectedLink = (link: AssetLink) => link.visibility === 'internal' || link.visibility === 'private';
-const monitorLink = links.find(link => link.kind === 'monitor' || link.kind === 'panel');
-const monitorHref = monitor?.url ?? (!monitorLink || isProtectedLink(monitorLink) ? undefined : monitorLink.url);
-const monitorPrivateRef = monitorLink && isProtectedLink(monitorLink) ? monitorLink.private_ref : undefined;
+const repeatsTitle = entry.body?.trimStart().split(/\r?\n/)[0] === `# ${title}`;
+const isProtectedLink = (link: AssetLink) =>
+  link.visibility === 'internal' || link.visibility === 'private';
+const monitorLink = links.find((link) => link.kind === 'monitor' || link.kind === 'panel');
+const monitorHref =
+  monitor?.url ?? (!monitorLink || isProtectedLink(monitorLink) ? undefined : monitorLink.url);
+const monitorPrivateRef =
+  monitorLink && isProtectedLink(monitorLink) ? monitorLink.private_ref : undefined;
 ---
 
 <BaseLayout title={title} description={description || ''} type="article">
-  <main class="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
-    <div class="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <section class="rounded-[32px] border border-border bg-card/80 p-7 md:p-9">
-        <div class="mb-4 flex flex-wrap items-center gap-2">
-          <span class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary">
-            {asset_type}
-          </span>
-          {entry.data.status && (
-            <span class="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-              {entry.data.status}
-            </span>
+  <main class="page-main mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-16">
+      <div class="min-w-0 space-y-8">
+        <header class="min-w-0 border-b border-border pb-8">
+          <div class="mb-4 flex flex-wrap items-center gap-2">
+            <span class="py-1 text-xs uppercase tracking-[0.2em] text-primary">{asset_type}</span>
+            {entry.data.status && (
+              <span class="py-1 text-xs text-muted-foreground">{entry.data.status}</span>
+            )}
+            <span class="py-1 text-xs text-muted-foreground">{asset_id}</span>
+          </div>
+
+          <h1 class="text-4xl font-semibold tracking-tight text-foreground">{title}</h1>
+          {description && (
+            <p class="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">{description}</p>
           )}
-          <span class="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-            {asset_id}
-          </span>
-        </div>
 
-        <h1 class="text-4xl font-semibold tracking-tight text-foreground">{title}</h1>
-        {description && (
-          <p class="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">{description}</p>
-        )}
-
-        {tags.length > 0 && (
-          <div class="mt-5 flex flex-wrap gap-2">
-            {tags.map((tag: string) => (
-              <span class="rounded-full bg-pane px-3 py-1 text-xs text-muted-foreground">
-                #{tag.includes('/') ? tag.split('/').pop() : tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <aside class="space-y-4">
-        <section class="rounded-[28px] border border-border bg-card/70 p-5">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Quick Links</h2>
-          <div class="mt-4 flex flex-col gap-3">
-            {links.length > 0 ? links.map((link: AssetLink) => {
-              if (!isProtectedLink(link) && link.url) {
-                return (
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="flex items-center justify-between rounded-sm border border-border bg-background px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                  >
-                    <span>{link.label}</span>
-                    <span class="text-xs uppercase tracking-[0.16em] text-muted-foreground font-mono">{link.kind || 'link'}</span>
-                  </a>
-                );
-              }
-
-              if (link.private_ref) {
-                return (
-                  <a
-                    href={`/login?next=${encodeURIComponent(currentPath)}`}
-                    data-private-link={link.private_ref}
-                    data-private-unlocked-label={link.label}
-                    class="flex items-center justify-between rounded-sm border border-border/40 bg-background/20 px-4 py-3 text-sm text-muted-foreground hover:border-primary/45 hover:text-primary transition-colors"
-                    title="该入口由 Cloudflare Access 保护。"
-                  >
-                    <span class="flex items-center gap-1.5 font-mono font-bold">
-                      <span data-private-link-label>{link.label}</span>
-                      <span class="text-[8px] bg-border/40 px-1 py-0.5 text-muted-foreground tracking-widest font-mono">INTERNAL</span>
-                    </span>
-                    <span class="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/75 font-mono">
-                      <Lock size={10} />
-                      <span>LOCKED</span>
-                    </span>
-                  </a>
-                );
-              }
-
-              return (
-                <span class="flex items-center justify-between rounded-sm border border-border/40 bg-background/20 px-4 py-3 text-sm text-muted-foreground">
-                  <span>{link.label}</span>
-                  <span class="font-mono text-[10px]">UNAVAILABLE</span>
+          {tags.length > 0 && (
+            <div class="mt-5 flex flex-wrap gap-2">
+              {tags.map((tag: string) => (
+                <span class="py-1 text-xs text-muted-foreground">
+                  #{tag.includes('/') ? tag.split('/').pop() : tag}
                 </span>
-              );
-            }) : (
-              <p class="text-sm text-muted-foreground font-mono">[ NO_SIGNAL ] 未检测到链接映射。</p>
-            )}
+              ))}
+            </div>
+          )}
+        </header>
+        <article class="flex min-w-0 flex-col gap-8">
+          {subTopology.length > 0 && (
+            <div class="border border-border bg-background/50 rounded-sm p-6">
+              <InfrastructureTopologyMap
+                title="内嵌拓扑 / Sub-Topology"
+                description="该资产承载的下级节点与服务。"
+                tiers={subTopology}
+              />
+            </div>
+          )}
+
+          <div
+            class:list={[repeatsTitle && '[&>h1:first-child]:hidden']}
+            class="prose prose-neutral max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:border prose-pre:border-border prose-pre:bg-card prose-blockquote:border-l-primary prose-img:rounded-sm prose-img:border prose-img:border-border"
+          >
+            <Content />
           </div>
-        </section>
-
-        <section class="rounded-[28px] border border-border bg-card/70 p-5">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Monitoring</h2>
-          <div class="mt-4 text-sm text-muted-foreground">
-            {(monitor?.provider || monitorHref || monitorPrivateRef) ? (
-              <div class="space-y-3">
-                {monitor?.provider && <p>来源：{monitor.provider}</p>}
-                {monitor?.target_id && <p>Target: {monitor.target_id}</p>}
-                {monitorHref && (
-                  <a
-                    href={monitorHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="inline-flex rounded-full border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                  >
-                    {monitor?.label || '[ LAUNCH_PROBE ]'}
-                  </a>
-                )}
-                {!monitorHref && monitorPrivateRef && (
-                  <a
-                    href={`/login?next=${encodeURIComponent(currentPath)}`}
-                    data-private-link={monitorPrivateRef}
-                    data-private-unlocked-label={monitor?.label || '[ LAUNCH_PROBE ]'}
-                    class="inline-flex rounded-sm border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                  >
-                    <Lock size={12} class="mr-2" />
-                    <span data-private-link-label>[ ACCESS_REQUIRED ]</span>
-                  </a>
-                )}
-              </div>
-            ) : (
-              <p class="font-mono text-sm">[ NO_SIGNAL ] 监控探针未接入。</p>
-            )}
-          </div>
-        </section>
-      </aside>
-    </div>
-
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <article class="flex flex-col gap-8 rounded-[32px] border border-border bg-card/70 p-7 md:p-9">
-        {subTopology.length > 0 && (
-          <div class="border border-border bg-background/50 rounded-2xl p-6">
-            <InfrastructureTopologyMap
-              title="内嵌拓扑 / Sub-Topology"
-              description="该资产承载的下级节点与服务。"
-              tiers={subTopology}
-            />
-          </div>
-        )}
-
-        <div class="prose prose-neutral max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:text-primary prose-code:bg-primary/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-pre:border prose-pre:border-border prose-pre:bg-card prose-blockquote:border-l-primary prose-img:rounded-xl prose-img:border prose-img:border-border">
-          <Content />
-        </div>
-      </article>
-
+        </article>
+      </div>
       <aside class="space-y-4">
-        <section class="rounded-[28px] border border-border bg-card/70 p-5">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Relationships</h2>
-          <div class="mt-4 space-y-3">
-            {entry.data.host_asset_id && (
-              <p class="text-sm text-muted-foreground">Host: {entry.data.host_asset_id}</p>
-            )}
-            {entry.data.parent_asset_id && (
-              <p class="text-sm text-muted-foreground">Parent: {entry.data.parent_asset_id}</p>
-            )}
-            {relatedAssets.length > 0 ? relatedAssets.map(asset => (
-              <a href={asset.href} class="block rounded-2xl border border-border px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary">
-                {asset.title}
-              </a>
-            )) : (
-              <p class="text-sm text-muted-foreground">暂时没有关联资产。</p>
+        <section class="min-w-0 border-t border-border pt-5">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Quick Links
+          </h2>
+          <div class="mt-4 flex flex-col gap-3">
+            {links.length > 0 ? (
+              links.map((link: AssetLink) => {
+                if (!isProtectedLink(link) && link.url) {
+                  return (
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="flex items-center justify-between gap-4 border-b border-border py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      <span>{link.label}</span>
+                      <span class="text-xs uppercase tracking-[0.16em] text-muted-foreground font-mono">
+                        {link.kind || 'link'}
+                      </span>
+                    </a>
+                  );
+                }
+
+                if (link.private_ref) {
+                  return (
+                    <a
+                      href={`/login?next=${encodeURIComponent(currentPath)}`}
+                      data-private-link={link.private_ref}
+                      data-private-unlocked-label={link.label}
+                      class="flex items-center justify-between gap-4 border-b border-border py-3 text-sm text-muted-foreground hover:border-primary/45 hover:text-primary transition-colors"
+                      title="该入口由 Cloudflare Access 保护。"
+                    >
+                      <span class="flex items-center gap-1.5 font-mono font-bold">
+                        <span data-private-link-label>{link.label}</span>
+                        <span class="text-[8px] bg-border/40 px-1 py-0.5 text-muted-foreground tracking-widest font-mono">
+                          INTERNAL
+                        </span>
+                      </span>
+                      <span class="flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground/75 font-mono">
+                        <Lock size={10} />
+                        <span>LOCKED</span>
+                      </span>
+                    </a>
+                  );
+                }
+
+                return (
+                  <span class="flex items-center justify-between gap-4 border-b border-border py-3 text-sm text-muted-foreground">
+                    <span>{link.label}</span>
+                    <span class="font-mono text-[10px]">UNAVAILABLE</span>
+                  </span>
+                );
+              })
+            ) : (
+              <p class="text-sm text-muted-foreground font-mono">暂无可用入口。</p>
             )}
           </div>
         </section>
+
+        {(monitor?.provider || monitorHref || monitorPrivateRef) && (
+          <section class="min-w-0 border-t border-border pt-5">
+            <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Monitoring
+            </h2>
+            <div class="mt-4 text-sm text-muted-foreground">
+              {monitor?.provider || monitorHref || monitorPrivateRef ? (
+                <div class="space-y-3">
+                  {monitor?.provider && <p>来源：{monitor.provider}</p>}
+                  {monitor?.target_id && <p>Target: {monitor.target_id}</p>}
+                  {monitorHref && (
+                    <a
+                      href={monitorHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex rounded-sm border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      {monitor?.label || '打开监控'}
+                    </a>
+                  )}
+                  {!monitorHref && monitorPrivateRef && (
+                    <a
+                      href={`/login?next=${encodeURIComponent(currentPath)}`}
+                      data-private-link={monitorPrivateRef}
+                      data-private-unlocked-label={monitor?.label || '打开监控'}
+                      class="inline-flex rounded-sm border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                    >
+                      <Lock size={12} class="mr-2" />
+                      <span data-private-link-label>Access</span>
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <p class="font-mono text-sm">未登记监控入口。</p>
+              )}
+            </div>
+          </section>
+        )}
+        {(entry.data.host_asset_id || entry.data.parent_asset_id || relatedAssets.length > 0) && (
+          <section class="min-w-0 border-t border-border pt-5">
+            <h2 class="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Relationships
+            </h2>
+            <div class="mt-4 space-y-3">
+              {entry.data.host_asset_id && (
+                <p class="text-sm text-muted-foreground">Host: {entry.data.host_asset_id}</p>
+              )}
+              {entry.data.parent_asset_id && (
+                <p class="text-sm text-muted-foreground">Parent: {entry.data.parent_asset_id}</p>
+              )}
+              {relatedAssets.length > 0 ? (
+                relatedAssets.map((asset) => (
+                  <a
+                    href={asset.href}
+                    class="block rounded-sm border border-border px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    {asset.title}
+                  </a>
+                ))
+              ) : (
+                <p class="text-sm text-muted-foreground">暂时没有关联资产。</p>
+              )}
+            </div>
+          </section>
+        )}
       </aside>
     </div>
   </main>

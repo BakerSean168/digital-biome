@@ -16,11 +16,9 @@ test('notes list does not render empty graph or outline columns', () => {
   assert.match(layout, /\{showOutline && \(/);
 });
 
-test('note title decoration preserves text as text rather than parsing HTML', () => {
-  assert.doesNotMatch(layout, /h1\.innerHTML\s*=/);
-  assert.match(layout, /accessibleText\.textContent = text/);
-  assert.match(layout, /visualText\.textContent = text/);
-  assert.match(layout, /h1\.replaceChildren\(accessibleText, visualText\)/);
+test('reading layout preserves server-rendered titles without client decoration', () => {
+  assert.match(layout, /<slot \/>/);
+  assert.doesNotMatch(layout, /h1\.innerHTML\s*=|h1\.replaceChildren|accessibleText|signal-decode/);
 });
 
 test('note detail exposes an explicit route back to the notes index', () => {

@@ -1,0 +1,93 @@
+---
+import type { TerminalObject } from '../../view-models/terminal-object';
+import type { getPinnedPortalServices } from '../../utils/personal-systems';
+interface Props {
+  notes: TerminalObject[];
+  blogs: TerminalObject[];
+  pinned: ReturnType<typeof getPinnedPortalServices>;
+}
+const { notes, blogs, pinned } = Astro.props;
+const entries = [
+  { label: 'Library', href: '/notes', purpose: '知识笔记与独立写作' },
+  { label: 'Projects', href: '/dev', purpose: '从想法到可使用的作品' },
+  { label: 'Tools', href: '/tools', purpose: '服务、资源与运行环境' },
+];
+---
+
+<section data-ui-only="gui" class="gui-home">
+  <div class="gui-home-intro">
+    <header>
+      <p class="mb-5 text-sm text-primary">个人数字生态</p>
+      <h1 class="text-[32px] leading-tight md:text-5xl">BakerSean</h1>
+      <p class="mt-6 text-base leading-relaxed text-muted-foreground md:text-lg">
+        写下的，做出的，正在使用的。
+        <br />
+        知识、作品与个人系统，在这里相连。
+      </p>
+      <a href="/about" class="mt-8 hidden text-sm text-primary md:inline-block">
+        了解我和这片数字生态 →
+      </a>
+    </header>
+    <nav aria-label="探索数字生态" class="gui-home-entries">
+      {entries.map((entry) => (
+        <a
+          href={entry.href}
+          class="group flex min-h-16 items-center gap-5 border-b border-border py-4 md:min-h-20"
+        >
+          <span class="w-[90px] shrink-0 font-semibold group-hover:text-primary md:w-[138px] md:text-2xl md:font-normal">
+            {entry.label}
+          </span>
+          <span class="text-sm text-muted-foreground md:text-base">{entry.purpose}</span>
+        </a>
+      ))}
+    </nav>
+  </div>
+  <div class="gui-home-writing">
+    <section>
+      <h2 class="text-lg">
+        <a href="/blog" class="hover:text-primary">
+          Blog
+        </a>
+      </h2>
+      <p class="mt-3 text-sm text-muted-foreground">完整的叙述与个人思考</p>
+      {blogs.slice(0, 1).map((post) => (
+        <a href={post.href} class="mt-6 block hover:text-primary md:mt-10">
+          <h3 class="text-lg md:text-2xl">{post.title}</h3>
+          <p class="mt-4 text-xs text-muted-foreground">{post.meta}</p>
+        </a>
+      ))}
+    </section>
+    <section>
+      <h2 class="text-lg">
+        <a href="/notes" class="hover:text-primary">
+          Notes
+        </a>
+      </h2>
+      <p class="mt-3 text-sm text-muted-foreground">持续补充，彼此连接的知识</p>
+      <div class="mt-6 space-y-4 md:mt-10">
+        {notes.slice(0, 2).map((note) => (
+          <a href={note.href} class="block text-base hover:text-primary md:text-lg">
+            {note.title}
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+  <nav
+    aria-label="常用服务"
+    class="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm md:mt-20 md:text-base"
+  >
+    <span class="text-muted-foreground">常用服务</span>
+    {pinned.map((service) => (
+      <a
+        href={service.url ?? '/login?next=%2F'}
+        data-private-link={service.privateRef}
+        target={service.url ? '_blank' : undefined}
+        rel="noopener noreferrer"
+        class="text-primary hover:underline"
+      >
+        {service.resource.title}
+      </a>
+    ))}
+  </nav>
+</section>
