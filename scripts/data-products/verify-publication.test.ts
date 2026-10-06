@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {
+  parseKnowledgePublicV1Lock,
+  verifyKnowledgePublicV1Manifest,
+} from './knowledge-public-v1-lock';
 import { publicDataProducts } from './registry';
 import { semanticSha256, sha256 } from './semantic-digest';
 import { verifyPublication } from './verify-publication';
@@ -221,6 +225,14 @@ for (const definition of publicDataProducts) {
         () => verifyPublication({ ...input, identity: { kind: 'event', value: event } }),
         { message: expected },
       );
+      if (definition.product === 'knowledge-public-v1') {
+        const knowledgeLock = parseKnowledgePublicV1Lock(JSON.stringify(lock));
+        assert.throws(
+          () =>
+            verifyKnowledgePublicV1Manifest(knowledgeLock, input.manifest.bytes.toString('utf8')),
+          { message: expected },
+        );
+      }
     });
   }
 

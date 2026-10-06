@@ -28,7 +28,8 @@ export interface PublicationInput {
   manifest: { name: string; bytes: Uint8Array };
 }
 
-function verifyManifest(
+/** Validates manifest shape and domain identity; callers verify the raw byte digest. */
+export function verifyManifest(
   value: unknown,
   lock: PublicDataProductLock,
   definition: PublicDataProductDefinition,

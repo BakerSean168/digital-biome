@@ -1,6 +1,8 @@
 import { parseKnowledgePublicV1, type KnowledgePublicV1 } from './knowledge-public-v1';
-import { assertRecord, parsePublicDataProductLock, type PublicDataProductLock } from './lock-v1';
+import { parsePublicDataProductLock, type PublicDataProductLock } from './lock-v1';
+import { getPublicDataProduct } from './registry';
 import { semanticSha256, sha256 } from './semantic-digest';
+import { verifyManifest } from './verify-publication';
 
 export const KNOWLEDGE_PUBLIC_V1_PRODUCER = 'BakerSean168/thought-forest';
 
@@ -46,28 +48,9 @@ export function verifyKnowledgePublicV1Manifest(lock: KnowledgePublicV1Lock, raw
       `knowledge-public-v1 manifest digest mismatch: expected ${lock.manifest.sha256}, got ${actualDigest}`,
     );
   }
-  const value: unknown = JSON.parse(raw);
-  assertRecord(value, 'knowledge-public-v1 producer manifest');
-  assertRecord(value.metadata, 'knowledge-public-v1 producer manifest metadata');
-  assertRecord(value.spec, 'knowledge-public-v1 producer manifest spec');
-  assertRecord(value.spec.producer, 'knowledge-public-v1 producer manifest producer');
-  assertRecord(value.spec.contract, 'knowledge-public-v1 producer manifest contract');
-  assertRecord(value.spec.source, 'knowledge-public-v1 producer manifest source');
-  assertRecord(value.spec.artifact, 'knowledge-public-v1 producer manifest artifact');
-  if (
-    value.apiVersion !== 'pds/v1alpha1' ||
-    value.kind !== 'DataProductManifest' ||
-    value.metadata.id !== 'knowledge-public-v1' ||
-    value.spec.producer.ref !== 'pds://system/component/thought-forest' ||
-    value.spec.contract.name !== 'knowledge-public' ||
-    value.spec.contract.version !== 'v1' ||
-    value.spec.source.repository !== 'https://github.com/BakerSean168/thought-forest.git' ||
-    value.spec.source.revision !== lock.sourceRevision ||
-    value.spec.artifact.path !== 'generated/knowledge-public-v1.json' ||
-    value.spec.artifact.mediaType !== 'application/vnd.pds.knowledge-public-v1+json' ||
-    value.spec.artifact.generated !== true ||
-    value.spec.artifact.editable !== false
-  ) {
-    throw new Error('knowledge-public-v1 producer manifest contract mismatch');
-  }
+  verifyManifest(
+    JSON.parse(raw),
+    lock,
+    getPublicDataProduct('knowledge-public-v1', KNOWLEDGE_PUBLIC_V1_PRODUCER),
+  );
 }
