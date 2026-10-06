@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { archiveDigest, MAX_CONTENT_ARCHIVE_BYTES } from './archive-digest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { assertRecord } from '../data-products/lock-v1';
@@ -29,6 +29,8 @@ function output(value: Record<string, string>) {
   );
 }
 function candidate(file: string) {
+  if (fs.statSync(file).size > 1024 * 1024)
+    throw new Error('Candidate manifest exceeds size limit');
   const value: unknown = JSON.parse(fs.readFileSync(file, 'utf8'));
   assertRecord(value, 'Candidate');
   const errors = validateCandidate(value);
@@ -66,17 +68,31 @@ function resolve() {
   if (matches.length !== 1) throw new Error('Missing or ambiguous Candidate artifact');
   const artifact = matches[0];
   assertRecord(artifact, 'artifact');
-  gh([
-    'run',
-    'download',
-    runId,
-    '--repo',
-    repository,
-    '--name',
-    String(artifact.name),
-    '--dir',
-    'reports/content',
-  ]);
+  if (
+    !Number.isSafeInteger(artifact.size_in_bytes) ||
+    Number(artifact.size_in_bytes) <= 0 ||
+    Number(artifact.size_in_bytes) > MAX_CONTENT_ARCHIVE_BYTES
+  )
+    throw new Error('Candidate download exceeds size limit');
+  // GitHub Actions runs on Linux. Limit extracted files too, before gh writes them.
+  execFileSync(
+    'prlimit',
+    [
+      `--fsize=${MAX_CONTENT_ARCHIVE_BYTES}`,
+      '--',
+      'gh',
+      'run',
+      'download',
+      runId,
+      '--repo',
+      repository,
+      '--name',
+      String(artifact.name),
+      '--dir',
+      'reports/content',
+    ],
+    { timeout: 120_000, maxBuffer: 2 * 1024 * 1024 },
+  );
   const value = candidate('reports/content/reports/candidate/candidate-manifest.json');
   const sha = String(value.gitSha);
   if (artifact.name !== `candidate-${sha}`) throw new Error('Candidate artifact/source mismatch');
@@ -108,12 +124,9 @@ function resolve() {
     output({ eligible: 'false' });
     return;
   }
-  const archive = fs.readFileSync('reports/content/digital-biome-pages.tar.gz');
+  const archive = archiveDigest('reports/content/digital-biome-pages.tar.gz');
   assertRecord(value.artifact, 'Pages artifact');
-  if (
-    archive.length !== value.artifact.bytes ||
-    `sha256:${createHash('sha256').update(archive).digest('hex')}` !== value.artifact.sha256
-  )
+  if (archive.bytes !== value.artifact.bytes || archive.sha256 !== value.artifact.sha256)
     throw new Error('Pages artifact identity mismatch');
   // Compare source-bound inputs from the actual source tree, not current mutable main.
   execFileSync('git', ['checkout', '--detach', sha], { stdio: 'inherit', timeout: 30_000 });

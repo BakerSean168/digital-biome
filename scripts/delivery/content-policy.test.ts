@@ -116,6 +116,13 @@ test('automatic lanes keep kill switches, separate production environment and im
   const deploy = steps.find((s: { id?: string }) => s.id === 'deploy');
   assert.match(deploy.with.command, /--no-bundle/);
   assert.match(deploy.if, /freshness.outputs.eligible/);
+  const recordIndex = steps.findIndex((s: { id?: string }) => s.id === 'record');
+  const smokeIndex = steps.findIndex((s: { id?: string }) => s.id === 'smoke');
+  assert.ok(recordIndex > 0 && recordIndex < smokeIndex);
+  const upload = steps.find((s: { uses?: string }) =>
+    s.uses?.startsWith('actions/upload-artifact'),
+  );
+  assert.match(upload.if, /always\(\).*record.outcome/);
   const commands = steps.map((s: { run?: string }) => s.run ?? '').join('\n');
   assert.doesNotMatch(commands, /astro build|pnpm build|pages secret put|gh release create/);
   assert.match(commands, /revalidate.ts/);

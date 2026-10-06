@@ -175,7 +175,23 @@ jobs:
             --commit-hash ${{ needs.resolve.outputs.revision }}
             --commit-dirty=false
             --no-bundle
+      - name: Record exact content deployment provenance
+        id: record
+        if: steps.freshness.outputs.eligible == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          pnpm exec wrangler pages deployment list --project-name digital-biome --environment production --json > "$RUNNER_TEMP/content-deployments.json"
+          id="$(jq -r --arg url "$DEPLOYMENT_URL" '[.[] | select(.Deployment == $url)][0].Id // empty' "$RUNNER_TEMP/content-deployments.json")"
+          test -n "$id"
+          jq --arg id "$id" --arg url "$DEPLOYMENT_URL" \
+            '. + {deployment:{id:$id,url:$url,lane:"content"}}' \
+            reports/content/reports/candidate/candidate-manifest.json > content-deployment-result.json
       - name: Verify public pages and protected boundary
+        id: smoke
         if: steps.freshness.outputs.eligible == 'true'
         env:
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://bakersean.top' }}
@@ -194,23 +210,15 @@ jobs:
               ;;
             *) echo 'Protected API boundary failed' >&2; exit 1 ;;
           esac
-      - name: Record exact content deployment provenance
-        if: steps.freshness.outputs.eligible == 'true'
+      - name: Retain deployment identity and smoke outcome even on failure
+        if: always() && steps.record.outcome == 'success'
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
         run: |
-          set -euo pipefail
-          pnpm exec wrangler pages deployment list --project-name digital-biome --environment production --json > "$RUNNER_TEMP/content-deployments.json"
-          id="$(jq -r --arg url "$DEPLOYMENT_URL" '[.[] | select(.Deployment == $url)][0].Id // empty' "$RUNNER_TEMP/content-deployments.json")"
-          test -n "$id"
-          jq --arg id "$id" --arg url "$DEPLOYMENT_URL" \
-            '. + {deployment:{id:$id,url:$url,lane:"content"}}' \
-            reports/content/reports/candidate/candidate-manifest.json > content-deployment-result.json
+          jq --arg outcome "$SMOKE_OUTCOME" '. + {smokeOutcome:$outcome}' content-deployment-result.json > content-deployment-evidence.json
       - uses: actions/upload-artifact@v4
-        if: steps.freshness.outputs.eligible == 'true'
+        if: always() && steps.record.outcome == 'success'
         with:
           name: content-production-${{ needs.resolve.outputs.revision }}
-          path: content-deployment-result.json
+          path: content-deployment-evidence.json
           if-no-files-found: error

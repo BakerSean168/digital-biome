@@ -47,6 +47,7 @@ function fixture() {
     sha,
     candidate,
     archive: archive.toString(),
+    artifactSize: 1024,
     run: {
       repository: repo,
       name: 'Publish Main Candidate',
@@ -74,7 +75,7 @@ const d = JSON.parse(fs.readFileSync('fixture.json','utf8')), args = process.arg
 if (args[0] === 'api') {
  let out;
  if (route.endsWith('/actions/runs/456')) out=d.run;
- else if (route.endsWith('/artifacts?per_page=100')) out={total_count:1,artifacts:[{name:'candidate-'+d.sha,expired:false}]};
+ else if (route.endsWith('/artifacts?per_page=100')) out={total_count:1,artifacts:[{name:'candidate-'+d.sha,expired:false,size_in_bytes:d.artifactSize}]};
  else if (route.endsWith('/actions/runs/123')) out=d.ci;
  else if (route.endsWith('/git/ref/heads/main')) out={object:{sha:d.sha}};
  else throw new Error('unexpected API');
@@ -129,6 +130,7 @@ test('content resolver rejects stale, failed, substituted CI and artifact eviden
     'ci-path',
     'archive',
     'manifest',
+    'size',
   ]) {
     const f = fixture();
     try {
@@ -137,6 +139,7 @@ test('content resolver rejects stale, failed, substituted CI and artifact eviden
       if (kind === 'ci-sha') f.data.ci.head_sha = 'b'.repeat(40);
       if (kind === 'ci-failure') f.data.ci.conclusion = 'failure';
       if (kind === 'ci-path') f.data.ci.path = '.github/workflows/other.yml';
+      if (kind === 'size') f.data.artifactSize = 300 * 1024 * 1024;
       if (kind === 'archive') f.data.archive = 'tampered';
       if (kind === 'manifest') f.data.candidate.digest = `sha256:${'d'.repeat(64)}`;
       const run = f.run();
@@ -145,5 +148,21 @@ test('content resolver rejects stale, failed, substituted CI and artifact eviden
     } finally {
       fs.rmSync(f.root, { recursive: true, force: true });
     }
+  }
+});
+
+test('Pages archives are hashed incrementally within the declared byte ceiling', async () => {
+  const { archiveDigest } = await import('./archive-digest');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'archive-bound-'));
+  const file = path.join(root, 'archive');
+  try {
+    fs.writeFileSync(file, 'abc');
+    assert.deepEqual(archiveDigest(file, 3), {
+      bytes: 3,
+      sha256: 'sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+    });
+    assert.throws(() => archiveDigest(file, 2), /size limit/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
