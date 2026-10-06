@@ -1,240 +1,197 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import SignalTitle from '../../components/common/SignalTitle.astro';
-import { GitBranch, BookMarked, ArrowRight } from '@lucide/astro';
-import { SITE_NAME, AUTHOR_NAME, SOCIAL_LINKS } from '../../constants';
-import { getAllNoteTags, getRecentNotesWithDate } from '../../utils/notes';
-import { formatTimeAgo } from '../../utils/date';
-import ScrollingTagWall from '../../components/common/ScrollingTagWall.astro';
-import GitHubContributions from '../../components/common/GitHubContributions.astro';
-import ObservabilityGrid from '../../components/observability/ObservabilityGrid.astro';
-
-const allTagsMap = getAllNoteTags();
-
-const filteredTags = Array.from(allTagsMap.entries())
-  .filter(([tag]) => {
-    const lowerTag = tag.toLowerCase();
-    return !lowerTag.startsWith('status/') && !lowerTag.startsWith('type/');
-  })
-  .sort((a, b) => b[1] - a[1]);
-const representativeTags = filteredTags.slice(0, 80);
-
-const recentNotes = await getRecentNotesWithDate(3);
-const recentReads = recentNotes.map((item) => ({
-  title: item.note.data.title || item.note.id.split('/').pop() || '',
-  time: formatTimeAgo(item.date, 'zh'),
-  href: `/notes/${item.note.id}`,
-}));
+import TerminalLayout from '../../layouts/TerminalLayout.astro';
+import { SOCIAL_LINKS } from '../../constants';
+const areas = [
+  {
+    title: 'Notes',
+    href: '/notes',
+    description: '知识笔记。概念、方法和学习过程，持续补充、彼此连接。',
+  },
+  { title: 'Blog', href: '/blog', description: '博客文章。相对完整的叙述、工程记录与个人思考。' },
+  {
+    title: 'Projects',
+    href: '/dev',
+    description: '我做过和正在做的作品，从问题、实现到可访问的成果。',
+  },
+  {
+    title: 'Tools',
+    href: '/tools',
+    description: '自托管服务、外部资源、主机和网络。找到用途，再到达入口。',
+  },
+];
 ---
 
-<BaseLayout title={`About | ${SITE_NAME}`} description="SYS.ENTITY_LOADED: 实体档案与工程履历">
-  <!-- Row 1: Full-Viewport Hero with Background Scrolling Tag Wall -->
-  <section class="w-full h-screen relative overflow-hidden flex items-center justify-center bg-transparent group/hero-section">
-    <!-- Background Scrolling Tag Wall -->
-    <ScrollingTagWall tags={representativeTags} lang="zh" />
-
-    <!-- Foreground Centered Hero Content -->
-    <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center text-center gap-6 px-6">
-      <SignalTitle
-        as="h1"
-        class="text-5xl sm:text-6xl font-bold font-mono tracking-tight text-foreground"
-        title={`Hi, I'm ${AUTHOR_NAME}`}
-      />
-      <h2 class="text-2xl sm:text-3xl font-mono text-primary uppercase tracking-widest mt-2">
-        [ 全栈开发者 / 数字园丁 ]
-      </h2>
-      <p class="text-muted-foreground leading-relaxed max-w-2xl font-mono text-base sm:text-lg mt-3">
-        SYS.ENTITY_LOADED: 欢迎接入。这里存储着我的工程切片、架构推演与个人知识脉络。
-      </p>
-
-      <div class="flex flex-wrap justify-center gap-10 mt-8">
-        <a
-          href="/notes"
-          class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none"
-        >
-          <span>[</span>
-          <span class="uppercase">浏览笔记 // BROWSE_NOTES</span>
-          <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
-          <span>]</span>
-        </a>
-        <a
-          href="/about/tags"
-          class="group/btn font-mono text-sm sm:text-base tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center gap-1 select-none"
-        >
-          <span>[</span>
-          <span class="uppercase">所有标签 // TOPOLOGY_TAGS</span>
-          <span class="inline-block w-2 h-4 bg-primary opacity-0 group-hover/btn:opacity-100 animate-terminal-blink ml-0.5"></span>
-          <span>]</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Main Body (Rest of the Page) -->
-  <main class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-    <div class="flex flex-col gap-12">
-      <!-- Row 2 -->
-      <div class="flex flex-col md:flex-row gap-6">
-        <!-- Recently Learning -->
-        <div class="flex-[1] bg-transparent border border-border p-6 sm:p-8">
-          <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">
-            [ RECENT_SYNC ] / 近期数据同步
-          </h3>
-          <div class="flex flex-col gap-4">
-            {recentReads.map((item) => (
-              <a
-                href={item.href}
-                class="group flex items-center justify-between p-4 bg-background border border-border hover:border-primary/50 transition-all"
-              >
-                <div class="flex flex-col gap-1">
-                  <h4 class="text-sm font-mono text-foreground group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h4>
-                  <span class="text-[10px] font-mono text-muted-foreground uppercase">
-                    UPDATED: {item.time}
-                  </span>
-                </div>
-                <BookMarked
-                  size={16}
-                  class="text-muted-foreground group-hover:text-primary transition-colors"
-                />
-              </a>
+<TerminalLayout
+  title="About"
+  description="BakerSean 与 Digital Biome：个人知识、作品和基础设施的关联。"
+>
+  <article data-ui-only="gui" class="gui-about">
+    <header data-reading-anchor="about-title">
+      <p class="mb-5 text-sm text-primary">About</p>
+      <h1 class="text-2xl leading-normal md:text-[32px]">构建系统，也记录系统之外的生活。</h1>
+      <p class="mt-5 text-muted-foreground">BakerSean</p>
+    </header>
+    <div class="gui-about-columns">
+      <div>
+        <p data-reading-anchor="about-intro" class="max-w-[38em] text-muted-foreground md:text-lg">
+          这里是 Digital
+          Biome，我的个人数字生态。它把知识、写作、项目与正在使用的资源放在一起，让我看清自己拥有什么，也让你了解我在思考和构建什么。
+        </p>
+        <section data-reading-anchor="about-practice" class="mt-10 md:mt-16">
+          <h2 class="text-lg md:text-2xl">我在做什么</h2>
+          <p class="mt-6 leading-relaxed text-muted-foreground md:text-lg">
+            学习、编程，搭建自己的数字基础设施。
+            <br />
+            把一次次探索沉淀成笔记，把想法做成可使用的项目，再让这些工具融入日常。
+          </p>
+          <p class="mt-6 leading-relaxed text-muted-foreground">
+            我关心知识之间的联系，也关心系统如何长期可靠地运行。
+            <br class="hidden md:block" />
+            这片数字生态随着实践慢慢生长。
+          </p>
+        </section>
+        <section data-reading-anchor="about-content" class="mt-10 md:mt-16">
+          <h2 class="mb-6 text-lg md:text-2xl">这里有什么</h2>
+          <dl class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-5 gap-y-5 text-sm">
+            {areas.map((area) => (
+              <>
+                <dt>
+                  <a href={area.href} class="hover:text-primary">
+                    {area.title}
+                  </a>
+                </dt>
+                <dd class="text-muted-foreground">{area.description}</dd>
+              </>
             ))}
-          </div>
-        </div>
-
-        <!-- GitHub Contributions -->
-        <div class="flex-[2] bg-card/40 border border-border p-6 sm:p-8 overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-sm font-mono tracking-widest text-muted-foreground hidden sm:block">
-              GITHUB_ACTIVITY
-            </h3>
-            <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
-              <a
-                href={SOCIAL_LINKS.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-outline-sm !font-mono !text-[11px] !rounded-none"
-              >
-                [ GITHUB ] <GitBranch size={14} />
+          </dl>
+        </section>
+      </div>
+      <aside data-reading-anchor="about-ecosystem">
+        <h2 class="mb-6 text-lg">背后的生态</h2>
+        <dl class="space-y-6">
+          <div>
+            <dt>
+              <a href="/notes" class="hover:text-primary">
+                Thought Forest
               </a>
-            </div>
+            </dt>
+            <dd class="mt-2 text-sm text-muted-foreground">知识笔记与独立写作</dd>
           </div>
-
-          <div class="flex-1 bg-background border border-border p-4 overflow-x-auto flex items-center justify-center">
-            <GitHubContributions lang="zh" />
+          <div>
+            <dt>
+              <a href="/systems" class="hover:text-primary">
+                Personal Digital System
+              </a>
+            </dt>
+            <dd class="mt-2 text-sm text-muted-foreground">项目与系统的关系</dd>
           </div>
-        </div>
-      </div>
-
-      <!-- Observability Dashboard Section -->
-      <ObservabilityGrid />
-
-      <!-- Row 3 -->
-      <div class="border border-border p-6 sm:p-8 bg-transparent">
-        <h3 class="text-sm font-mono tracking-widest text-muted-foreground mb-6 uppercase">
-          [ SITE_COORDINATES ] / 多站点协同导航网格
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
-          <div class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors">
-            <div>
-              <div class="text-[10px] text-primary font-bold mb-2">
-                // 01 . PERSONAL_WEBSITE (CURRENT)
-              </div>
-              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3">
-                [ 个人网站 ]
-              </h4>
-              <p class="text-[11px] text-muted-foreground leading-relaxed">
-                个人数字花园与思想森林。承载 Obsidian 笔记库、核心工程履历、系统拓扑图。
-              </p>
-            </div>
-            <div class="mt-6 text-[10px] text-primary font-bold">STATUS: ACTIVE_PRIMARY</div>
+          <div>
+            <dt>
+              <a href="/infrastructure" class="hover:text-primary">
+                Personal Infrastructure
+              </a>
+            </dt>
+            <dd class="mt-2 text-sm text-muted-foreground">主机、网络与运行中的服务</dd>
           </div>
-
-          <a
-            href={SOCIAL_LINKS.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors"
-          >
-            <div>
-              <div class="text-[10px] text-muted-foreground mb-2">// 02 . GITHUB_PROFILE</div>
-              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">
-                [ GITHUB 主页 ]
-              </h4>
-              <p class="text-[11px] text-muted-foreground leading-relaxed">
-                开源项目与开发控制台。存放所有开源工程源代码、技术切片、提交历史。
-              </p>
-            </div>
-            <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
-              ACCESS_PROFILE{' '}
-              <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
-            </div>
-          </a>
-
-          <a
-            href="https://BakerSean168.github.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="border border-border/60 p-5 bg-card/20 flex flex-col justify-between group hover:border-primary/50 transition-colors"
-          >
-            <div>
-              <div class="text-[10px] text-muted-foreground mb-2">// 03 . GITHUB_PAGES</div>
-              <h4 class="text-base text-foreground font-bold uppercase tracking-wider mb-3 group-hover:text-primary transition-colors">
-                [ GITHUB PAGE ]
-              </h4>
-              <p class="text-[11px] text-muted-foreground leading-relaxed">
-                前端概念实验室与微应用演示区。用于托管独立的网页小玩具、交互动效演示及实验性 Web
-                组件。
-              </p>
-            </div>
-            <div class="mt-6 text-[10px] text-muted-foreground group-hover:text-primary transition-all flex items-center gap-1">
-              ACCESS_PAGES{' '}
-              <ArrowRight size={12} class="group-hover:translate-x-1 transition-transform" />
-            </div>
-          </a>
-        </div>
-      </div>
+        </dl>
+      </aside>
     </div>
-  </main>
-</BaseLayout>
-
-<style>
-  @keyframes wave {
-    0% {
-      transform: rotate(0deg);
-    }
-    10% {
-      transform: rotate(14deg);
-    }
-    20% {
-      transform: rotate(-8deg);
-    }
-    30% {
-      transform: rotate(14deg);
-    }
-    40% {
-      transform: rotate(-4deg);
-    }
-    50% {
-      transform: rotate(10deg);
-    }
-    60% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(0deg);
-    }
-  }
-  .animate-wave {
-    animation: wave 2.5s infinite;
-  }
-  @keyframes terminal-blink {
-    50% {
-      opacity: 0;
-    }
-  }
-  .animate-terminal-blink {
-    animation: terminal-blink 0.8s step-start infinite;
-  }
-</style>
+    <nav
+      data-reading-anchor="about-contact"
+      aria-label="更多关于我"
+      class="mt-10 flex flex-wrap gap-6 text-primary"
+    >
+      <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
+        GitHub ↗
+      </a>
+      <a href="/friends">Friends →</a>
+      <a href="/about/tags">知识标签 →</a>
+    </nav>
+    <p data-reading-anchor="about-access" class="mt-12 text-sm text-muted-foreground">
+      公开内容可以直接阅读。部分服务仅供个人使用，需要通过 Access
+      验证身份。页面展示入口，访问权限由服务与认证系统负责。
+    </p>
+  </article>
+  <article data-ui-only="tui" class="max-w-[720px] space-y-7">
+    <header data-reading-anchor="about-title">
+      <h1 class="text-3xl font-semibold">BakerSean</h1>
+      <p class="mt-2 text-muted-foreground">构建系统，也记录系统之外的生活。</p>
+    </header>
+    <p data-reading-anchor="about-intro">
+      这里是 Digital
+      Biome，我的个人数字生态。它把知识、写作、项目与正在使用的资源放在一起，让我看清自己拥有什么，也让你了解我在思考和构建什么。
+    </p>
+    <section data-reading-anchor="about-practice">
+      <h2 class="mb-3 text-primary">
+        <span class="text-muted-foreground">## </span>我在做什么
+      </h2>
+      <p>
+        学习、编程、搭建自己的数字基础设施。把一次次探索沉淀成笔记，把想法做成可使用的项目，再让这些工具融入日常。
+      </p>
+      <p class="mt-3">
+        我关心知识之间的联系，也关心系统如何长期可靠地运行。这片数字生态随着我的实践慢慢生长。
+      </p>
+    </section>
+    <section data-reading-anchor="about-content">
+      <h2 class="mb-3 text-primary">
+        <span class="text-muted-foreground">## </span>这里有什么
+      </h2>
+      <dl class="grid grid-cols-[90px_1fr] gap-x-5 gap-y-3 sm:grid-cols-[150px_1fr]">
+        {areas.map((area) => (
+          <>
+            <dt>
+              <a class="text-primary" href={area.href}>
+                {area.title}
+              </a>
+            </dt>
+            <dd>{area.description}</dd>
+          </>
+        ))}
+      </dl>
+    </section>
+    <section data-reading-anchor="about-ecosystem">
+      <h2 class="mb-3 text-primary">
+        <span class="text-muted-foreground">## </span>背后的生态
+      </h2>
+      <p>
+        Soft Forest 是知识生长的地方。Personal Digital System 组织我的项目与个人系统，Personal
+        Infrastructure 承载运行中的服务。Digital Biome 是它们面向自己和访客的展示与访问层。
+      </p>
+      <p class="mt-3">
+        <a class="border-b border-border hover:text-primary" href="/systems">
+          探索 Personal System →
+        </a>
+      </p>
+    </section>
+    <section data-reading-anchor="about-access">
+      <h2 class="mb-3 text-primary">
+        <span class="text-muted-foreground">## </span>公开与私有
+      </h2>
+      <p>
+        公开内容可以直接阅读。部分服务仅供个人使用，需要通过 Access
+        验证身份。页面展示入口，访问权限由服务与认证系统负责。
+      </p>
+    </section>
+    <section data-reading-anchor="about-contact">
+      <h2 class="mb-3 text-primary">
+        <span class="text-muted-foreground">## </span>找到我
+      </h2>
+      <div class="flex flex-wrap gap-6">
+        <a
+          class="border-b border-border hover:text-primary"
+          href={SOCIAL_LINKS.github}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub ↗
+        </a>
+        <a class="border-b border-border hover:text-primary" href="/friends">
+          Friends →
+        </a>
+        <a class="border-b border-border hover:text-primary" href="/about/tags">
+          知识标签 →
+        </a>
+      </div>
+    </section>
+  </article>
+</TerminalLayout>

@@ -1,69 +1,204 @@
 ---
+import { PRIMARY_NAVIGATION, activeNavigation, pageMode } from '../../config/navigation-policy';
+import { BUILD_INFO } from '../../utils/build-info';
 import SiteSearch from './SiteSearch.astro';
-import { Search, Lock, LogOut } from '@lucide/astro';
-import { HEADER_CONTROLS } from '../../config/navigation-policy';
-
+import { Search, Lock, LogOut, Network } from '@lucide/astro';
 const currentPath = Astro.url.pathname;
-const loginNext = currentPath && currentPath !== '/login' ? currentPath : '/';
-const showSearch = HEADER_CONTROLS.includes('search');
-const showAccess = HEADER_CONTROLS.includes('access');
+const loginNext = currentPath !== '/login' ? currentPath : '/';
+const links = PRIMARY_NAVIGATION;
+const current = activeNavigation(currentPath);
+const mode = pageMode(currentPath);
 ---
 
-<div class="fixed top-6 left-1/2 -translate-x-1/2 z-50 group">
-  <nav
-    class="flex h-10 items-center gap-3 rounded-sm border border-border bg-background/95 px-4 text-sm font-mono"
-    aria-label="快捷操作"
-  >
-    {showSearch && (
-      <button
-        data-header-control="search"
-        class="search-trigger flex cursor-pointer items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-        aria-label="打开搜索"
-        aria-haspopup="dialog"
+<header class="gui-header" data-ui-only="gui">
+  <a href="/" class="font-semibold">
+    Digital Biome
+  </a>
+  <div class="flex items-center gap-8 text-sm text-muted-foreground">
+    <button
+      class="search-trigger min-h-11 hover:text-primary"
+      data-header-control="search"
+      aria-label="打开搜索"
+      aria-haspopup="dialog"
+    >
+      Search
+    </button>
+    <span data-header-control="access">
+      <a
+        data-auth-login
+        href={`/login?next=${encodeURIComponent(loginNext)}`}
+        class="inline-flex min-h-11 items-center hover:text-primary"
       >
-        <Search size={14} class="text-primary" />
-        <span class="text-xs">[ SEARCH ]</span>
+        Access
+      </a>
+      <a
+        data-auth-logout
+        href="/cdn-cgi/access/logout"
+        class="hidden min-h-11 items-center hover:text-primary"
+      >
+        Logout
+      </a>
+    </span>
+  </div>
+</header>
+<footer
+  class="relative z-40 shrink-0 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] font-mono text-xs"
+  data-terminal-dock
+>
+  <div
+    data-dock-status
+    class="flex h-7 items-center justify-between gap-3 overflow-hidden border-b border-border text-muted-foreground"
+  >
+    <span data-dock-mode class="shrink-0 bg-primary px-3 py-1 text-background">
+      -- {mode} --
+    </span>
+    <span data-dock-hints class="hidden xl:block">
+      j k 移动　 ↵ 打开　 / 搜索　 i 文本　 f 筛选　 1–4 标签　 g 跳转　 r 关联　 u 返回
+    </span>
+    <span
+      class="hidden min-w-0 truncate text-[10px] sm:inline"
+      data-build-info
+      title="package 版本 · Git 基线；worktree 表示包含未提交修改，不是已发布版本"
+    >
+      v{BUILD_INFO.version} · {BUILD_INFO.revision}
+      {BUILD_INFO.state !== 'clean' ? `+${BUILD_INFO.state}` : ''}
+    </span>
+    <div
+      data-mode-switch
+      role="group"
+      aria-label="界面模式"
+      class="ml-auto flex shrink-0 gap-1 pr-3"
+    >
+      <button
+        type="button"
+        data-ui-mode-choice="tui"
+        aria-pressed="true"
+        aria-label="切换到终端界面"
+        class="px-2"
+      >
+        TUI
       </button>
-    )}
-
-    {showSearch && showAccess && <div class="h-4 w-px bg-border/80"></div>}
-
-    {showAccess && (
-      <span data-header-control="access" class="contents">
-        <a
-          data-auth-login
-          href={`/login?next=${encodeURIComponent(loginNext)}`}
-          class="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          title="使用 GitHub 身份登录"
-        >
-          <Lock size={12} />
-          <span>[ ACCESS ]</span>
-        </a>
-
-        <a
-          data-auth-logout
-          href="/cdn-cgi/access/logout"
-          class="hidden items-center gap-1.5 text-xs text-primary transition-colors hover:text-foreground"
-          title="退出 Cloudflare Access"
-        >
-          <LogOut size={12} />
-          <span>[ LOGOUT ]</span>
-        </a>
+      <button
+        type="button"
+        data-ui-mode-choice="gui"
+        aria-pressed="false"
+        aria-label="切换到图形界面"
+        class="px-2"
+      >
+        GUI
+      </button>
+    </div>
+  </div>
+  <div data-dock-commands class="flex flex-wrap items-stretch md:flex-nowrap">
+    <a
+      href="/"
+      data-ui-only="tui"
+      class="terminal-segment z-20 flex items-center gap-2 bg-card px-3 font-semibold"
+    >
+      <Network size={13} /> DigitalBiome
+    </a>
+    <span
+      data-ui-only="tui"
+      data-header-control="access"
+      class="terminal-segment z-10 flex items-center bg-pane px-4"
+    >
+      <a
+        data-auth-login
+        href={`/login?next=${encodeURIComponent(loginNext)}`}
+        class="flex items-center gap-2 text-primary"
+      >
+        <Lock size={12} /> Access
+      </a>
+      <a
+        data-auth-logout
+        href="/cdn-cgi/access/logout"
+        class="hidden items-center gap-2 text-primary"
+      >
+        <LogOut size={12} /> Logout
+      </a>
+      <span data-auth-announcer class="sr-only" aria-live="polite"></span>
+    </span>
+    <span data-dock-path class="min-w-0 flex-1 truncate px-4 leading-8 text-muted-foreground">
+      <span data-terminal-path>~{currentPath === '/' ? '' : currentPath}</span>{' '}
+      <span data-ui-only="tui" class="text-primary">
+        $ ▌
       </span>
-    )}
-
-    <span data-auth-announcer class="sr-only" aria-live="polite"></span>
-  </nav>
-</div>
-
+    </span>
+    <nav
+      aria-label="主导航"
+      class="order-last flex w-full border-t border-border md:order-none md:w-auto md:border-0"
+    >
+      {links.map(({ title, href }) => (
+        <a
+          href={href}
+          aria-current={current === href ? 'page' : undefined}
+          class:list={[
+            'flex min-h-11 flex-1 items-center justify-center px-3 md:min-h-8',
+            current === href
+              ? 'bg-primary text-background'
+              : 'text-muted-foreground hover:text-foreground',
+          ]}
+        >
+          {title.toLowerCase()}
+        </a>
+      ))}
+    </nav>
+    <button
+      data-header-control="search"
+      data-ui-only="tui"
+      class="search-trigger px-3 hover:text-primary"
+      aria-label="打开搜索"
+      aria-haspopup="dialog"
+    >
+      <Search size={14} />
+    </button>
+    <button
+      data-ui-only="tui"
+      class="px-3 hover:text-primary"
+      data-terminal-help
+      aria-label="键盘帮助"
+    >
+      ?
+    </button>
+  </div>
+</footer>
+<dialog
+  id="terminal-help"
+  class="m-auto max-w-[92vw] border border-border bg-background p-6 text-sm text-foreground backdrop:bg-black/70"
+>
+  <form method="dialog" class="flex justify-between gap-12">
+    <h2 class="text-primary">键盘导航</h2>
+    <button aria-label="关闭帮助">[关闭]</button>
+  </form>
+  <dl class="mt-5 grid grid-cols-[auto_1fr] gap-x-8 gap-y-2">
+    <dt>j / k / ↑ / ↓</dt>
+    <dd>选择对象</dd>
+    <dt>Enter / o</dt>
+    <dd>打开选择</dd>
+    <dt>/ 或 Ctrl+K</dt>
+    <dd>全站搜索</dd>
+    <dt>i / f / 1–4</dt>
+    <dd>筛选当前列表</dd>
+    <dt>g → h / l / p / t / a</dt>
+    <dd>首页 / 笔记 / 项目 / 工具 / About</dd>
+    <dt>r → 1–9</dt>
+    <dd>打开所选对象的关联</dd>
+    <dt>u</dt>
+    <dd>返回上一页</dd>
+    <dt>Esc</dt>
+    <dd>关闭浮层 / 清空筛选</dd>
+  </dl>
+</dialog>
 <SiteSearch />
-
+<script>
+  import '../../browser/terminal-navigation';
+</script>
 <script>
   async function refreshAccessSession() {
-    const loginControl = document.querySelector<HTMLElement>('[data-auth-login]');
-    const logoutControl = document.querySelector<HTMLElement>('[data-auth-logout]');
+    const loginControls = document.querySelectorAll<HTMLElement>('[data-auth-login]');
+    const logoutControls = document.querySelectorAll<HTMLElement>('[data-auth-logout]');
     const announcer = document.querySelector<HTMLElement>('[data-auth-announcer]');
-    if (!loginControl || !logoutControl) return;
+    if (!loginControls.length || !logoutControls.length) return;
 
     try {
       const response = await fetch('/api/private/session', {
@@ -83,9 +218,11 @@ const showAccess = HEADER_CONTROLS.includes('access');
         return;
       }
 
-      loginControl.classList.add('hidden');
-      logoutControl.classList.remove('hidden');
-      logoutControl.classList.add('flex');
+      loginControls.forEach((control) => control.classList.add('hidden'));
+      logoutControls.forEach((control) => {
+        control.classList.remove('hidden');
+        control.classList.add('flex');
+      });
       if (announcer) announcer.textContent = 'Cloudflare Access 已认证';
     } catch {
       // Guests keep the default login control.
