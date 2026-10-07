@@ -1,6 +1,6 @@
 # Digital Biome 首页资源与交互优化方案
 
-日期：2026-10-07。状态：A–E 与新数据已随 v0.10.0 部署生产，线上内容、产物身份与接口门禁通过；线上回归发现目录完成时序问题，追加修复与回归测试。最新交付记录见第 16 节，前文保留实施前审查基线与分批记录。
+日期：2026-10-07。状态：A–E、新数据与目录完成时序补丁已随 v0.10.1 完成生产交付；线上身份、内容、接口门禁及 28 项 Chromium 浏览器验收全部通过。最终交付记录见第 17 节，前文保留实施前审查基线与分批记录。
 
 > 实施记录（2026-10-07）：用户已要求开始实施。首批交付 A/B，并将共用的即时导航反馈一并接入。以下审查正文保留为实施前基线；完成证据在本节更新。
 >
@@ -505,3 +505,35 @@ items/loaded，hasMore 却仍读取旧 filtered，误判已无更多并留下加
 [修复后实际构建的 28 项浏览器回归](evidence/2026-10-07-implementation/catalog-completion-green.txt)。
 补丁已通过 `pnpm sync:data-products` 与 `pnpm verify:full`：389 项通过、2 项跳过，
 3766 页及搜索、泄漏扫描和性能预算均通过。
+
+## 17 v0.10.1 最终生产验收（2026-10-07）
+
+目录完成补丁 [#139](https://github.com/BakerSean168/digital-biome/pull/139)
+与发布 PR [#140](https://github.com/BakerSean168/digital-biome/pull/140) 已通过各自
+精确提交的 CI 并合入。最终源码为 `97545cfd79ba3b6afa4160bf84700be882d09c0d`；
+主分支 CI `37640812333`、Candidate `37641323511` 与 Release Publish
+`37641885224` 均成功，发布 [v0.10.1](https://github.com/BakerSean168/digital-biome/releases/tag/v0.10.1)。
+
+[生产部署 37642104509](https://github.com/BakerSean168/digital-biome/actions/runs/37642104509)
+经既有环境审核后成功。Cloudflare 部署 ID 为
+`efd43df4-e5b9-4e52-949d-2c3ef0f23e86`；上传的既有产物共 67,806,382 字节，
+SHA-256 为 `3cfc5aec4815e0627d580467c2601543c7333856e20a9909517e0e65328d4330`。
+Release/Candidate manifest、annotated tag、三个 public lock、部署记录与实际产物均
+已独立校验，生产阶段没有重新构建应用。
+
+`https://bakersean.top` 已显示 `v0.10.1` 与 `97545cfd`。线上 external/services
+目录、favicon 及 Tools 引用的 ObjectBrowser JavaScript 与 Release 归档逐字节一致。
+五项首页精选、四个常用网站、宝可梦机场/Google Stitch 网址、另一家服务说明与
+Personal Twin 的可见范围再次核验通过；PDS 共享契约已更新，catalog payload 不变，
+因此 PDS 数据锁保持原身份。
+
+生产目标的 `PLAYWRIGHT_BASE_URL=https://bakersean.top pnpm test:e2e` 全部
+28 项通过（1.0 分钟），没有替换线上应用脚本。固定时序用例确认：切回后才完成
+目录响应时，加载提示清除、仍保留 16 行、下一次点击追加到 40 行。
+公开笔记、站点、telemetry 与匿名受保护 API 的工作流契约检查也全部通过。
+浏览器范围为 Chromium 桌面及模拟移动视口；保留第 12 节中未测物理设备与浏览器的范围说明。
+
+本次实施、数据发布、生产部署与线上验收已闭环；第 16 节所述补丁待发布状态已解除。
+
+[最终身份与验收记录](evidence/2026-10-07-implementation/production-v0.10.1-verification.json) ·
+[生产浏览器验收日志](evidence/2026-10-07-implementation/production-v0.10.1-browser-tests.txt)。
