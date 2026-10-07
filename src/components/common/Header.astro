@@ -15,7 +15,7 @@ const hasBrowser = ['/', '/notes', '/blog', '/dev', '/tools'].includes(
 
 <header class="gui-header flex-wrap gap-x-4" data-ui-only="gui">
   <a href="/" class="flex min-h-11 shrink-0 items-center gap-2 font-semibold">
-    <img src="/favicon.svg" width="20" height="20" alt="" class="shrink-0" />
+    <img src="/favicon.svg" width="20" height="20" alt="" class="shrink-0 brightness-0 invert" />
     Digital Biome
   </a>
   <div class="flex items-center gap-3 text-sm text-muted-foreground sm:gap-8">
@@ -114,7 +114,8 @@ const hasBrowser = ['/', '/notes', '/blog', '/dev', '/tools'].includes(
       data-ui-only="tui"
       class="terminal-segment z-20 flex items-center gap-2 bg-card px-3 font-semibold"
     >
-      <img src="/favicon.svg" width="16" height="16" alt="" /> DigitalBiome
+      <img src="/favicon.svg" width="16" height="16" alt="" class="brightness-0 invert" />{' '}
+      DigitalBiome
     </a>
     <span
       data-ui-only="tui"
