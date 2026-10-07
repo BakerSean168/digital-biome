@@ -5,6 +5,15 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.8.1](https://github.com/BakerSean168/digital-biome/compare/v0.8.0...v0.8.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **delivery:** keep public detail smoke compatible with rollback archives ([8bc179f](https://github.com/BakerSean168/digital-biome/commit/8bc179f385e85ea8caeb9899117ab018119839db))
+* **delivery:** preserve precise Pages invocation routes when packaging ([10b3001](https://github.com/BakerSean168/digital-biome/commit/10b3001dab9d85731f01c57065bcc4a334ba0b1a))
+* **delivery:** preserve precise Pages invocation routes when packaging ([d64aa11](https://github.com/BakerSean168/digital-biome/commit/d64aa11f67f6164526718923b6f87af4adcdef2b))
+
 ## [0.8.0](https://github.com/BakerSean168/digital-biome/compare/v0.7.0...v0.8.0) (2026-10-06)
 
 
