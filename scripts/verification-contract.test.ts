@@ -83,11 +83,11 @@ test('main integration builds all immutable public products through one preparat
   assert.match(candidateWorkflow, /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/);
   assert.match(candidateWorkflow, /pnpm sync:data-products/);
   assert.doesNotMatch(candidateWorkflow, /producer-root|personal-infrastructure-public/);
-  assert.match(candidateWorkflow, /knowledgeArtifactSha256/);
+  assert.match(candidateWorkflow, /knowledge-public-v1\.lock\.json/);
   assert.match(candidateWorkflow, /infra-public-v2\.lock\.json/);
-  assert.match(candidateWorkflow, /publicInfrastructure:/);
+  assert.match(candidateWorkflow, /dataProducts:/);
   assert.match(candidateWorkflow, /digital-biome-private-infrastructure-v1\.lock\.json/);
-  assert.match(candidateWorkflow, /privateInfrastructure:/);
+  assert.match(candidateWorkflow, /privateBindings:/);
   assert.doesNotMatch(candidateWorkflow, /submodules: recursive/);
   assert.match(candidateWorkflow, /pages functions build functions/);
   assert.match(candidateWorkflow, /--outdir "\$worker_dir"/);
@@ -278,7 +278,7 @@ test('production v4 consumes public infra projection and pinned private RuntimeB
   assert.doesNotMatch(productionWorkflow, /export:private:legacy/);
 
   const bindingStep = productionWorkflow.match(
-    / {6}- name: Generate and update encrypted Pages bindings\n[\s\S]*?(?=\n {6}- name: Verify and unpack immutable Pages artifact)/,
+    / {6}- name: Generate and update encrypted Pages bindings\n[\s\S]*?(?=\n {6}- name: Deploy selected immutable artifact)/,
   )?.[0];
   assert.ok(bindingStep, 'encrypted binding step must exist');
   assert.match(bindingStep, /--contract "\$PDS_PRIVATE_INFRASTRUCTURE_BINDING"/);

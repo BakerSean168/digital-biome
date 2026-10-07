@@ -160,6 +160,11 @@ jobs:
           private_infrastructure_sha256=''
 
           case "$manifest_schema" in
+            digital-biome.release/v5)
+              private_infrastructure_source_revision="$(jq -r '.privateBindings["digital-biome-private-infrastructure-v1"].sourceRevision' "$manifest")"
+              private_infrastructure_contract_path="$(jq -r '.privateBindings["digital-biome-private-infrastructure-v1"].contractPath' "$manifest")"
+              private_infrastructure_sha256="$(jq -r '.privateBindings["digital-biome-private-infrastructure-v1"].sha256' "$manifest")"
+              ;;
             digital-biome.release/v4)
               knowledge_source_revision="$(jq -r .knowledge.sourceRevision "$manifest")"
               knowledge_release_tag="$(jq -r .knowledge.releaseTag "$manifest")"
@@ -285,6 +290,8 @@ jobs:
           repositories: |
             digital-biome
             thought-forest
+            personal-infrastructure
+            personal-digital-system
           permission-contents: read
 
       - name: Checkout exact Release source
@@ -306,8 +313,8 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Checkout exact v3/v4 Personal Infrastructure runtime binding
-        if: needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v4' || needs.verify-release.outputs.manifest_schema == 'digital-biome.release/v3'
+      - name: Checkout exact private Personal Infrastructure runtime binding
+        if: contains(fromJSON('["digital-biome.release/v5","digital-biome.release/v4","digital-biome.release/v3"]'), needs.verify-release.outputs.manifest_schema)
         uses: actions/checkout@v6
         with:
           repository: BakerSean168/personal-infrastructure
@@ -368,6 +375,9 @@ jobs:
           pnpm exec tsx scripts/delivery/manifest.ts validate --file "$manifest"
 
           case "$MANIFEST_SCHEMA" in
+            digital-biome.release/v5)
+              pnpm exec tsx scripts/delivery/revalidate.ts "$manifest" .pds-runtime/personal-infrastructure
+              ;;
             digital-biome.release/v4|digital-biome.release/v3)
               knowledge_lock=data-products/knowledge-public-v1.lock.json
               private_lock=data-products/digital-biome-private-infrastructure-v1.lock.json
@@ -436,6 +446,27 @@ jobs:
           # Private source work above regenerates only deployment inputs and validates
           # contracts. It never rebuilds the immutable public Pages artifact.
 
+      - name: Verify and unpack immutable Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=reports/deploy/release-manifest.json
+          artifact=reports/deploy/digital-biome-pages.tar.gz
+
+          expected="$(jq -r .artifact.sha256 "$manifest")"
+          actual="sha256:$(sha256sum "$artifact" | cut -d ' ' -f 1)"
+          [[ "$actual" == "$expected" ]]
+
+          if tar -tzf "$artifact" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
+            echo 'release archive contains unsafe path entries' >&2
+            exit 1
+          fi
+
+          mkdir release-package
+          tar -xzf "$artifact" -C release-package
+          test -s release-package/dist/_worker.js
+          test -s release-package/dist/_routes.json
+
       - name: Validate production observability credentials
         shell: bash
         env:
@@ -458,7 +489,7 @@ jobs:
           set -euo pipefail
           payload_file="${RUNNER_TEMP}/private-infrastructure.json"
           case "$MANIFEST_SCHEMA" in
-            digital-biome.release/v4|digital-biome.release/v3)
+            digital-biome.release/v5|digital-biome.release/v4|digital-biome.release/v3)
               test -n "${PDS_PRIVATE_INFRASTRUCTURE_BINDING:-}"
               pnpm export:private -- \
                 --contract "$PDS_PRIVATE_INFRASTRUCTURE_BINDING" \
@@ -475,27 +506,6 @@ jobs:
             --project-name digital-biome
           printf '%s' "$AI_USAGE_HUB_READ_KEY" | pnpm exec wrangler pages secret put AI_USAGE_HUB_READ_KEY \
             --project-name digital-biome
-
-      - name: Verify and unpack immutable Pages artifact
-        shell: bash
-        run: |
-          set -euo pipefail
-          manifest=reports/deploy/release-manifest.json
-          artifact=reports/deploy/digital-biome-pages.tar.gz
-
-          expected="$(jq -r .artifact.sha256 "$manifest")"
-          actual="sha256:$(sha256sum "$artifact" | cut -d ' ' -f 1)"
-          [[ "$actual" == "$expected" ]]
-
-          if tar -tzf "$artifact" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
-            echo 'release archive contains unsafe path entries' >&2
-            exit 1
-          fi
-
-          mkdir release-package
-          tar -xzf "$artifact" -C release-package
-          test -s release-package/dist/_worker.js
-          test -s release-package/dist/_routes.json
 
       - name: Deploy selected immutable artifact
         id: deploy
