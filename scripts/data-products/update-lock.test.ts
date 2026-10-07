@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { computeNextLock, parseSyncRequest, updateKnowledgeLock } from './update-lock';
+import { computeNextLock, parseSyncRequest, updatePublicDataProductLock } from './update-lock';
 import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
 import { parsePublicDataProductLock } from './lock-v1';
 
@@ -27,16 +27,20 @@ test('standard event, manual recovery and missed-dispatch reconciliation produce
   try {
     fs.mkdirSync(path.join(root, 'data-products'));
     const file = path.join(root, event.lockPath);
-    const current = { ...f.lock, semanticSha256: `sha256:${'0'.repeat(64)}` };
+    const current = {
+      ...f.lock,
+      sourceRevision: '1'.repeat(40),
+      releaseTag: `${f.lock.product}-${'1'.repeat(40)}`,
+    };
     fs.writeFileSync(file, JSON.stringify(current));
     fs.writeFileSync(path.join(root, 'untouched'), 'sentinel');
-    assert.equal(updateKnowledgeLock(event, root), true);
+    assert.equal(updatePublicDataProductLock(event, root), true);
     assert.equal(fs.readFileSync(file, 'utf8'), event.serialized);
-    assert.equal(updateKnowledgeLock(recovery, root), false);
+    assert.equal(updatePublicDataProductLock(recovery, root), false);
     // Non-authoritative metadata / formatting do not create PR churn.
     const annotated = JSON.stringify({ ...f.lock, consumerMetadata: { note: 'retained' } });
     fs.writeFileSync(file, annotated);
-    assert.equal(updateKnowledgeLock(event, root), false);
+    assert.equal(updatePublicDataProductLock(event, root), false);
     assert.equal(fs.readFileSync(file, 'utf8'), annotated);
     assert.equal(fs.readFileSync(path.join(root, 'untouched'), 'utf8'), 'sentinel');
     assert.deepEqual(fs.readdirSync(path.dirname(file)), ['knowledge-public-v1.lock.json']);
@@ -62,7 +66,7 @@ test('forged product/repository/source/tag and not-yet-enabled products fail bef
     );
     assert.deepEqual(f.calls, []);
   }
-  for (const product of ['pds-catalog-v1', 'infra-public-v2']) {
+  for (const product of ['pds-catalog-v1']) {
     assert.throws(() => parseSyncRequest('reconcile', { product }), /not yet enabled/);
     assert.throws(
       () => parseSyncRequest('exact', { product, release_tag: `${product}-${'f'.repeat(40)}` }),
@@ -89,8 +93,20 @@ test('materialized current Release event resolves to the exact committed knowled
     ...fixture.release,
     tag_name: lock.releaseTag,
     assets: [
-      { id: 11, name: lock.artifact.name, size: artifact.length, digest: lock.artifact.sha256 },
-      { id: 12, name: lock.manifest.name, size: manifest.length, digest: lock.manifest.sha256 },
+      {
+        id: 11,
+        name: lock.artifact.name,
+        state: 'uploaded',
+        size: artifact.length,
+        digest: lock.artifact.sha256,
+      },
+      {
+        id: 12,
+        name: lock.manifest.name,
+        state: 'uploaded',
+        size: manifest.length,
+        digest: lock.manifest.sha256,
+      },
     ],
   });
   fixture.responses.set(`${base}/git/ref/tags/${lock.releaseTag}`, {

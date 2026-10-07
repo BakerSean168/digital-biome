@@ -12,7 +12,11 @@ const runtimeRoot = '.pds-runtime/infra-public-v2';
 
 test('tracked infra-public-v2 lock has canonical producer identity', () => {
   const lock = parseInfraPublicV2Lock(fs.readFileSync(lockPath, 'utf8'));
+  assert.equal(lock.protocolVersion, 1);
+  assert.match(lock.semanticSha256, /^sha256:[0-9a-f]{64}$/);
   assert.equal(lock.producerRepository, 'BakerSean168/personal-infrastructure');
+  const { protocolVersion: _protocol, semanticSha256: _semantic, ...legacy } = lock;
+  assert.throws(() => parseInfraPublicV2Lock(JSON.stringify({ ...legacy, schemaVersion: 1 })));
   assert.equal(lock.releaseTag, `infra-public-v2-${lock.sourceRevision}`);
 });
 

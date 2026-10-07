@@ -1,9 +1,10 @@
-# Public Protocol-v1 consumer — knowledge rollout slice
+# Public Protocol-v1 consumer — knowledge + infra rollout
 
 The common protocol foundation supports three public products; **generic sync and
-prepare rollout currently enables `knowledge-public-v1` only**. PDS, public infra,
-private RuntimeBindings, Candidate provenance and production promotion are not
-cut over by this slice. The old infra scheduled workflow and PR #120 are unchanged.
+prepare currently enable `knowledge-public-v1` and `infra-public-v2`**. PDS generic
+consumption/materialization remains disabled; its legacy workflow and PR #120 are
+unchanged. Private RuntimeBindings, Candidate provenance and production promotion
+are not cut over by this slice.
 
 ## Owners and trust boundaries
 
@@ -18,7 +19,7 @@ cut over by this slice. The old infra scheduled workflow and PR #120 are unchang
   and dereferences its Git tag to a commit. It never trusts `target_commitish`,
   reads producer main, checks out source, or regenerates an artifact. Prereleases
   are valid publications. Exactly the registered artifact and manifest must exist.
-  GitHub asset sizes/digests, when supplied, are checked too.
+  Assets must be fully uploaded. GitHub asset sizes and optional digests are checked too.
 - `github-release-transport.ts` supplies injectable GET-only transport. Responses
   are bounded (4 MiB metadata, 64 MiB artifact, 1 MiB manifest; 120 seconds/request).
   Tag dereference is capped at 8 objects; reconciliation at 20 pages of 100 Releases.
@@ -29,13 +30,15 @@ cut over by this slice. The old infra scheduled workflow and PR #120 are unchang
   silently fall back to an older Release. Ambiguous latest timestamps fail closed.
 - Downloads use an isolated temporary directory removed on success and failure.
   `update-lock.ts` is the single event/manual/reconciliation serialization path.
-  It can change only the enabled knowledge lock, with atomic single-file rename;
+  It can change only the selected enabled product lock, with atomic single-file rename;
   identity equality is a no-op (including annotations/formatting differences).
+  Foreign-owned locks at that path and identity drift under the same immutable tag
+  fail closed rather than being silently repinned.
 
 ## Knowledge prepare
 
 ```sh
-pnpm sync  # existing knowledge + existing infra paths, not generic prepare-all
+pnpm sync  # knowledge + infra prepare wrappers, sharing exact Release verification
 scripts/data-products/prepare-knowledge-public-v1.sh
 ```
 
@@ -61,13 +64,18 @@ the same Release reader. It does not perform downstream source/index generation.
 ## Workflows and activation
 
 - `sync-data-products.yml` alone listens to `data-product-published`. Manual recovery
-  requires `product` and exact `release_tag`. Other standard products are rejected
-  with a not-yet-enabled error.
-- `reconcile-data-products.yml` runs at `17 */6 * * *` and manually. It calls the
-  same reusable sync workflow, with the same concurrency group, lock generator,
-  fixed branch `automation/data-product-knowledge-public-v1`, and PR flow.
-- Producer reads use the existing short-lived `VAULT_APP_CLIENT_ID` /
-  `VAULT_APP_PRIVATE_KEY` App, restricted to Thought Forest Contents Read.
+  requires `product` and exact `release_tag`. PDS remains not-yet-enabled; unknown
+  products/producers and private bindings are rejected.
+- `reconcile-data-products.yml` runs at `17 */6 * * *` and manually. Its knowledge +
+  infra matrix calls the same reusable sync workflow. Each product shares the same
+  concurrency group across event/manual/reconcile, lock generator, fixed branch
+  `automation/data-product-<product>`, and PR flow. One product's failure does not
+  cancel the other's run.
+- A credential-free route step validates the request and emits registry-owned
+  repository, branch and lock path. Producer reads use the existing short-lived
+  `VAULT_APP_CLIENT_ID` / `VAULT_APP_PRIVATE_KEY` App with Contents Read on only the
+  selected producer. CI/Candidate read tokens need both Thought Forest and Personal
+  Infrastructure. The App installation must authorize these repositories before activation.
 - Consumer writes use `GITHUB_TOKEN`. Since its pushes may suppress PR-triggered
   Actions, the workflow explicitly dispatches the existing protected `check.yml`
   at the fixed branch, waits for successful exact-head CI, and rechecks live PR
@@ -77,12 +85,46 @@ the same Release reader. It does not perform downstream source/index generation.
   reader so it cannot downgrade the Protocol-v1 lock. Avoid dual legacy/standard
   dispatch during activation; they intentionally remain separate PR lanes.
 
+- `sync-infra-public-v2.yml` is now only a manual alias to shared reconciliation.
+  It has no schedule, old event listener, source checkout/exporter or second PR lane.
+  Until Personal Infrastructure PR #112 is merged/activated, shared reconciliation
+  recovers legacy/missed notifications from existing published semantic Releases.
+
 Before activation, this consumer must reach the default branch, the reviewed
-Thought Forest `feat/data-product-protocol-v1` producer must be activated, and its
-consumer dispatch credential must be valid. Verify a real standard dispatch and
+producer Protocol-v1 branches must be activated, and their consumer dispatch
+credentials must be valid. Verify a real standard dispatch and
 reconciliation run, lock-only PR, and protected exact-head CI in GitHub. Local
 shadow reads do not prove these hosted write/CI operations. Merge stays manual;
 auto-merge, provenance v5 and content production are later batches.
+
+## Infra prepare and scope boundary
+
+`prepare-infra-public-v2.sh` and the fetch-only compatibility wrapper now call
+`prepare-infra-public-v2.ts`: parse the Protocol-v1 lock, read and verify the exact
+Release through the common reader, stage its original bytes, then invoke the
+existing infra domain parser/JSON materializer. The consumer output remains
+`src/data/infrastructure/infra-public-v2.json` (ignored); `privateRef` identities
+are preserved, never resolved to private values. `sync:data-products:infra` uses
+this verified prepare path too, not a bare unverified JSON writer.
+
+Verification failures leave both the accepted runtime and output untouched.
+Output replacement is a same-filesystem atomic rename; ordinary install failures
+restore the previous runtime. A failed restore retains the backup for recovery.
+As with knowledge, this assumes one writer and is not a cross-file transaction
+across process death; retry from the committed lock converges.
+
+Check/Candidate public preparation no longer checks out Personal Infrastructure
+or installs/runs its exporter. Private binding source checkout, credentials,
+validation and secret mutation are unchanged, as is the Candidate v4 manifest.
+
+**Production remains outside this slice.** `deploy-production.yml` is unchanged,
+including its historical v4 public-source preparation call. Already published
+rollback Releases use their exact historical tooling. Promoting a future Release
+built from this slice requires a separately approved public revalidation cutover:
+that workflow still passes the removed `--producer-root` option and its read App
+scope has not been expanded for infra Releases. Do not treat local/CI acceptance
+here as production readiness. No compatibility exporter path is retained in the
+new prepare implementation.
 
 ## Live shadow evidence (2026-10-06)
 
@@ -111,6 +153,43 @@ pnpm exec tsx scripts/data-products/update-lock.ts shadow knowledge-public-v1 \
   knowledge-public-v1-d2e3b97a0326908eb47d0f8f05f28d771865581a
 pnpm exec tsx --test scripts/data-products/*.test.ts scripts/verification-contract.test.ts
 ```
+
+### Infra verified lock migration
+
+Producer reference: `BakerSean168/personal-infrastructure` PR #112, reviewed head
+`55248d163bab1985caa09aa97036955448650835` (observed open/unmerged). Re-downloaded
+current locked Release `402531799`, published `2026-10-03T13:46:42Z`:
+
+- Tag: `infra-public-v2-88f5e8dd1865e373cdfec3b0c3dcce1dbb7f4df7`
+- Dereferenced tag commit: `88f5e8dd1865e373cdfec3b0c3dcce1dbb7f4df7`
+- Artifact: 25,884 bytes,
+  `sha256:8dbad767d9dd76b2117865f10eb60c29b08087a491894ebc4ec0cfe60163602f`
+- Manifest: 649 bytes,
+  `sha256:7c2718a2b87a145e979fa72e116fb3885efac6aa9b673f8fedfc3b8c4cb0ac51`
+- Recomputed semantic digest (TypeScript, independently confirmed by Python):
+  `sha256:664fb1f8411a5b845cb558a8080bd6ba109171464c9367d090e9826a7ef785f3`
+
+The existing source/tag/raw digests are unchanged. Migration replaces
+`schemaVersion` with `protocolVersion` and adds the verified semantic digest.
+The legacy prerelease reports GitHub `immutable: false`: this consumer implements
+Protocol-v1 exact-tag/content-pinning immutability, not a requirement for GitHub's
+new server-side Release immutability flag, which existing publications do not use.
+
+Observed producer main: `ea906f56772eb380d1ec806fdc2bb3bc189b2a7f`, newer than the
+latest semantic Release; no corresponding product Release exists. Live shared
+reconciliation returned the committed lock with `changed=false`. The historical
+regression fixture models those revisions and a missing main Release, forbids
+main lookups, and exercises the same event/manual/reconcile entrypoint. Main was
+observed for evidence only and is never an input to reconciliation.
+
+```sh
+pnpm exec tsx scripts/data-products/update-lock.ts shadow infra-public-v2 \
+  infra-public-v2-88f5e8dd1865e373cdfec3b0c3dcce1dbb7f4df7
+pnpm exec tsx scripts/data-products/update-lock.ts reconcile infra-public-v2
+```
+
+Hosted dispatch, fixed-branch/PR refresh and exact-head protected CI still require
+post-merge activation evidence. No remote writes were performed for this slice.
 
 ## Protocol authority and numeric limits
 

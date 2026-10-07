@@ -65,11 +65,11 @@ test('the required check workflow runs for every pull request to main', () => {
 test('main integration builds from immutable knowledge and infrastructure projections', () => {
   assert.match(ciWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
   assert.match(ciWorkflow, /prepare-knowledge-public-v1\.sh/);
-  assert.match(ciWorkflow, /Build and materialize pinned infra-public-v2/);
-  assert.match(ciWorkflow, /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/);
-  assert.match(
+  assert.match(ciWorkflow, /Fetch and materialize pinned infra-public-v2/);
+  assert.match(ciWorkflow, /prepare-infra-public-v2\.sh/);
+  assert.doesNotMatch(
     ciWorkflow,
-    /prepare-infra-public-v2\.sh --producer-root \.pds-runtime\/personal-infrastructure-public/,
+    /producer-root|personal-infrastructure-public|PDS_INFRA_PUBLIC_DEPLOY_KEY/,
   );
   assert.doesNotMatch(ciWorkflow, /submodules: recursive/);
 
@@ -78,10 +78,9 @@ test('main integration builds from immutable knowledge and infrastructure projec
   assert.match(candidateWorkflow, /Build immutable Pages candidate/);
   assert.match(candidateWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
   assert.match(candidateWorkflow, /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/);
-  assert.match(
-    candidateWorkflow,
-    /prepare-infra-public-v2\.sh --producer-root \.pds-runtime\/personal-infrastructure-public/,
-  );
+  assert.match(candidateWorkflow, /Fetch and materialize pinned infra-public-v2/);
+  assert.match(candidateWorkflow, /prepare-infra-public-v2\.sh/);
+  assert.doesNotMatch(candidateWorkflow, /producer-root|personal-infrastructure-public/);
   assert.match(candidateWorkflow, /knowledgeArtifactSha256/);
   assert.match(candidateWorkflow, /infra-public-v2\.lock\.json/);
   assert.match(candidateWorkflow, /publicInfrastructure:/);
@@ -128,23 +127,27 @@ test('knowledge producer publication updates only its immutable consumer lock th
   assert.match(knowledgeSyncWorkflow, /gh run watch "\$run_id"/);
 });
 
-test('infrastructure sync pins only immutable Personal Infrastructure projection identity', () => {
-  assert.match(infrastructureSyncWorkflow, /infra-public-v2-published/);
-  assert.match(infrastructureSyncWorkflow, /automation\/infra-public-v2-sync/);
-  assert.match(infrastructureSyncWorkflow, /BakerSean168\/personal-infrastructure/);
-  assert.match(infrastructureSyncWorkflow, /infra-public-v2\.json/);
-  assert.match(infrastructureSyncWorkflow, /infra-public-v2\.manifest\.json/);
+test('infrastructure legacy sync is a manual alias to the single generic lock-only path', () => {
   assert.match(
     infrastructureSyncWorkflow,
-    /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/,
+    /uses: \.\/\.github\/workflows\/sync-data-products\.yml/,
   );
-  assert.match(infrastructureSyncWorkflow, /python3 scripts\/export_infra_public_v2\.py/);
-  assert.match(infrastructureSyncWorkflow, /refs\/tags\/\$release_tag/);
-  assert.doesNotMatch(infrastructureSyncWorkflow, /create-github-app-token/);
-  assert.doesNotMatch(infrastructureSyncWorkflow, /gh release download/);
-  assert.match(infrastructureSyncWorkflow, /git add data-products\/infra-public-v2\.lock\.json/);
-  assert.match(infrastructureSyncWorkflow, /gh pr create/);
-  assert.doesNotMatch(infrastructureSyncWorkflow, /inventory\/public-infrastructure\.yaml/);
+  assert.match(infrastructureSyncWorkflow, /product: infra-public-v2/);
+  assert.match(infrastructureSyncWorkflow, /reconcile: true/);
+  assert.doesNotMatch(
+    infrastructureSyncWorkflow,
+    /schedule:|repository_dispatch:|checkout|export_infra|source_sha|git push/,
+  );
+  const prepare = fixture('scripts/data-products/prepare-infra-public-v2.sh');
+  const fetch = fixture('scripts/data-products/fetch-infra-public-v2.sh');
+  for (const raw of [prepare, fetch]) {
+    assert.match(raw, /prepare-infra-public-v2\.ts/);
+    assert.doesNotMatch(raw, /producer-root|export_infra|python|git -C|gh release download/);
+  }
+  assert.equal(
+    packageJson.scripts['sync:data-products:infra'],
+    'bash scripts/data-products/prepare-infra-public-v2.sh',
+  );
 });
 
 test('PDS catalog sync imports only the producer-owned thin projection through a protected PR', () => {

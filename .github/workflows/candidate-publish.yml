@@ -64,7 +64,7 @@ jobs:
     outputs:
       candidate_digest: ${{ steps.identity.outputs.candidate_digest }}
     steps:
-      - name: Create short-lived knowledge product token
+      - name: Create short-lived public product read token
         id: vault-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -74,6 +74,7 @@ jobs:
           repositories: |
             digital-biome
             thought-forest
+            personal-infrastructure
           permission-contents: read
 
       - name: Checkout exact application revision
@@ -82,25 +83,6 @@ jobs:
           token: ${{ steps.vault-token.outputs.token }}
           ref: ${{ needs.resolve.outputs.revision }}
           fetch-depth: 0
-          persist-credentials: false
-
-      - id: public-infra-lock
-        name: Resolve pinned public infrastructure revision
-        shell: bash
-        run: |
-          set -euo pipefail
-          revision="$(jq -r .sourceRevision data-products/infra-public-v2.lock.json)"
-          [[ "$revision" =~ ^[0-9a-f]{40}$ ]]
-          echo "revision=$revision" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout pinned Personal Infrastructure projection source
-        uses: actions/checkout@v6
-        with:
-          repository: BakerSean168/personal-infrastructure
-          ssh-key: ${{ secrets.PDS_INFRA_PUBLIC_DEPLOY_KEY }}
-          ref: ${{ steps.public-infra-lock.outputs.revision }}
-          path: .pds-runtime/personal-infrastructure-public
-          fetch-depth: 1
           persist-credentials: false
 
       - name: Setup pnpm
@@ -115,16 +97,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install public infrastructure projection tooling
-        run: python3 -m pip install --disable-pip-version-check -r .pds-runtime/personal-infrastructure-public/requirements-deployment-registry.txt
-
       - name: Fetch and materialize pinned knowledge-public-v1
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
         run: scripts/data-products/prepare-knowledge-public-v1.sh
 
-      - name: Build and materialize pinned infra-public-v2
-        run: scripts/data-products/prepare-infra-public-v2.sh --producer-root .pds-runtime/personal-infrastructure-public
+      - name: Fetch and materialize pinned infra-public-v2
+        env:
+          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
+        run: scripts/data-products/prepare-infra-public-v2.sh
 
       - name: Build exact-SHA public artifact
         run: |

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       product:
-        description: Exact product ID (only knowledge-public-v1 is enabled)
+        description: Exact product ID (knowledge-public-v1 or infra-public-v2)
         required: true
         type: string
       release_tag:
@@ -15,6 +15,9 @@ on:
         type: string
   workflow_call:
     inputs:
+      product:
+        type: string
+        required: true
       reconcile:
         type: boolean
         default: false
@@ -29,11 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     concurrency:
-      group: data-product-knowledge-public-v1
+      # Used only for serialization; the route step validates before token creation or writes.
+      group: data-product-${{ inputs.product || github.event.client_payload.product }}
       cancel-in-progress: false
-    env:
-      SYNC_BRANCH: automation/data-product-knowledge-public-v1
-      LOCK_PATH: data-products/knowledge-public-v1.lock.json
     steps:
       - name: Checkout consumer main only
         uses: actions/checkout@v6
@@ -49,21 +50,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
 
-      - name: Create short-lived Thought Forest read token
-        id: producer-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        with:
-          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
-          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: thought-forest
-          permission-contents: read
-
-      - name: Verify publication and update only the enabled lock
-        id: lock
+      - name: Validate request and resolve registry-owned routing
+        id: route
         env:
-          GH_TOKEN: ${{ steps.producer-token.outputs.token }}
           RECONCILE: ${{ inputs.reconcile || false }}
+          RECONCILE_PRODUCT: ${{ inputs.product }}
         run: |
           set -euo pipefail
           if [ "$RECONCILE" = true ]; then
@@ -77,7 +68,25 @@ jobs:
             exit 1
           fi
           # Payload fields are read and validated as unknown JSON by Protocol-v1 code.
-          pnpm exec tsx scripts/data-products/update-lock.ts "$mode"
+          pnpm exec tsx scripts/data-products/update-lock.ts route "$mode" "$RECONCILE_PRODUCT"
+
+      - name: Create short-lived selected producer read token
+        id: producer-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.VAULT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VAULT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ steps.route.outputs.producer_repository }}
+          permission-contents: read
+
+      - name: Verify publication and update only the enabled lock
+        id: lock
+        env:
+          GH_TOKEN: ${{ steps.producer-token.outputs.token }}
+          MODE: ${{ steps.route.outputs.mode }}
+          PRODUCT: ${{ steps.route.outputs.product }}
+        run: pnpm exec tsx scripts/data-products/update-lock.ts "$MODE" "$PRODUCT"
 
       - name: Create or refresh the fixed lock-only branch and PR
         if: steps.lock.outputs.changed == 'true'
@@ -86,9 +95,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SOURCE_REVISION: ${{ steps.lock.outputs.source_revision }}
           RELEASE_TAG: ${{ steps.lock.outputs.release_tag }}
+          PRODUCT: ${{ steps.route.outputs.product }}
+          SYNC_BRANCH: ${{ steps.route.outputs.branch }}
+          LOCK_PATH: ${{ steps.route.outputs.lock_path }}
         run: |
           set -euo pipefail
-          next="$RUNNER_TEMP/knowledge-next.lock.json"
+          next="$RUNNER_TEMP/data-product-next.lock.json"
           cp "$LOCK_PATH" "$next"
           git restore -- "$LOCK_PATH"
           git config user.name 'github-actions[bot]'
@@ -96,8 +108,8 @@ jobs:
           previous="$(git rev-parse --verify "refs/remotes/origin/$SYNC_BRANCH" 2>/dev/null || true)"
           reuse=false
           if [ -n "$previous" ] && [ "$(git diff --name-only origin/main "$previous")" = "$LOCK_PATH" ]; then
-            git show "$previous:$LOCK_PATH" > "$RUNNER_TEMP/knowledge-pending.lock.json"
-            if cmp -s "$next" "$RUNNER_TEMP/knowledge-pending.lock.json"; then reuse=true; fi
+            git show "$previous:$LOCK_PATH" > "$RUNNER_TEMP/data-product-pending.lock.json"
+            if cmp -s "$next" "$RUNNER_TEMP/data-product-pending.lock.json"; then reuse=true; fi
           fi
           if [ "$reuse" = true ]; then
             git checkout --detach "$previous"
@@ -105,7 +117,7 @@ jobs:
             git switch -C "$SYNC_BRANCH" origin/main
             cp "$next" "$LOCK_PATH"
             git add -- "$LOCK_PATH"
-            git commit -m "chore(data): pin knowledge-public-v1 to ${SOURCE_REVISION:0:12}"
+            git commit -m "chore(data): pin $PRODUCT to ${SOURCE_REVISION:0:12}"
           fi
           test "$(git diff --name-only origin/main HEAD)" = "$LOCK_PATH"
           test -z "$(git status --porcelain)"
@@ -114,8 +126,8 @@ jobs:
           if [ "$reuse" != true ]; then
             git push --force-with-lease="refs/heads/$SYNC_BRANCH:$previous" origin "HEAD:refs/heads/$SYNC_BRANCH"
           fi
-          title="chore(data): update knowledge-public-v1 to ${SOURCE_REVISION:0:12}"
-          body="Verified immutable Thought Forest Release: $RELEASE_TAG. Protocol-v1 transport, manifest, tag commit and semantic digests passed. This PR changes only the knowledge lock. Manual review/merge required; no auto-merge."
+          title="chore(data): update $PRODUCT to ${SOURCE_REVISION:0:12}"
+          body="Verified immutable $PRODUCT Release: $RELEASE_TAG. Protocol-v1 transport, manifest, tag commit and semantic digests passed. This PR changes only $LOCK_PATH. Private RuntimeBinding is unchanged. Manual review/merge required; no auto-merge."
           pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [ -z "$pr" ]; then
             gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$SYNC_BRANCH" --title "$title" --body "$body"
@@ -133,6 +145,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
+          SYNC_BRANCH: ${{ steps.route.outputs.branch }}
         run: |
           set -euo pipefail
           # GITHUB_TOKEN pushes/PRs do not reliably emit pull_request runs. Explicitly
@@ -154,4 +167,4 @@ jobs:
 
       - name: Report verified no-op
         if: steps.lock.outputs.changed != 'true'
-        run: echo 'Verified knowledge publication already matches the committed lock; no PR mutation.' >> "$GITHUB_STEP_SUMMARY"
+        run: echo 'Verified publication already matches the committed product lock; no PR mutation.' >> "$GITHUB_STEP_SUMMARY"
