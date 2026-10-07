@@ -2,19 +2,30 @@
 import { PRIMARY_NAVIGATION, activeNavigation, pageMode } from '../../config/navigation-policy';
 import { BUILD_INFO } from '../../utils/build-info';
 import SiteSearch from './SiteSearch.astro';
-import { Search, Lock, LogOut, Network } from '@lucide/astro';
+import { Search, Lock, LogOut } from '@lucide/astro';
 const currentPath = Astro.url.pathname;
 const loginNext = currentPath !== '/login' ? currentPath : '/';
 const links = PRIMARY_NAVIGATION;
 const current = activeNavigation(currentPath);
 const mode = pageMode(currentPath);
+const hasBrowser = ['/', '/notes', '/blog', '/dev', '/tools'].includes(
+  currentPath.replace(/\/$/, '') || '/',
+);
 ---
 
-<header class="gui-header" data-ui-only="gui">
-  <a href="/" class="font-semibold">
+<header class="gui-header flex-wrap gap-x-4" data-ui-only="gui">
+  <a href="/" class="flex min-h-11 shrink-0 items-center gap-2 font-semibold">
+    <img src="/favicon.svg" width="20" height="20" alt="" class="shrink-0" />
     Digital Biome
   </a>
-  <div class="flex items-center gap-8 text-sm text-muted-foreground">
+  <div class="flex items-center gap-3 text-sm text-muted-foreground sm:gap-8">
+    <button
+      data-terminal-help
+      aria-label="键盘帮助"
+      class="min-h-11 whitespace-nowrap hover:text-primary"
+    >
+      快捷键
+    </button>
     <button
       class="search-trigger min-h-11 hover:text-primary"
       data-header-control="search"
@@ -46,6 +57,14 @@ const mode = pageMode(currentPath);
   data-terminal-dock
 >
   <div
+    data-command-feedback
+    hidden
+    class="absolute inset-x-0 bottom-full border-t border-primary bg-background px-5 py-3 text-foreground"
+  >
+    <p data-command-message role="status" aria-live="polite" aria-atomic="true"></p>
+    <div data-command-choices class="flex flex-wrap gap-x-5 gap-y-1"></div>
+  </div>
+  <div
     data-dock-status
     class="flex h-7 items-center justify-between gap-3 overflow-hidden border-b border-border text-muted-foreground"
   >
@@ -53,7 +72,7 @@ const mode = pageMode(currentPath);
       -- {mode} --
     </span>
     <span data-dock-hints class="hidden xl:block">
-      j k 移动　 ↵ 打开　 / 搜索　 i 文本　 f 筛选　 1–4 标签　 g 跳转　 r 关联　 u 返回
+      {hasBrowser && <span>j k 移动　 ↵ 打开　</span>}/ 搜索　 g 跳转　 u 返回
     </span>
     <span
       class="hidden min-w-0 truncate text-[10px] sm:inline"
@@ -95,7 +114,7 @@ const mode = pageMode(currentPath);
       data-ui-only="tui"
       class="terminal-segment z-20 flex items-center gap-2 bg-card px-3 font-semibold"
     >
-      <Network size={13} /> DigitalBiome
+      <img src="/favicon.svg" width="16" height="16" alt="" /> DigitalBiome
     </a>
     <span
       data-ui-only="tui"
@@ -164,13 +183,13 @@ const mode = pageMode(currentPath);
 </footer>
 <dialog
   id="terminal-help"
-  class="m-auto max-w-[92vw] border border-border bg-background p-6 text-sm text-foreground backdrop:bg-black/70"
+  class="m-auto max-h-[85dvh] max-w-[92vw] overflow-auto border border-border bg-background p-6 text-sm text-foreground backdrop:bg-black/70"
 >
-  <form method="dialog" class="flex justify-between gap-12">
+  <form method="dialog" class="flex justify-between gap-4 sm:gap-12">
     <h2 class="text-primary">键盘导航</h2>
     <button aria-label="关闭帮助">[关闭]</button>
   </form>
-  <dl class="mt-5 grid grid-cols-[auto_1fr] gap-x-8 gap-y-2">
+  <dl class="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 sm:gap-x-8">
     <dt>j / k / ↑ / ↓</dt>
     <dd>选择对象</dd>
     <dt>Enter / o</dt>
@@ -186,8 +205,20 @@ const mode = pageMode(currentPath);
     <dt>u</dt>
     <dd>返回上一页</dd>
     <dt>Esc</dt>
-    <dd>关闭浮层 / 清空筛选</dd>
+    <dd>关闭浮层 / 取消命令；输入框内清空文本</dd>
   </dl>
+  <div class="mt-5 flex flex-wrap items-center gap-4 border-t border-border pt-4">
+    <label class="flex min-h-11 items-center gap-2">
+      <input type="checkbox" data-shortcuts-enabled checked /> 启用单字符快捷键
+    </label>
+    <label class="flex min-h-11 items-center gap-2">
+      命令等待
+      <select data-command-timeout class="border border-border bg-background px-2 py-1">
+        <option value="2000">2 秒</option>
+        <option value="5000">5 秒</option>
+      </select>
+    </label>
+  </div>
 </dialog>
 <SiteSearch />
 <script>

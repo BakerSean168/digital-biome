@@ -2,6 +2,7 @@ import catalogData from '../data/system/pds-catalog-v1.json';
 import { parsePdsCatalogV1, type PdsCatalogDomain } from '../domain/system/pds-catalog-v1';
 import { publicSystemDomains } from '../config/personal-systems-access';
 import { getInfrastructureResources, type InfrastructureResource } from './infrastructure';
+import { compareResourcePriority, compareResourceTitle } from '../domain/resource-order';
 
 const catalog = parsePdsCatalogV1(JSON.stringify(catalogData));
 
@@ -70,14 +71,15 @@ function actionLabel(kind: string | undefined): string {
   return 'Open';
 }
 
-export function getPortalServices(): PortalService[] {
-  const resources = getInfrastructureResources();
+export function getPortalServices(resources = getInfrastructureResources()): PortalService[] {
   const resourceMap = new Map(resources.map((resource) => [resource.id, resource]));
+  // Only entirely legacy projections use portal-pinned during the expand/migrate window.
+  const explicitHomepage = resources.some((resource) => resource.homepage !== undefined);
 
   return resources
     .filter((resource) => resource.kind === 'service' && resource.status === 'active')
     .flatMap((resource) => {
-      const category = serviceCategory(resource);
+      const category = serviceCategory(resource) ?? (resource.homepage ? 'apps' : undefined);
       if (!category) return [];
       const link = primaryLink(resource);
       const access: PortalService['access'] = link?.url
@@ -94,16 +96,26 @@ export function getPortalServices(): PortalService[] {
           url: link?.url,
           privateRef: link?.privateRef,
           actionLabel: actionLabel(link?.kind),
-          pinned: resource.groups.includes('portal-pinned'),
+          pinned: explicitHomepage
+            ? resource.homepage?.enabled === true && resource.homepage.featured === true
+            : resource.groups.includes('portal-pinned'),
         } satisfies PortalService,
       ];
     })
-    .sort((a, b) => a.resource.title.localeCompare(b.resource.title));
+    .sort((a, b) => compareResourcePriority(a.resource, b.resource));
 }
 
-export function getPinnedPortalServices(): PortalService[] {
-  return getPortalServices()
+export function getPinnedPortalServices(resources = getInfrastructureResources()): PortalService[] {
+  return getPortalServices(resources)
     .filter((service) => service.pinned)
+    .sort((a, b) => {
+      const first = a.resource.homepage?.order ?? Infinity;
+      const second = b.resource.homepage?.order ?? Infinity;
+      return (
+        (first === second ? 0 : first < second ? -1 : 1) ||
+        compareResourceTitle(a.resource, b.resource)
+      );
+    })
     .slice(0, 8);
 }
 

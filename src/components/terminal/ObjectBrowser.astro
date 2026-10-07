@@ -8,6 +8,8 @@ interface Props {
   filter?: boolean;
   queryParam?: string;
   contextPath?: string;
+  autoFill?: boolean;
+  defaultSortLabel?: string;
 }
 const {
   items,
@@ -17,6 +19,8 @@ const {
   filter = true,
   queryParam,
   contextPath = Astro.url.pathname,
+  autoFill = false,
+  defaultSortLabel = '默认顺序',
 } = Astro.props;
 const first = items[0];
 ---
@@ -27,11 +31,15 @@ const first = items[0];
   data-query-param={queryParam}
   data-catalog={catalog}
   data-total={total}
+  data-auto-fill={autoFill || undefined}
   aria-label={label}
 >
   {filter && (
     <>
-      <div data-filter-bar class="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
+      <div
+        data-filter-bar
+        class="mb-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground"
+      >
         <label class="flex min-w-0 items-center gap-2">
           <kbd data-ui-only="tui">i</kbd>
           <input
@@ -41,6 +49,17 @@ const first = items[0];
             aria-label="文本筛选"
             class="min-w-0 w-40 border-b border-border bg-transparent py-1 text-foreground focus:border-primary sm:w-52"
           />
+        </label>
+        <label class="flex min-w-0 items-center gap-2">
+          <span class="sr-only">排序</span>
+          <select
+            data-object-sort
+            aria-label="排序"
+            class="min-h-8 border border-border bg-background px-2 text-foreground"
+          >
+            <option value="default">{defaultSortLabel}</option>
+            <option value="title">名称排序</option>
+          </select>
         </label>
         <button
           data-facet-trigger
@@ -62,8 +81,14 @@ const first = items[0];
       ></div>
     </>
   )}
+  <p
+    data-object-status
+    role="status"
+    aria-live="polite"
+    class="mb-2 text-xs text-muted-foreground empty:hidden"
+  ></p>
   <div data-browser-columns class="grid gap-7 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-    <div class="min-w-0">
+    <div data-object-scroll class="min-w-0">
       <div
         data-object-list
         class="max-h-[45dvh] overflow-y-auto border-t border-border md:max-h-none md:overflow-visible"

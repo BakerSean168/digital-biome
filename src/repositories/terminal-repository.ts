@@ -6,6 +6,8 @@ import { getPortalServices } from '../utils/personal-systems';
 import { buildKnowledgeNoteHref } from '../domain/note-routing';
 import { sortNoteCatalog, toNoteCatalogItem } from '../view-models/note-list-item';
 import { isSafeTerminalHref, type TerminalObject } from '../view-models/terminal-object';
+import { compareResourcePriority } from '../domain/resource-order';
+import { publicResourceGroups, registeredStatus } from '../view-models/infrastructure-labels';
 
 export function terminalBlogs(): TerminalObject[] {
   return getBlogPosts().map((post) => ({
@@ -77,6 +79,7 @@ export function terminalProjects(): TerminalObject[] {
 export function terminalExternal(): TerminalObject[] {
   return getBookmarks()
     .filter((bookmark) => /^https?:\/\//i.test(bookmark.url) && isSafeTerminalHref(bookmark.url))
+    .sort((a, b) => compareResourcePriority({ ...a, id: a.slug }, { ...b, id: b.slug }))
     .map((bookmark) => ({
       id: bookmark.slug,
       title: bookmark.title,
@@ -93,7 +96,7 @@ export function terminalInfrastructure(): TerminalObject[] {
   const resources = getInfrastructureResources();
   const portals = new Map(getPortalServices().map((service) => [service.resource.id, service]));
   const connections = getInfrastructureConnections();
-  return resources.map((resource) => {
+  return [...resources].sort(compareResourcePriority).map((resource) => {
     const portal = portals.get(resource.id);
     const primary = portal
       ? { url: portal.url, privateRef: portal.privateRef }
@@ -115,8 +118,8 @@ export function terminalInfrastructure(): TerminalObject[] {
       title: resource.title,
       kind: resource.kind,
       description: resource.description,
-      tags: resource.groups,
-      meta: resource.status,
+      tags: publicResourceGroups(resource.groups),
+      meta: registeredStatus(resource.status),
       facets: {
         主机: resource.hostResourceId
           ? resources

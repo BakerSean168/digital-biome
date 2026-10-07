@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { ASSET_NOTE_PREFIX, NOTE_ID_PREFIX } from '../../src/domain/foundation/constants';
 import { toNoteId } from '../../src/domain/foundation/note-id';
 import { inferVisibility } from '../../src/domain/foundation/visibility';
+import { parseUsagePriority } from '../../src/domain/resource-order';
 import { parseWikilinks } from '../../src/domain/foundation/wikilink-parser';
 import {
   frontmatterBoolean,
@@ -42,6 +43,7 @@ const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 // projects fields that Digital Biome needs for route/publication/index work.
 
 interface RawFrontmatter {
+  usagePriority?: number;
   title?: string;
   description?: string;
   tags: string[];
@@ -65,6 +67,7 @@ interface RawFrontmatter {
 
 function projectLocalFrontmatter(data: FrontmatterRecord): RawFrontmatter {
   return {
+    usagePriority: parseUsagePriority(data.usage_priority),
     title: frontmatterString(data.title),
     description: frontmatterString(data.description),
     tags: frontmatterStringArray(data.tags),
@@ -184,9 +187,9 @@ function normalizeDate(value?: string): string | undefined {
   return d.toISOString();
 }
 
-export function buildIndexes(notesRoot?: string): void {
+export function buildIndexes(notesRoot?: string, outputRoot?: string): void {
   const root = notesRoot ?? path.join(PROJECT_ROOT, 'src', 'data', 'obsidian');
-  const outDir = path.join(PROJECT_ROOT, 'src', 'data', 'indexes');
+  const outDir = outputRoot ?? path.join(PROJECT_ROOT, 'src', 'data', 'indexes');
 
   if (!fs.existsSync(root)) {
     console.log(`  [build-indexes] Notes root not found: ${root} — skipping`);
@@ -226,6 +229,7 @@ export function buildIndexes(notesRoot?: string): void {
 
   // ── notes-index.json ──
   const notesIndexEntries = notes.map((n) => ({
+    usagePriority: n.fm.usagePriority,
     id: n.id,
     title: n.fm.title ?? '',
     description: n.fm.description,

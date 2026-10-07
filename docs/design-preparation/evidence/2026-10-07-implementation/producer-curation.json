@@ -1,0 +1,42 @@
+{
+  "mode": "local-uncommitted-producer-exports; not an immutable release or deployment",
+  "featured": [
+    {
+      "id": "svc-nezha-panel",
+      "label": "哪吒面板",
+      "order": 10,
+      "access": "public"
+    },
+    {
+      "id": "svc-memoflow-dailyuse",
+      "label": "MemoFlow",
+      "order": 20,
+      "access": "public"
+    },
+    {
+      "id": "svc-homepage-dashboard",
+      "label": "Homepage",
+      "order": 30,
+      "access": "owner"
+    },
+    {
+      "id": "svc-litellm-model-gateway",
+      "label": "LiteLLM",
+      "order": 40,
+      "access": "owner"
+    },
+    {
+      "id": "svc-hermes-agent",
+      "label": "Hermes",
+      "order": 50,
+      "access": "owner"
+    }
+  ],
+  "priorityIds": [
+    "obsidian/bilibili",
+    "obsidian/linux-do",
+    "obsidian/youtube"
+  ],
+  "personalTwinStillPresent": true,
+  "consumerLocksChanged": false
+}

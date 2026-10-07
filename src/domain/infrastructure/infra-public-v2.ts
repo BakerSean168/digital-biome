@@ -1,3 +1,6 @@
+import type { HomepageConfig } from '../../types/notes';
+import { parseUsagePriority } from '../resource-order';
+
 export type InfrastructureResourceKind = 'host' | 'network' | 'service' | 'platform';
 export type InfrastructureResourceStatus =
   'active' | 'planned' | 'retired' | 'archived' | 'decommissioning';
@@ -18,6 +21,8 @@ export interface InfrastructureResource {
   descriptionEn?: string;
   status: InfrastructureResourceStatus;
   groups: string[];
+  usagePriority?: number | null;
+  homepage?: Pick<HomepageConfig, 'enabled' | 'featured' | 'order' | 'label' | 'description'>;
   hostRef?: string;
   parentResourceId?: string;
   hostResourceId?: string;
@@ -185,6 +190,24 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
       throw new Error(`${resource.id}.status is invalid`);
     }
     assertStringArray(resource.groups, `${resource.id}.groups`);
+    parseUsagePriority(resource.usagePriority);
+    if (resource.homepage !== undefined) {
+      assertRecord(resource.homepage, `${resource.id}.homepage`);
+      for (const [key, field] of Object.entries(resource.homepage)) {
+        if (key === 'enabled' || key === 'featured') {
+          if (typeof field !== 'boolean')
+            throw new Error(`${resource.id}.homepage.${key} must be boolean`);
+        } else if (key === 'order') {
+          if (typeof field !== 'number' || !Number.isInteger(field) || field < 0) {
+            throw new Error(`${resource.id}.homepage.order must be a nonnegative integer`);
+          }
+        } else if (key === 'label' || key === 'description') {
+          assertString(field, `${resource.id}.homepage.${key}`);
+        } else {
+          throw new Error(`${resource.id}.homepage.${key} is unsupported`);
+        }
+      }
+    }
     if (resource.status === 'active') activeResources += 1;
 
     if (resource.privateValues !== undefined) {

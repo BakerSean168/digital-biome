@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseUsagePriority } from '../../src/domain/resource-order';
 
 export const KNOWLEDGE_PUBLIC_V1_REPOSITORY = 'https://github.com/BakerSean168/thought-forest.git';
 
@@ -12,6 +13,7 @@ export type KnowledgePublicNote = {
   title: string;
   aliases: string[];
   description?: string;
+  usagePriority?: number | null;
   url?: string;
   icon?: string;
   category?: string;
@@ -98,6 +100,7 @@ function assertProjectionShape(projection: KnowledgePublicV1): void {
     assertSafeRelativePath(note.sourcePath, `${note.id}.sourcePath`);
     assertStringArray(note.aliases, `${note.id}.aliases`);
     assertStringArray(note.tags, `${note.id}.tags`);
+    parseUsagePriority(note.usagePriority);
     for (const field of ['url', 'icon', 'category'] as const) {
       if (note[field] !== undefined && typeof note[field] !== 'string') {
         throw new Error(`knowledge-public-v1 note ${note.id}.${field} must be a string`);

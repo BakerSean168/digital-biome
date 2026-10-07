@@ -11,7 +11,20 @@ export interface AssetLink {
   label: string;
   url?: string;
   private_ref?: string;
-  kind?: 'app' | 'admin' | 'repo' | 'repository' | 'showcase' | 'docs' | 'monitor' | 'panel' | 'ssh' | 'web' | 'service' | 'vm' | 'other';
+  kind?:
+    | 'app'
+    | 'admin'
+    | 'repo'
+    | 'repository'
+    | 'showcase'
+    | 'docs'
+    | 'monitor'
+    | 'panel'
+    | 'ssh'
+    | 'web'
+    | 'service'
+    | 'vm'
+    | 'other';
   description?: string;
   visibility?: Visibility;
 }
@@ -67,6 +80,7 @@ export interface Note {
 }
 
 export interface Bookmark {
+  usagePriority?: number;
   title: string;
   url: string;
   description?: string;
@@ -123,9 +137,7 @@ export type { AssetNoteData } from './asset';
  * An asset must have both `asset_id` and `asset_type` present,
  * OR live under the obsidian/assets/ path prefix.
  */
-export function isAssetNoteData(
-  data: NoteCollectionEntry['data']
-): data is AssetNoteEntry['data'] {
+export function isAssetNoteData(data: NoteCollectionEntry['data']): data is AssetNoteEntry['data'] {
   return Boolean(data.asset_id && data.asset_type);
 }
 
@@ -133,8 +145,6 @@ export function isAssetNoteData(
  * Check whether a collection entry is a knowledge note (not an asset).
  * A knowledge note is any note that is NOT an asset.
  */
-export function isKnowledgeNoteData(
-  data: NoteCollectionEntry['data']
-): boolean {
+export function isKnowledgeNoteData(data: NoteCollectionEntry['data']): boolean {
   return !isAssetNoteData(data);
 }

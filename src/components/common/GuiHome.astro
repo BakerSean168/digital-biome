@@ -1,4 +1,5 @@
 ---
+import FeaturedSystems from './FeaturedSystems.astro';
 import type { TerminalObject } from '../../view-models/terminal-object';
 import type { getPinnedPortalServices } from '../../utils/personal-systems';
 interface Props {
@@ -73,21 +74,5 @@ const entries = [
       </div>
     </section>
   </div>
-  <nav
-    aria-label="常用服务"
-    class="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm md:mt-20 md:text-base"
-  >
-    <span class="text-muted-foreground">常用服务</span>
-    {pinned.map((service) => (
-      <a
-        href={service.url ?? '/login?next=%2F'}
-        data-private-link={service.privateRef}
-        target={service.url ? '_blank' : undefined}
-        rel="noopener noreferrer"
-        class="text-primary hover:underline"
-      >
-        {service.resource.title}
-      </a>
-    ))}
-  </nav>
+  <FeaturedSystems services={pinned} class="mt-10 md:mt-20" />
 </section>

@@ -42,16 +42,11 @@ test('Personal Systems launcher is producer-owned and includes important service
   assert.equal(byId.has('svc-sing-box-japan'), false);
 });
 
-test('Pinned launcher stays small while preserving high-frequency tools', () => {
+test('Pinned launcher stays small while preserving representative services', () => {
   const pinned = getPinnedPortalServices();
   assert.ok(pinned.length <= 8);
   const ids = new Set(pinned.map((item) => item.resource.id));
-  for (const id of [
-    'svc-personal-twin-editor',
-    'svc-litellm-model-gateway',
-    'svc-hermes-agent',
-    'svc-nezha-panel',
-  ]) {
+  for (const id of ['svc-litellm-model-gateway', 'svc-hermes-agent', 'svc-nezha-panel']) {
     assert.ok(ids.has(id), `${id} should remain pinned`);
   }
 });
@@ -73,4 +68,42 @@ test('Personal Systems facts count launcher services, not every infrastructure r
   assert.equal(facts.cloudHostCount, 4);
   assert.equal(facts.serviceCount, getPortalServices().length);
   assert.ok(facts.domainCount > 0);
+});
+
+import type { InfrastructureResource } from './infrastructure';
+
+const resource = (
+  id: string,
+  extra: Partial<InfrastructureResource> = {},
+): InfrastructureResource => ({
+  id,
+  title: id,
+  kind: 'service',
+  status: 'active',
+  description: '',
+  groups: ['portal-apps', 'portal-pinned'],
+  ...extra,
+});
+
+test('homepage selection is explicit, ordered and independent of usage priority', () => {
+  const resources = [
+    resource('svc-later', {
+      homepage: { enabled: true, featured: true, order: 20 },
+      usagePriority: 1,
+    }),
+    resource('svc-first', { homepage: { enabled: true, featured: true, order: 0 } }),
+    resource('svc-excluded', { homepage: { enabled: false, featured: true }, usagePriority: 1 }),
+    resource('svc-legacy'),
+    resource('svc-retired', { status: 'retired', homepage: { enabled: true, featured: true } }),
+    resource('host-other', { kind: 'host', homepage: { enabled: true, featured: true } }),
+  ];
+  assert.deepEqual(
+    getPinnedPortalServices(resources).map((item) => item.resource.id),
+    ['svc-first', 'svc-later'],
+  );
+  assert.ok(getPortalServices(resources).some((item) => item.resource.id === 'svc-excluded'));
+  assert.deepEqual(getPinnedPortalServices([resource('svc-none', { homepage: {} })]), []);
+  assert.deepEqual(getPinnedPortalServices([resources[4], resource('svc-legacy')]), []);
+  assert.deepEqual(getPinnedPortalServices([]), []);
+  assert.equal(getPinnedPortalServices([resource('svc-legacy')]).length, 1);
 });

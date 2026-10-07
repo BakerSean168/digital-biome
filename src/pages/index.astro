@@ -2,6 +2,7 @@
 import TerminalLayout from '../layouts/TerminalLayout.astro';
 import ObjectBrowser from '../components/terminal/ObjectBrowser.astro';
 import GuiHome from '../components/common/GuiHome.astro';
+import FeaturedSystems from '../components/common/FeaturedSystems.astro';
 import {
   terminalNotes,
   terminalBlogs,
@@ -27,7 +28,7 @@ const recent = [...notes.slice(0, 3), ...blogs.slice(0, 2)].sort((a, b) =>
   <GuiHome notes={notes} blogs={blogs} pinned={pinned} />
   <section data-ui-only="tui">
     <header class="mb-6 flex items-center gap-5 md:gap-6">
-      <img src="/images/biome-mark.svg" width="76" height="76" alt="" class="shrink-0" />
+      <img src="/favicon.svg" width="76" height="76" alt="" class="shrink-0" />
       <div>
         <h1 class="text-[34px] leading-tight font-semibold">BakerSean</h1>
         <p class="mt-2 max-w-[46em]">
@@ -61,21 +62,7 @@ const recent = [...notes.slice(0, 3), ...blogs.slice(0, 2)].sort((a, b) =>
       </a>
     </nav>
     <p class="mb-4 text-xs text-muted-foreground">知识持续积累，作品逐步生长，系统服务于日常。</p>
-    <div class="mb-5 flex flex-wrap gap-x-5 gap-y-2">
-      <span class="text-muted-foreground">常用</span>
-      {pinned.map((service) => (
-        <a
-          href={service.url ?? `/login?next=%2F`}
-          data-private-link={service.privateRef}
-          target={service.url ? '_blank' : undefined}
-          rel="noopener noreferrer"
-          class="hover:text-primary"
-        >
-          {service.resource.title}
-          {service.privateRef ? ' · Access' : ' ↗'}
-        </a>
-      ))}
-    </div>
+    <FeaturedSystems services={pinned} class="mb-5" />
     <h2 class="mb-2 text-xs text-muted-foreground">最近</h2>
     <ObjectBrowser items={recent} filter={false} label="最近的笔记与文章" />
   </section>

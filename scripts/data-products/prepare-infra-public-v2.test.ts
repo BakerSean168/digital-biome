@@ -8,6 +8,36 @@ import { infraReleaseFixture } from './fixtures/infra-release';
 import { parseInfraPublicV2 } from '../../src/domain/infrastructure/infra-public-v2';
 import { semanticSha256, sha256 } from './semantic-digest';
 
+test('infra curation contract accepts old records and validates optional metadata', () => {
+  const { projection } = infraReleaseFixture();
+  const parse = (extra: Record<string, unknown>) => {
+    const copy = structuredClone(projection);
+    Object.assign(copy.payload.resources[0], extra);
+    return parseInfraPublicV2(JSON.stringify(copy));
+  };
+  assert.equal(parse({}).payload.resources[0].usagePriority, undefined);
+  assert.equal(
+    parse({ usagePriority: 1, homepage: { enabled: true, featured: true, order: 0 } }).payload
+      .resources[0].usagePriority,
+    1,
+  );
+  for (const usagePriority of [0, -1, 1.5, '1', true]) {
+    assert.throws(() => parse({ usagePriority }), /usagePriority/);
+  }
+  for (const homepage of [
+    null,
+    [],
+    { enabled: 'true' },
+    { featured: 1 },
+    { order: -1 },
+    { order: true },
+    { label: 3 },
+    { unknown: true },
+  ]) {
+    assert.throws(() => parse({ homepage }), /homepage/);
+  }
+});
+
 test('infra prepare uses verified immutable bytes and preserves the existing owner materialization and privateRefs', async () => {
   const f = infraReleaseFixture();
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'prepare-infra-'));

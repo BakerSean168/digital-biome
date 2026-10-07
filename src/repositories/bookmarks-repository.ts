@@ -9,6 +9,7 @@ import type { NoteIndexEntry } from '../types/knowledge-index';
 import { getAllNoteEntries, getNoteEntryByIdFromIndex } from './knowledge-index-loader';
 import { extractCategories } from '../view-models/bookmark-item';
 import { VISIBILITY_PRIVATE, CONFIG_RESOURCE_TYPES_SLUG } from '../domain/constants';
+import { parseUsagePriority } from '../domain/resource-order';
 
 const HOMEPAGE_FEATURED_BOOKMARK_SLUGS = [
   'chatgpt',
@@ -61,6 +62,7 @@ export function getBookmarks(): Bookmark[] {
       categories: extractCategories(entry.tags || [], resourceTypes),
       icon: entry.icon,
       slug: entry.id,
+      usagePriority: parseUsagePriority(entry.usagePriority),
     }));
 }
 

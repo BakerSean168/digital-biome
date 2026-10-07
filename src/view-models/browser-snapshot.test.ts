@@ -27,3 +27,25 @@ test('untrusted or stale history cannot supply invalid browser state', () => {
     assert.equal(readBrowserSnapshot({ biomeBrowsers: { notes: value } }, 'notes'), undefined);
   }
 });
+
+test('browser history validates sorting and a stable scroll anchor while accepting old entries', () => {
+  const snapshot = {
+    query: 'linux',
+    facets: [],
+    limit: 40,
+    sort: 'title',
+    anchor: { id: 'linux-do', offset: -8 },
+  };
+  assert.deepEqual(readBrowserSnapshot({ biomeBrowsers: { tools: snapshot } }, 'tools'), snapshot);
+  for (const extra of [
+    { sort: 'random' },
+    { anchor: { id: 'linux-do', offset: Infinity } },
+    { anchor: { id: 1, offset: 0 } },
+    { anchor: { id: 'linux-do', offset: '12' } },
+  ]) {
+    assert.equal(
+      readBrowserSnapshot({ biomeBrowsers: { tools: { ...snapshot, ...extra } } }, 'tools'),
+      undefined,
+    );
+  }
+});

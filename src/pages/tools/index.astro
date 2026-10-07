@@ -33,7 +33,7 @@ const groups = [
 ];
 ---
 
-<TerminalLayout title="Tools" description="服务、外部资源、主机与网络的统一入口。">
+<TerminalLayout browser title="Tools" description="服务、外部资源、主机与网络的统一入口。">
   <header data-ui-only="gui" class="mb-8">
     <h1 class="text-[32px]">Tools</h1>
     <p class="mt-3 text-muted-foreground">找到用途，再到达入口。</p>
@@ -63,9 +63,16 @@ const groups = [
   {groups.map((group) => (
     <section id={group.id} data-tools-panel class="mb-8 scroll-mt-5">
       <h2 class="sr-only">{group.label}</h2>
-      <p data-tools-description class="mb-5 text-muted-foreground">
-        {group.description}
-      </p>
+      <details data-tools-description class="mb-3 text-xs text-muted-foreground">
+        <summary class="cursor-pointer">
+          {group.id === 'services' ? '自托管服务与应用 · 状态来自登记' : group.description}
+        </summary>
+        <p class="py-2">
+          {group.id === 'services'
+            ? group.description
+            : '文本与分类筛选可组合使用；登记信息不代表实时可用性。'}
+        </p>
+      </details>
       <ObjectBrowser
         items={group.items.slice(0, group.id === 'external' ? 16 : 12)}
         total={group.items.length}
@@ -75,6 +82,9 @@ const groups = [
             : undefined
         }
         label={group.label}
+        autoFill
+        defaultSortLabel="优先级"
+        queryParam="facet"
         contextPath={`/tools#${group.id}`}
       />
     </section>
@@ -87,6 +97,10 @@ const groups = [
     const id = location.hash.slice(1);
     const active = panels.some((panel) => panel.id === id) ? id : 'services';
     panels.forEach((panel) => {
+      if (!panel.hidden && panel.id !== active)
+        panel
+          .querySelector('[data-object-browser]')
+          ?.dispatchEvent(new Event('terminal-deactivate'));
       panel.hidden = panel.id !== active;
       if (!panel.hidden)
         panel.querySelector('[data-object-browser]')?.dispatchEvent(new Event('terminal-activate'));
@@ -99,7 +113,9 @@ const groups = [
     tab.addEventListener('click', (event) => {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      history.pushState(history.state, '', tab.getAttribute('href'));
+      const url = new URL(tab.href);
+      for (const key of ['q', 'sort', 'facet']) url.searchParams.delete(key);
+      history.pushState(history.state, '', url);
       activate();
     }),
   );

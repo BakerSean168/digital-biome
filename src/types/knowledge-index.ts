@@ -28,6 +28,7 @@ export interface NoteIndexEntry {
   id: string;
   title: string;
   description?: string;
+  usagePriority?: number;
   tags: string[];
   /** ISO 8601 date string */
   created?: string;

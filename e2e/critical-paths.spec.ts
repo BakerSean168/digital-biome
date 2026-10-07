@@ -128,10 +128,10 @@ test('URL mode is temporary, propagates to navigation and manual choice persists
 });
 
 test('Facet cancellation and catalog failure do not commit a partial filter', async ({ page }) => {
-  await page.goto('/tools/#external');
   await page.route('**/data/terminal/external.json', (route) =>
     route.fulfill({ status: 503, body: 'unavailable' }),
   );
+  await page.goto('/tools/#external');
   await page.keyboard.press('f');
   await expect(page.locator(`${browser} [data-object-error]`)).toBeVisible();
   await expect(page.locator('dialog[open]')).toHaveCount(0);

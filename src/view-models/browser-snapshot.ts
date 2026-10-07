@@ -4,6 +4,8 @@ export interface BrowserSnapshot {
   facets: string[];
   selectedId?: string;
   limit: number;
+  sort?: 'default' | 'title';
+  anchor?: { id: string; offset: number };
 }
 
 export function readBrowserSnapshot(state: unknown, key: string): BrowserSnapshot | undefined {
@@ -23,10 +25,27 @@ export function readBrowserSnapshot(state: unknown, key: string): BrowserSnapsho
     !Number.isInteger(v.limit) ||
     v.limit < 1 ||
     v.limit > 10000 ||
-    (v.selectedId !== undefined && (typeof v.selectedId !== 'string' || v.selectedId.length > 2000))
+    (v.selectedId !== undefined &&
+      (typeof v.selectedId !== 'string' || v.selectedId.length > 2000)) ||
+    (v.sort !== undefined && v.sort !== 'default' && v.sort !== 'title') ||
+    (v.anchor !== undefined &&
+      (!v.anchor ||
+        typeof v.anchor !== 'object' ||
+        typeof v.anchor.id !== 'string' ||
+        v.anchor.id.length > 2000 ||
+        typeof v.anchor.offset !== 'number' ||
+        !Number.isFinite(v.anchor.offset) ||
+        Math.abs(v.anchor.offset) > 10000))
   )
     return;
-  return { query: v.query, facets: [...v.facets], selectedId: v.selectedId, limit: v.limit };
+  return {
+    query: v.query,
+    facets: [...v.facets],
+    limit: v.limit,
+    ...(v.selectedId !== undefined ? { selectedId: v.selectedId } : {}),
+    ...(v.sort !== undefined ? { sort: v.sort } : {}),
+    ...(v.anchor !== undefined ? { anchor: { id: v.anchor.id, offset: v.anchor.offset } } : {}),
+  };
 }
 
 export function withBrowserSnapshot(
