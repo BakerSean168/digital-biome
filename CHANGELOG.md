@@ -5,6 +5,18 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.10.0](https://github.com/BakerSean168/digital-biome/compare/v0.9.0...v0.10.0) (2026-10-07)
+
+
+### Features
+
+* **resources:** improve browsing feedback and data-driven curation ([#134](https://github.com/BakerSean168/digital-biome/issues/134)) ([55a798e](https://github.com/BakerSean168/digital-biome/commit/55a798e997a1a24540093456cf3eb61be781967f))
+
+
+### Bug Fixes
+
+* **resources:** complete published curation migration ([#137](https://github.com/BakerSean168/digital-biome/issues/137)) ([e22adb9](https://github.com/BakerSean168/digital-biome/commit/e22adb96e4fc611e7349f3c51d5e326fabc47c0a))
+
 ## [0.9.0](https://github.com/BakerSean168/digital-biome/compare/v0.8.1...v0.9.0) (2026-10-07)
 
 
