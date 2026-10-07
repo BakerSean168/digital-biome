@@ -1,0 +1,18 @@
+
+> digital-biome@0.9.0 check:performance /home/dev/projects/digital-biome
+> tsx scripts/check-performance-budgets.ts
+
+/notes HTML: raw 32.1 KiB / 200 KiB [PASS], gzip 8.9 KiB / 60 KiB [PASS]
+/about HTML: raw 20.0 KiB / 200 KiB [PASS], gzip 6.6 KiB / 32 KiB [PASS]
+/about/tags HTML: raw 130.3 KiB / 220 KiB [PASS], gzip 16.3 KiB / 24 KiB [PASS]
+/tools HTML: raw 89.3 KiB / 96 KiB [PASS], gzip 14.1 KiB / 16 KiB [PASS]
+dist JavaScript: raw 68.4 KiB / 100 KiB [PASS]
+dist CSS: raw 132.1 KiB / 190 KiB [PASS]
+terminal notes catalog: raw 1415.5 KiB / 1600 KiB [PASS]
+terminal external catalog: raw 115.9 KiB / 400 KiB [PASS]
+notes catalog: raw 1386.1 KiB / 1400 KiB [PASS]
+tools catalog: raw 49.3 KiB / 80 KiB [PASS], gzip 15.8 KiB / 24 KiB [PASS]
+about markup: 0 compact contribution cells; tag directory remains full SSR
+notes catalog: 1415.5 KiB (lazy-loaded; 12 SSR cards)
+tools catalog: 115.9 KiB (lazy-loaded; 16 SSR cards)
+Performance budget check passed.

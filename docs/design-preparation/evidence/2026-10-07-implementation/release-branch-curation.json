@@ -1,0 +1,53 @@
+{
+  "mode": "local-committed-release-branch-exports; not an immutable release or deployment",
+  "featured": [
+    {
+      "id": "svc-nezha-panel",
+      "label": "哪吒面板",
+      "order": 10,
+      "access": "public"
+    },
+    {
+      "id": "svc-memoflow-dailyuse",
+      "label": "MemoFlow",
+      "order": 20,
+      "access": "public"
+    },
+    {
+      "id": "svc-homepage-dashboard",
+      "label": "Homepage",
+      "order": 30,
+      "access": "owner"
+    },
+    {
+      "id": "svc-litellm-model-gateway",
+      "label": "LiteLLM",
+      "order": 40,
+      "access": "owner"
+    },
+    {
+      "id": "svc-hermes-agent",
+      "label": "Hermes",
+      "order": 50,
+      "access": "owner"
+    }
+  ],
+  "priorityIds": [
+    "obsidian/bilibili",
+    "obsidian/chatgpt",
+    "obsidian/linux-do",
+    "obsidian/youtube"
+  ],
+  "personalTwinStillPresent": true,
+  "consumerLocksChanged": false,
+  "sources": {
+    "knowledge": "32a522c690732751e4cb5370ea6e64366de4c38a",
+    "infra": "36fffd2f4c37610126430b89b868185d76793609",
+    "pdsContract": "a1c171648116f62a255512d0c18c4835d83aa5a1"
+  },
+  "correctedUrls": {
+    "obsidian/baokemeng-airport": "https://love3.p6m6.com/",
+    "obsidian/google-stitch": "https://stitch.withgoogle.com/"
+  },
+  "sharedSchemaValidation": "PASS (3757 public notes)"
+}

@@ -139,6 +139,7 @@ export function initializeFacets(
   dialog?.addEventListener('keydown', (event) => {
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const key = event.key;
+    if (document.documentElement.dataset.shortcuts === 'off' && key.length === 1) return;
     if (key === 'Enter' && !(event.target as Element).closest('[data-facet-cancel]')) {
       event.preventDefault();
       commit();

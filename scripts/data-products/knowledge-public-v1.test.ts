@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { buildIndexes } from '../sync/build-indexes';
 import {
   knowledgeProjectionSummary,
   knowledgePublicIds,
@@ -49,6 +50,41 @@ function fixture(): KnowledgePublicV1 {
     },
   };
 }
+
+test('resource priority reaches materialized Markdown and the local note index', () => {
+  const value = fixture();
+  value.payload.notes[0].usagePriority = 1;
+  value.payload.notes[0].markdown =
+    '---\ntitle: Example\ntags: [type/resource]\nusage_priority: 1\nurl: https://example.com\n---\nExample\n';
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'knowledge-priority-consumer-'));
+  try {
+    const source = materializeKnowledgePublicV1Source(
+      parseKnowledgePublicV1(JSON.stringify(value)),
+      path.join(root, 'source'),
+    );
+    const index = JSON.parse(
+      fs.readFileSync(
+        path.join(source.sourceRoot, 'generated/knowledge-index/notes-index.json'),
+        'utf8',
+      ),
+    );
+    assert.equal(index[0].usagePriority, 1);
+    assert.match(
+      fs.readFileSync(path.join(source.sourceRoot, 'z/example.md'), 'utf8'),
+      /usage_priority: 1/,
+    );
+    const output = path.join(root, 'local-index');
+    buildIndexes(path.join(source.sourceRoot, 'z'), output);
+    const local = JSON.parse(fs.readFileSync(path.join(output, 'notes-index.json'), 'utf8'));
+    assert.equal(local.entries[0].usagePriority, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+  for (const invalid of [0, -1, 1.5, '1', true]) {
+    Object.assign(value.payload.notes[0], { usagePriority: invalid });
+    assert.throws(() => parseKnowledgePublicV1(JSON.stringify(value)), /usagePriority/);
+  }
+});
 
 test('accepts the producer-owned public projection envelope', () => {
   const projection = parseKnowledgePublicV1(JSON.stringify(fixture()));

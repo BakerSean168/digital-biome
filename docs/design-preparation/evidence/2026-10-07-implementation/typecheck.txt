@@ -1,0 +1,27 @@
+
+> digital-biome@0.9.0 check /home/dev/projects/digital-biome
+> astro check
+
+12:21:16 [content] Syncing content
+12:21:20 [content] Synced content
+12:21:20 [types] Generated 7.36s
+12:21:20 [check] Getting diagnostics for Astro files in /home/dev/projects/digital-biome...
+src/browser/terminal-navigation.ts:172:11 - warning ts(6385): 'keyCode' is deprecated.
+
+172     event.keyCode === 229 ||
+              ~~~~~~~
+
+src/browser/terminal-objects.ts:424:38 - warning ts(6385): 'keyCode' is deprecated.
+
+424       if (event.isComposing || event.keyCode === 229) return;
+                                         ~~~~~~~
+
+src/components/common/SiteSearch.astro:425:36 - warning ts(6385): 'keyCode' is deprecated.
+
+425     if (event.isComposing || event.keyCode === 229) return;
+                                       ~~~~~~~
+
+Result (270 files):
+- 0 errors
+- 0 warnings
+- 3 hints

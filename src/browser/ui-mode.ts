@@ -32,6 +32,7 @@ function decorate(anchor: HTMLAnchorElement) {
 }
 
 function setMode(mode: UiMode) {
+  document.dispatchEvent(new Event('biome:before-ui-mode'));
   root.dataset.ui = mode;
   buttons.forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.uiModeChoice === mode));
@@ -91,7 +92,11 @@ for (const button of buttons) {
             (node) => node.dataset.readingAnchor === readingKey && node.getClientRects().length,
           )
         : anchor;
-      if (content && current?.getClientRects().length)
+      if (
+        content &&
+        !content.querySelector('[data-browser-workspace]') &&
+        current?.getClientRects().length
+      )
         content.scrollTop +=
           current.getBoundingClientRect().top - content.getBoundingClientRect().top - offset;
       button.focus({ preventScroll: true });

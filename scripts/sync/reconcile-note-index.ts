@@ -9,9 +9,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseUsagePriority } from '../../src/domain/resource-order';
 import { redactIPv4Addresses, redactProtectedInfrastructureUrls } from './markdown-transform';
 
 interface UpstreamNote {
+  usagePriority?: number | null;
   sourcePath: string;
   title: string;
   description?: string;
@@ -40,15 +42,11 @@ interface LocalNotesIndex {
   entries: LocalNote[];
 }
 
-
 export function sanitizePublishedMetadataText(
   value: string,
   protectedInfrastructureUrls: ReadonlySet<string> = new Set(),
 ): string {
-  return redactProtectedInfrastructureUrls(
-    redactIPv4Addresses(value),
-    protectedInfrastructureUrls,
-  );
+  return redactProtectedInfrastructureUrls(redactIPv4Addresses(value), protectedInfrastructureUrls);
 }
 
 function sanitizeOptionalMetadataText(
@@ -77,10 +75,15 @@ export function reconcileNote(
 
   return {
     ...local,
+    usagePriority: parseUsagePriority(upstream.usagePriority),
     title: sanitizePublishedMetadataText(upstream.title.trim(), protectedInfrastructureUrls),
     description: sanitizeOptionalMetadataText(upstream.description, protectedInfrastructureUrls),
-    tags: upstream.tags.map(tag => sanitizePublishedMetadataText(tag, protectedInfrastructureUrls)),
-    aliases: upstream.aliases.map(alias => sanitizePublishedMetadataText(alias, protectedInfrastructureUrls)),
+    tags: upstream.tags.map((tag) =>
+      sanitizePublishedMetadataText(tag, protectedInfrastructureUrls),
+    ),
+    aliases: upstream.aliases.map((alias) =>
+      sanitizePublishedMetadataText(alias, protectedInfrastructureUrls),
+    ),
     type: upstream.noteType ?? local.type,
     status: upstream.status ?? local.status,
   };
@@ -100,10 +103,10 @@ export function reconcileNoteIndex(
 
   const upstream = JSON.parse(fs.readFileSync(upstreamPath, 'utf8')) as UpstreamNote[];
   const local = JSON.parse(fs.readFileSync(localPath, 'utf8')) as LocalNotesIndex;
-  const bySourcePath = new Map(upstream.map(note => [note.sourcePath.replace(/\\/g, '/'), note]));
+  const bySourcePath = new Map(upstream.map((note) => [note.sourcePath.replace(/\\/g, '/'), note]));
 
   let reconciled = 0;
-  const entries = local.entries.map(note => {
+  const entries = local.entries.map((note) => {
     const sourcePath = toUpstreamSourcePath(note.filePath);
     if (!sourcePath) return note;
     const upstreamNote = bySourcePath.get(sourcePath);
@@ -113,5 +116,7 @@ export function reconcileNoteIndex(
   });
 
   fs.writeFileSync(localPath, JSON.stringify({ ...local, entries }, null, 2), 'utf8');
-  console.log(`  [reconcile-note-index] Reconciled ${reconciled}/${local.entries.length} local notes`);
+  console.log(
+    `  [reconcile-note-index] Reconciled ${reconciled}/${local.entries.length} local notes`,
+  );
 }

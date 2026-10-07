@@ -1,0 +1,45 @@
+---
+import type { PortalService } from '../../utils/personal-systems';
+interface Props {
+  services: PortalService[];
+  class?: string;
+}
+const { services, class: className } = Astro.props;
+---
+
+<section aria-label="精选系统" class={className}>
+  <div class="mb-3 flex items-center justify-between gap-4 text-sm">
+    {services.length > 0 && <h2>精选系统</h2>}
+    <a href="/tools" class="inline-flex min-h-11 items-center text-primary hover:underline">
+      全部服务 →
+    </a>
+  </div>
+  {services.length > 0 && (
+    <ul class="grid gap-x-8 md:grid-cols-2">
+      {services.map((service) => (
+        <li data-featured-system={service.resource.id} class="border-t border-border py-3">
+          <a
+            href={`/infrastructure/${service.resource.id}`}
+            class="inline-flex min-h-11 items-center font-semibold hover:text-primary"
+          >
+            {service.resource.homepage?.label ?? service.resource.title}
+          </a>
+          <p class="text-sm text-muted-foreground">
+            {service.resource.homepage?.description ?? service.resource.description}
+          </p>
+          {(service.url || service.privateRef) && (
+            <a
+              href={service.url ?? '/login?next=%2F'}
+              data-private-link={service.privateRef}
+              target={service.url ? '_blank' : undefined}
+              rel="noopener noreferrer"
+              class="inline-flex min-h-11 items-center text-xs text-primary hover:underline"
+            >
+              {service.privateRef ? '登录访问 · Access' : '公开入口 ↗'}
+            </a>
+          )}
+        </li>
+      ))}
+    </ul>
+  )}
+</section>

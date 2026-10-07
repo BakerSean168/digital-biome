@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-07",
+  "scope": "local worktrees; no publication or deployment",
+  "consumer": {
+    "syncDataProducts": "passed against unchanged committed locks",
+    "verifyFull": "passed before final Tab and TUI-width fixes; final fixes additionally passed check, build:only, performance and all E2E tests",
+    "testsPassed": 389,
+    "testsSkipped": 2,
+    "browserTestsPassed": 27,
+    "browser": "Chromium",
+    "viewports": [
+      "1366x768",
+      "1600x1000",
+      "1920x1080",
+      "390x844",
+      "320x844"
+    ]
+  },
+  "producers": {
+    "personal-infrastructureTestsPassed": 51,
+    "thought-forestTestsPassed": 79,
+    "yaml": "passed",
+    "changedNoteAudit": "no findings",
+    "docDrift": "no findings"
+  },
+  "pending": [
+    "publish both producer revisions",
+    "pin new immutable releases in consumer locks",
+    "build and deploy new curated data",
+    "remove historical portal-pinned compatibility after migration"
+  ],
+  "unverified": [
+    "real screen reader and touch/IME hardware",
+    "native 200% browser zoom",
+    "WebKit/Firefox",
+    "cold/warm Core Web Vitals comparison",
+    "production delivery"
+  ],
+  "pdsFollowup": {
+    "schema": "knowledge-public-v1 optional usagePriority added after cross-repository audit",
+    "testsPassed": 5,
+    "catalogValidation": "passed",
+    "realKnowledgeExportNotesValidated": 3772,
+    "catalogPayloadChanged": false,
+    "published": false
+  }
+}

@@ -1084,3 +1084,125 @@ html[data-ui='gui'] [data-page-title] {
 .prose :where(a, p, li, td, th) {
   overflow-wrap: anywhere;
 }
+
+/* Resource workspaces own their scrolling; article pages retain normal flow. */
+@keyframes biome-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  #site-content {
+    view-transition-name: page-content;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(page-content) {
+    animation: none;
+  }
+  ::view-transition-new(page-content) {
+    animation: biome-page-enter 160ms ease-out both;
+  }
+}
+html[data-browser-ready] .browser-page [data-tools-description] {
+  display: block;
+}
+html[data-browser-ready] .browser-page [data-filter-bar] {
+  margin-bottom: 12px;
+}
+html[data-browser-ready] .browser-page [data-filter-bar] label {
+  flex: 0 0 auto;
+}
+html[data-browser-ready] .browser-page [data-filter-bar] label:first-child {
+  flex: 1 1 10rem;
+  min-width: min(10rem, 100%);
+}
+html[data-browser-ready] .browser-page [data-object-list] {
+  max-height: none;
+  overflow: visible;
+}
+[data-command-feedback][hidden] {
+  display: none;
+}
+[data-command-feedback][data-navigating]::before {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 25%;
+  margin-bottom: 8px;
+  background: var(--primary);
+}
+@media (min-width: 768px) {
+  html[data-browser-ready] .browser-page #site-content {
+    overflow: hidden;
+  }
+  html[data-browser-ready] .browser-page [data-browser-workspace] {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    width: 100%;
+    padding-top: 20px;
+    padding-bottom: 12px;
+  }
+  html[data-browser-ready] .browser-page [data-browser-workspace] > header {
+    margin-bottom: 16px;
+  }
+  html[data-browser-ready] .browser-page [data-page-title] {
+    margin-bottom: 12px;
+  }
+  html[data-browser-ready] .browser-page [data-tools-panel]:not([hidden]),
+  html[data-browser-ready] .browser-page [data-object-browser] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    margin-bottom: 0;
+  }
+  html[data-browser-ready] .browser-page [data-browser-columns] {
+    min-height: 0;
+    flex: 1;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 28px;
+  }
+  html[data-browser-ready] .browser-page [data-object-scroll],
+  html[data-browser-ready] .browser-page [data-browser-columns] > [data-object-preview] {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+  }
+  html[data-browser-ready] .browser-page [data-browser-columns] > [data-object-preview] {
+    align-self: stretch;
+    position: static;
+  }
+}
+@media (max-width: 767px) {
+  html[data-browser-ready] .browser-page [data-browser-columns] {
+    display: block;
+  }
+  html[data-ui] [data-terminal-dock] nav a {
+    min-width: 0;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+  html[data-browser-ready] .browser-page [data-browser-columns] > [data-object-preview] {
+    display: none;
+  }
+  html[data-browser-ready] .browser-page [data-object-filter] {
+    max-width: 100%;
+  }
+  [data-command-feedback] {
+    max-height: 45dvh;
+    overflow-y: auto;
+  }
+}

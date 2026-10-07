@@ -3,11 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import {
-  reconcileNote,
-  reconcileNoteIndex,
-  toUpstreamSourcePath,
-} from './reconcile-note-index';
+import { reconcileNote, reconcileNoteIndex, toUpstreamSourcePath } from './reconcile-note-index';
 
 test('maps published destinations back to their Thought Forest source namespaces', () => {
   assert.equal(toUpstreamSourcePath('typescript.md'), 'z/typescript.md');
@@ -16,6 +12,27 @@ test('maps published destinations back to their Thought Forest source namespaces
   assert.equal(toUpstreamSourcePath('config/skills/example.md'), 'config/skills/example.md');
   assert.equal(toUpstreamSourcePath('blogs/example.md'), null);
   assert.equal(toUpstreamSourcePath('../escape.md'), null);
+});
+
+test('resource priority is owned upstream and clearing it removes stale local priority', () => {
+  const local = {
+    id: 'obsidian/example',
+    filePath: 'example.md',
+    title: 'Example',
+    tags: [],
+    aliases: [],
+    type: 'resource',
+    usagePriority: 99,
+  };
+  const upstream = {
+    sourcePath: 'z/example.md',
+    title: 'Example',
+    tags: [],
+    aliases: [],
+    visibility: 'public' as const,
+  };
+  assert.equal(reconcileNote(local, { ...upstream, usagePriority: 1 }).usagePriority, 1);
+  assert.equal(reconcileNote(local, upstream).usagePriority, undefined);
 });
 
 test('takes rich parsed metadata upstream while preserving Digital Biome route and privacy fields', () => {
@@ -59,22 +76,26 @@ test('takes rich parsed metadata upstream while preserving Digital Biome route a
 });
 
 test('re-applies Digital Biome publication redaction to upstream metadata', () => {
-  const result = reconcileNote({
-    id: 'obsidian/example',
-    filePath: 'example.md',
-    title: 'Example',
-    tags: [],
-    aliases: [],
-    type: 'note',
-    visibility: 'public',
-  }, {
-    sourcePath: 'z/example.md',
-    title: 'Host 10.20.30.40',
-    description: 'proxy http://10.20.30.40:7890 and https://private.example/admin',
-    tags: ['host/10.20.30.40'],
-    aliases: ['10.20.30.40'],
-    visibility: 'public',
-  }, new Set(['https://private.example/admin']));
+  const result = reconcileNote(
+    {
+      id: 'obsidian/example',
+      filePath: 'example.md',
+      title: 'Example',
+      tags: [],
+      aliases: [],
+      type: 'note',
+      visibility: 'public',
+    },
+    {
+      sourcePath: 'z/example.md',
+      title: 'Host 10.20.30.40',
+      description: 'proxy http://10.20.30.40:7890 and https://private.example/admin',
+      tags: ['host/10.20.30.40'],
+      aliases: ['10.20.30.40'],
+      visibility: 'public',
+    },
+    new Set(['https://private.example/admin']),
+  );
 
   assert.equal(result.title, 'Host 10.20.x.x');
   assert.equal(result.description, 'proxy http://10.20.x.x:7890 and private://redacted');
@@ -88,23 +109,47 @@ test('reconciles matching upstream notes and leaves blogs/local-only entries unt
   const localDir = path.join(root, 'local');
   fs.mkdirSync(upstreamDir);
   fs.mkdirSync(localDir);
-  fs.writeFileSync(path.join(upstreamDir, 'notes-index.json'), JSON.stringify([{
-    sourcePath: 'z/a.md',
-    title: 'Canonical A',
-    tags: ['type/concept', 'status/growing'],
-    aliases: ['A'],
-    noteType: 'concept',
-    status: 'growing',
-    visibility: 'public',
-  }]));
-  fs.writeFileSync(path.join(localDir, 'notes-index.json'), JSON.stringify({
-    version: 1,
-    generatedAt: 'before',
-    entries: [
-      { id: 'obsidian/a', filePath: 'a.md', title: 'A', tags: [], aliases: [], type: 'note', visibility: 'public' },
-      { id: 'obsidian/blogs/post', filePath: 'blogs/post.md', title: 'Post', tags: [], aliases: [], type: 'blog', visibility: 'public' },
-    ],
-  }));
+  fs.writeFileSync(
+    path.join(upstreamDir, 'notes-index.json'),
+    JSON.stringify([
+      {
+        sourcePath: 'z/a.md',
+        title: 'Canonical A',
+        tags: ['type/concept', 'status/growing'],
+        aliases: ['A'],
+        noteType: 'concept',
+        status: 'growing',
+        visibility: 'public',
+      },
+    ]),
+  );
+  fs.writeFileSync(
+    path.join(localDir, 'notes-index.json'),
+    JSON.stringify({
+      version: 1,
+      generatedAt: 'before',
+      entries: [
+        {
+          id: 'obsidian/a',
+          filePath: 'a.md',
+          title: 'A',
+          tags: [],
+          aliases: [],
+          type: 'note',
+          visibility: 'public',
+        },
+        {
+          id: 'obsidian/blogs/post',
+          filePath: 'blogs/post.md',
+          title: 'Post',
+          tags: [],
+          aliases: [],
+          type: 'blog',
+          visibility: 'public',
+        },
+      ],
+    }),
+  );
 
   reconcileNoteIndex(upstreamDir, localDir);
   const output = JSON.parse(fs.readFileSync(path.join(localDir, 'notes-index.json'), 'utf8'));
