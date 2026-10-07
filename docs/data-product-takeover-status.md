@@ -2,6 +2,22 @@
 
 日期：2026-10-06。当前用户授权包含前端、接管中断的数据实施、合并和发版；本记录区分代码、CI、合并与生产。
 
+## 2026-10-07 配置恢复后的进展
+
+用户确认并完成了既有GitHub App的仓库安装范围配置。实际CI已成功创建read-only token，并从Thought Forest、Personal Infrastructure和Personal Digital System读取锁定的公开Release。
+
+| 已合并部分 | main merge | 通过的精确head CI |
+| --- | --- | --- |
+| Infra消费 #122 | `41a29c5` | `37559195348` / `234b1f0` |
+| PDS消费 #124 | `c42abd9` | `37559533229` / `056cc09` |
+| v5发布身份 #125 | `fe7b120` | `37559899752` / `13fe0c3` |
+
+旧的projection复制PR #120已关闭，由公开Release锁消费替代；新PDS Release `7e9033ac85afd1717d2ed095fd0dd0f9071c4739`的只读shadow验证通过，语义与当前锁不同，可用于后续真实自动更新验收。
+
+自动通道 #126需合并并通过main CI后，先完成一次v5应用发布与生产验收，再启用公共锁自动合并和内容部署。两个开关目前仍为false。`production-content`需三项Secrets：Cloudflare账户ID、仅目标账户的Cloudflare Pages Edit token，以及Personal Infrastructure只读SSH Deploy Key。原production中的对应凭据可以复用；新环境只允许main，自动内容通道不设置必需人工审批。截至本次检查，环境secret清单仍为空，用户正在配置；不能据确认文字跳过实际部署验证。
+
+下面保留2026-10-06的实施与交付证据。历史阻塞描述不覆盖本节较新的状态。
+
 ## 已完成的代码
 
 | 部分                           | 位置                            | 验证 / 状态                                                                                   |
@@ -24,7 +40,7 @@
 
 内容和应用生产通道共用串行化组。内容部署使用独立 `production-content` Environment、同一不可变 archive 与 `--no-bundle`，不写 semver Release，不改私有 secret。上线前复验公开/私有引用覆盖；上线后验证公开页面和匿名私有 API 边界，记录完整 Candidate 和 Cloudflare部署 ID/URL。
 
-## 当前外部阻塞
+## 2026-10-06 外部阻塞记录
 
 1. 现有 GitHub App installation `147359906` 尚未允许读取 `personal-infrastructure` / `personal-digital-system`。Infra CI重试仍在创建 token 时返回422，尚未进入测试。需要在 GitHub installation 设置扩展这两个仓库的既有只读安装范围，不能用更宽 PAT绕过。
 2. 新自动内容环境尚未配置 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN`、`PERSONAL_INFRASTRUCTURE_DEPLOY_KEY`。它们目前仅位于 application `production` 环境；GitHub不允许读取已有 secret 明文以跨环境复制。保持内容 kill switch 关闭，直到 owner通过私密输入或 GitHub设置完成该环境配置。
