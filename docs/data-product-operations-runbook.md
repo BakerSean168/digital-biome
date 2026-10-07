@@ -1,6 +1,6 @@
 # Data Product / Content Delivery 运维与故障恢复 Runbook
 
-> 状态：Target runbook — 随统一协议实施启用
+> 状态：实现已进入 PR 栈，自动开关当前关闭；生产激活证据见 `data-product-takeover-status.md`。下列恢复操作应按已启用的阶段执行。
 > 对应：ADR-0005、PDS Data Product Protocol v1
 
 ## 1. 运行模型

@@ -14,4 +14,8 @@ Local three-product Release preparation succeeds with the existing developer rea
 
 ## Rollout status
 
-Implementation is in the stack after Infra consumer PR #122 and PDS consumer PR #124. CI, merge, Candidate, Release and Production are separate states. The frontend PR #123 has merged independently. This document does not assert v5 production activation before workflow and deployment evidence exists.
+Infra consumer #122, PDS consumer #124 and v5 delivery #125 merged on 2026-10-07 after the existing GitHub App installation was extended and fresh exact-head CI passed. The automatic content layer follows in #126. Producer publication cutover and the v5 application Release must precede enabling both automation switches.
+
+The production-content Environment uses the same destination account/project and read-only private repository access as application production. It needs CLOUDFLARE_ACCOUNT_ID, a CLOUDFLARE_API_TOKEN with Cloudflare Pages Edit on the destination account, and PERSONAL_INFRASTRUCTURE_DEPLOY_KEY with read-only repository access. Its deployment branch policy is main-only; application production retains its separate approval gate.
+
+CI, merge, Candidate, Release and Production remain separate states. Use the published Release manifest and Cloudflare deployment record as delivery evidence; merged code alone does not prove activation. The historical v0.8.1 production evidence and the current takeover status are recorded in docs/data-product-takeover-status.md.

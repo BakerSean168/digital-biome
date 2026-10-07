@@ -81,7 +81,9 @@ the same Release reader. It does not perform downstream source/index generation.
 - Consumer writes use `GITHUB_TOKEN`. Since its pushes may suppress PR-triggered
   Actions, the workflow explicitly dispatches the existing protected `check.yml`
   at the fixed branch, waits for successful exact-head CI, and rechecks live PR
-  head identity. Timeouts, CI failure and head movement fail closed. No auto-merge.
+  head identity. Timeouts, CI failure and head movement fail closed. The opt-in
+  auto-merge path additionally verifies bot/workflow provenance, complete lock-only
+  changes, required checks and the live immutable Release before an expected-SHA merge.
 - `sync-knowledge-public-v1.yml` retains its legacy event/manual inputs and branch
   for rollback. Its final lock generation now also verifies through the common
   reader so it cannot downgrade the Protocol-v1 lock. Avoid dual legacy/standard
@@ -96,8 +98,9 @@ Before activation, this consumer must reach the default branch, the reviewed
 producer Protocol-v1 branches must be activated, and their consumer dispatch
 credentials must be valid. Verify a real standard dispatch and
 reconciliation run, lock-only PR, and protected exact-head CI in GitHub. Local
-shadow reads do not prove these hosted write/CI operations. Merge stays manual;
-auto-merge, provenance v5 and content production are later batches.
+shadow reads do not prove these hosted write/CI operations. Both automatic lanes
+remain disabled until rollout evidence and credentials are ready. Implementation
+and activation status are tracked in `docs/data-product-takeover-status.md`.
 
 ## Infra prepare and scope boundary
 
@@ -115,18 +118,12 @@ restore the previous runtime. A failed restore retains the backup for recovery.
 As with knowledge, this assumes one writer and is not a cross-file transaction
 across process death; retry from the committed lock converges.
 
-Check/Candidate public preparation no longer checks out Personal Infrastructure
-or installs/runs its exporter. Private binding source checkout, credentials,
-validation and secret mutation are unchanged, as is the Candidate v4 manifest.
-
-**Production remains outside this slice.** `deploy-production.yml` is unchanged,
-including its historical v4 public-source preparation call. Already published
-rollback Releases use their exact historical tooling. Promoting a future Release
-built from this slice requires a separately approved public revalidation cutover:
-that workflow still passes the removed `--producer-root` option and its read App
-scope has not been expanded for infra Releases. Do not treat local/CI acceptance
-here as production readiness. No compatibility exporter path is retained in the
-new prepare implementation.
+Check/Candidate public preparation no longer checks out producer source or runs
+its exporter. New Candidate/Release v5 manifests include the three complete public
+locks and a separate private binding identity. Production revalidates these exact
+inputs and private reference coverage, then promotes the existing archive without
+an application rebuild. Historical v4/v3 Releases still use their tagged source
+tooling during rollback. See `docs/data-product-delivery-v5.md`.
 
 ## PDS prepare and Git-ownership cutover (DPP-303–307)
 
@@ -227,8 +224,10 @@ onto this consumer, then run shared reconciliation for the newer Release and
 review the resulting one-lock PR. Retiring the old source writer is essential:
 rollback is application/source rollback, not re-enabling a second source of truth.
 
-No auto-merge, provenance v5, content delivery or production workflow changes are
-included. The previously documented production revalidation blocker remains.
+This section records the original PDS materialization slice. The subsequent v5
+and automation implementation resolves its code-level production revalidation
+gap; hosted activation still requires the App/environment setup documented in
+`docs/data-product-takeover-status.md`.
 
 ### Local verification for this cutover
 

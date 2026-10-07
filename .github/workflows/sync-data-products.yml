@@ -127,7 +127,7 @@ jobs:
             git push --force-with-lease="refs/heads/$SYNC_BRANCH:$previous" origin "HEAD:refs/heads/$SYNC_BRANCH"
           fi
           title="chore(data): update $PRODUCT to ${SOURCE_REVISION:0:12}"
-          body="Verified immutable $PRODUCT Release: $RELEASE_TAG. Protocol-v1 transport, manifest, tag commit and semantic digests passed. This PR changes only $LOCK_PATH. Private RuntimeBinding is unchanged. Manual review/merge required; no auto-merge."
+          body="Verified immutable $PRODUCT Release: $RELEASE_TAG. Protocol-v1 transport, manifest, tag commit and semantic digests passed. This PR changes only $LOCK_PATH. Private RuntimeBinding is unchanged. Eligible for protected lock-only auto-merge only when the repository kill switch is enabled."
           pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [ -z "$pr" ]; then
             gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$SYNC_BRANCH" --title "$title" --body "$body"
@@ -139,7 +139,8 @@ jobs:
           echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
           echo "number=$pr" >> "$GITHUB_OUTPUT"
 
-      - name: Wait for exact-head protected CI (never merge)
+      - name: Wait for exact-head protected CI
+        id: ci
         if: steps.lock.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -163,7 +164,20 @@ jobs:
           gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json headSha,conclusion,event > "$RUNNER_TEMP/ci-result.json"
           jq -e --arg sha "$HEAD_SHA" '.headSha == $sha and .conclusion == "success" and .event == "workflow_dispatch"' "$RUNNER_TEMP/ci-result.json"
           test "$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$HEAD_SHA"
-          echo "Exact-head CI passed for PR #$PR_NUMBER at $HEAD_SHA. Manual merge required." >> "$GITHUB_STEP_SUMMARY"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Exact-head CI passed for PR #$PR_NUMBER at $HEAD_SHA." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Merge only a trusted verified public lock update
+        if: steps.lock.outputs.changed == 'true' && vars.DATA_PRODUCT_AUTO_MERGE_ENABLED == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRODUCT_READ_TOKEN: ${{ steps.producer-token.outputs.token }}
+          DATA_PRODUCT_AUTO_MERGE_ENABLED: ${{ vars.DATA_PRODUCT_AUTO_MERGE_ENABLED }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PRODUCT: ${{ steps.route.outputs.product }}
+          CI_RUN_ID: ${{ steps.ci.outputs.run_id }}
+        run: pnpm exec tsx scripts/data-products/auto-merge.ts
 
       - name: Report verified no-op
         if: steps.lock.outputs.changed != 'true'

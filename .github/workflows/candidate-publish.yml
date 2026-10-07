@@ -46,7 +46,8 @@ jobs:
 
           run_json="$(gh api "repos/$REPOSITORY/actions/runs/$run_id")"
           [[ "$(jq -r .name <<<"$run_json")" == CI ]] || { echo 'selected run is not CI' >&2; exit 1; }
-          [[ "$(jq -r .event <<<"$run_json")" == push ]] || { echo 'selected CI run is not a push run' >&2; exit 1; }
+          [[ "$(jq -r .path <<<"$run_json")" == .github/workflows/check.yml ]] || { echo 'CI workflow path mismatch' >&2; exit 1; }
+          [[ "$(jq -r .event <<<"$run_json")" =~ ^(push|workflow_dispatch)$ ]] || { echo 'selected CI run is not a supported main CI trigger' >&2; exit 1; }
           [[ "$(jq -r .head_branch <<<"$run_json")" == main ]] || { echo 'selected CI run is not on main' >&2; exit 1; }
           [[ "$(jq -r .conclusion <<<"$run_json")" == success ]] || { echo 'selected CI run did not succeed' >&2; exit 1; }
 
