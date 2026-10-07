@@ -5,6 +5,16 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.9.0](https://github.com/BakerSean168/digital-biome/compare/v0.8.1...v0.9.0) (2026-10-07)
+
+
+### Features
+
+* **data-products:** consume immutable PDS catalog and unify preparation ([c42abd9](https://github.com/BakerSean168/digital-biome/commit/c42abd92de071fe0984449ecd0c3edad8cc88590))
+* **data-products:** migrate infra consumer to immutable releases ([41a29c5](https://github.com/BakerSean168/digital-biome/commit/41a29c589357b17b04c67566ef259b88e16541ff))
+* **delivery:** automate verified public data updates and content promotion ([b4fc79b](https://github.com/BakerSean168/digital-biome/commit/b4fc79bc2331aca2ab96de0e8921eeb3bfe1a7b3))
+* **delivery:** preserve all data-product identities through v5 promotion ([fe7b120](https://github.com/BakerSean168/digital-biome/commit/fe7b120abadb6c8355b069bd97ef61bfa0505fee))
+
 ## [0.8.1](https://github.com/BakerSean168/digital-biome/compare/v0.8.0...v0.8.1) (2026-10-06)
 
 
