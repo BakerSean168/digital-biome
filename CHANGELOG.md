@@ -5,6 +5,13 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.10.2](https://github.com/BakerSean168/digital-biome/compare/v0.10.1...v0.10.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* **brand:** ship the emergent icon and homepage delivery closure ([#141](https://github.com/BakerSean168/digital-biome/issues/141)) ([9a3ee1b](https://github.com/BakerSean168/digital-biome/commit/9a3ee1b459938f4ef61d56ab650dbf634dd8c2a5))
+
 ## [0.10.1](https://github.com/BakerSean168/digital-biome/compare/v0.10.0...v0.10.1) (2026-10-07)
 
 
