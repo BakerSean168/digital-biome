@@ -73,8 +73,6 @@ function actionLabel(kind: string | undefined): string {
 
 export function getPortalServices(resources = getInfrastructureResources()): PortalService[] {
   const resourceMap = new Map(resources.map((resource) => [resource.id, resource]));
-  // Only entirely legacy projections use portal-pinned during the expand/migrate window.
-  const explicitHomepage = resources.some((resource) => resource.homepage !== undefined);
 
   return resources
     .filter((resource) => resource.kind === 'service' && resource.status === 'active')
@@ -96,9 +94,7 @@ export function getPortalServices(resources = getInfrastructureResources()): Por
           url: link?.url,
           privateRef: link?.privateRef,
           actionLabel: actionLabel(link?.kind),
-          pinned: explicitHomepage
-            ? resource.homepage?.enabled === true && resource.homepage.featured === true
-            : resource.groups.includes('portal-pinned'),
+          pinned: resource.homepage?.enabled === true && resource.homepage.featured === true,
         } satisfies PortalService,
       ];
     })

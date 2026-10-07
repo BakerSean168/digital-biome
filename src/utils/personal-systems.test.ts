@@ -105,5 +105,5 @@ test('homepage selection is explicit, ordered and independent of usage priority'
   assert.deepEqual(getPinnedPortalServices([resource('svc-none', { homepage: {} })]), []);
   assert.deepEqual(getPinnedPortalServices([resources[4], resource('svc-legacy')]), []);
   assert.deepEqual(getPinnedPortalServices([]), []);
-  assert.equal(getPinnedPortalServices([resource('svc-legacy')]).length, 1);
+  assert.deepEqual(getPinnedPortalServices([resource('svc-legacy')]), []);
 });

@@ -1,6 +1,6 @@
 # Digital Biome 首页资源与交互优化方案
 
-日期：2026-10-07。状态：审查基线与分批实施记录；A/B/D/E 本地验收完成，C 本地源端与消费链路通过；producer 发布与数据锁迁移尚未完成。
+日期：2026-10-07。状态：A–E 实现、两个 producer 发布与数据锁迁移已完成；新数据完整门禁和浏览器验收通过，生产部署待完成。最新交付记录见第 15 节，前文保留实施前审查基线与分批记录。
 
 > 实施记录（2026-10-07）：用户已要求开始实施。首批交付 A/B，并将共用的即时导航反馈一并接入。以下审查正文保留为实施前基线；完成证据在本节更新。
 >
@@ -434,3 +434,38 @@ PDS 最新主线已有 unittest discovery，新增共享契约测试复用现有
 
 以下先提交兼容旧锁的站点实现，随后发布两个 producer、更新数据锁并退出旧名单兼容。
 最终交付必须另附 producer Release、站点 Release、部署身份和线上验收证据。
+
+## 15 正式数据发布与迁移验收（2026-10-07）
+
+共享契约 [PDS #17](https://github.com/BakerSean168/personal-digital-system/pull/17)
+与兼容实现 [Digital Biome #134](https://github.com/BakerSean168/digital-biome/pull/134)
+已通过各自精确提交的 CI 并合入，随后发布两个 producer：
+
+- [Thought Forest #30](https://github.com/BakerSean168/thought-forest/pull/30)：
+  `knowledge-public-v1-ca075b07a3df680299138328203ebdea3821b376`。
+- [Personal Infrastructure #113](https://github.com/BakerSean168/personal-infrastructure/pull/113)：
+  `infra-public-v2-b559dd028b2edaa4cd4d0555f18e43b6d29e8bad`。
+
+通过本站 Protocol-v1 verifier 独立验证正式 Release 的 tag/source revision、manifest、
+artifact 字节摘要与 semantic digest，并再次核对两个修正的网址、四个常用网站和五项
+精选身份。PI 未配置即时通知凭据，本次使用既有 `Sync data products` 手动入口选择
+确切 Release，不改变发布验证流程。
+
+数据锁更新由 [#135](https://github.com/BakerSean168/digital-biome/pull/135) 和
+[#136](https://github.com/BakerSean168/digital-biome/pull/136) 承载。迁移收口移除
+`portal-pinned` 的历史回退；缺省 homepage、空配置或显式停用都不再自动入选。
+旧投影仍可解析，Personal Twin 仍保留于 Tools。浏览器验收增加对两种首页的精确
+五项顺序、四个常用网站的目录顺序及正确网址的断言。
+
+两份数据锁均已合入，最终新数据验证通过：`pnpm sync:data-products`、
+`pnpm verify:full`（389 项通过、2 项跳过，3766 页）、28 项 Chromium 浏览器验收。
+Tools HTML 为 88.9 KiB（上限 96），gzip 为 13.9 KiB（上限 16），未放宽任何预算。
+源索引无重复 ID，两个网址和四个优先级已从物化索引及构建目录双重确认。
+
+[正式数据验收记录](evidence/2026-10-07-implementation/activation-verification.json) ·
+[浏览器日志](evidence/2026-10-07-implementation/activation-browser-tests.txt) ·
+[性能门禁](evidence/2026-10-07-implementation/activation-performance.txt) ·
+[GUI 精选](evidence/2026-10-07-implementation/activated-homepage-gui.png) ·
+[TUI 精选](evidence/2026-10-07-implementation/activated-homepage-tui.png)。
+
+上述数据发布与源码集成尚不代表生产部署完成；站点 Release 与部署证据另行记录。
