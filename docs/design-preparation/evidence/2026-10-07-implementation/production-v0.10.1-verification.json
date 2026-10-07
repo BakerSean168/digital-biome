@@ -1,0 +1,121 @@
+{
+  "verifiedAt": "2026-10-07T15:08:14.192968+00:00",
+  "target": "https://bakersean.top",
+  "releaseTag": "v0.10.1",
+  "gitSha": "97545cfd79ba3b6afa4160bf84700be882d09c0d",
+  "artifact": {
+    "file": "digital-biome-pages.tar.gz",
+    "sha256": "sha256:3cfc5aec4815e0627d580467c2601543c7333856e20a9909517e0e65328d4330",
+    "bytes": 67806382
+  },
+  "criteria": {
+    "featuredOrderBothModes": [
+      "svc-nezha-panel",
+      "svc-memoflow-dailyuse",
+      "svc-homepage-dashboard",
+      "svc-litellm-model-gateway",
+      "svc-hermes-agent"
+    ],
+    "priorityOrder": [
+      "obsidian/bilibili",
+      "obsidian/chatgpt",
+      "obsidian/linux-do",
+      "obsidian/youtube"
+    ],
+    "airportURL": "https://love3.p6m6.com/",
+    "stitchURL": "https://stitch.withgoogle.com/",
+    "airportOtherServiceMention": true,
+    "personalTwinRetainedInToolsExcludedFromHome": true,
+    "versionAndRevisionVisible": true
+  },
+  "liveArtifactMatches": [
+    {
+      "path": "/data/terminal/external.json",
+      "sha256": "sha256:a38ce838001ba0cea5960de38dc5e907c94eab707ee152d4b001ad4fb9befa31",
+      "matchesReleaseArtifact": true
+    },
+    {
+      "path": "/data/terminal/services.json",
+      "sha256": "sha256:88e7e3391b6eeaef41b313dc3ffae29cba2b4ff40ec74e1b451c1d87ae89ce07",
+      "matchesReleaseArtifact": true
+    },
+    {
+      "path": "/favicon.svg",
+      "sha256": "sha256:bcdbd4ac186b0a1362c21d9a6daf9f096f892a7bfe55200733a350f9862cb50c",
+      "matchesReleaseArtifact": true
+    },
+    {
+      "path": "/_astro/ObjectBrowser.astro_astro_type_script_index_0_lang.62JCEZmb.js",
+      "sha256": "sha256:8e63b2f98b021446f8f3a32165132e28c1ff0574027813e2d19f3b7bbd7dbe21",
+      "matchesReleaseArtifact": true
+    }
+  ],
+  "http": [
+    {
+      "path": "/",
+      "status": 200,
+      "bodySha256": "sha256:e2536335b9f5c1fdd4a148ec3f57d913c90c7292c177bd59d945dad94263683f"
+    },
+    {
+      "path": "/data/terminal/external.json",
+      "status": 200,
+      "bodySha256": "sha256:a38ce838001ba0cea5960de38dc5e907c94eab707ee152d4b001ad4fb9befa31"
+    },
+    {
+      "path": "/data/terminal/services.json",
+      "status": 200,
+      "bodySha256": "sha256:88e7e3391b6eeaef41b313dc3ffae29cba2b4ff40ec74e1b451c1d87ae89ce07"
+    },
+    {
+      "path": "/favicon.svg",
+      "status": 200,
+      "bodySha256": "sha256:bcdbd4ac186b0a1362c21d9a6daf9f096f892a7bfe55200733a350f9862cb50c"
+    },
+    {
+      "path": "/notes/obsidian/baokemeng-airport/",
+      "status": 200,
+      "bodySha256": "sha256:4d19f8057779bedb7a3ba817e13ae884e67f4c09185493afd86c34008b0c93d1"
+    },
+    {
+      "path": "/notes/obsidian/google-stitch/",
+      "status": 200,
+      "bodySha256": "sha256:090232b6031ee57c03dc7d9be773b64d4a8adb573e4f067446abcb55318d5168"
+    },
+    {
+      "path": "/tools/",
+      "status": 200,
+      "bodySha256": "sha256:4004de718c724f4e5ab85c0c251f650fdcf465b0fe9993674b383833da1b6443"
+    },
+    {
+      "path": "/_astro/ObjectBrowser.astro_astro_type_script_index_0_lang.62JCEZmb.js",
+      "status": 200,
+      "bodySha256": "sha256:8e63b2f98b021446f8f3a32165132e28c1ff0574027813e2d19f3b7bbd7dbe21"
+    }
+  ],
+  "deliveryState": "delivery verified",
+  "releaseUrl": "https://github.com/BakerSean168/digital-biome/releases/tag/v0.10.1",
+  "releaseId": 405889714,
+  "releaseManifestDigest": "sha256:688302a3a4b30b00e1bab006f24df7c6040fdbbecff755982f47ad2890120987",
+  "candidateManifestDigest": "sha256:f58b39b247e9eccb3b2238137011fdb8cac472bdf87883ac57b135a992a739fa",
+  "deployment": {
+    "id": "efd43df4-e5b9-4e52-949d-2c3ef0f23e86",
+    "url": "https://efd43df4.digital-biome.pages.dev"
+  },
+  "ciRunId": "37640812333",
+  "candidateRunId": "37641323511",
+  "releasePublishRunId": "37641885224",
+  "deploymentRunId": "37642104509",
+  "sourcePRs": {
+    "catalogFix": 139,
+    "release": 140
+  },
+  "workflowSmoke": "PASS: public note, public site, telemetry, protected API contract",
+  "browser": {
+    "command": "PLAYWRIGHT_BASE_URL=https://bakersean.top pnpm test:e2e",
+    "result": "28 passed (1.0m)",
+    "runtimeSubstitution": false,
+    "catalogCompletionRegression": "PASS: response completes after returning to tab; loading clears, 16 rows remain, fresh click appends to 40",
+    "scope": "Chromium desktop and emulated mobile viewports; private unlock and failure paths use test fixtures"
+  },
+  "unresolvedAcceptanceCriteria": []
+}
