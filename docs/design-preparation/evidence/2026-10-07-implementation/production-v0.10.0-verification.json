@@ -1,0 +1,102 @@
+{
+  "verifiedAt": "2026-10-07T14:17:14.824623+00:00",
+  "target": "https://bakersean.top",
+  "releaseTag": "v0.10.0",
+  "gitSha": "92c1867d87e5bd89ea00036789640b727b52119d",
+  "artifact": {
+    "file": "digital-biome-pages.tar.gz",
+    "sha256": "sha256:8abdb47249365c33033478757d327b8069d44b85a94238d6c59e9c917ef3485d",
+    "bytes": 67805466
+  },
+  "criteria": {
+    "featuredOrderBothModes": [
+      "svc-nezha-panel",
+      "svc-memoflow-dailyuse",
+      "svc-homepage-dashboard",
+      "svc-litellm-model-gateway",
+      "svc-hermes-agent"
+    ],
+    "priorityOrder": [
+      "obsidian/bilibili",
+      "obsidian/chatgpt",
+      "obsidian/linux-do",
+      "obsidian/youtube"
+    ],
+    "airportURL": "https://love3.p6m6.com/",
+    "stitchURL": "https://stitch.withgoogle.com/",
+    "airportOtherServiceMention": true,
+    "personalTwinRetainedInToolsExcludedFromHome": true,
+    "versionAndRevisionVisible": true
+  },
+  "liveArtifactMatches": [
+    {
+      "path": "/data/terminal/external.json",
+      "sha256": "sha256:a38ce838001ba0cea5960de38dc5e907c94eab707ee152d4b001ad4fb9befa31",
+      "matchesReleaseArtifact": true
+    },
+    {
+      "path": "/data/terminal/services.json",
+      "sha256": "sha256:88e7e3391b6eeaef41b313dc3ffae29cba2b4ff40ec74e1b451c1d87ae89ce07",
+      "matchesReleaseArtifact": true
+    },
+    {
+      "path": "/favicon.svg",
+      "sha256": "sha256:bcdbd4ac186b0a1362c21d9a6daf9f096f892a7bfe55200733a350f9862cb50c",
+      "matchesReleaseArtifact": true
+    }
+  ],
+  "http": [
+    {
+      "path": "/",
+      "status": 200,
+      "bodySha256": "sha256:2ce8a8a4f2a946151b74526f81e45e096099a7375964c91f13fdfc1daf8010ea"
+    },
+    {
+      "path": "/data/terminal/external.json",
+      "status": 200,
+      "bodySha256": "sha256:a38ce838001ba0cea5960de38dc5e907c94eab707ee152d4b001ad4fb9befa31"
+    },
+    {
+      "path": "/data/terminal/services.json",
+      "status": 200,
+      "bodySha256": "sha256:88e7e3391b6eeaef41b313dc3ffae29cba2b4ff40ec74e1b451c1d87ae89ce07"
+    },
+    {
+      "path": "/favicon.svg",
+      "status": 200,
+      "bodySha256": "sha256:bcdbd4ac186b0a1362c21d9a6daf9f096f892a7bfe55200733a350f9862cb50c"
+    },
+    {
+      "path": "/notes/obsidian/baokemeng-airport/",
+      "status": 200,
+      "bodySha256": "sha256:ddf595afe9515128e3a82330b2646e512e9f5c6b1583da8febb9e32465877dc1"
+    },
+    {
+      "path": "/notes/obsidian/google-stitch/",
+      "status": 200,
+      "bodySha256": "sha256:aa84723910a22f919bafb8370ed3fbae375adcd988f9c1d3cb5865862dfbb25a"
+    }
+  ],
+  "deployment": {
+    "id": "039922e7-f4b5-4c84-8d6e-6198ebe1c28b",
+    "url": "https://039922e7.digital-biome.pages.dev"
+  },
+  "releaseUrl": "https://github.com/BakerSean168/digital-biome/releases/tag/v0.10.0",
+  "releaseManifestDigest": "sha256:00713dc86a0e015fc9a9507095e19c58851cbae103a3c696225f9ef1a061cbc3",
+  "ciRunId": "37633756353",
+  "candidateRunId": "37634309541",
+  "releasePublishRunId": "37634681066",
+  "deploymentRunId": "37635001270",
+  "workflowSmoke": "PASS: public note, site, telemetry and protected API contracts",
+  "browser": {
+    "initial": "27 passed, 1 failed",
+    "failedCase": "failed catalog preserves rows and retry; a stale request cannot select across tabs",
+    "repeatedOriginalCase": "2 passed, 1 failed",
+    "diagnosis": "Returning to the tab before the shared request completes renders SSR rows. Completion updates items and loaded, leaving filtered stale; hasMore then incorrectly returns false.",
+    "deterministicRegression": "Hold response until tab reactivation; old production keeps loading status and cannot append.",
+    "patchedRuntimeProbe": "5/5 passed using the patched browser module in isolated browser routing; production artifact unchanged.",
+    "deliveryState": "v0.10.0 deployed; catalog completion patch requires follow-up release",
+    "patchedBuiltRegression": "28/28 passed against actual local production build, including deterministic late-completion test",
+    "patchedFullGate": "sync:data-products + verify:full passed: 389 tests passed, 2 skipped; 3766 pages; search, leak and performance gates passed"
+  }
+}

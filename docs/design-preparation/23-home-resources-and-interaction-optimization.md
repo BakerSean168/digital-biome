@@ -1,6 +1,6 @@
 # Digital Biome 首页资源与交互优化方案
 
-日期：2026-10-07。状态：A–E 实现、两个 producer 发布与数据锁迁移已完成；新数据完整门禁和浏览器验收通过，生产部署待完成。最新交付记录见第 15 节，前文保留实施前审查基线与分批记录。
+日期：2026-10-07。状态：A–E 与新数据已随 v0.10.0 部署生产，线上内容、产物身份与接口门禁通过；线上回归发现目录完成时序问题，追加修复与回归测试。最新交付记录见第 16 节，前文保留实施前审查基线与分批记录。
 
 > 实施记录（2026-10-07）：用户已要求开始实施。首批交付 A/B，并将共用的即时导航反馈一并接入。以下审查正文保留为实施前基线；完成证据在本节更新。
 >
@@ -469,3 +469,39 @@ Tools HTML 为 88.9 KiB（上限 96），gzip 为 13.9 KiB（上限 16），未�
 [TUI 精选](evidence/2026-10-07-implementation/activated-homepage-tui.png)。
 
 上述数据发布与源码集成尚不代表生产部署完成；站点 Release 与部署证据另行记录。
+
+## 16 v0.10.0 生产交付与目录完成时序回归（2026-10-07）
+
+[发布 PR #138](https://github.com/BakerSean168/digital-biome/pull/138) 已合入
+`92c1867d87e5bd89ea00036789640b727b52119d`。精确主分支 CI
+`37633756353`、Candidate `37634309541`、Release Publish `37634681066`
+均通过；[v0.10.0](https://github.com/BakerSean168/digital-biome/releases/tag/v0.10.0)
+的 annotated tag、Release/Candidate manifest 与 67,805,466 字节产物已独立校验。
+产物 SHA-256 为 `8abdb47249365c33033478757d327b8069d44b85a94238d6c59e9c917ef3485d`。
+
+[生产部署 37635001270](https://github.com/BakerSean168/digital-biome/actions/runs/37635001270)
+经现有 production Environment 审核后成功。Cloudflare 部署 ID 为
+`039922e7-f4b5-4c84-8d6e-6198ebe1c28b`，直接上传同一份产物，没有重新构建。
+公开笔记、站点、telemetry 和受保护 API 的工作流冒烟契约全部通过。
+
+对 `https://bakersean.top` 的独立核验确认：两种首页均为哪吒面板、MemoFlow、
+Homepage、LiteLLM、Hermes；Personal Twin 保留在 Tools；前四个常用网站为
+bilibili、ChatGPT、LinuxDo、YouTube；宝可梦机场与 Google Stitch 的链接和笔记说明
+已更新。线上 external/services 目录与 favicon 的实际字节匹配 Release 归档，
+页面显示 `v0.10.0` 与 `92c1867d`。
+
+线上 Chromium 首轮 27 项通过、1 项失败。失败不属于网络超时：在失败重试尚未
+返回时切出并切回分类，恢复的 16 行 SSR 数据写入 filtered；随后目录完成只更新
+items/loaded，hasMore 却仍读取旧 filtered，误判已无更多并留下加载提示。
+既有测试在切回前放行响应，因此快速本地网络掩盖了这个分支。
+
+回归测试现在固定在切回后才完成响应，并检查加载提示清除、保留 16 行、下一次
+点击追加至 40 行。修复在共享目录成功完成、解除 pending 后刷新当前可见视图，
+继续由有效的调用者决定是否追加；没有重放旧请求的选择或追加操作。
+该补丁仍需通过独立发布流程进入生产，不能把 v0.10.0 的部署记录当作补丁交付证据。
+
+[生产内容与身份核验](evidence/2026-10-07-implementation/production-v0.10.0-verification.json) ·
+[固定时序的失败证据](evidence/2026-10-07-implementation/catalog-completion-red.txt) ·
+[修复后实际构建的 28 项浏览器回归](evidence/2026-10-07-implementation/catalog-completion-green.txt)。
+补丁已通过 `pnpm sync:data-products` 与 `pnpm verify:full`：389 项通过、2 项跳过，
+3766 页及搜索、泄漏扫描和性能预算均通过。

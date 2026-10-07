@@ -167,9 +167,13 @@ test('failed catalog preserves rows and retry; a stale request cannot select acr
   await page.locator(`${browser} [data-object-retry]`).click();
   await expect(page.locator(`${browser} [data-object-status]`)).toHaveText('正在加载…');
   await page.locator('[data-tools-tab="services"]').click();
-  release();
   await expect(page.locator('[data-tools-tab="services"]')).toHaveAttribute('aria-current', 'true');
   await page.locator('[data-tools-tab="external"]').click();
+  // Complete the shared request only after restoring the original SSR rows.
+  // Completion must refresh their catalog state without replaying the stale append.
+  release();
+  await expect(page.locator(`${browser} [data-object-more]`)).toBeEnabled();
+  await expect(page.locator(`${browser} [data-object-status]`)).not.toHaveText('正在加载…');
   await expect(page.locator(`${browser} [data-object-row]`)).toHaveCount(16);
   await page.locator(`${browser} [data-object-more]`).click();
   await expect(page.locator(`${browser} [data-object-row]`)).toHaveCount(40);

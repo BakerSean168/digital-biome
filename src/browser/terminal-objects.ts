@@ -394,6 +394,9 @@ export function initializeObjectBrowsers() {
           more.textContent = loaded ? '显示更多' : '加载更多';
           list.removeAttribute('aria-busy');
           pending = undefined;
+          // A restored view can still reflect SSR rows when this shared request finishes.
+          // Refresh its current state; only the active caller may append or change selection.
+          if (loaded && visible()) render();
         }
       })();
       return pending;

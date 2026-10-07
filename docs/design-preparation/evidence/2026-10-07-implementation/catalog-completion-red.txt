@@ -1,0 +1,54 @@
+
+> digital-biome@0.10.0 test:e2e /home/dev/projects/digital-biome
+> playwright test e2e/resource-interactions.spec.ts --grep 'failed catalog preserves'
+
+
+Running 1 test using 1 worker
+
+(node:2864817) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › e2e/resource-interactions.spec.ts:147:1 › failed catalog preserves rows and retry; a stale request cannot select across tabs (23.5s)
+
+
+  1) [chromium] › e2e/resource-interactions.spec.ts:147:1 › failed catalog preserves rows and retry; a stale request cannot select across tabs
+
+    Error: expect(locator).not.toHaveText(expected) failed
+
+    Locator:  locator('[data-object-browser]:visible [data-object-status]')
+    Expected: not "正在加载…"
+    Received: "正在加载…"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "not toHaveText" locator('[data-object-browser]:visible [data-object-status]') with timeout 5000ms
+      - waiting for locator('[data-object-browser]:visible [data-object-status]')
+        13 × locator resolved to <p role="status" aria-live="polite" data-object-status="" class="mb-2 text-xs text-muted-foreground empty:hidden">正在加载…</p>
+           - unexpected value "正在加载…"
+
+
+      174 |   release();
+      175 |   await expect(page.locator(`${browser} [data-object-more]`)).toBeEnabled();
+    > 176 |   await expect(page.locator(`${browser} [data-object-status]`)).not.toHaveText('正在加载…');
+          |                                                                     ^
+      177 |   await expect(page.locator(`${browser} [data-object-row]`)).toHaveCount(16);
+      178 |   await page.locator(`${browser} [data-object-more]`).click();
+      179 |   await expect(page.locator(`${browser} [data-object-row]`)).toHaveCount(40);
+        at /home/dev/projects/digital-biome/e2e/resource-interactions.spec.ts:176:69
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/resource-interactions-fail-f0eb8-t-cannot-select-across-tabs-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/resource-interactions-fail-f0eb8-t-cannot-select-across-tabs-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/resource-interactions-fail-f0eb8-t-cannot-select-across-tabs-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/resource-interactions-fail-f0eb8-t-cannot-select-across-tabs-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e/resource-interactions.spec.ts:147:1 › failed catalog preserves rows and retry; a stale request cannot select across tabs
+ ELIFECYCLE  Command failed with exit code 1.
