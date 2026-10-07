@@ -1,0 +1,39 @@
+
+> digital-biome@0.9.0 test:e2e /home/dev/projects/digital-biome
+> playwright test
+
+
+Running 28 tests using 1 worker
+
+(node:2724928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/critical-paths.spec.ts:13:1 › Notes retains 12 SSR objects and loads its catalog only on demand (1.2s)
+  ✓   2 [chromium] › e2e/critical-paths.spec.ts:32:1 › Notes restores combined URL filters and clears query without losing tag or UI mode (1.3s)
+  ✓   3 [chromium] › e2e/critical-paths.spec.ts:56:1 › Search returns real Pagefind content and service navigation (2.1s)
+  ✓   4 [chromium] › e2e/critical-paths.spec.ts:69:1 › Tools bounds external SSR to 16 and lazy-loads the shared catalog (889ms)
+  ✓   5 [chromium] › e2e/critical-paths.spec.ts:83:1 › Mode choice preserves selection, query, facets and category; back restores entry state (2.0s)
+  ✓   6 [chromium] › e2e/critical-paths.spec.ts:116:1 › URL mode is temporary, propagates to navigation and manual choice persists (1.2s)
+  ✓   7 [chromium] › e2e/critical-paths.spec.ts:130:1 › Facet cancellation and catalog failure do not commit a partial filter (1.0s)
+  ✓   8 [chromium] › e2e/critical-paths.spec.ts:146:1 › Mocked private binding unlocks both SSR and lazily rendered service links (1.2s)
+  ✓   9 [chromium] › e2e/critical-paths.spec.ts:183:1 › Mobile GUI details close back to the same list, with no outer scrolling (2.6s)
+  ✓  10 [chromium] › e2e/critical-paths.spec.ts:226:1 › Tag directory remains complete while About uses bounded content (956ms)
+  ✓  11 [chromium] › e2e/critical-paths.spec.ts:238:1 › Reading keeps its visible heading on mode change and TOC tracks decorated anchors (1.2s)
+  ✓  12 [chromium] › e2e/critical-paths.spec.ts:271:1 › IME confirmation stays in input and Search close keeps native Enter behavior (899ms)
+  ✓  13 [chromium] › e2e/critical-paths.spec.ts:310:1 › Modified Tools tab clicks leave browser navigation intact (630ms)
+  ✓  14 [chromium] › e2e/critical-paths.spec.ts:334:1 › About retains full content and a shared reading anchor across mobile modes (758ms)
+  ✓  15 [chromium] › e2e/critical-paths.spec.ts:362:1 › About switches modes while reading inside a definition list (551ms)
+  ✓  16 [chromium] › e2e/critical-paths.spec.ts:382:1 › About keeps the reading section visible when the shorter mode reaches its scroll limit (526ms)
+  ✓  17 [chromium] › e2e/resource-interactions.spec.ts:14:1 › published resource curation reaches the catalog and visible browser (685ms)
+  ✓  18 [chromium] › e2e/resource-interactions.spec.ts:42:1 › desktop Tools fills the visible tab and keeps controls outside list scrolling (1.0s)
+  ✓  19 [chromium] › e2e/resource-interactions.spec.ts:64:1 › command prefix gives immediate feedback and cancellation preserves the browser (1.1s)
+  ✓  20 [chromium] › e2e/resource-interactions.spec.ts:100:1 › commands expire, clear on focus, offer clickable relations, and can be disabled (3.8s)
+  ✓  21 [chromium] › e2e/resource-interactions.spec.ts:126:1 › boundary J needs two fresh presses and selects the first appended row (1.1s)
+  ✓  22 [chromium] › e2e/resource-interactions.spec.ts:147:1 › failed catalog preserves rows and retry; a stale request cannot select across tabs (1.1s)
+  ✓  23 [chromium] › e2e/resource-interactions.spec.ts:178:1 › Tools shares query and sorting, and preserves a scroll anchor across mode and history (2.1s)
+  ✓  24 [chromium] › e2e/resource-interactions.spec.ts:208:1 › navigation reports its first target immediately and clears on page restoration (782ms)
+  ✓  25 [chromium] › e2e/resource-interactions.spec.ts:258:3 › tui homepage shares its brand and exposes public service introductions (1.5s)
+  ✓  26 [chromium] › e2e/resource-interactions.spec.ts:297:3 › tui resource controls and mobile dialogs fit supported viewport widths (6.3s)
+  ✓  27 [chromium] › e2e/resource-interactions.spec.ts:258:3 › gui homepage shares its brand and exposes public service introductions (2.2s)
+  ✓  28 [chromium] › e2e/resource-interactions.spec.ts:297:3 › gui resource controls and mobile dialogs fit supported viewport widths (6.4s)
+
+  28 passed (49.4s)

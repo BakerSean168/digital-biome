@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { parseTerminalCatalog } from '../src/view-models/terminal-object';
 
 const browser = '[data-object-browser]:visible';
 const query = `${browser} [data-object-filter]`;
@@ -8,6 +9,34 @@ test.beforeEach(async ({ page }) => {
   // These public browsing checks do not need authentication or remote fonts.
   await page.route('**/api/private/**', (route) => route.fulfill({ status: 401, body: '{}' }));
   await page.route('https://fonts.googleapis.com/**', (route) => route.abort());
+});
+
+test('published resource curation reaches the catalog and visible browser', async ({
+  page,
+  request,
+}) => {
+  const response = await request.get('/data/terminal/external.json');
+  expect(response.ok()).toBe(true);
+  const catalog = parseTerminalCatalog(await response.json());
+  expect(catalog.slice(0, 4).map((item) => item.id)).toEqual([
+    'obsidian/bilibili',
+    'obsidian/chatgpt',
+    'obsidian/linux-do',
+    'obsidian/youtube',
+  ]);
+  expect(catalog.find((item) => item.id === 'obsidian/baokemeng-airport')?.href).toBe(
+    'https://love3.p6m6.com/',
+  );
+  expect(catalog.find((item) => item.id === 'obsidian/google-stitch')?.href).toBe(
+    'https://stitch.withgoogle.com/',
+  );
+  await page.goto('/tools/?ui=tui#external');
+  await expect(page.locator(`${browser} [data-object-row] strong`).nth(1)).toHaveText('ChatGPT');
+  await page.locator(query).fill('Google Stitch');
+  await expect(page.locator(`${browser} [data-object-open]`)).toHaveAttribute(
+    'href',
+    'https://stitch.withgoogle.com/',
+  );
 });
 
 test('desktop Tools fills the visible tab and keeps controls outside list scrolling', async ({
@@ -235,6 +264,17 @@ for (const mode of ['tui', 'gui']) {
       .locator(`[data-ui-only="${mode}"]`)
       .filter({ has: page.locator('[data-featured-system]') })
       .first();
+    expect(
+      await home
+        .locator('[data-featured-system]')
+        .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-featured-system'))),
+    ).toEqual([
+      'svc-nezha-panel',
+      'svc-memoflow-dailyuse',
+      'svc-homepage-dashboard',
+      'svc-litellm-model-gateway',
+      'svc-hermes-agent',
+    ]);
     await expect(home.locator('[data-featured-system]').first().locator('p')).not.toBeEmpty();
     await expect(
       home.locator('[data-featured-system]').first().locator('a').first(),
@@ -243,6 +283,9 @@ for (const mode of ['tui', 'gui']) {
     await expect(protectedEntry).toContainText('登录访问');
     await expect(page.locator('img[src="/images/biome-mark.svg"]')).toHaveCount(0);
     await expect(page.locator('img[src="/favicon.svg"]').first()).toHaveAttribute('alt', '');
+    await home.locator('[aria-label="精选系统"]').screenshot({
+      path: `.artifacts/resource-interactions/homepage-${mode}.png`,
+    });
     expect(
       await page
         .locator('#site-content')
