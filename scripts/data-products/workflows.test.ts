@@ -8,6 +8,7 @@ import { parse } from 'yaml';
 import { publicDataProducts } from './registry';
 import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
 import { infraReleaseFixture } from './fixtures/infra-release';
+import { pdsReleaseFixture } from './fixtures/pds-release';
 
 const root = new URL('../../.github/workflows/', import.meta.url);
 const read = (name: string) => fs.readFileSync(new URL(name, root), 'utf8');
@@ -59,6 +60,16 @@ test('only generic sync handles the standard event, with manual exact recovery a
   );
 });
 
+test('PDS projection is generated and never part of the consumer Git write set', () => {
+  const projection = 'src/data/system/pds-catalog-v1.json';
+  const tracked = spawnSync('git', ['ls-files', '--', projection], { encoding: 'utf8' });
+  assert.equal(tracked.status, 0, tracked.stderr);
+  assert.equal(tracked.stdout, '');
+  const ignored = spawnSync('git', ['check-ignore', '--', projection], { encoding: 'utf8' });
+  assert.equal(ignored.status, 0, ignored.stderr);
+  assert.equal(ignored.stdout.trim(), projection);
+});
+
 test('knowledge legacy rollback trigger stays separate and cannot write an obsolete schema lock', () => {
   const raw = read('sync-knowledge-public-v1.yml');
   assert.deepEqual(parse(raw).on.repository_dispatch.types, ['knowledge-public-v1-published']);
@@ -66,30 +77,35 @@ test('knowledge legacy rollback trigger stays separate and cannot write an obsol
   assert.doesNotMatch(raw, /schemaVersion: 1/);
 });
 
-test('legacy infra entrypoint is only a manual alias to shared reconciliation, not a second writer', () => {
-  const raw = read('sync-infra-public-v2.yml');
-  const legacy = parse(raw);
-  assert.deepEqual(Object.keys(legacy.on), ['workflow_dispatch']);
-  assert.equal(legacy.jobs.reconcile.uses, './.github/workflows/sync-data-products.yml');
-  assert.deepEqual(legacy.jobs.reconcile.with, { product: 'infra-public-v2', reconcile: true });
-  assert.doesNotMatch(
-    raw,
-    /schedule:|repository_dispatch:|checkout|export_infra|source_sha|git push/,
-  );
-  for (const name of ['check.yml', 'candidate-publish.yml']) {
-    const workflow = parse(read(name));
-    const job = workflow.jobs.check ?? workflow.jobs['build-candidate'];
-    const text = JSON.stringify(job);
+for (const product of ['infra-public-v2', 'pds-catalog-v1']) {
+  test(`legacy ${product} entrypoint is only a manual alias to shared reconciliation, not a second writer`, () => {
+    const raw = read(`sync-${product}.yml`);
+    const legacy = parse(raw);
+    assert.deepEqual(Object.keys(legacy.on), ['workflow_dispatch']);
+    assert.equal(legacy.jobs.reconcile.uses, './.github/workflows/sync-data-products.yml');
+    assert.deepEqual(legacy.jobs.reconcile.with, { product, reconcile: true });
     assert.doesNotMatch(
-      text,
-      /producer-root|personal-infrastructure-public|export_infra|pip install|PDS_INFRA_PUBLIC_DEPLOY_KEY/,
+      raw,
+      /schedule:|repository_dispatch:|checkout|export_infra|export_pds|source_sha|git push/,
     );
-    const prepare = job.steps.find(
-      (step: { run?: string }) => step.run === 'scripts/data-products/prepare-infra-public-v2.sh',
-    );
-    assert.equal(prepare.env.GH_TOKEN, `\${{ steps.vault-token.outputs.token }}`);
-  }
-});
+    for (const name of ['check.yml', 'candidate-publish.yml']) {
+      const workflow = parse(read(name));
+      const job = workflow.jobs.check ?? workflow.jobs['build-candidate'];
+      const text = JSON.stringify(job);
+      assert.doesNotMatch(
+        text,
+        /producer-root|personal-infrastructure-public|export_infra|export_pds|pip install|PDS_INFRA_PUBLIC_DEPLOY_KEY|PDS_CATALOG_DEPLOY_KEY|repository: BakerSean168\/personal-digital-system/,
+      );
+      const prepare = job.steps.find(
+        (step: { run?: string }) => step.run === 'pnpm sync:data-products',
+      );
+      assert.equal(prepare.env.GH_TOKEN, `\${{ steps.vault-token.outputs.token }}`);
+      const token = job.steps.find((step: { id?: string }) => step.id === 'vault-token');
+      assert.match(token.with.repositories, /personal-digital-system/);
+      assert.equal(token.with['permission-contents'], 'read');
+    }
+  });
+}
 
 test('actual workflow route command validates event/manual/reconcile before credentials and emits only registry policy', () => {
   const workflow = parse(read('sync-data-products.yml'));
@@ -98,7 +114,7 @@ test('actual workflow route command validates event/manual/reconcile before cred
   try {
     const eventPath = path.join(root, 'event.json');
     const outputPath = path.join(root, 'output');
-    for (const fixture of [knowledgeReleaseFixture, infraReleaseFixture]) {
+    for (const fixture of [knowledgeReleaseFixture, infraReleaseFixture, pdsReleaseFixture]) {
       const f = fixture();
       for (const mode of ['event', 'manual', 'reconcile']) {
         fs.writeFileSync(
@@ -146,7 +162,7 @@ test('actual workflow route command validates event/manual/reconcile before cred
       }
     }
     for (const product of [
-      'pds-catalog-v1',
+      'unknown',
       'digital-biome-private-infrastructure-v1',
       'infra-public-v2\nbranch=main',
     ]) {

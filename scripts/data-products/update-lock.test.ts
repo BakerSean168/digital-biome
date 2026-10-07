@@ -49,7 +49,7 @@ test('standard event, manual recovery and missed-dispatch reconciliation produce
   }
 });
 
-test('forged product/repository/source/tag and not-yet-enabled products fail before network', async () => {
+test('forged product/repository/source/tag and non-public products fail before network', async () => {
   for (const [key, value] of [
     ['product', 'unknown'],
     ['producer_repository', 'foreign/repo'],
@@ -66,11 +66,11 @@ test('forged product/repository/source/tag and not-yet-enabled products fail bef
     );
     assert.deepEqual(f.calls, []);
   }
-  for (const product of ['pds-catalog-v1']) {
-    assert.throws(() => parseSyncRequest('reconcile', { product }), /not yet enabled/);
+  for (const product of ['digital-biome-private-infrastructure-v1', 'unknown']) {
+    assert.throws(() => parseSyncRequest('reconcile', { product }), /Unknown public product/);
     assert.throws(
       () => parseSyncRequest('exact', { product, release_tag: `${product}-${'f'.repeat(40)}` }),
-      /not yet enabled/,
+      /Unknown public product/,
     );
   }
 });

@@ -62,11 +62,14 @@ test('the required check workflow runs for every pull request to main', () => {
   assert.match(ciWorkflow, / {2}workflow_dispatch:/);
 });
 
-test('main integration builds from immutable knowledge and infrastructure projections', () => {
-  assert.match(ciWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
-  assert.match(ciWorkflow, /prepare-knowledge-public-v1\.sh/);
-  assert.match(ciWorkflow, /Fetch and materialize pinned infra-public-v2/);
-  assert.match(ciWorkflow, /prepare-infra-public-v2\.sh/);
+test('main integration builds all immutable public products through one preparation entrypoint', () => {
+  assert.match(ciWorkflow, /Fetch and materialize all pinned public data products/);
+  assert.match(ciWorkflow, /pnpm sync:data-products/);
+  assert.equal(packageJson.scripts.sync, 'pnpm sync:data-products');
+  assert.equal(
+    packageJson.scripts['sync:data-products'],
+    'tsx scripts/data-products/prepare-all.ts',
+  );
   assert.doesNotMatch(
     ciWorkflow,
     /producer-root|personal-infrastructure-public|PDS_INFRA_PUBLIC_DEPLOY_KEY/,
@@ -76,10 +79,9 @@ test('main integration builds from immutable knowledge and infrastructure projec
   assert.match(candidateWorkflow, /workflows: \['CI'\]/);
   assert.match(candidateWorkflow, /branches: \[main\]/);
   assert.match(candidateWorkflow, /Build immutable Pages candidate/);
-  assert.match(candidateWorkflow, /Fetch and materialize pinned knowledge-public-v1/);
+  assert.match(candidateWorkflow, /Fetch and materialize all pinned public data products/);
   assert.match(candidateWorkflow, /ssh-key: \$\{\{ secrets\.PDS_INFRA_PUBLIC_DEPLOY_KEY \}\}/);
-  assert.match(candidateWorkflow, /Fetch and materialize pinned infra-public-v2/);
-  assert.match(candidateWorkflow, /prepare-infra-public-v2\.sh/);
+  assert.match(candidateWorkflow, /pnpm sync:data-products/);
   assert.doesNotMatch(candidateWorkflow, /producer-root|personal-infrastructure-public/);
   assert.match(candidateWorkflow, /knowledgeArtifactSha256/);
   assert.match(candidateWorkflow, /infra-public-v2\.lock\.json/);
@@ -150,23 +152,21 @@ test('infrastructure legacy sync is a manual alias to the single generic lock-on
   );
 });
 
-test('PDS catalog sync imports only the producer-owned thin projection through a protected PR', () => {
-  assert.match(pdsCatalogSyncWorkflow, /pds-catalog-v1-published/);
-  assert.match(pdsCatalogSyncWorkflow, /automation\/pds-catalog-v1-sync/);
-  assert.match(pdsCatalogSyncWorkflow, /BakerSean168\/personal-digital-system/);
-  assert.match(pdsCatalogSyncWorkflow, /ssh-key: \$\{\{ secrets\.PDS_CATALOG_DEPLOY_KEY \}\}/);
-  assert.match(pdsCatalogSyncWorkflow, /export_pds_catalog\.py/);
-  assert.match(pdsCatalogSyncWorkflow, /verify_pds_catalog\.py/);
-  assert.match(pdsCatalogSyncWorkflow, /jq -cS '\.payload'/);
+test('PDS legacy source-copy writer is retired in favor of the shared lock-only path', () => {
+  assert.match(pdsCatalogSyncWorkflow, /uses: \.\/\.github\/workflows\/sync-data-products\.yml/);
+  assert.match(pdsCatalogSyncWorkflow, /product: pds-catalog-v1/);
+  assert.match(pdsCatalogSyncWorkflow, /reconcile: true/);
+  for (const raw of [pdsCatalogSyncWorkflow, ciWorkflow, candidateWorkflow]) {
+    assert.doesNotMatch(
+      raw,
+      /export_pds_catalog|verify_pds_catalog|PDS_CATALOG_DEPLOY_KEY|repository: BakerSean168\/personal-digital-system|git add .*src\/data\/system/,
+    );
+  }
+  assert.match(fixture('.gitignore'), /^src\/data\/system\/pds-catalog-v1\.json$/m);
   assert.match(
-    pdsCatalogSyncWorkflow,
-    /git add data-products\/pds-catalog-v1\.lock\.json src\/data\/system\/pds-catalog-v1\.json/,
+    fixture('scripts/data-products/prepare-pds-catalog-v1.ts'),
+    /readPublicDataProductRelease/,
   );
-  assert.match(pdsCatalogSyncWorkflow, /gh pr create/);
-  assert.match(pdsCatalogSyncWorkflow, /actions: write/);
-  assert.match(pdsCatalogSyncWorkflow, /actions\/runs\/\$run_id\/approve/);
-  assert.match(pdsCatalogSyncWorkflow, /gh run watch "\$run_id"/);
-  assert.doesNotMatch(pdsCatalogSyncWorkflow, /catalog\/domains/);
 });
 
 test('Digital Biome no longer carries a Thought Forest gitlink', () => {

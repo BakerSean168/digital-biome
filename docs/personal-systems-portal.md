@@ -39,7 +39,9 @@ Global Search consumes the same launcher read model. Searching `litellm`, `twin`
 
 ## Sync model
 
-The public-safe PDS catalog is materialized into Digital Biome by an automation PR. The workflow checks out the private PDS repository using a read-only deploy key, runs the producer-owned exporter at an exact Git revision, verifies the digest, and commits only the generated public-safe artifact plus its lock. Normal Digital Biome builds therefore do not need access to the private PDS repository.
+Digital Biome tracks only `data-products/pds-catalog-v1.lock.json`, using the common public Protocol-v1 contract. `pnpm sync` / `pnpm sync:data-products`, CI and Candidate read the exact immutable Release with the public read-only GitHub App, verify tag/source/manifest/raw and semantic digests plus the existing PDS domain parser, then generate the ignored `src/data/system/pds-catalog-v1.json`. Consumer builds never check out PDS source or run its exporter.
+
+Standard events, manual recovery and scheduled reconciliation use the same generic verifier and fixed lock-only PR branch, with protected exact-head CI and manual merge. The legacy PDS workflow is a manual reconciliation alias only. See [consumer migration evidence and PR #120 supersession handoff](../scripts/data-products/README.md#pds-prepare-and-git-ownership-cutover-dpp-303307). Private RuntimeBinding credentials and `/systems` audience policy remain separate.
 
 ## Domain visibility policy
 

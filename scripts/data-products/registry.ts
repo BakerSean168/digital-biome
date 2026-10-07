@@ -23,7 +23,7 @@ export const publicDataProducts = Object.freeze([
   } as const),
   Object.freeze({
     product: 'pds-catalog-v1',
-    genericConsumption: false,
+    genericConsumption: true,
     producerRepository: 'BakerSean168/personal-digital-system',
     producer: 'pds://system/component/personal-digital-system',
     artifactName: 'pds-catalog-v1.json',
@@ -35,8 +35,7 @@ export const publicDataProducts = Object.freeze([
     lockPath: 'data-products/pds-catalog-v1.lock.json',
     buildTime: true,
     parseArtifact: parsePdsCatalogV1,
-    // DPP-304 will implement this writer; no new materialization path in Batch 1.
-    materializer: 'validated-json:src/data/system/pds-catalog-v1.json',
+    materializer: 'scripts/data-products/prepare-pds-catalog-v1.ts#preparePdsCatalogV1',
   } as const),
   Object.freeze({
     product: 'infra-public-v2',

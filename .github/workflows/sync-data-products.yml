@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       product:
-        description: Exact product ID (knowledge-public-v1 or infra-public-v2)
+        description: Exact product ID (knowledge-public-v1, pds-catalog-v1, or infra-public-v2)
         required: true
         type: string
       release_tag:

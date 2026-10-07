@@ -3,7 +3,7 @@ import test from 'node:test';
 import catalogData from '../../data/system/pds-catalog-v1.json';
 import { parsePdsCatalogV1 } from './pds-catalog-v1';
 
-test('tracked pds-catalog-v1 is a valid thin system catalog projection', () => {
+test('generated pds-catalog-v1 is a valid thin system catalog projection', () => {
   const catalog = parsePdsCatalogV1(JSON.stringify(catalogData));
   assert.equal(catalog.product, 'pds-catalog-v1');
   assert.ok(catalog.payload.summary.domainCount >= 6);

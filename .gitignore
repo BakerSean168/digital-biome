@@ -62,6 +62,9 @@ src/data/indexes/
 # Producer-owned infrastructure projection - materialized from pinned infra-public-v2
 src/data/infrastructure/infra-public-v2.json
 
+# Producer-owned PDS catalog - materialized from the pinned immutable Release
+src/data/system/pds-catalog-v1.json
+
 # Synced vault assets - generated at build time, do not commit
 public/vault-assets/
 

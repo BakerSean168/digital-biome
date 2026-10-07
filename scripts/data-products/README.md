@@ -1,10 +1,10 @@
-# Public Protocol-v1 consumer — knowledge + infra rollout
+# Public Protocol-v1 consumer — knowledge + infra + PDS
 
-The common protocol foundation supports three public products; **generic sync and
-prepare currently enable `knowledge-public-v1` and `infra-public-v2`**. PDS generic
-consumption/materialization remains disabled; its legacy workflow and PR #120 are
-unchanged. Private RuntimeBindings, Candidate provenance and production promotion
-are not cut over by this slice.
+Generic event/manual/reconciliation and prepare now enable `knowledge-public-v1`,
+`infra-public-v2` and `pds-catalog-v1`. Only their Protocol-v1 locks are tracked;
+producer projections are generated from verified immutable Releases.
+Private RuntimeBindings, Candidate provenance and production promotion are not
+cut over by this slice. Merge remains manual.
 
 ## Owners and trust boundaries
 
@@ -38,8 +38,9 @@ are not cut over by this slice.
 ## Knowledge prepare
 
 ```sh
-pnpm sync  # knowledge + infra prepare wrappers, sharing exact Release verification
-scripts/data-products/prepare-knowledge-public-v1.sh
+pnpm sync  # alias to sync:data-products: all three public products + consumer indexes
+pnpm sync:data-products
+scripts/data-products/prepare-knowledge-public-v1.sh  # product-specific recovery
 ```
 
 The knowledge lock delegates identity validation to `lock-v1.ts`, retaining its
@@ -64,18 +65,19 @@ the same Release reader. It does not perform downstream source/index generation.
 ## Workflows and activation
 
 - `sync-data-products.yml` alone listens to `data-product-published`. Manual recovery
-  requires `product` and exact `release_tag`. PDS remains not-yet-enabled; unknown
-  products/producers and private bindings are rejected.
+  requires `product` and exact `release_tag`. Unknown products/producers and private
+  bindings are rejected; all three public products use the same route/verifier.
 - `reconcile-data-products.yml` runs at `17 */6 * * *` and manually. Its knowledge +
-  infra matrix calls the same reusable sync workflow. Each product shares the same
+  PDS + infra matrix calls the same reusable sync workflow. Each product shares the same
   concurrency group across event/manual/reconcile, lock generator, fixed branch
   `automation/data-product-<product>`, and PR flow. One product's failure does not
   cancel the other's run.
 - A credential-free route step validates the request and emits registry-owned
   repository, branch and lock path. Producer reads use the existing short-lived
   `VAULT_APP_CLIENT_ID` / `VAULT_APP_PRIVATE_KEY` App with Contents Read on only the
-  selected producer. CI/Candidate read tokens need both Thought Forest and Personal
-  Infrastructure. The App installation must authorize these repositories before activation.
+  selected producer. CI/Candidate read tokens need Thought Forest, Personal
+  Infrastructure and Personal Digital System. The App installation must authorize
+  these repositories before activation. This is not the private binding credential.
 - Consumer writes use `GITHUB_TOKEN`. Since its pushes may suppress PR-triggered
   Actions, the workflow explicitly dispatches the existing protected `check.yml`
   at the fixed branch, waits for successful exact-head CI, and rechecks live PR
@@ -125,6 +127,130 @@ that workflow still passes the removed `--producer-root` option and its read App
 scope has not been expanded for infra Releases. Do not treat local/CI acceptance
 here as production readiness. No compatibility exporter path is retained in the
 new prepare implementation.
+
+## PDS prepare and Git-ownership cutover (DPP-303–307)
+
+`prepare-all.ts` is the `pnpm sync:data-products` entrypoint used by local sync,
+Check and Candidate. It validates all three lock/path identities before any
+network/write, passes one common Release transport to the product adapters, then
+runs the unchanged knowledge consumer sync/index pipeline. Each product retains
+its own domain parser. Atomicity is per product, not across all three or downstream
+knowledge indexes; a retry from the committed locks converges.
+
+`prepare-pds-catalog-v1.ts` parses the common lock and invokes the exact Release
+reader, including the existing `parsePdsCatalogV1` domain owner. It stages both
+Release assets beside `.pds-runtime/pds-catalog-v1` and stages the original artifact
+bytes beside `src/data/system/pds-catalog-v1.json` before replacement. The latter
+is the consumer adapter's read model: no reserialization, no producer checkout,
+no exporter, no working-tree copy. Application imports and `/systems` access
+policy are unchanged. The output is ignored and must be generated with `pnpm sync`
+before `pnpm check` / `pnpm build:only` on a fresh checkout.
+
+Verification, domain, staging and late output-rename failures preserve the previous
+accepted runtime/read model. Failed runtime restore retains a backup with its path
+in the error. Same-filesystem renames assume a single writer and do not provide a
+cross-file transaction over process death. Recovery is preparation from the lock,
+not restoring an independently writable projection copy.
+
+`sync-pds-catalog-v1.yml` is now only a manual alias to shared reconciliation. No
+schedule, legacy event, producer deploy key, exporter, projection commit or second
+PR branch remains in that workflow. The fixed branch is now
+`automation/data-product-pds-catalog-v1`; only
+`data-products/pds-catalog-v1.lock.json` may change. Exact-head protected CI and
+manual review/merge use the existing generic workflow without a PDS trust shortcut.
+
+### Independently verified historical migration
+
+Base: approved infra consumer `62bfdef4c6b71637cdc648debd211174c2dc6e87`.
+Re-downloaded PDS Release **402343236**, published `2026-10-03T05:22:11Z`:
+
+- Repository: `BakerSean168/personal-digital-system`
+- Tag: `pds-catalog-v1-21aceab6bd6c551bfae24f23a1637fe3847f5441`
+- Dereferenced tag commit: `21aceab6bd6c551bfae24f23a1637fe3847f5441`
+- Artifact: 13,630 bytes,
+  `sha256:8db2de75c98c058abb4ac558ded669d5b11b27e485396524e500e8c28db00196`
+- Manifest: 641 bytes,
+  `sha256:f93a6427980e68fc04a52bee7c9de5e3191ad7a96875e6c6bbc57d4bebcae635`
+- Semantic digest, recomputed independently in TypeScript and Python:
+  `sha256:75a6ba96f26a55d55498b847d5e436ed39462537e3d24b61f07ca9984590dcd9`
+
+The common reader verified the non-draft prerelease, tag commit, complete assets,
+manifest, source, domain and semantic identity. As with historical infra Releases,
+GitHub reports `immutable: false`; immutability here is exact tag + content pinning.
+The serialized lock was compared byte-for-byte with common-reader output, not
+assembled from an unverified notification or producer branch.
+
+Before `git rm --cached`, the adapter parity test passed against the still-tracked
+projection, proving byte and JSON equality and the independently fixed semantic
+fingerprint (7 domains, 22 repositories, 3 projections). No upstream projection
+fixture was committed elsewhere. The retained test replays the prepared historical
+Release and checks those fingerprints; after a future semantic lock update, its
+historical-only assertion skips while synthetic adapter/transport regressions and
+the current generated-lock check continue. Reproduce historical parity on this
+migration revision with `pnpm sync` then:
+
+```sh
+pnpm exec tsx --test scripts/data-products/prepare-pds-catalog-v1.test.ts
+pnpm exec tsx scripts/data-products/update-lock.ts shadow pds-catalog-v1 \
+  pds-catalog-v1-21aceab6bd6c551bfae24f23a1637fe3847f5441
+```
+
+Real historical bytes passed event/manual/reconcile byte-identical lock generation
+and no-op replay. Shared adversarial tests cover draft/incomplete/uploading,
+wrong tag target, tampered artifact/manifest, malformed newest publication,
+wrong product/producer events, digest claims, same-tag drift and foreign-owned
+lock paths. A synthetic newer-main-with-no-Release regression rejects any main
+lookup. Late output installation failure restores prior state and retry converges.
+
+**Live latest differs from the migration baseline:** reconciliation also verified
+Release **404396246**, published `2026-10-06T06:41:00Z`, at
+`pds-catalog-v1-7e9033ac85afd1717d2ed095fd0dd0f9071c4739`.
+Producer main was that revision when observed. This is not a live example of main
+being newer than the latest Release; that failure mode is simulated in regression.
+The newer publication is intentionally not adopted in this parity-preserving
+cutover. Its future lock-only PR is a separate manual review.
+
+Producer Protocol-v1 PR #16 was observed **open/unmerged** at
+`ee3a5fdd49029646a34343754792cdfef299a2b9`; it is protocol reference, not deployment
+or publication authority. Hosted standard dispatch, fixed-branch refresh and
+exact-head CI remain activation evidence to obtain after independent review and
+merge, not claims established by these local tests.
+
+### PR #120 supersession handoff — no remote mutation
+
+Digital Biome PR #120 was observed open/unmerged on
+`automation/pds-catalog-v1-sync` at `7552ce6d5ee3154f9dfba54bc155701360be2b02`.
+This worker did not push, update, close or merge it. Its projection-copy + legacy
+lock contract is retired by this cutover. After independent review/merge, the
+maintainer should supersede/close #120, never merge its tracked JSON/legacy lock
+onto this consumer, then run shared reconciliation for the newer Release and
+review the resulting one-lock PR. Retiring the old source writer is essential:
+rollback is application/source rollback, not re-enabling a second source of truth.
+
+No auto-merge, provenance v5, content delivery or production workflow changes are
+included. The previously documented production revalidation blocker remains.
+
+### Local verification for this cutover
+
+| Command / evidence | Result |
+| --- | --- |
+| Historical Release download + independent Python raw/semantic hashes + base Git blob comparison | PASS |
+| Adapter parity suite **before** retiring tracked JSON | 7 passed |
+| `pnpm exec tsx --test scripts/data-products/*.test.ts scripts/verification-contract.test.ts` | 138 passed, no skips |
+| `pnpm sync` (also repeated after deleting generated PDS output) | PASS; recreated byte-identical historical PDS read model |
+| `pnpm verify:data-products:pds:lock` | 4 passed |
+| `pnpm exec tsx --test src/domain/system/*.test.ts src/config/personal-systems-access.test.ts src/utils/personal-systems.test.ts` | 9 passed |
+| `pnpm check` | 232 files; 0 errors, warnings or hints |
+| `pnpm test:infrastructure` | 205 passed, 1 existing private-binding coverage skip |
+| `pnpm verify:full` | PASS: quality, Astro/edge checks, 34 edge + 115 unit + 205 infrastructure tests |
+| Build / Pagefind / postbuild / performance (in `verify:full`) | 3,766 pages built and indexed; boundary/pruning and all budgets passed |
+| `git diff --check` | PASS |
+
+The one skip is `private RuntimeBinding covers every privateRef exported by
+infra-public-v2`: no private binding was materialized in this public-only worker.
+No private credentials or production environment were accessed. App installation
+scope for hosted public reads and real dispatch/PR/CI activation must still be
+verified after review; local CLI reads used the existing `gh` credential.
 
 ## Live shadow evidence (2026-10-06)
 

@@ -1,152 +1,18 @@
-name: Sync pds-catalog-v1
+name: Reconcile pds-catalog-v1 (manual alias)
 
+# Legacy source-copy writer retired. PR #120 is superseded only after independent review.
 on:
-  schedule:
-    - cron: '23 * * * *'
   workflow_dispatch:
-  repository_dispatch:
-    types: [pds-catalog-v1-published]
 
 permissions:
-  actions: write
   contents: write
   pull-requests: write
-
-concurrency:
-  group: sync-pds-catalog-v1
-  cancel-in-progress: false
-
-env:
-  SYNC_BRANCH: automation/pds-catalog-v1-sync
+  actions: write
 
 jobs:
-  sync:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Checkout Personal Digital System producer
-        uses: actions/checkout@v4
-        with:
-          repository: BakerSean168/personal-digital-system
-          ref: main
-          ssh-key: ${{ secrets.PDS_CATALOG_DEPLOY_KEY }}
-          path: .pds-runtime/personal-digital-system
-          fetch-depth: 1
-      - name: Build producer-owned public catalog
-        id: projection
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check PyYAML jsonschema >/dev/null
-          producer=.pds-runtime/personal-digital-system
-          python "$producer/scripts/export_pds_catalog.py"
-          python "$producer/scripts/verify_pds_catalog.py"
-          artifact="$producer/generated/pds-catalog-v1.json"
-          source_sha="$(git -C "$producer" rev-parse HEAD)"
-          artifact_sha="sha256:$(sha256sum "$artifact" | cut -d ' ' -f 1)"
-          current=src/data/system/pds-catalog-v1.json
-          changed=true
-          if [ -f "$current" ]; then
-            current_semantic="$(jq -cS '.payload' "$current" | sha256sum | cut -d ' ' -f 1)"
-            next_semantic="$(jq -cS '.payload' "$artifact" | sha256sum | cut -d ' ' -f 1)"
-            if [ "$current_semantic" = "$next_semantic" ]; then changed=false; fi
-          fi
-          {
-            echo "changed=$changed"
-            echo "source_sha=$source_sha"
-            echo "artifact_sha=$artifact_sha"
-          } >> "$GITHUB_OUTPUT"
-          if [ "$changed" = true ]; then
-            mkdir -p src/data/system
-            cp "$artifact" "$current"
-            jq -n \
-              --arg source "$source_sha" \
-              --arg digest "$artifact_sha" \
-              '{product:"pds-catalog-v1",producerRepository:"BakerSean168/personal-digital-system",sourceRevision:$source,artifact:{path:"generated/pds-catalog-v1.json",sha256:$digest}}' \
-              > data-products/pds-catalog-v1.lock.json
-          fi
-      - name: Verify consumer contract
-        if: steps.projection.outputs.changed == 'true'
-        run: |
-          corepack enable
-          pnpm install --frozen-lockfile
-          pnpm exec tsx --test scripts/data-products/pds-catalog-v1-lock.test.ts src/domain/system/pds-catalog-v1.test.ts
-      - name: Commit projection update
-        if: steps.projection.outputs.changed == 'true'
-        env:
-          SOURCE_SHA: ${{ steps.projection.outputs.source_sha }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git checkout -B "$SYNC_BRANCH"
-          git add data-products/pds-catalog-v1.lock.json src/data/system/pds-catalog-v1.json
-          git commit -m "chore(data): update pds-catalog-v1 to ${SOURCE_SHA:0:12}"
-          git push --force-with-lease origin "$SYNC_BRANCH"
-      - name: Create or refresh sync PR
-        if: steps.projection.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_SHA: ${{ steps.projection.outputs.source_sha }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          open_pr="$(gh pr list --head "$SYNC_BRANCH" --base main --state open --json number --jq '.[0].number // empty')"
-          if [ -n "$open_pr" ]; then
-            gh pr edit "$open_pr" --title "chore(data): update pds-catalog-v1 to ${SOURCE_SHA:0:12}" >/dev/null
-            exit 0
-          fi
-          gh pr create \
-            --base main \
-            --head "$SYNC_BRANCH" \
-            --title "chore(data): update pds-catalog-v1 to ${SOURCE_SHA:0:12}" \
-            --body "Updates the public-safe Personal Digital System catalog projection from exact producer revision \`$SOURCE_SHA\`. Digital Biome remains a presentation consumer; PDS remains the system boundary owner."
-      - name: Wait for protected sync PR CI
-        if: steps.projection.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          head_sha="$(git ls-remote origin "refs/heads/$SYNC_BRANCH" | awk '{print $1}')"
-          test -n "$head_sha" || {
-            echo 'generated sync branch is missing from origin' >&2
-            exit 1
-          }
-
-          run_id=
-          conclusion=
-          for attempt in $(seq 1 30); do
-            run_json="$(gh run list \
-              --repo "$GITHUB_REPOSITORY" \
-              --workflow check.yml \
-              --branch "$SYNC_BRANCH" \
-              --event pull_request \
-              --limit 10 \
-              --json databaseId,headSha,status,conclusion)"
-            run_id="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].databaseId // empty' <<<"$run_json")"
-            conclusion="$(jq -r --arg sha "$head_sha" '[.[] | select(.headSha == $sha)][0].conclusion // empty' <<<"$run_json")"
-            [ -n "$run_id" ] && break
-            sleep 2
-          done
-
-          test -n "$run_id" || {
-            echo 'protected pull_request CI run did not appear for the generated PDS sync commit' >&2
-            exit 1
-          }
-
-          if [ "$conclusion" = action_required ]; then
-            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/approve" > /dev/null
-          fi
-
-          gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
-
-      - name: No semantic change
-        if: steps.projection.outputs.changed != 'true'
-        run: echo "pds-catalog-v1 already matches the latest semantic producer catalog."
+  reconcile:
+    uses: ./.github/workflows/sync-data-products.yml
+    with:
+      product: pds-catalog-v1
+      reconcile: true
+    secrets: inherit

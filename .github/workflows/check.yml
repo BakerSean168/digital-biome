@@ -51,6 +51,7 @@ jobs:
             digital-biome
             thought-forest
             personal-infrastructure
+            personal-digital-system
           permission-contents: read
 
       - name: Checkout
@@ -71,15 +72,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Fetch and materialize pinned knowledge-public-v1
+      - name: Fetch and materialize all pinned public data products
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
-        run: scripts/data-products/prepare-knowledge-public-v1.sh
-
-      - name: Fetch and materialize pinned infra-public-v2
-        env:
-          GH_TOKEN: ${{ steps.vault-token.outputs.token }}
-        run: scripts/data-products/prepare-infra-public-v2.sh
+        run: pnpm sync:data-products
 
       - name: Run verification and production build gates
         env:

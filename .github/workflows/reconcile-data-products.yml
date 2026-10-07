@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        product: [knowledge-public-v1, infra-public-v2]
+        product: [knowledge-public-v1, pds-catalog-v1, infra-public-v2]
     uses: ./.github/workflows/sync-data-products.yml
     with:
       product: ${{ matrix.product }}
