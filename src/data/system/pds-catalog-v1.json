@@ -6,7 +6,7 @@
   "producer": "pds://system/component/personal-digital-system",
   "source": {
     "repository": "https://github.com/BakerSean168/personal-digital-system.git",
-    "revision": "21aceab6bd6c551bfae24f23a1637fe3847f5441"
+    "revision": "7e9033ac85afd1717d2ed095fd0dd0f9071c4739"
   },
   "payload": {
     "domains": [
@@ -29,6 +29,13 @@
             "metadataState": "present"
           },
           {
+            "id": "personal-context",
+            "relation": "canonical",
+            "webUrl": "https://github.com/BakerSean168/personal-context",
+            "lifecycle": "active",
+            "metadataState": "present"
+          },
+          {
             "id": "dev-environment",
             "relation": "archived",
             "webUrl": "https://github.com/BakerSean168/dev-environment",
@@ -39,7 +46,8 @@
         "owns": [
           "local-agent-capability-composition",
           "reusable-agent-skills",
-          "distributed-capability-transport"
+          "distributed-capability-transport",
+          "portable-cross-session-context"
         ]
       },
       {
@@ -364,6 +372,14 @@
         "metadataState": "present"
       },
       {
+        "id": "personal-context",
+        "domainId": "agent-platform",
+        "relation": "canonical",
+        "webUrl": "https://github.com/BakerSean168/personal-context",
+        "lifecycle": "active",
+        "metadataState": "present"
+      },
+      {
         "id": "personal-infrastructure",
         "domainId": "infrastructure",
         "relation": "canonical",
@@ -438,7 +454,7 @@
     ],
     "summary": {
       "domainCount": 7,
-      "repositoryCount": 22,
+      "repositoryCount": 23,
       "projectionCount": 3
     }
   }
