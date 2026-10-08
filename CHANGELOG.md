@@ -5,6 +5,12 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.10.3](https://github.com/BakerSean168/digital-biome/compare/v0.10.2...v0.10.3) (2026-10-08)
+
+### Bug Fixes
+
+* **brand:** publish the finalized Emergent v22q favicon and site logo, with Digital Biome and Thought Forest brand assets ([e53871a](https://github.com/BakerSean168/digital-biome/commit/e53871a1288a722164be93326d14fafa60644a8f)).
+
 ## [0.10.2](https://github.com/BakerSean168/digital-biome/compare/v0.10.1...v0.10.2) (2026-10-07)
 
 
