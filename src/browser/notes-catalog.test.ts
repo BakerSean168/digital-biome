@@ -47,6 +47,13 @@ test('rejects HTTP, malformed JSON, and malformed catalog payloads', async () =>
   assert.throws(() => parseNoteCatalogPayload([note(1), { id: 'broken' }]), /malformed/);
 });
 
+test('reconstructs omitted derived href and still accepts legacy catalogs', () => {
+  const original = note(7);
+  const { href: _derivedHref, ...transport } = original;
+  assert.deepEqual(parseNoteCatalogPayload([transport]), [original]);
+  assert.deepEqual(parseNoteCatalogPayload([original]), [original]);
+});
+
 test('deferred catalog orchestration is lazy, single-flight, and retryable', async () => {
   let requestCount = 0;
   const fetcher = async () => {

@@ -1,4 +1,5 @@
 import type { NoteCatalogItem } from '../view-models/note-list-item';
+import { buildKnowledgeNoteHref } from '../domain/note-routing';
 
 export const NOTES_BATCH_SIZE = 12;
 
@@ -14,12 +15,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isNoteCatalogItem(value: unknown): value is NoteCatalogItem {
+type NoteCatalogTransportItem = Omit<NoteCatalogItem, 'href'> & { href?: string };
+
+function isNoteCatalogItem(value: unknown): value is NoteCatalogTransportItem {
   return isRecord(value)
     && typeof value.id === 'string'
     && typeof value.title === 'string'
     && typeof value.description === 'string'
-    && typeof value.href === 'string'
+    && (value.href === undefined || typeof value.href === 'string')
     && Array.isArray(value.tags)
     && value.tags.every(tag => typeof tag === 'string')
     && typeof value.date === 'string'
@@ -30,7 +33,10 @@ export function parseNoteCatalogPayload(payload: unknown): NoteCatalogItem[] {
   if (!Array.isArray(payload) || !payload.every(isNoteCatalogItem)) {
     throw new Error('Notes catalog response was malformed.');
   }
-  return payload;
+  return payload.map((note) => ({
+    ...note,
+    href: note.href ?? buildKnowledgeNoteHref(note.id),
+  }));
 }
 
 export async function fetchNotesCatalog(
