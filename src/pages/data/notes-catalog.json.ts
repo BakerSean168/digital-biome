@@ -6,7 +6,7 @@ export const prerender = true;
 
 export const GET: APIRoute = async () => {
   const notes = await getPublicNotes();
-  const catalog = sortNoteCatalog(notes.map(note => toNoteCatalogItem(note)));
+  const catalog = sortNoteCatalog(notes.map((note) => toNoteCatalogItem(note)));
 
   // The browser reconstructs note hrefs from ids; transmitting both repeats
   // a deterministic path for every entry in the large, lazy-loaded catalog.

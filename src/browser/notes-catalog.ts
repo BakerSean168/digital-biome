@@ -18,15 +18,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 type NoteCatalogTransportItem = Omit<NoteCatalogItem, 'href'> & { href?: string };
 
 function isNoteCatalogItem(value: unknown): value is NoteCatalogTransportItem {
-  return isRecord(value)
-    && typeof value.id === 'string'
-    && typeof value.title === 'string'
-    && typeof value.description === 'string'
-    && (value.href === undefined || typeof value.href === 'string')
-    && Array.isArray(value.tags)
-    && value.tags.every(tag => typeof tag === 'string')
-    && typeof value.date === 'string'
-    && (typeof value.timestamp === 'number' || value.timestamp === null);
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.title === 'string' &&
+    typeof value.description === 'string' &&
+    (value.href === undefined || typeof value.href === 'string') &&
+    Array.isArray(value.tags) &&
+    value.tags.every((tag) => typeof tag === 'string') &&
+    typeof value.date === 'string' &&
+    (typeof value.timestamp === 'number' || value.timestamp === null)
+  );
 }
 
 export function parseNoteCatalogPayload(payload: unknown): NoteCatalogItem[] {
@@ -39,9 +41,7 @@ export function parseNoteCatalogPayload(payload: unknown): NoteCatalogItem[] {
   }));
 }
 
-export async function fetchNotesCatalog(
-  fetcher: typeof fetch = fetch,
-): Promise<NoteCatalogItem[]> {
+export async function fetchNotesCatalog(fetcher: typeof fetch = fetch): Promise<NoteCatalogItem[]> {
   const response = await fetcher('/data/notes-catalog.json', {
     cache: 'no-store',
   });
@@ -59,11 +59,11 @@ export function createNotesCatalogLoader(
     if (catalog) return Promise.resolve(catalog);
     if (!request) {
       request = fetchNotesCatalog(fetcher)
-        .then(notes => {
+        .then((notes) => {
           catalog = notes;
           return notes;
         })
-        .catch(error => {
+        .catch((error) => {
           request = null;
           throw error;
         });
