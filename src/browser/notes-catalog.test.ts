@@ -26,8 +26,11 @@ test('starts the first catalog-backed batch after the SSR boundary', () => {
   const nextBatch = getNextNoteBatch(catalog, initial.length);
 
   assert.equal(nextBatch.length, 12);
-  assert.deepEqual(nextBatch.map(item => item.id), Array.from({ length: 12 }, (_, index) => `obsidian/note-${index + 12}`));
-  assert.equal(new Set([...initial, ...nextBatch].map(item => item.id)).size, 24);
+  assert.deepEqual(
+    nextBatch.map((item) => item.id),
+    Array.from({ length: 12 }, (_, index) => `obsidian/note-${index + 12}`),
+  );
+  assert.equal(new Set([...initial, ...nextBatch].map((item) => item.id)).size, 24);
 });
 
 test('rejects HTTP, malformed JSON, and malformed catalog payloads', async () => {
@@ -41,10 +44,26 @@ test('rejects HTTP, malformed JSON, and malformed catalog payloads', async () =>
   );
   assert.deepEqual(requestInit, { cache: 'no-store' });
   await assert.rejects(
-    fetchNotesCatalog(async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('invalid JSON'); } }) as unknown as Response),
+    fetchNotesCatalog(
+      async () =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () => {
+            throw new SyntaxError('invalid JSON');
+          },
+        }) as unknown as Response,
+    ),
     /invalid JSON/,
   );
   assert.throws(() => parseNoteCatalogPayload([note(1), { id: 'broken' }]), /malformed/);
+});
+
+test('reconstructs omitted derived href and still accepts legacy catalogs', () => {
+  const original = note(7);
+  const { href: _derivedHref, ...transport } = original;
+  assert.deepEqual(parseNoteCatalogPayload([transport]), [original]);
+  assert.deepEqual(parseNoteCatalogPayload([original]), [original]);
 });
 
 test('deferred catalog orchestration is lazy, single-flight, and retryable', async () => {

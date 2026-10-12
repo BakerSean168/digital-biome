@@ -33,6 +33,12 @@ test('published resource curation reaches the catalog and visible browser', asyn
   await page.goto('/tools/?ui=tui#external');
   await expect(page.locator(`${browser} [data-object-row] strong`).nth(1)).toHaveText('ChatGPT');
   await page.locator(query).fill('Google Stitch');
+  // Curated ordering may put a resource mentioning Stitch before its title match.
+  const stitchRow = page
+    .locator('[data-object-browser]:visible [data-object-row]')
+    .filter({ has: page.locator('[data-object-title]', { hasText: /^Google Stitch$/ }) });
+  await expect(stitchRow).toBeVisible();
+  await stitchRow.click();
   await expect(page.locator(`${browser} [data-object-open]`)).toHaveAttribute(
     'href',
     'https://stitch.withgoogle.com/',
