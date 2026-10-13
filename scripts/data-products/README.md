@@ -78,12 +78,16 @@ the same Release reader. It does not perform downstream source/index generation.
   selected producer. CI/Candidate read tokens need Thought Forest, Personal
   Infrastructure and Personal Digital System. The App installation must authorize
   these repositories before activation. This is not the private binding credential.
-- Consumer writes use `GITHUB_TOKEN`. Since its pushes may suppress PR-triggered
-  Actions, the workflow explicitly dispatches the existing protected `check.yml`
-  at the fixed branch, waits for successful exact-head CI, and rechecks live PR
-  head identity. Timeouts, CI failure and head movement fail closed. The opt-in
-  auto-merge path additionally verifies bot/workflow provenance, complete lock-only
-  changes, required checks and the live immutable Release before an expected-SHA merge.
+- Consumer writes use `GITHUB_TOKEN` rather than expanding the read-only Vault
+  App or retaining a broad PAT. GitHub places the resulting `pull_request` CI in
+  `action_required`; the sync job verifies the exact bot-authored, single-lock,
+  fixed-branch PR, associated head SHA, run author and `check.yml` provenance
+  before attempting narrowly scoped Actions approval. It then waits for the
+  actual required `pull_request` check and revalidates the PR head. A passing
+  `workflow_dispatch` run is **not** a substitute for branch protection.
+  Missing permission, unapproved CI, failure, timeout, or head movement fail
+  closed. Opt-in auto-merge additionally verifies the immutable Release and
+  performs an expected-SHA merge only after GitHub required checks pass.
 - `sync-knowledge-public-v1.yml` retains its legacy event/manual inputs and branch
   for rollback. Its final lock generation now also verifies through the common
   reader so it cannot downgrade the Protocol-v1 lock. Avoid dual legacy/standard

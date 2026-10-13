@@ -95,6 +95,14 @@ L. production smoke
 
 只有前一步正确，才继续追后一步。
 
+**PR CI 特例（2026-10）**：由 `GITHUB_TOKEN` 创建的数据锁 PR 会产生
+`action_required` 的 `pull_request` CI。消费者只能在校验 GitHub Actions
+来源、固定数据锁分支、单文件差异、PR 编号和精确 SHA 后尝试批准该运行。
+必须等待该 `pull_request` 工作流的必需检查通过；即使同一 SHA 的
+`workflow_dispatch` CI 成功，也不能视为 PR Required Check。
+若 GitHub 拒绝自动批准，应保持 PR 未合并并排查 Actions 权限，
+**不要**关闭分支保护或直接以手动 CI 成功取代。
+
 ## 5. Scenario A — Producer merge 后 Digital Biome 完全没动
 
 ### 判断

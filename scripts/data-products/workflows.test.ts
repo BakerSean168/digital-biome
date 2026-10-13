@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { parse } from 'yaml';
-import { publicDataProducts } from './registry';
-import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
 import { infraReleaseFixture } from './fixtures/infra-release';
+import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
 import { pdsReleaseFixture } from './fixtures/pds-release';
+import { publicDataProducts } from './registry';
 
 const root = new URL('../../.github/workflows/', import.meta.url);
 const read = (name: string) => fs.readFileSync(new URL(name, root), 'utf8');
@@ -50,9 +50,15 @@ test('only generic sync handles the standard event, with manual exact recovery a
   assert.match(raw, /update-lock\.ts "\$MODE" "\$PRODUCT"/);
   assert.match(raw, /git add -- "\$LOCK_PATH"/);
   assert.match(raw, /--force-with-lease=/);
-  assert.match(raw, /gh workflow run check\.yml/);
+  assert.doesNotMatch(raw, /gh workflow run check\.yml/);
+  assert.match(raw, /--event pull_request/);
+  assert.match(raw, /approve-pr-ci\.ts/);
   assert.match(raw, /select\(\.headSha ==/);
-  assert.match(raw, /\.headSha == \$sha and \.conclusion == "success"/);
+  assert.match(
+    raw,
+    /\.headSha == \$sha and \.conclusion == "success" and \.event == "pull_request"/,
+  );
+  assert.match(raw, /gh pr checks "\$PR_NUMBER" --repo "\$GITHUB_REPOSITORY" --required/);
   assert.match(raw, /headRefOid/);
   assert.doesNotMatch(
     raw,

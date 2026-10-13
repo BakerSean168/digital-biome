@@ -1,10 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertRecord, parsePublicDataProductLock } from './lock-v1';
 import { assertTrustedLockPullRequest } from '../delivery/content-policy';
-import { createGitHubReleaseTransport } from './github-release-transport';
 import { readPublicDataProductRelease } from './fetch-release';
+import { createGitHubReleaseTransport } from './github-release-transport';
+import { assertRecord, parsePublicDataProductLock } from './lock-v1';
+import { assertTrustedPRCheckRun } from './pr-ci-evidence';
 
 const repository = 'BakerSean168/digital-biome';
 function gh(args: string[]) {
@@ -53,19 +54,8 @@ async function main() {
   const files = api(`pulls/${number}/files?per_page=100`);
   const definition = assertTrustedLockPullRequest(pr, files, sha, product);
   const run = api(`actions/runs/${runId}`);
-  assertRecord(run, 'CI run');
-  assertRecord(run.repository, 'CI repository');
-  if (
-    run.repository.full_name !== repository ||
-    run.name !== 'CI' ||
-    run.path !== '.github/workflows/check.yml' ||
-    run.event !== 'workflow_dispatch' ||
-    run.head_branch !== `automation/data-product-${product}` ||
-    run.head_sha !== sha ||
-    run.status !== 'completed' ||
-    run.conclusion !== 'success'
-  )
-    throw new Error('CI does not prove the exact protected PR head');
+  if (assertTrustedPRCheckRun(run, Number(number), sha, product) !== 'success')
+    throw new Error('The actual required pull_request CI has not succeeded');
   const lock = parsePublicDataProductLock(
     JSON.parse(
       execFileSync('git', ['show', `${sha}:${definition.lockPath}`], {
