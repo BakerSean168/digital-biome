@@ -139,33 +139,38 @@ jobs:
           echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
           echo "number=$pr" >> "$GITHUB_OUTPUT"
 
-      - name: Wait for exact-head protected CI
+      - name: Wait for exact-head protected pull_request CI
         id: ci
         if: steps.lock.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
+          PRODUCT: ${{ steps.route.outputs.product }}
           SYNC_BRANCH: ${{ steps.route.outputs.branch }}
         run: |
           set -euo pipefail
-          # GITHUB_TOKEN pushes/PRs do not reliably emit pull_request runs. Explicitly
-          # dispatch the existing protected check.yml, not a second CI/gate workflow.
-          gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$SYNC_BRANCH"
+          # GITHUB_TOKEN-created PRs generate an approval-required pull_request
+          # run. A workflow_dispatch run at the same head SHA cannot satisfy the
+          # branch's required check. Only the real PR event is eligible.
           run_id=''
           for _attempt in $(seq 1 60); do
             test "$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$HEAD_SHA"
-            run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow check.yml --branch "$SYNC_BRANCH" --event workflow_dispatch --limit 20 --json databaseId,headSha --jq ".[] | select(.headSha == \"$HEAD_SHA\") | .databaseId" | head -n 1)"
+            run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow check.yml --branch "$SYNC_BRANCH" --event pull_request --limit 30 --json databaseId,headSha --jq ".[] | select(.headSha == \"$HEAD_SHA\") | .databaseId" | head -n 1)"
             [ -n "$run_id" ] && break
             sleep 5
           done
-          test -n "$run_id" || { echo 'Exact-head protected CI did not appear' >&2; exit 1; }
+          test -n "$run_id" || { echo 'Required pull_request CI did not appear' >&2; exit 1; }
+          # The approver verifies bot identity, event, fixed branch, lock-only PR,
+          # exact head and PR number. Approval API failures remain blocking.
+          CI_RUN_ID="$run_id" pnpm exec tsx scripts/data-products/approve-pr-ci.ts
           timeout 35m gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
           gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json headSha,conclusion,event > "$RUNNER_TEMP/ci-result.json"
-          jq -e --arg sha "$HEAD_SHA" '.headSha == $sha and .conclusion == "success" and .event == "workflow_dispatch"' "$RUNNER_TEMP/ci-result.json"
+          jq -e --arg sha "$HEAD_SHA" '.headSha == $sha and .conclusion == "success" and .event == "pull_request"' "$RUNNER_TEMP/ci-result.json"
           test "$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$HEAD_SHA"
+          gh pr checks "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --required
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
-          echo "Exact-head CI passed for PR #$PR_NUMBER at $HEAD_SHA." >> "$GITHUB_STEP_SUMMARY"
+          echo "Required pull_request CI passed for PR #$PR_NUMBER at $HEAD_SHA." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Merge only a trusted verified public lock update
         if: steps.lock.outputs.changed == 'true' && vars.DATA_PRODUCT_AUTO_MERGE_ENABLED == 'true'
