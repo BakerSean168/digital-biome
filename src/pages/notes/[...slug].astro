@@ -3,6 +3,7 @@ import { render } from 'astro:content';
 import NotesLayout from '../../layouts/NotesLayout.astro';
 import { getPublicKnowledgeNoteEntries } from '../../utils/notes';
 import { toRouteSlug } from '../../domain/note-routing';
+import { formatArchiveMonth } from '../../domain/blog/archive-month';
 import type { NoteCollectionEntry } from '../../types/notes';
 
 export const prerender = true;
@@ -25,6 +26,9 @@ const slug = entry.id;
 
 const { Content, headings } = await render(entry);
 const { title, description, tags, created, updated } = entry.data;
+const archiveLabel = slug.startsWith('obsidian/blogs/')
+  ? formatArchiveMonth(entry.data.archive_month)
+  : undefined;
 ---
 
 <NotesLayout title={title} description={description || ''} headings={headings} currentSlug={slug}>
@@ -35,6 +39,11 @@ const { title, description, tags, created, updated } = entry.data;
     >
       ← [ BACK_TO_NOTES ]
     </a>
+    {archiveLabel && (
+      <p class="font-mono text-xs text-muted-foreground mb-3">
+        {archiveLabel}（编辑分组，非实际写作日期）
+      </p>
+    )}
     <h1 class="text-3xl font-bold mb-2 text-foreground">{title}</h1>
     {description && <p class="text-muted-foreground m-0">{description}</p>}
   </header>

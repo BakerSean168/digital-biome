@@ -123,6 +123,43 @@ test('fails closed on contract identity or publication-boundary drift', () => {
   );
 });
 
+test('retrospective blog archive month survives the public projection and site index', () => {
+  const value = fixture();
+  const note = value.payload.notes[0];
+  note.id = 'blog/reflection';
+  note.collection = 'blog';
+  note.sourcePath = 'blogs/reflection.md';
+  note.slug = 'reflection';
+  note.archiveMonth = '2026-05';
+  note.created = '2026-10-16T15:05:00+08:00';
+  note.updated = '2026-10-16T16:07:00+08:00';
+  note.markdown =
+    '---\ntitle: Reflection\narchive_month: "2026-05"\ncreated: 2026-10-16T15:05:00+08:00\nupdated: 2026-10-16T16:07:00+08:00\n---\nPersonal note.\n';
+  value.payload.linkGraph[0].sourceId = note.id;
+  assert.equal(
+    parseKnowledgePublicV1(JSON.stringify(value)).payload.notes[0].archiveMonth,
+    '2026-05',
+  );
+
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'knowledge-blog-month-consumer-'));
+  try {
+    const materialized = materializeKnowledgePublicV1Source(value, path.join(root, 'source'));
+    const output = path.join(root, 'local-index');
+    buildIndexes(path.join(materialized.sourceRoot, 'blogs'), output);
+    const index = JSON.parse(fs.readFileSync(path.join(output, 'notes-index.json'), 'utf8'));
+    assert.equal(index.entries[0].archiveMonth, '2026-05');
+    assert.equal(new Date(index.entries[0].created).toISOString(), '2026-10-16T07:05:00.000Z');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+
+  note.archiveMonth = '2026-13';
+  assert.throws(() => parseKnowledgePublicV1(JSON.stringify(value)), /archiveMonth/);
+  note.archiveMonth = '2026-05';
+  note.collection = 'knowledge';
+  assert.throws(() => parseKnowledgePublicV1(JSON.stringify(value)), /archiveMonth/);
+});
+
 test('materializes a projection as an isolated legacy-compatible sync source', () => {
   const value = fixture();
   const media = Buffer.from('public-image');

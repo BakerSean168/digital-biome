@@ -26,6 +26,7 @@ const notes = defineCollection({
       tags: optionalStringArray(),
       created: optionalDate(),
       updated: optionalDate(),
+      archive_month: optionalString(),
       draft: optionalBooleanish().default(false),
       private: optionalBooleanish().default(false),
       visibility: z.enum(['public', 'private', 'internal']).nullable().optional(),
@@ -119,6 +120,7 @@ const notes = defineCollection({
       parent_asset_id: data.parent_asset_id ?? undefined,
       created: data.created ? new Date(data.created) : undefined,
       updated: data.updated ? new Date(data.updated) : undefined,
+      archive_month: data.archive_month ?? undefined,
       homepage: data.homepage
         ? {
             ...data.homepage,
