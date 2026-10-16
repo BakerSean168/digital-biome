@@ -5,6 +5,25 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.11.0](https://github.com/BakerSean168/digital-biome/compare/v0.10.3...v0.11.0) (2026-10-16)
+
+
+### Features
+
+* **blog:** support retrospective archive months in blog timelines ([#151](https://github.com/BakerSean168/digital-biome/issues/151)) ([3b4b625](https://github.com/BakerSean168/digital-biome/commit/3b4b625a455571925c895eb356e55409ac27e828))
+
+
+### Bug Fixes
+
+* **brand:** restore spacing in emergent mark ([0facd15](https://github.com/BakerSean168/digital-biome/commit/0facd1535bc3dddcb399e0b00bd8dba1733fe753))
+* **data:** gate auto-merge on real protected pull request CI ([9496fc8](https://github.com/BakerSean168/digital-biome/commit/9496fc891eb37b263276d66d5356e8ec9fe9fffe))
+* **data:** use real PR required CI for trusted lock auto-merge ([12189af](https://github.com/BakerSean168/digital-biome/commit/12189af1a85499481f049340710e90a1d7cd3bdd))
+
+
+### Performance Improvements
+
+* **knowledge:** deduplicate notes href in transport and sync published data locks ([6a4016c](https://github.com/BakerSean168/digital-biome/commit/6a4016c4c83e038bbdcf2675696e055b2bce9916))
+
 ## [0.10.3](https://github.com/BakerSean168/digital-biome/compare/v0.10.2...v0.10.3) (2026-10-08)
 
 ### Bug Fixes
