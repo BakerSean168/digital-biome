@@ -1,4 +1,5 @@
 import { getBlogPosts } from './blogs-repository';
+import { formatArchiveMonth } from '../domain/blog/archive-month';
 import { getBookmarks } from './bookmarks-repository';
 import { getPublicNotes, getProjectShowcaseAssets } from '../utils/notes';
 import { getInfrastructureResources, getInfrastructureConnections } from '../utils/infrastructure';
@@ -16,7 +17,8 @@ export function terminalBlogs(): TerminalObject[] {
     kind: 'blog',
     description: post.description ?? '',
     href: buildKnowledgeNoteHref(post.id.replace(/^note\//, '')),
-    meta: (post.updated || post.created || '').slice(0, 10),
+    meta:
+      formatArchiveMonth(post.archiveMonth) ?? (post.updated || post.created || '').slice(0, 10),
     tags: post.tags ?? [],
     relations: [],
   }));

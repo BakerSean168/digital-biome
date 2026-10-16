@@ -23,6 +23,8 @@ export type KnowledgePublicNote = {
   visibility: string;
   created?: string;
   updated?: string;
+  /** Editorial blog archive month, not a publication or creation date. */
+  archiveMonth?: string;
   isAsset: boolean;
   isMoc: boolean;
   markdown: string;
@@ -101,6 +103,14 @@ function assertProjectionShape(projection: KnowledgePublicV1): void {
     assertStringArray(note.aliases, `${note.id}.aliases`);
     assertStringArray(note.tags, `${note.id}.tags`);
     parseUsagePriority(note.usagePriority);
+    if (
+      note.archiveMonth !== undefined &&
+      (note.collection !== 'blog' ||
+        typeof note.archiveMonth !== 'string' ||
+        !/^\d{4}-(0[1-9]|1[0-2])$/.test(note.archiveMonth))
+    ) {
+      throw new Error(`knowledge-public-v1 note ${note.id}.archiveMonth must be a blog YYYY-MM`);
+    }
     for (const field of ['url', 'icon', 'category'] as const) {
       if (note[field] !== undefined && typeof note[field] !== 'string') {
         throw new Error(`knowledge-public-v1 note ${note.id}.${field} must be a string`);

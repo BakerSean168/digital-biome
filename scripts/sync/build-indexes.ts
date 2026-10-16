@@ -49,6 +49,7 @@ interface RawFrontmatter {
   tags: string[];
   created?: string;
   updated?: string;
+  archiveMonth?: string;
   draft: boolean;
   private: boolean;
   visibility?: string;
@@ -73,6 +74,7 @@ function projectLocalFrontmatter(data: FrontmatterRecord): RawFrontmatter {
     tags: frontmatterStringArray(data.tags),
     created: frontmatterString(data.created),
     updated: frontmatterString(data.updated),
+    archiveMonth: frontmatterString(data.archive_month),
     draft: frontmatterBoolean(data.draft),
     private: frontmatterBoolean(data.private),
     visibility: frontmatterString(data.visibility),
@@ -236,6 +238,7 @@ export function buildIndexes(notesRoot?: string, outputRoot?: string): void {
     tags: n.fm.tags,
     created: normalizeDate(n.fm.created),
     updated: normalizeDate(n.fm.updated),
+    archiveMonth: n.fm.archiveMonth,
     draft: n.fm.draft,
     private: n.fm.private,
     visibility: n.visibility,

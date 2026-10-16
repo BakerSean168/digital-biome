@@ -34,6 +34,8 @@ export interface NoteIndexEntry {
   created?: string;
   /** ISO 8601 date string */
   updated?: string;
+  /** User-chosen retrospective blog archive month (YYYY-MM); distinct from created/updated. */
+  archiveMonth?: string;
   draft: boolean;
   private: boolean;
   visibility?: Visibility;
