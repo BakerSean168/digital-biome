@@ -87,6 +87,46 @@ export function rewriteImagePaths(content: string, assetsUrlPrefix: string): str
   return content;
 }
 
+/** Obsidian Bases are local dynamic views; publish a browsable Note index instead. */
+const BASE_FILTER_TAGS: Readonly<Record<string, string>> = {
+  'react-topics': 'resource/react',
+  'vue-topics': 'resource/vue3',
+  'python-topics': 'tech/lang/python',
+  'tailwind-topics': 'resource/css',
+  'vite-topics': 'resource/javascript',
+  'css-topics': 'resource/css',
+  'html-topics': 'resource/html',
+  'security-tools': 'tech/security',
+  resource: 'type/resource',
+  toolbox: 'type/resource',
+};
+
+/**
+ * Convert standalone local `![[name.base]]` embeds into public Note catalog links.
+ * Never attempt to render or leak a local Obsidian Base definition on the website.
+ * Leave fenced source examples untouched.
+ */
+export function rewriteObsidianBaseEmbeds(content: string): string {
+  let fenceChar: string | null = null;
+  return content
+    .split('\n')
+    .map((line) => {
+      const fence = /^[ \t]*(`{3,}|~{3,})/.exec(line);
+      if (fence) {
+        if (fenceChar === null) fenceChar = fence[1][0];
+        else if (fenceChar === fence[1][0]) fenceChar = null;
+        return line;
+      }
+      if (fenceChar) return line;
+      const match = /^([ \t]*)!\[\[([a-z0-9-]+)\.base(?:\|[^\]]+)?\]\][ \t]*$/i.exec(line);
+      if (!match) return line;
+      const tag = BASE_FILTER_TAGS[match[2].toLowerCase()];
+      const url = tag ? `/notes?tag=${encodeURIComponent(tag)}` : '/notes';
+      return `${match[1]}> Obsidian Base 是本地动态视图；网页端请[浏览相关知识笔记](${url})。`;
+    })
+    .join('\n');
+}
+
 /**
  * Rewrite vault-internal .md links to /notes/obsidian/<slug> format.
  */
@@ -243,7 +283,9 @@ export function processContent(
     }
   }
 
-  let rewritten = rewriteVaultNoteLinks(rewriteImagePaths(processed, assetsUrlPrefix));
+  let rewritten = rewriteVaultNoteLinks(
+    rewriteImagePaths(rewriteObsidianBaseEmbeds(processed), assetsUrlPrefix),
+  );
   if (options.redactNetworkIdentifiers) rewritten = redactIPv4Addresses(rewritten);
   if (options.protectedInfrastructureUrls) {
     rewritten = redactProtectedInfrastructureUrls(rewritten, options.protectedInfrastructureUrls);
