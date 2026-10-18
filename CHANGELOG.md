@@ -5,6 +5,13 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.11.1](https://github.com/BakerSean168/digital-biome/compare/v0.11.0...v0.11.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **knowledge:** provide public fallback for Obsidian Bases ([#158](https://github.com/BakerSean168/digital-biome/issues/158)) ([1aaeba9](https://github.com/BakerSean168/digital-biome/commit/1aaeba96fe24ecb3970f0d1dc621c8733846c5a1))
+
 ## [0.11.0](https://github.com/BakerSean168/digital-biome/compare/v0.10.3...v0.11.0) (2026-10-16)
 
 
