@@ -24,7 +24,6 @@
     "scripts/prune-pagefind-artifacts.ts": "56929a3671d6756e138bf6525c5842e66c89703c9979375ee920c9904dcb07dc",
     "scripts/sync/config.ts": "7bd7a740270427ebaf599320320a655d29d18a9e0e01edf013e6309db6513e07",
     "scripts/sync/favicon-cache.ts": "6259b0e90b738c224d01c70f38c3de4e94b53f84accc2cbcb6df2802f21f774c",
-    "scripts/sync/markdown-transform.test.ts": "b5dd88551a2a70bc27640eafe51b4f81070e436484c74411018dbd93a394adc8",
     "scripts/sync/rebuild-derived-indexes.test.ts": "9fe818f0bc083586e86c52bd956cd26285c6334c80977cbf0a82de1a6a3d2ce8",
     "scripts/sync/rebuild-derived-indexes.ts": "41342637a573c2a6460499e779b8508f5b2e4629c47c86d46de93e3e1e38cc45",
     "scripts/sync/stale-cleaner.ts": "49440b9dc36f63bee45b0d54d0956079a976a6f6dcbd8cf5ed70ff0b4983dce3",

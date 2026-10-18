@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   rewriteImagePaths,
+  rewriteObsidianBaseEmbeds,
   rewriteVaultNoteLinks,
   quoteYamlSpecialValues,
   detectYamlRisks,
@@ -11,7 +12,10 @@ import {
 
 describe('rewriteImagePaths', () => {
   test('rewrites Obsidian wikilink images to vault assets', () => {
-    assert.equal(rewriteImagePaths('![[image.png]]', '/vault-assets'), '![image](/vault-assets/image.png)');
+    assert.equal(
+      rewriteImagePaths('![[image.png]]', '/vault-assets'),
+      '![image](/vault-assets/image.png)',
+    );
     assert.equal(
       rewriteImagePaths('![[assets/img/photo 1.png]]', '/vault-assets'),
       '![photo 1](/vault-assets/photo%201.png)',
@@ -35,6 +39,47 @@ describe('rewriteImagePaths', () => {
 
   test('leaves local non-image files untouched', () => {
     assert.equal(rewriteImagePaths('![alt](guide.txt)', '/vault-assets'), '![alt](guide.txt)');
+  });
+});
+
+describe('rewriteObsidianBaseEmbeds', () => {
+  test('converts supported local Bases into filtered public Note catalog links', () => {
+    assert.equal(
+      rewriteObsidianBaseEmbeds('## Dynamic index\n\n![[react-topics.base]]'),
+      '## Dynamic index\n\n> Obsidian Base 是本地动态视图；网页端请[浏览相关知识笔记](/notes?tag=resource%2Freact)。',
+    );
+    assert.equal(
+      rewriteObsidianBaseEmbeds('![[resource.base]]'),
+      '> Obsidian Base 是本地动态视图；网页端请[浏览相关知识笔记](/notes?tag=type%2Fresource)。',
+    );
+  });
+
+  test('falls back to all Notes for unknown Bases without exposing their contents', () => {
+    assert.equal(
+      rewriteObsidianBaseEmbeds('![[other.base|Custom index]]'),
+      '> Obsidian Base 是本地动态视图；网页端请[浏览相关知识笔记](/notes)。',
+    );
+  });
+
+  test('leaves code fence examples and inline wikilink descriptions unchanged', () => {
+    const source = [
+      '```md',
+      '![[react-topics.base]]',
+      '```',
+      'Reference ![[react-topics.base]]',
+    ].join('\n');
+    assert.equal(rewriteObsidianBaseEmbeds(source), source);
+  });
+
+  test('processContent applies the fallback in regular Markdown', () => {
+    assert.match(
+      processContent(
+        '---\ntitle: Test\n---\n\n![[security-tools.base]]',
+        'test.md',
+        '/vault-assets',
+      ),
+      /\[浏览相关知识笔记\]\(\/notes\?tag=tech%2Fsecurity\)/,
+    );
   });
 });
 
