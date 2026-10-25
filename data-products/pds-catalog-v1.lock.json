@@ -2,15 +2,15 @@
   "protocolVersion": 1,
   "product": "pds-catalog-v1",
   "producerRepository": "BakerSean168/personal-digital-system",
-  "sourceRevision": "460f075f6e1433f631b5458aa67b5cc7a321d0ec",
-  "releaseTag": "pds-catalog-v1-460f075f6e1433f631b5458aa67b5cc7a321d0ec",
+  "sourceRevision": "fd81ec1a27a5b2c83c413d175a9dccaa2e8cc4a1",
+  "releaseTag": "pds-catalog-v1-fd81ec1a27a5b2c83c413d175a9dccaa2e8cc4a1",
   "artifact": {
     "name": "pds-catalog-v1.json",
-    "sha256": "sha256:5109ece7995c6f068085e1b0337b19fcec4471c323a382e988336d090d88161f"
+    "sha256": "sha256:df680918addbd45f9d0a6bdb45cf92f897e672e328ae788540eb51e08234d1b4"
   },
   "manifest": {
     "name": "pds-catalog-v1.manifest.json",
-    "sha256": "sha256:cacf1ae8b01a5f133cdb7fde48f16845c9b77fe97fed235716f26614a3e4a61f"
+    "sha256": "sha256:a7159fb63c0f4c25fa6ab8963e8dde21b08dee9c4fa2037a848edf8a5725ff60"
   },
-  "semanticSha256": "sha256:0fc6f185b0ac95359dec255f72275e651bd356f4e8cb8cc069b7ad566094559e"
+  "semanticSha256": "sha256:829fedcdf61cdf2e09a63c84ff8acaaab4ac16714f0778f1f833d545012dcfd3"
 }
