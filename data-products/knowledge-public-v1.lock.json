@@ -2,15 +2,15 @@
   "protocolVersion": 1,
   "product": "knowledge-public-v1",
   "producerRepository": "BakerSean168/thought-forest",
-  "sourceRevision": "6c81b9e729625ecfe603c9f06a47d15b96aeadad",
-  "releaseTag": "knowledge-public-v1-6c81b9e729625ecfe603c9f06a47d15b96aeadad",
+  "sourceRevision": "2e7fadf2bea3921a2830b23321e767aeda8d8645",
+  "releaseTag": "knowledge-public-v1-2e7fadf2bea3921a2830b23321e767aeda8d8645",
   "artifact": {
     "name": "knowledge-public-v1.json",
-    "sha256": "sha256:1abec8518f61d406ecc8b3a159e9645f5cc8470e15d62343fe8631c41e149aed"
+    "sha256": "sha256:b301ae0864a9a7e1f84b8a53304cc98a7ffb4c4cced428ab6ea1bd1d4e53ce1a"
   },
   "manifest": {
     "name": "knowledge-public-v1.manifest.json",
-    "sha256": "sha256:548079c84c6d6311b2e7bc84e916bb9b7605c984b9be176e98f7fa6cf61b3d0d"
+    "sha256": "sha256:55efebcb5d4a425a9479e696622f6154939b87821a91db48c2fb190a2ea5296e"
   },
-  "semanticSha256": "sha256:fe5ea4c0a4e86280ac2c8c4fe26e4a517f8552ea510f9731c15a27bf3c39441e"
+  "semanticSha256": "sha256:e13442bf79ccdbe5badb200ce25a011238a281333749bbb8006e0ddfc5a6b164"
 }
