@@ -1,6 +1,11 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { inferAssetRole, toAssetCard } from './asset-card';
+import {
+  inferAssetRole,
+  isProtectedAssetLink,
+  resolveAssetMonitorTarget,
+  toAssetCard,
+} from './asset-card';
 import type { AssetNoteEntry, NoteCollectionEntry } from '../types/notes';
 
 function noteData(data: Record<string, unknown> = {}) {
@@ -77,5 +82,45 @@ describe('toAssetCard', () => {
     assert.deepEqual(card.tags, []);
     assert.deepEqual(card.links, []);
     assert.equal(card.href, '/tools/tool-x');
+  });
+});
+
+describe('AssetDetailView protected link policy', () => {
+  test('internal and private links remain locked, public and unspecified visibility stay public', () => {
+    assert.equal(isProtectedAssetLink({ label: 'Private', visibility: 'private' }), true);
+    assert.equal(isProtectedAssetLink({ label: 'Internal', visibility: 'internal' }), true);
+    assert.equal(isProtectedAssetLink({ label: 'Public', visibility: 'public' }), false);
+    assert.equal(isProtectedAssetLink({ label: 'Default' }), false);
+  });
+
+  test('monitor projection preserves existing owner-only ref and optional public monitor precedence', () => {
+    const links = [
+      { label: 'Control', kind: 'app' as const, url: 'https://example.test' },
+      {
+        label: 'Monitor',
+        kind: 'monitor' as const,
+        visibility: 'private' as const,
+        private_ref: 'owner.monitor',
+        url: 'https://must-not-leak.invalid',
+      },
+    ];
+    assert.deepEqual(resolveAssetMonitorTarget(links), {
+      href: undefined,
+      privateRef: 'owner.monitor',
+    });
+    assert.deepEqual(resolveAssetMonitorTarget(links, { url: 'https://public-monitor.example' }), {
+      href: 'https://public-monitor.example',
+      privateRef: 'owner.monitor',
+    });
+    assert.deepEqual(
+      resolveAssetMonitorTarget([
+        { label: 'Monitor', kind: 'panel', url: 'https://public-monitor.example' },
+      ]),
+      {
+        href: 'https://public-monitor.example',
+        privateRef: undefined,
+      },
+    );
+    assert.deepEqual(resolveAssetMonitorTarget([]), { href: undefined, privateRef: undefined });
   });
 });
