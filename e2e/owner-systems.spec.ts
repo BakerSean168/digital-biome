@@ -45,10 +45,12 @@ test('anonymous public /systems shell never requests owner catalog or reveals ow
   });
 
   await page.goto('/systems/?ui=gui');
+  await page.locator('#registry > details > summary').click();
   await expect(page.locator('[data-systems-access-label]')).toHaveText('Public view');
   await expect(page.locator('[data-owner-domain-gate]')).toBeVisible();
   await expect(page.locator('[data-owner-system-domain]')).toHaveCount(0);
-  await expect.poll(() => sessionRequests).toBe(1);
+  // The shared Header independently checks the same session endpoint.
+  await expect.poll(() => sessionRequests).toBeGreaterThanOrEqual(1);
   await expect(page.locator('[data-systems-access-action]')).toHaveAttribute(
     'href',
     /\/login\?next=/,
@@ -79,6 +81,7 @@ test('verified session and valid owner-only catalog hydrate just the private reg
   });
 
   await page.goto('/systems/?ui=tui');
+  await page.locator('#registry > details > summary').click();
   await expect(page.locator('[data-systems-access-label]')).toHaveText('Owner view');
   await expect(page.locator('[data-systems-access-action]')).toHaveText('Sign out');
   await expect(page.locator('[data-owner-domain-gate]')).toHaveCount(0);
@@ -89,7 +92,8 @@ test('verified session and valid owner-only catalog hydrate just the private reg
   await expect(domain.locator('a')).toHaveAttribute('href', 'https://github.com/demo/test-repo');
   await expect(domain.locator('a')).toHaveAttribute('target', '_blank');
   await expect(domain.locator('a')).toHaveAttribute('rel', 'noopener noreferrer');
-  expect(sessionRequests).toBe(1);
+  // Do not assert a global count; Header has its own independent Access session check.
+  expect(sessionRequests).toBeGreaterThanOrEqual(1);
   expect(catalogRequests).toBe(1);
   // Private owner metadata never enters URL or browser History snapshots.
   expect(page.url()).not.toContain('private-e2e-repository');
@@ -134,6 +138,7 @@ test('authenticated but denied, failed or invalid catalog response retains publi
   for (const variant of ['forbidden', 'error', 'invalid'] as const) {
     mode = variant;
     await page.goto('/systems/?ui=gui');
+    await page.locator('#registry > details > summary').click();
     await expect(page.locator('[data-systems-access-label]')).toHaveText('Owner view');
     await expect(page.locator('[data-owner-domain-gate]')).toBeVisible();
     await expect(page.locator('[data-owner-system-domain]')).toHaveCount(0);
