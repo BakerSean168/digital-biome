@@ -3,14 +3,17 @@ import {
   Activity,
   ArrowLeft,
   ArrowRight,
-  Boxes,
   ExternalLink,
   LockKeyhole,
-  Network,
-  Server,
   ShieldCheck,
 } from '@lucide/astro';
 import type { InfrastructureConnection, InfrastructureResource } from '../../utils/infrastructure';
+import InfrastructureKindIcon from './InfrastructureKindIcon.astro';
+import {
+  infrastructureKindLabel,
+  infrastructureStatusCode,
+  infrastructureStatusTone,
+} from '../../view-models/infrastructure-labels';
 
 interface Props {
   title: string;
@@ -55,30 +58,10 @@ const homeNodes = homeNodeIds
   .map((id) => resourceMap.get(id))
   .filter((resource): resource is NonNullable<typeof resource> => Boolean(resource));
 const vmNodes = resources.filter((resource) => resource.parentResourceId === 'host-n100-pve');
-const statusLabel = (status: InfrastructureResource['status']) =>
-  ({
-    active: 'ACTIVE',
-    planned: 'PLANNED',
-    retired: 'RETIRED',
-    archived: 'ARCHIVED',
-    decommissioning: 'DECOMMISSIONING',
-  })[status];
-const statusTone = (status: InfrastructureResource['status']) =>
-  status === 'active'
-    ? 'text-emerald-300'
-    : status === 'planned'
-      ? 'text-amber-300'
-      : 'text-muted-foreground';
 const kindOrder: InfrastructureResource['kind'][] = ['host', 'service', 'network', 'platform'];
-const kindLabels: Record<InfrastructureResource['kind'], string> = {
-  host: 'Hosts',
-  service: 'Services',
-  network: 'Network',
-  platform: 'Platforms',
-};
 const resourcesByKind = kindOrder.map((kind) => ({
   kind,
-  label: kindLabels[kind],
+  label: infrastructureKindLabel(kind),
   items: resources.filter((resource) => resource.kind === kind),
 }));
 const labels =
@@ -349,13 +332,7 @@ const labels =
         <details class="group border-b border-border/40 last:border-b-0" open={index < 2}>
           <summary class="grid cursor-pointer list-none gap-3 py-5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center [&::-webkit-details-marker]:hidden">
             <div class="flex items-center gap-2">
-              {kind === 'host' ? (
-                <Server size={14} class="text-primary" />
-              ) : kind === 'network' ? (
-                <Network size={14} class="text-primary" />
-              ) : (
-                <Boxes size={14} class="text-primary" />
-              )}
+              <InfrastructureKindIcon kind={kind} size={14} class="text-primary" />
               <span class="text-sm font-medium text-foreground group-open:text-primary">
                 {label}
               </span>
@@ -395,8 +372,10 @@ const labels =
                           {resource.id}
                         </div>
                       </td>
-                      <td class={`py-3 pr-4 font-mono text-[10px] ${statusTone(resource.status)}`}>
-                        {statusLabel(resource.status)}
+                      <td
+                        class={`py-3 pr-4 font-mono text-[10px] ${infrastructureStatusTone(resource.status)}`}
+                      >
+                        {infrastructureStatusCode(resource.status)}
                       </td>
                       <td class="py-3 pr-4 text-muted-foreground">
                         {resource.role ?? resource.provider ?? '—'}

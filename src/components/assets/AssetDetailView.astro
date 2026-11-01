@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import type { AssetCard, AssetLink, AssetNoteEntry } from '../../types/notes';
+import { isProtectedAssetLink, resolveAssetMonitorTarget } from '../../view-models/asset-card';
 import InfrastructureTopologyMap, { type TopologyTier } from './InfrastructureTopologyMap.astro';
 import { Lock } from '@lucide/astro';
 
@@ -15,13 +16,10 @@ const { entry, Content, relatedAssets = [], subTopology = [] } = Astro.props;
 const { title, description, asset_type, asset_id, tags = [], links = [], monitor } = entry.data;
 const currentPath = Astro.url.pathname;
 const repeatsTitle = entry.body?.trimStart().split(/\r?\n/)[0] === `# ${title}`;
-const isProtectedLink = (link: AssetLink) =>
-  link.visibility === 'internal' || link.visibility === 'private';
-const monitorLink = links.find((link) => link.kind === 'monitor' || link.kind === 'panel');
-const monitorHref =
-  monitor?.url ?? (!monitorLink || isProtectedLink(monitorLink) ? undefined : monitorLink.url);
-const monitorPrivateRef =
-  monitorLink && isProtectedLink(monitorLink) ? monitorLink.private_ref : undefined;
+const { href: monitorHref, privateRef: monitorPrivateRef } = resolveAssetMonitorTarget(
+  links,
+  monitor,
+);
 ---
 
 <BaseLayout title={title} description={description || ''} type="article">
@@ -79,7 +77,7 @@ const monitorPrivateRef =
           <div class="mt-4 flex flex-col gap-3">
             {links.length > 0 ? (
               links.map((link: AssetLink) => {
-                if (!isProtectedLink(link) && link.url) {
+                if (!isProtectedAssetLink(link) && link.url) {
                   return (
                     <a
                       href={link.url}

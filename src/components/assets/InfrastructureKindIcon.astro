@@ -1,0 +1,15 @@
+---
+import { Boxes, Network, Server } from '@lucide/astro';
+import type { InfrastructureResourceKind } from '../../domain/infrastructure/infra-public-v2';
+
+interface Props {
+  kind: InfrastructureResourceKind;
+  size?: number;
+  class?: string;
+}
+
+const { kind, size = 14, class: className = 'text-primary' } = Astro.props;
+const Icon = kind === 'network' ? Network : kind === 'host' ? Server : Boxes;
+---
+
+<Icon size={size} class={className} />

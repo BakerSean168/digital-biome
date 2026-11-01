@@ -289,7 +289,7 @@
 - `service`：Lime
 - `tool`：Fuchsia
 
-你现在 `InfrastructureAtlas.astro` 里这套配色基础是对的，可以继续深化，而不是推翻。
+原 `InfrastructureAtlas.astro` 展示方案已在 DB-Q10（#183）中退役，现行页面以 `InfrastructureShowcase.astro` 为准；上方配色仅作历史设计参考，不代表在用组件。
 
 ### 背景
 
