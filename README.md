@@ -21,9 +21,10 @@ It is both an Astro website and an engineering project about turning personal kn
 
 - **Knowledge garden** — Obsidian / Thought Forest notes, tags, wikilinks, backlinks, and full-text search.
 - **Project portfolio** — projects are presented through the problem they solve, their product loop, and engineering highlights, with direct links to GitHub, the project page, and the live product.
-- **About / Resume** — personal profile, GitHub activity, resume, and continuous learning history.
+- **About / Resume** — personal profile, resume, tags, and continuous learning history.
+- **Tools catalog** — curated external tools and bookmarks, browsable in GUI and terminal (TUI) modes.
 - **Infrastructure atlas** — visualization of public assets, hosts, networks, and service relationships while preserving private/internal boundaries.
-- **Observability** — a browsable view of long-running personal services and digital assets.
+- **Personal Systems portal** — `/systems` presents the Personal Digital System catalog (`pds-catalog-v1`).
 
 ## Content architecture
 
@@ -51,9 +52,10 @@ This keeps deployed services, source repositories, and portfolio presentation se
 
 ## Tech stack
 
-- **Framework:** Astro 5
-- **Language:** TypeScript
+- **Framework:** Astro 7
+- **Language:** TypeScript 6 (strict)
 - **Styling:** Tailwind CSS 4
+- **Quality:** Biome + Oxlint, Oxfmt format ratchet, `astro check`
 - **Search:** Pagefind
 - **Content source:** Obsidian + Thought Forest
 - **Deployment:** Cloudflare Pages + Pages Functions
@@ -64,7 +66,7 @@ This keeps deployed services, source repositories, and portfolio presentation se
 
 ### Prerequisites
 
-- Node.js 22+
+- Node.js 24
 - pnpm 10+
 - Git
 - GitHub CLI (`gh`) authenticated for the private producer, or `GH_TOKEN`
@@ -82,7 +84,8 @@ pnpm dev
 Useful commands:
 
 ```bash
-pnpm sync               # rebuild Thought Forest indexes and sync content
+pnpm sync:data-products # verify + materialize the pinned public data products
+pnpm verify             # offline data-product preflight, lint, types, unit/contract tests
 pnpm check              # Astro type/content checks
 pnpm check:edge         # Pages Functions typecheck
 pnpm test:unit
@@ -96,14 +99,15 @@ pnpm build              # sync + Astro + Pagefind + postbuild
 ```text
 src/
 ├── pages/              Astro routes
-├── components/         project, asset, note and dashboard UI
+├── components/         asset, note, terminal and shared UI
+├── layouts/            BaseLayout, TerminalLayout, NotesLayout
 ├── data/               generated public content/index projection
 ├── domain/             note routing and foundation rules
 ├── repositories/       asset / knowledge index access
 └── view-models/        presentation adapters
 
 functions/              Cloudflare Pages Functions
-scripts/                sync, data-product, deployment and validation tooling
+scripts/                sync, data-product, delivery manifest and validation tooling
 data-products/           immutable producer projection locks
 docs/                   architecture and operations documentation
 ```
@@ -116,7 +120,8 @@ Production deployment includes a deliberate public/private boundary: public stat
 
 Read:
 
-- [`docs/architecture.md`](./docs/architecture.md) — current system architecture.
+- [`docs/architecture.md`](./docs/architecture.md) — current system architecture and route map.
+- [`AGENTS.md`](./AGENTS.md) — development guide (stack, structure, commands, conventions).
 - [`docs/cloudflare-deployment.md`](./docs/cloudflare-deployment.md) — Cloudflare deployment contract.
 - [`docs/development-deployment-operations.md`](./docs/development-deployment-operations.md) — development and production operations.
 - [`docs/asset-architecture.md`](./docs/asset-architecture.md) — asset model and visibility boundary.

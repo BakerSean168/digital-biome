@@ -1,4 +1,5 @@
 import type { TerminalBrowserState } from './terminal-browser-state';
+import { isImeComposition } from './ime-composition';
 
 export interface TerminalBrowserEventDependencies {
   root: HTMLElement;
@@ -70,7 +71,7 @@ export function bindTerminalBrowserEvents(deps: TerminalBrowserEventDependencies
   input?.addEventListener(
     'keydown',
     (event) => {
-      if (event.isComposing || event.keyCode === 229) return;
+      if (isImeComposition(event)) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         input.value = '';

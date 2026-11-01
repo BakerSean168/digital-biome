@@ -21,9 +21,10 @@ Digital Biome 是我的个人数字空间：它把 **知识库、项目作品集
 
 - **知识花园** —— Obsidian / Thought Forest 笔记、标签、wikilink、反向链接与全文搜索。
 - **项目作品集** —— 以产品问题、核心闭环和工程亮点展示项目，并同时连接 GitHub、项目介绍页和生产环境。
-- **个人介绍与履历** —— 个人资料、GitHub 活动、履历与持续学习轨迹。
+- **个人介绍与履历** —— 个人资料、履历、标签与持续学习轨迹。
+- **工具目录** —— 精选外部工具与书签，支持 GUI 与终端（TUI）两种浏览模式。
 - **基础设施地图** —— 对公开资产、主机、网络和服务关系进行可视化，同时保留 private/internal 边界。
-- **可观测信息** —— 把长期运行的个人服务与数字资产状态汇总到可浏览页面。
+- **个人系统门户** —— `/systems` 展示 Personal Digital System 目录（`pds-catalog-v1`）。
 
 ## 内容架构
 
@@ -51,9 +52,10 @@ CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thoug
 
 ## 技术栈
 
-- **框架：** Astro 5
-- **语言：** TypeScript
+- **框架：** Astro 7
+- **语言：** TypeScript 6（strict）
 - **样式：** Tailwind CSS 4
+- **质量：** Biome + Oxlint、Oxfmt 格式 ratchet、`astro check`
 - **搜索：** Pagefind
 - **内容源：** Obsidian + Thought Forest
 - **部署：** Cloudflare Pages + Pages Functions
@@ -64,7 +66,7 @@ CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thoug
 
 ### 环境要求
 
-- Node.js 22+
+- Node.js 24
 - pnpm 10+
 - Git
 - 已认证私有 producer 的 GitHub CLI (`gh`)，或显式 `GH_TOKEN`
@@ -82,7 +84,8 @@ pnpm dev
 常用命令：
 
 ```bash
-pnpm sync               # 重建 Thought Forest 索引并同步内容
+pnpm sync:data-products # 校验并物化锁定的公开 data product
+pnpm verify             # 离线 data-product preflight、lint、类型与单元/契约测试
 pnpm check              # Astro 类型 / 内容检查
 pnpm check:edge         # Pages Functions 类型检查
 pnpm test:unit
@@ -96,7 +99,8 @@ pnpm build              # sync + Astro + Pagefind + postbuild
 ```text
 src/
 ├── pages/              Astro 路由
-├── components/         项目、资产、笔记与仪表盘 UI
+├── components/         资产、笔记、终端与通用 UI
+├── layouts/            BaseLayout、TerminalLayout、NotesLayout
 ├── data/               自动生成的公开内容 / 索引投影
 ├── domain/             笔记路由与基础领域规则
 ├── repositories/       资产 / 知识索引访问

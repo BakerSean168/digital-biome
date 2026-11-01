@@ -1,6 +1,6 @@
 # Digital Biome 系统架构
 
-> 状态基线：2026-10-02
+> 状态基线：2026-11-02（DB-Q16 对齐 `main`）
 > 本文描述当前已经运行在生产环境中的真实架构，同时明确尚未解决的问题。它不是理想化设计稿。
 
 ## 1. 系统定位
@@ -37,6 +37,34 @@ flowchart LR
 系统的关键思想是：原始知识库不直接发布，构建流程只生成公开投影；真实基础设施值不进入静态产物，而由受 Access 保护的 Pages Functions 在运行时返回。
 
 ## 3. 分层与职责
+
+### 3.0 应用拓扑（`main` 现状）
+
+技术栈：Astro 7 + TypeScript 6（strict）+ Tailwind CSS 4，Node 24 / pnpm 10，部署到 Cloudflare Pages + Pages Functions。
+`scripts/docs-topology-contract.test.ts` 会在本表、`AGENTS.md`、`README.md` 与 `src/pages`、`src/layouts`、`package.json` 不一致时让 CI 失败。
+
+布局：`BaseLayout`（唯一 HTML 壳）→ `TerminalLayout`（首页与各列表页，配合 `ObjectBrowser` 提供 GUI/TUI）/ `NotesLayout`（笔记阅读）。
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Home (GUI/TUI) |
+| `/notes`, `/notes/[...slug]` | Knowledge garden list and note pages |
+| `/tools`, `/tools/[assetId]` | Tools catalog and tool detail |
+| `/dev`, `/dev/[assetId]`, `/projects/[assetId]` | Project portfolio and project detail |
+| `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
+| `/systems` | Personal Systems portal (`pds-catalog-v1`) |
+| `/about`, `/about/tags` | About / resume and tag index |
+| `/blog`, `/friends` | Blog and friends links |
+| `/login` | Cloudflare Access entry |
+| `/404` | Not found |
+| `/data/notes-catalog.json`, `/data/tools-catalog.json`, `/data/terminal/[catalog].json`, `/data/system-launcher-index.json` | Public JSON catalogs |
+
+已退役且由契约测试阻止回归：Dashboard/BiomeTree UI 与 `DashboardLayout`、Observability 页面、`/discover`、`/about/refactor`。
+
+交付与验证模块：
+
+- `scripts/data-products/`：三份 public lock 的下载、校验与物化；`preflight.ts` 是 `pnpm verify` 的只读离线前置检查，缓存缺失或过期时 fail closed 并提示 `pnpm sync:data-products`。
+- `scripts/delivery/`：`manifest-schema.ts`（schema 身份与 digest；写 v5，接受 v3/v4 rollback）、`manifest-validate.ts`、`manifest-create.ts` 为纯模块，`manifest.ts` 只负责 CLI 参数与文件 I/O。
 
 ### 3.1 内容源层
 
@@ -80,11 +108,6 @@ CI / Candidate 入口为 `scripts/data-products/prepare-knowledge-public-v1.sh`�
 - `private: true`；
 - `visibility: private`；
 - `obsidian/config/` 运维配置内容。
-
-GitHub 贡献图是一个独立的公开外部数据快照。`src/data/github-contributions.json`
-纳入版本控制，Astro 构建只读取该文件，不在构建期间访问 GitHub 或写回源码。
-刷新必须通过 `pnpm refresh:github-contributions` 显式执行并审查差异，因此同一 Git
-提交不会因构建时间或外部页面变化而生成不同的贡献图。
 
 ### 3.4 静态交付层
 
@@ -164,7 +187,7 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 ### 6.1 已缓解：部署不再依赖单个本地工作区
 
-日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`。当前 v4 provenance 同时绑定主仓库 SHA、source CI、Candidate digest、immutable `knowledge-public-v1` producer identity、`infra-public-v2` producer identity、Personal Infrastructure private RuntimeBinding identity 与 Pages artifact digest；仅仍有真实已发布 Release 的 v3 保留为 rollback。v1/v2 delivery schema 已退休。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
+日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`。当前 v5 manifest 的 provenance 同时绑定主仓库 SHA、source CI、Candidate digest、immutable `knowledge-public-v1` producer identity、`infra-public-v2`、`pds-catalog-v1` producer identity（三份 Protocol-v1 lock，见 [delivery v5](data-product-delivery-v5.md)）、Personal Infrastructure private RuntimeBinding identity 与 Pages artifact digest；v3/v4 仅为已发布 Release 的 rollback 保留。v1/v2 delivery schema 已退休。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
 
 剩余外部依赖是 GitHub App、Production Environment 和 Cloudflare API token 的控制面配置。
 
@@ -174,7 +197,7 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 ### 6.3 已缓解：构建输入漂移
 
-`notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`。当前 v4 Production 与受支持的 v3 rollback 都不需要知识仓库的私有 source layout：它们验证 `knowledge-public-v1` provenance 与 Personal Infrastructure RuntimeBinding；历史 v1/v2 private Thought Forest 兼容路径已经退休。
+`notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`。当前 v5 Production 与受支持的 v3/v4 rollback 都不需要知识仓库的私有 source layout：它们验证 `knowledge-public-v1` provenance 与 Personal Infrastructure RuntimeBinding；历史 v1/v2 private Thought Forest 兼容路径已经退休。
 
 ### 6.4 P1：同一 frontmatter 存在两套解析器
 

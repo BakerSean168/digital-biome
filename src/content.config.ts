@@ -102,7 +102,7 @@ const notes = defineCollection({
         .nullable()
         .optional(),
     })
-    .passthrough()
+    .loose()
     .transform((data) => ({
       ...data,
       title: data.title ?? undefined,
