@@ -64,6 +64,18 @@ export function initSiteSearch(
     const message = messages[searchStatus] || '';
     statusElement.textContent = message;
     statusElement.classList.toggle('hidden', !message);
+    if (!message || !searchModal?.open) return;
+    const retry = root.createElement('button');
+    retry.type = 'button';
+    retry.dataset.pagefindRetry = '';
+    retry.className = 'ml-3 underline underline-offset-2 hover:text-primary';
+    retry.textContent = '重试搜索';
+    retry.setAttribute('aria-label', '重试全文搜索');
+    retry.addEventListener('click', () => {
+      if (!searchModal.open || !cmdInput?.value.trim()) return;
+      void handleSearch(searchIntents.start(cmdInput.value));
+    });
+    statusElement.appendChild(retry);
   }
 
   function renderResults(): void {

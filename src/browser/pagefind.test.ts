@@ -63,45 +63,70 @@ test('shares one initialized Pagefind promise', async () => {
   assert.equal(initCount, 1);
 });
 
-test('caches Pagefind import failures', async () => {
+test('shares one failed import attempt, then recovers on a subsequent explicit load', async () => {
   let importCount = 0;
+  const runtime: PagefindRuntime = {
+    init: async () => undefined,
+    search: async () => ({ results: [] }),
+  };
   const adapter = createPagefindAdapter(async () => {
     importCount += 1;
-    throw new Error('index unavailable');
+    if (importCount === 1) throw new Error('temporary index unavailable');
+    return runtime;
   });
 
   const firstLoad = adapter.load();
-  const secondLoad = adapter.load();
-
-  assert.strictEqual(firstLoad, secondLoad);
+  const sameAttempt = adapter.load();
+  assert.strictEqual(firstLoad, sameAttempt);
   assert.equal(await firstLoad, null);
-  assert.equal(await secondLoad, null);
   assert.equal(importCount, 1);
+
+  // No background retries: only a subsequent user-triggered load retries the import.
+  await Promise.resolve();
+  assert.equal(importCount, 1);
+
+  assert.strictEqual(await adapter.load(), runtime);
+  assert.equal(importCount, 2);
+  assert.strictEqual(await adapter.load(), runtime);
+  assert.equal(importCount, 2);
 });
 
-test('caches Pagefind initialization failures', async () => {
+test('failed Pagefind initialization retries without reusing a broken runtime', async () => {
+  let importCount = 0;
   let initCount = 0;
-  const adapter = createPagefindAdapter(async () => ({
-    init: async () => {
-      initCount += 1;
-      throw new Error('initialization unavailable');
-    },
-    search: async () => ({ results: [] }),
-  }));
+  const adapter = createPagefindAdapter(async () => {
+    importCount += 1;
+    return {
+      init: async () => {
+        initCount += 1;
+        if (initCount === 1) throw new Error('temporary initialization failure');
+      },
+      search: async () => ({ results: [] }),
+    };
+  });
 
   const firstLoad = adapter.load();
-  const secondLoad = adapter.load();
-
-  assert.strictEqual(firstLoad, secondLoad);
+  const sameAttempt = adapter.load();
+  assert.strictEqual(firstLoad, sameAttempt);
   assert.equal(await firstLoad, null);
-  assert.equal(await secondLoad, null);
-  assert.equal(initCount, 1);
+  assert.equal(importCount, 1);
+
+  const recovered = await adapter.load();
+  assert.ok(recovered);
+  assert.equal(initCount, 2);
+  assert.equal(importCount, 2);
+  assert.strictEqual(await adapter.load(), recovered);
+  assert.equal(importCount, 2);
 });
 
 test('keeps valid hydrated results when one Pagefind result rejects', async () => {
   const outcome = await hydratePagefindResultsWithStatus([
     result({ url: '/notes/valid', meta: {}, excerpt: 'valid' }),
-    { data: async () => { throw new Error('result unavailable'); } },
+    {
+      data: async () => {
+        throw new Error('result unavailable');
+      },
+    },
   ]);
 
   assert.deepEqual(outcome.results, [{ url: '/notes/valid', excerpt: 'valid', meta: {} }]);
@@ -112,35 +137,61 @@ test('distinguishes unavailable, query failure, hydration failure, and zero matc
   const unavailable = await searchPagefind(async () => null, 'missing');
   assert.equal(unavailable.status, 'unavailable');
 
-  const queryFailed = await searchPagefind(async () => ({
-    init: async () => undefined,
-    search: async () => { throw new Error('query unavailable'); },
-  }), 'missing');
+  const queryFailed = await searchPagefind(
+    async () => ({
+      init: async () => undefined,
+      search: async () => {
+        throw new Error('query unavailable');
+      },
+    }),
+    'missing',
+  );
   assert.equal(queryFailed.status, 'query-failed');
 
-  const hydrationFailed = await searchPagefind(async () => ({
-    init: async () => undefined,
-    search: async () => ({ results: [{ data: async () => { throw new Error('data unavailable'); } }] }),
-  }), 'missing');
+  const hydrationFailed = await searchPagefind(
+    async () => ({
+      init: async () => undefined,
+      search: async () => ({
+        results: [
+          {
+            data: async () => {
+              throw new Error('data unavailable');
+            },
+          },
+        ],
+      }),
+    }),
+    'missing',
+  );
   assert.equal(hydrationFailed.status, 'hydration-failed');
 
-  const zeroMatch = await searchPagefind(async () => ({
-    init: async () => undefined,
-    search: async () => ({ results: [] }),
-  }), 'missing');
+  const zeroMatch = await searchPagefind(
+    async () => ({
+      init: async () => undefined,
+      search: async () => ({ results: [] }),
+    }),
+    'missing',
+  );
   assert.equal(zeroMatch.status, 'zero-match');
 });
 
 test('reports partial Pagefind results instead of discarding valid data', async () => {
-  const outcome = await searchPagefind(async () => ({
-    init: async () => undefined,
-    search: async () => ({
-      results: [
-        result({ url: '/notes/valid', meta: {}, excerpt: 'valid' }),
-        { data: async () => { throw new Error('data unavailable'); } },
-      ],
+  const outcome = await searchPagefind(
+    async () => ({
+      init: async () => undefined,
+      search: async () => ({
+        results: [
+          result({ url: '/notes/valid', meta: {}, excerpt: 'valid' }),
+          {
+            data: async () => {
+              throw new Error('data unavailable');
+            },
+          },
+        ],
+      }),
     }),
-  }), 'valid');
+    'valid',
+  );
 
   assert.equal(outcome.status, 'partial');
   assert.deepEqual(outcome.results, [{ url: '/notes/valid', excerpt: 'valid', meta: {} }]);
@@ -148,18 +199,34 @@ test('reports partial Pagefind results instead of discarding valid data', async 
 });
 
 test('keeps synchronous and asynchronous hydration faults per Pagefind result', async () => {
-  const outcome = await searchPagefind(async () => ({
-    init: async () => undefined,
-    search: async () => ({
-      results: [
-        { data: () => { throw new Error('first unavailable'); } },
-        { data: () => new Promise(resolve => setTimeout(() => resolve({ url: '/notes/slow', meta: {}, excerpt: 'slow' }), 5)) },
-        { data: () => { throw new Error('middle unavailable'); } },
-        result({ url: '/notes/fast', meta: {}, excerpt: 'fast' }),
-        {} as PagefindSearchResult,
-      ],
+  const outcome = await searchPagefind(
+    async () => ({
+      init: async () => undefined,
+      search: async () => ({
+        results: [
+          {
+            data: () => {
+              throw new Error('first unavailable');
+            },
+          },
+          {
+            data: () =>
+              new Promise((resolve) =>
+                setTimeout(() => resolve({ url: '/notes/slow', meta: {}, excerpt: 'slow' }), 5),
+              ),
+          },
+          {
+            data: () => {
+              throw new Error('middle unavailable');
+            },
+          },
+          result({ url: '/notes/fast', meta: {}, excerpt: 'fast' }),
+          {} as PagefindSearchResult,
+        ],
+      }),
     }),
-  }), 'mixed');
+    'mixed',
+  );
 
   assert.equal(outcome.status, 'partial');
   assert.deepEqual(outcome.results, [
@@ -170,10 +237,22 @@ test('keeps synchronous and asynchronous hydration faults per Pagefind result', 
 });
 
 test('reports hydration failure when every synchronous hydration fails', async () => {
-  const outcome = await searchPagefind(async () => ({
-    init: async () => undefined,
-    search: async () => ({ results: [{ data: () => { throw new Error('sync unavailable'); } }, {} as PagefindSearchResult] }),
-  }), 'missing');
+  const outcome = await searchPagefind(
+    async () => ({
+      init: async () => undefined,
+      search: async () => ({
+        results: [
+          {
+            data: () => {
+              throw new Error('sync unavailable');
+            },
+          },
+          {} as PagefindSearchResult,
+        ],
+      }),
+    }),
+    'missing',
+  );
 
   assert.equal(outcome.status, 'hydration-failed');
   assert.deepEqual(outcome.results, []);
