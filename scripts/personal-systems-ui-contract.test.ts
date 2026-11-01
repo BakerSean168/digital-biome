@@ -8,6 +8,7 @@ const systems = fs.readFileSync(
   'utf8',
 );
 const siteSearch = fs.readFileSync(path.resolve('src/components/common/SiteSearch.astro'), 'utf8');
+const searchServices = fs.readFileSync(path.resolve('src/browser/site-search-services.ts'), 'utf8');
 const privateUnlock = fs.readFileSync(
   path.resolve('src/components/common/PrivateInfrastructureUnlock.astro'),
   'utf8',
@@ -68,7 +69,8 @@ test('both system surfaces keep protected targets runtime-only', () => {
 });
 
 test('global Search loads the small launcher index instead of bundling infrastructure data', () => {
-  assert.match(siteSearch, /\/data\/system-launcher-index\.json/);
+  assert.match(searchServices, /\/data\/system-launcher-index\.json/);
+  assert.match(siteSearch, /initSiteSearch/);
   assert.doesNotMatch(siteSearch, /from ['"]\.\.\/\.\.\/utils\/personal-systems/);
   assert.match(launcherIndex, /getPortalServiceSearchIndex/);
 });
