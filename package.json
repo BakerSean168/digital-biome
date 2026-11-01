@@ -73,7 +73,7 @@
     "oxlint": "1.90.0",
     "pagefind": "^1.4.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "wrangler": "^4.111.0",
     "yaml": "^2.9.0"
   }
