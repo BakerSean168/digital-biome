@@ -26,6 +26,7 @@ on:
       - 'thought-forest'
       - 'docs/**'
       - 'AGENTS.md'
+      - 'README.md'
       - '.github/workflows/check.yml'
   pull_request:
     branches: [main]

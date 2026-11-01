@@ -34,7 +34,6 @@
     "sync": "pnpm sync:data-products",
     "sync:content": "tsx scripts/sync-obsidian.ts && tsx scripts/sync/build-subscriptions.ts",
     "build:indexes": "tsx scripts/sync/build-indexes.ts",
-    "refresh:github-contributions": "node scripts/bootstrap-github-cache.js",
     "astro": "astro",
     "test:e2e": "playwright test",
     "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts",

@@ -1,5 +1,6 @@
 import { PRIMARY_NAVIGATION } from '../config/navigation-policy';
 import { withUiMode } from '../domain/ui-mode';
+import { isImeComposition } from './ime-composition';
 
 const help = document.querySelector<HTMLDialogElement>('#terminal-help');
 const feedback = document.querySelector<HTMLElement>('[data-command-feedback]');
@@ -168,8 +169,7 @@ document.addEventListener('click', (event) => {
 document.addEventListener('keydown', (event) => {
   const target = event.target as HTMLElement;
   if (
-    event.isComposing ||
-    event.keyCode === 229 ||
+    isImeComposition(event) ||
     event.ctrlKey ||
     event.metaKey ||
     event.altKey ||

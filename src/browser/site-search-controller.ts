@@ -9,6 +9,7 @@ import {
 import { withUiMode } from '../domain/ui-mode';
 import { createSiteSearchServices, type SiteSearchServices } from './site-search-services';
 import { matchSearchPalette, toSearchResult, type PaletteResult } from './site-search-results';
+import { isImeComposition } from './ime-composition';
 
 export interface SiteSearchDependencies {
   readonly routes?: readonly SearchNavigationCommand[];
@@ -246,7 +247,7 @@ export function initSiteSearch(
   searchModal.addEventListener('click', onBackdropClick);
   cmdInput?.addEventListener('input', onInput);
   const onKeydown = (event: KeyboardEvent) => {
-    if (event.isComposing || event.keyCode === 229) return;
+    if (isImeComposition(event)) return;
     if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
       event.preventDefault();
       if (searchModal?.classList.contains('hidden')) {
