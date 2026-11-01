@@ -1,5 +1,11 @@
 export type TopologyNodeKind =
-  'external' | 'network' | 'host' | 'hypervisor' | 'vm' | 'service' | 'tool';
+  | 'external'
+  | 'network'
+  | 'host'
+  | 'hypervisor'
+  | 'vm'
+  | 'service'
+  | 'tool';
 
 export type TopologyNodeStatus = 'active' | 'planned' | 'internal';
 

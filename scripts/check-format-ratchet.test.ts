@@ -51,3 +51,34 @@ test('forces changed legacy files through formatting and baseline graduation', (
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('project-pinned Oxfmt owns formatting while preserving the SHA format debt ratchet', () => {
+  const projectRoot = path.resolve(import.meta.dirname, '..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8')) as {
+    scripts: Record<string, string>;
+    devDependencies: Record<string, string>;
+  };
+  const configuration = JSON.parse(
+    fs.readFileSync(path.join(projectRoot, '.oxfmtrc.json'), 'utf8'),
+  ) as {
+    printWidth: number;
+    singleQuote: boolean;
+    astro: object;
+    sortPackageJson: boolean;
+  };
+  const ratchet = fs.readFileSync(
+    path.join(projectRoot, 'scripts/check-format-ratchet.ts'),
+    'utf8',
+  );
+
+  assert.equal(manifest.devDependencies.oxfmt, '0.75.0');
+  assert.equal(manifest.devDependencies['@astrojs/compiler-rs'], '0.5.2');
+  assert.equal(manifest.scripts['format:check'], 'tsx scripts/check-format-ratchet.ts');
+  assert.equal(configuration.printWidth, 100);
+  assert.equal(configuration.singleQuote, true);
+  assert.equal(configuration.sortPackageJson, false);
+  assert.ok(configuration.astro);
+  assert.match(ratchet, /'oxfmt'/);
+  assert.doesNotMatch(ratchet, /'prettier'/);
+  assert.match(ratchet, /classifyFormatTargets/);
+});

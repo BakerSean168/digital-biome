@@ -296,6 +296,6 @@ test('quality gates are part of the canonical verify contract', () => {
   assert.equal(packageJson.scripts.quality, 'pnpm lint && pnpm format:check');
   assert.match(packageJson.scripts.verify, /^pnpm quality && /);
   assert.match(ciWorkflow, /- 'biome\.json'/);
-  assert.match(ciWorkflow, /- 'prettier\.config\.mjs'/);
+  assert.match(ciWorkflow, /- '\.oxfmtrc\.json'/);
   assert.match(ciWorkflow, /- '\.github\/workflows\/\*\*'/);
 });
