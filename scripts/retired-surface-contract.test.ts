@@ -27,3 +27,14 @@ test('Discover route is retired in favor of global Search and domain pages', () 
     false,
   );
 });
+
+test('obsolete Dashboard components and layout remain absent from production source', () => {
+  for (const relative of [
+    'src/components/dashboard/BiomeTree.astro',
+    'src/components/dashboard/BookmarkCategory.astro',
+    'src/components/dashboard/BookmarkGrid.astro',
+    'src/layouts/DashboardLayout.astro',
+  ]) {
+    assert.equal(fs.existsSync(path.join(root, relative)), false, relative + ' is retired');
+  }
+});
