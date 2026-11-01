@@ -83,4 +83,4 @@ draft: true
 
 ## Schema 定义
 
-见 `config.ts`。
+见 `src/content.config.ts`（Astro 6 起的集合配置位置）。

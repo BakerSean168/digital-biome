@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import remarkNormalizeCodeLang from './src/utils/remark-normalize-code-lang.ts';
 import remarkWikilinks from './src/utils/remark-wikilinks.ts';
+import rehypeStableHeadingIds from './src/utils/rehype-stable-heading-ids.ts';
 
 import tailwindcss from '@tailwindcss/vite';
 
@@ -52,6 +53,6 @@ export default defineConfig({
       remarkNormalizeCodeLang,
       [remarkWikilinks, { notesRoot: './src/data/obsidian' }],
     ],
-    rehypePlugins: [],
+    rehypePlugins: [rehypeStableHeadingIds],
   },
 });
