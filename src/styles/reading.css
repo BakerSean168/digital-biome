@@ -1,0 +1,35 @@
+/* ===== Signal Decode (Titles) ===== */
+.signal-decode {
+  position: relative;
+  display: inline-block;
+}
+
+.signal-decode::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--primary);
+  background: var(--bg);
+  overflow: hidden;
+  clip-path: inset(0 100% 0 0);
+  animation: signal-sweep 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes signal-sweep {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Fix table text contrast inside typography */
+.prose table tbody td {
+  color: var(--text-main) !important;
+}
+.prose table thead th {
+  color: var(--text-main) !important;
+  font-weight: 600;
+}
