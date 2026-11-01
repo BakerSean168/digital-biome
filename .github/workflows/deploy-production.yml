@@ -468,23 +468,11 @@ jobs:
           test -s release-package/dist/_worker.js
           test -s release-package/dist/_routes.json
 
-      - name: Validate production observability credentials
-        shell: bash
-        env:
-          AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
-          AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
-        run: |
-          set -euo pipefail
-          test -n "$AI_USAGE_HUB_URL"
-          test -n "$AI_USAGE_HUB_READ_KEY"
-
       - name: Generate and update encrypted Pages bindings
         shell: bash
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          AI_USAGE_HUB_URL: ${{ secrets.AI_USAGE_HUB_URL }}
-          AI_USAGE_HUB_READ_KEY: ${{ secrets.AI_USAGE_HUB_READ_KEY }}
           MANIFEST_SCHEMA: ${{ needs.verify-release.outputs.manifest_schema }}
         run: |
           set -euo pipefail
@@ -503,11 +491,6 @@ jobs:
           esac
           pnpm exec wrangler pages secret put PRIVATE_INFRASTRUCTURE_JSON \
             --project-name digital-biome < "$payload_file"
-          printf '%s' "$AI_USAGE_HUB_URL" | pnpm exec wrangler pages secret put AI_USAGE_HUB_URL \
-            --project-name digital-biome
-          printf '%s' "$AI_USAGE_HUB_READ_KEY" | pnpm exec wrangler pages secret put AI_USAGE_HUB_READ_KEY \
-            --project-name digital-biome
-
       - name: Deploy selected immutable artifact
         id: deploy
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
@@ -581,10 +564,9 @@ jobs:
             "$PRODUCTION_URL/" > /dev/null
 
 
-          ai_usage_file="$(mktemp)"
           servers_file="$(mktemp)"
           headers="$(mktemp)"
-          trap 'rm -f "$ai_usage_file" "$servers_file" "$headers"' EXIT
+          trap 'rm -f "$servers_file" "$headers"' EXIT
 
           wait_for_contract() {
             local url="$1"
@@ -607,28 +589,6 @@ jobs:
               sleep 5
             done
           }
-
-          wait_for_contract \
-            "$PRODUCTION_URL/api/ai-usage" \
-            "$ai_usage_file" \
-            '(.totalTokens7d | type == "number") and
-             (.estimatedCost7d | type == "number") and
-             (.tools | type == "array") and
-             (.byMachine.local.tokens7d | type == "number") and
-             (.byMachine.local.costUsd7d | type == "number") and
-             (.byMachine.hermes.tokens7d | type == "number") and
-             (.byMachine.hermes.costUsd7d | type == "number") and
-             (.periods["1d"].machines.local.agents | type == "array") and
-             (.periods["7d"].machines.hermes.models | type == "array") and
-             (.periods["30d"].totalTokens | type == "number") and
-             (.periods.all.totalTokens | type == "number") and
-             (.periods.all.totalCostUsd | type == "number") and
-             (.periods.all.machines.local.agents | type == "array") and
-             (.periods.all.machines.hermes.models | type == "array") and
-             (.periods.all.coverage.startDate | type == "string") and
-             (.periods.all.coverage.endDate | type == "string") and
-             (.periods.all.coverage.activeDays | type == "number")' \
-            'AI usage API'
 
           wait_for_contract \
             "$PRODUCTION_URL/api/servers" \
