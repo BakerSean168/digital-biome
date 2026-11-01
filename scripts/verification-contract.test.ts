@@ -236,11 +236,12 @@ test('production is manual Release selection and does not rebuild application co
 
 test('production server telemetry does not require a Nezha PAT', () => {
   assert.doesNotMatch(productionWorkflow, /NEZHA_PAT/);
+  assert.doesNotMatch(productionWorkflow, /AI_USAGE_HUB_(URL|READ_KEY)/);
 });
 
 test('production v4 consumes public infra projection and pinned private RuntimeBinding', () => {
   const step = productionWorkflow.match(
-    / {6}- name: Revalidate knowledge projection and private deployment source\n[\s\S]*?(?=\n {6}- name: Validate production observability credentials)/,
+    / {6}- name: Revalidate knowledge projection and private deployment source\n[\s\S]*?(?=\n {6}- name: Verify and unpack immutable Pages artifact)/,
   )?.[0];
   assert.ok(step, 'knowledge/private source verification step must exist');
 
