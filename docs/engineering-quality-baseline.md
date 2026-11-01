@@ -99,8 +99,12 @@ When local ignored `.pds-runtime` assets were older than the committed
 `Release asset metadata digest mismatch`. The local artifact and manifest digests
 were both different from the committed lock. Re-running `pnpm sync:data-products`
 restored matching digests; the same `pnpm verify` passed. **Do not bypass SHA-256
-verification** to suppress this failure. A separate diagnostic/preflight improvement
-is tracked in #184.
+verification** to suppress this failure. Since #184, `pnpm verify` starts with the
+read-only, offline `pnpm preflight:data-products`, which reports `missing`, `stale`
+(SHA-256 mismatch with the exact lock file, filename and digests), `invalid-lock` or
+`invalid-publication` per product and prints `pnpm sync:data-products` as the only
+recovery for cache states. It never edits locks, selects a newer Release or skips
+integrity checks; CI still materializes before validating.
 
 A subsequent `pnpm check` on the fully materialized tree had 0 errors,
 0 warnings and 3 hints. A prior cold-content parse reported duplicate ID and Shiki

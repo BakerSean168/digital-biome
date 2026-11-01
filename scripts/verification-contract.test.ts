@@ -297,7 +297,13 @@ test('quality gates are part of the canonical verify contract', () => {
   assert.equal(packageJson.scripts.lint, 'pnpm lint:biome && pnpm lint:oxlint && pnpm lint:astro');
   assert.equal(packageJson.scripts['format:check'], 'tsx scripts/check-format-ratchet.ts');
   assert.equal(packageJson.scripts.quality, 'pnpm lint && pnpm format:check');
-  assert.match(packageJson.scripts.verify, /^pnpm quality && /);
+  assert.equal(
+    packageJson.scripts['preflight:data-products'],
+    'tsx scripts/data-products/preflight.ts',
+  );
+  // Read-only cache preflight runs first so stale local data products are reported
+  // with a recovery command instead of surfacing as an opaque digest mismatch.
+  assert.match(packageJson.scripts.verify, /^pnpm preflight:data-products && pnpm quality && /);
   assert.match(ciWorkflow, /- 'biome\.json'/);
   assert.match(ciWorkflow, /- '\.oxfmtrc\.json'/);
   assert.match(ciWorkflow, /- '\.oxlintrc\.json'/);
