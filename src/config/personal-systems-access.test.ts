@@ -29,3 +29,15 @@ test('public and owner catalog slices are explicit', () => {
     ['knowledge', 'products', 'future-private-system'],
   );
 });
+
+test('public policy never promotes unknown or owner-only domains into public SSR', () => {
+  const domains = [fixture('knowledge'), fixture('products'), fixture('new-private-domain')];
+  assert.deepEqual(
+    publicSystemDomains(domains).map((item) => item.id),
+    ['knowledge'],
+  );
+  assert.deepEqual(
+    ownerSystemDomains(domains).map((item) => item.id),
+    ['products', 'new-private-domain'],
+  );
+});
