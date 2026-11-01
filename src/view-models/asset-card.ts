@@ -48,7 +48,7 @@ export function toAssetCard(note: AssetNoteEntry): AssetCard {
 }
 
 /** One policy shared by asset detail/preview surfaces; private never falls back to a raw URL. */
-export function isProtectedAssetLink(link: Pick<AssetLink, 'visibility'>): boolean {
+export function isProtectedAssetLink(link: AssetLink): boolean {
   return link.visibility === 'internal' || link.visibility === 'private';
 }
 
