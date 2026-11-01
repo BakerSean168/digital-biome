@@ -42,10 +42,7 @@ function toTimestamp(date: Date | string | null | undefined): number | null {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-export function formatNoteDate(
-  date: Date | string | null | undefined,
-  now = new Date(),
-): string {
+export function formatNoteDate(date: Date | string | null | undefined, now = new Date()): string {
   if (!date) return '2天前';
   const parsed = new Date(date);
   const timestamp = parsed.getTime();
@@ -59,10 +56,7 @@ export function formatNoteDate(
 }
 
 /** Transform a public note entry into the browser catalog shape. */
-export function toNoteCatalogItem(
-  note: NoteCollectionEntry,
-  now = new Date(),
-): NoteCatalogItem {
+export function toNoteCatalogItem(note: NoteCollectionEntry, now = new Date()): NoteCatalogItem {
   const rawDate = note.data.updated || note.data.created;
   return {
     id: note.id,
@@ -86,20 +80,17 @@ export function filterNoteCatalog(
   activeTags: string[],
 ): NoteCatalogItem[] {
   const normalizedQuery = query.trim().toLowerCase();
-  const normalizedTags = activeTags
-    .map(tag => tag.trim().toLowerCase())
-    .filter(Boolean);
+  const normalizedTags = activeTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
 
-  return notes.filter(note => {
-    const matchesQuery = !normalizedQuery || [
-      note.title,
-      note.description,
-      note.id,
-      ...note.tags,
-    ].some(value => value.toLowerCase().includes(normalizedQuery));
+  return notes.filter((note) => {
+    const matchesQuery =
+      !normalizedQuery ||
+      [note.title, note.description, note.id, ...note.tags].some((value) =>
+        value.toLowerCase().includes(normalizedQuery),
+      );
 
-    const matchesTags = normalizedTags.length === 0 || normalizedTags.every(activeTag =>
-      note.tags.some(noteTag => noteTag.toLowerCase().includes(activeTag)),
+    const matchesTags = normalizedTags.every((activeTag) =>
+      note.tags.some((noteTag) => noteTag.toLowerCase().includes(activeTag)),
     );
 
     return matchesQuery && matchesTags;

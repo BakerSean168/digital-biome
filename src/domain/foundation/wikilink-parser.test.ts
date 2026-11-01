@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseWikilinks, parseNoteWikilinks } from './wikilink-parser';
 
 function fields(link: ReturnType<typeof parseWikilinks>[number]) {
-  const { startIndex, length, ...rest } = link;
+  const { startIndex: _startIndex, length: _length, ...rest } = link;
   return rest;
 }
 
@@ -72,10 +72,13 @@ describe('parseWikilinks', () => {
 
   test('reports correct positions for multiple links in text', () => {
     const links = parseWikilinks('see [[A]] and [[B]]');
-    assert.deepEqual(links.map(l => [l.startIndex, l.length, l.target]), [
-      [4, 5, 'A'],
-      [14, 5, 'B'],
-    ]);
+    assert.deepEqual(
+      links.map((l) => [l.startIndex, l.length, l.target]),
+      [
+        [4, 5, 'A'],
+        [14, 5, 'B'],
+      ],
+    );
   });
 
   test('ignores unclosed brackets', () => {
@@ -93,7 +96,10 @@ describe('parseWikilinks', () => {
 describe('parseNoteWikilinks', () => {
   test('excludes image embeds', () => {
     const links = parseNoteWikilinks('![[img.png]] and [[note]]');
-    assert.deepEqual(links.map(l => l.target), ['note']);
+    assert.deepEqual(
+      links.map((l) => l.target),
+      ['note'],
+    );
   });
 
   test('excludes image links by extension', () => {

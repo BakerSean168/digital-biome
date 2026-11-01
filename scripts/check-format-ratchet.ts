@@ -19,6 +19,7 @@ const ROOT_FILES = [
   'tsconfig.json',
   'biome.json',
   '.oxfmtrc.json',
+  '.oxlintrc.json',
 ] as const;
 const GENERATED_FILES = new Set(['worker-configuration.d.ts']);
 const BASELINE_PATH = 'scripts/format-baseline.json';

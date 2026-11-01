@@ -248,7 +248,7 @@ export function processContent(
       const yamlLines: string[] = [];
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (line === '' || /^[\w"'/].*:/.test(line) || /^- /.test(line)) {
+        if (line === '' || /^[\w"'/].*:/.test(line) || line.startsWith('- ')) {
           yamlLines.push(lines[i]);
         } else {
           break;

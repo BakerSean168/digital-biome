@@ -133,10 +133,10 @@ export function initializeObjectBrowsers() {
     function syncQueryUrl() {
       if (!root.dataset.queryParam || !input || !visible()) return;
       const url = new URL(location.href);
-      input.value ? url.searchParams.set('q', input.value) : url.searchParams.delete('q');
-      sortValue() === 'title'
-        ? url.searchParams.set('sort', 'title')
-        : url.searchParams.delete('sort');
+      if (input.value) url.searchParams.set('q', input.value);
+      else url.searchParams.delete('q');
+      if (sortValue() === 'title') url.searchParams.set('sort', 'title');
+      else url.searchParams.delete('sort');
       const param = root.dataset.queryParam;
       url.searchParams.delete(param);
       for (const option of facets.options())

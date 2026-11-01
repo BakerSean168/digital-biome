@@ -18,6 +18,7 @@ on:
       - '.release-please-manifest.json'
       - 'biome.json'
       - '.oxfmtrc.json'
+      - '.oxlintrc.json'
       - 'astro.config.mjs'
       - 'notes.config.ts'
       - '.github/workflows/**'
