@@ -17,7 +17,7 @@ on:
       - 'release-please-config.json'
       - '.release-please-manifest.json'
       - 'biome.json'
-      - 'prettier.config.mjs'
+      - '.oxfmtrc.json'
       - 'astro.config.mjs'
       - 'notes.config.ts'
       - '.github/workflows/**'

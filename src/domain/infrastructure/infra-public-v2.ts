@@ -3,7 +3,11 @@ import { parseUsagePriority } from '../resource-order';
 
 export type InfrastructureResourceKind = 'host' | 'network' | 'service' | 'platform';
 export type InfrastructureResourceStatus =
-  'active' | 'planned' | 'retired' | 'archived' | 'decommissioning';
+  | 'active'
+  | 'planned'
+  | 'retired'
+  | 'archived'
+  | 'decommissioning';
 
 export interface InfrastructureResourceLink {
   label: string;

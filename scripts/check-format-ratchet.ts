@@ -18,7 +18,7 @@ const ROOT_FILES = [
   'package.json',
   'tsconfig.json',
   'biome.json',
-  'prettier.config.mjs',
+  '.oxfmtrc.json',
 ] as const;
 const GENERATED_FILES = new Set(['worker-configuration.d.ts']);
 const BASELINE_PATH = 'scripts/format-baseline.json';
@@ -115,14 +115,14 @@ export function runFormatRatchet(root = process.cwd()): void {
   }
 
   if (result.mustCheck.length > 0) {
-    const prettier = spawnSync('pnpm', ['exec', 'prettier', '--check', ...result.mustCheck], {
+    const formatter = spawnSync('pnpm', ['exec', 'oxfmt', '--check', ...result.mustCheck], {
       cwd: root,
       encoding: 'utf8',
     });
-    if (prettier.stdout) process.stdout.write(prettier.stdout);
-    if (prettier.stderr) process.stderr.write(prettier.stderr);
-    if (prettier.status !== 0) {
-      throw new Error('Prettier check failed for new or changed files.');
+    if (formatter.stdout) process.stdout.write(formatter.stdout);
+    if (formatter.stderr) process.stderr.write(formatter.stderr);
+    if (formatter.status !== 0) {
+      throw new Error('Oxfmt check failed for new or changed files.');
     }
   }
 
