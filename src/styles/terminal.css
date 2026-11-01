@@ -1,0 +1,114 @@
+/* R1 terminal: shared semantic tokens; no mock telemetry or window chrome. */
+:root,
+html.dark {
+  --bg: #0b0e0c;
+  --bg-secondary: #0f1311;
+  --card: #1d2a1e;
+  --pane: #262b22;
+  --border-color: #1f2621;
+  --text-main: #cfd6d0;
+  --text-muted: #859188;
+  --text-tertiary: #859188;
+  --primary: #93b877;
+  --primary-hover: #b4cf9e;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+.terminal-site {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.75;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  margin: 0;
+}
+.terminal-site :focus-visible {
+  outline: 1px solid var(--primary);
+  outline-offset: 3px;
+}
+.terminal-segment {
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%);
+  min-height: 32px;
+  margin-right: -9px;
+}
+.terminal-row {
+  display: grid;
+  grid-template-columns: 14px 18px minmax(0, 1fr);
+  gap: 8px;
+  width: 100%;
+  padding: 2px 8px 2px 0;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+.terminal-row[aria-current='true'] {
+  background: #152016;
+}
+.terminal-row[aria-current='true'] strong,
+.terminal-row[aria-current='true'] .terminal-pointer {
+  color: var(--primary);
+}
+.terminal-row .terminal-pointer {
+  color: transparent;
+}
+.terminal-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.terminal-row .terminal-description,
+.terminal-row .terminal-meta {
+  display: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+@media (min-width: 768px) {
+  .terminal-row {
+    grid-template-columns: 14px 18px minmax(120px, 190px) minmax(0, 1fr) auto;
+  }
+  .terminal-row .terminal-description,
+  .terminal-row .terminal-meta {
+    display: block;
+  }
+  .terminal-row .terminal-meta {
+    max-width: 9em;
+  }
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+  color-scheme: dark;
+}
+#site-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+@media print {
+  html,
+  .terminal-site {
+    height: auto;
+    overflow: visible;
+  }
+  #site-content {
+    overflow: visible;
+  }
+  [data-terminal-dock] {
+    display: none;
+  }
+}
+
+.tag-chip {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 6px 0;
+  font-size: 13px;
+}
+.tag-chip:hover {
+  color: var(--primary);
+}
