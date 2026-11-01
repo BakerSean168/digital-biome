@@ -289,13 +289,17 @@ test('production v4 consumes public infra projection and pinned private RuntimeB
 
 test('quality gates are part of the canonical verify contract', () => {
   assert.equal(
-    packageJson.scripts.lint,
+    packageJson.scripts['lint:biome'],
     'biome lint --diagnostic-level=warn --error-on-warnings .',
   );
+  assert.match(packageJson.scripts['lint:oxlint'], /oxlint --deny-warnings/);
+  assert.equal(packageJson.scripts['lint:astro'], 'tsx scripts/lint-astro-scripts.ts');
+  assert.equal(packageJson.scripts.lint, 'pnpm lint:biome && pnpm lint:oxlint && pnpm lint:astro');
   assert.equal(packageJson.scripts['format:check'], 'tsx scripts/check-format-ratchet.ts');
   assert.equal(packageJson.scripts.quality, 'pnpm lint && pnpm format:check');
   assert.match(packageJson.scripts.verify, /^pnpm quality && /);
   assert.match(ciWorkflow, /- 'biome\.json'/);
   assert.match(ciWorkflow, /- '\.oxfmtrc\.json'/);
+  assert.match(ciWorkflow, /- '\.oxlintrc\.json'/);
   assert.match(ciWorkflow, /- '\.github\/workflows\/\*\*'/);
 });

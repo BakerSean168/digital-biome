@@ -44,7 +44,6 @@
     "src/components/common/scrolling-tag-wall.test.ts": "a9ece9e1314dbf6e2c02af32b11234e5835dea7ab8bb1129a28d14dfd44313e0",
     "src/components/notes/NotesSidebar.astro": "ec34188ab0e55be51ddf3a57f5b6e1c1cfabd3838029485325f56b98d048855c",
     "src/domain/foundation/index.ts": "79dae34bbe27995cf82c406501dafe857212be89d510e69258215a2fc250fddd",
-    "src/domain/foundation/wikilink-parser.test.ts": "97f07029405fadd769746bf4cfe4c97a133cfc97dc3e332351bf9fb13797986d",
     "src/domain/foundation/wikilink-parser.ts": "9228e1c8cddf967bdde3e1ca24d95965ecb3977637d2d21312ba2e63b4363cfd",
     "src/domain/note-routing/index.ts": "388137cb4168a1e9d27be83513d0079785b90bcde3f99b0732f9c83b5ee42deb",
     "src/domain/note-routing/slug-resolver.test.ts": "d04846d2843f76708087ed0344a10c497cb23929ff98bb6d0015141cdfb69622",
@@ -67,7 +66,6 @@
     "src/utils/remark-normalize-code-lang.ts": "cfde65ecd30f12fcb4ca73b347982438e863372fc4012e914ff7ee1ee2cb76ee",
     "src/utils/remark-wikilinks.ts": "a8ea9927ad11a70f92cec9c2b554882f991bdc2c4118fadf6a871427620fce6c",
     "src/view-models/bookmark-item.ts": "c4d613fa48b56c0e11c82f02919dd0b777c5fa59a001391584b44595d205ec49",
-    "src/view-models/note-list-item.ts": "16a3f51d2351896689f4c2a3d58d2d32325fb0a714e00ead2475b76b8041fed9",
     "src/view-models/tools-catalog.ts": "da02c0115cbcf16e3e78603476c8306b7c56b9f7a6e379fbbcb1f087400a638f",
     "tsconfig.json": "e45553728da413bd380517d2970f84d09dd31869f88051578df888bdda84ddd4"
   }

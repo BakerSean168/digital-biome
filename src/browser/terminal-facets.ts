@@ -123,7 +123,8 @@ export function initializeFacets(
         cursor = i;
       };
       b.onclick = () => {
-        draft.has(option.key) ? draft.delete(option.key) : draft.add(option.key);
+        if (draft.has(option.key)) draft.delete(option.key);
+        else draft.add(option.key);
         sync();
       };
       group.append(b);

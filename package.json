@@ -37,10 +37,13 @@
     "astro": "astro",
     "test:e2e": "playwright test",
     "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts",
-    "lint": "biome lint --diagnostic-level=warn --error-on-warnings .",
+    "lint": "pnpm lint:biome && pnpm lint:oxlint && pnpm lint:astro",
     "format:check": "tsx scripts/check-format-ratchet.ts",
     "quality": "pnpm lint && pnpm format:check",
-    "verify:data-products:pds:lock": "tsx --test scripts/data-products/pds-catalog-v1-lock.test.ts src/domain/system/pds-catalog-v1.test.ts"
+    "verify:data-products:pds:lock": "tsx --test scripts/data-products/pds-catalog-v1-lock.test.ts src/domain/system/pds-catalog-v1.test.ts",
+    "lint:biome": "biome lint --diagnostic-level=warn --error-on-warnings .",
+    "lint:oxlint": "oxlint --deny-warnings src scripts functions edge e2e astro.config.mjs notes.config.ts playwright.config.ts",
+    "lint:astro": "tsx scripts/lint-astro-scripts.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",
@@ -63,6 +66,7 @@
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.0.0",
     "oxfmt": "0.75.0",
+    "oxlint": "1.90.0",
     "pagefind": "^1.4.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
