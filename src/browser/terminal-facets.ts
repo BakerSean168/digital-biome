@@ -5,9 +5,11 @@ export function initializeFacets(
   getItems: () => TerminalObject[],
   load: () => Promise<void>,
   apply: () => void,
+  signal?: AbortSignal,
 ) {
   const trigger = root.querySelector<HTMLButtonElement>('[data-facet-trigger]');
-  if (trigger)
+  const ownsDialog = Boolean(trigger) && !root.querySelector('[data-facet-dialog]');
+  if (ownsDialog)
     root.insertAdjacentHTML(
       'beforeend',
       `    <dialog
@@ -91,100 +93,120 @@ export function initializeFacets(
     dialog?.close();
     apply();
   };
-  trigger?.addEventListener('click', async () => {
-    trigger.disabled = true;
-    await load();
-    trigger.disabled = false;
-    if (!root.querySelector('[data-object-error]')?.classList.contains('hidden')) return;
-    options = facetOptions(getItems());
-    draft = new Set(selected);
-    cursor = 0;
-    buttons.length = 0;
-    body?.replaceChildren();
-    const groups = new Map<string, HTMLElement>();
-    options.forEach((option, i) => {
-      // Tags share OR semantics, while visual columns follow the first tag segment.
-      const groupLabel = option.group === '标签' ? option.value.split('/')[0] : option.group;
-      let group = groups.get(groupLabel);
-      if (!group) {
-        group = document.createElement('section');
-        const h = document.createElement('h3');
-        h.className = 'mb-2 text-xs text-muted-foreground';
-        h.textContent = groupLabel;
-        group.append(h);
-        groups.set(groupLabel, group);
-        body?.append(group);
-      }
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className =
-        'block w-full border border-transparent px-2 py-1 text-left break-words focus:border-primary focus:bg-card focus:outline-none';
-      b.onfocus = () => {
-        cursor = i;
-      };
-      b.onclick = () => {
-        if (draft.has(option.key)) draft.delete(option.key);
-        else draft.add(option.key);
-        sync();
-      };
-      group.append(b);
-      buttons.push(b);
-    });
-    if (!options.length && body) body.textContent = '暂无可用的筛选条件。';
-    sync();
-    dialog?.showModal();
-    buttons[0]?.focus();
-  });
-  dialog?.querySelector('[data-facet-apply]')?.addEventListener('click', commit);
-  dialog?.querySelector('[data-facet-cancel]')?.addEventListener('click', () => dialog.close());
-  dialog?.addEventListener('keydown', (event) => {
-    if (event.ctrlKey || event.metaKey || event.altKey) return;
-    const key = event.key;
-    if (document.documentElement.dataset.shortcuts === 'off' && key.length === 1) return;
-    if (key === 'Enter' && !(event.target as Element).closest('[data-facet-cancel]')) {
-      event.preventDefault();
-      commit();
-      return;
-    }
-    if (!buttons.length) return;
-    if (
-      ['j', 'k', 'ArrowDown', 'ArrowUp', 'h', 'l', 'ArrowLeft', 'ArrowRight', 'a', '0'].includes(
-        key,
-      )
-    ) {
-      event.preventDefault();
-      if (['j', 'ArrowDown'].includes(key)) cursor = Math.min(buttons.length - 1, cursor + 1);
-      if (['k', 'ArrowUp'].includes(key)) cursor = Math.max(0, cursor - 1);
-      const group =
-        options[cursor].group === '标签'
-          ? options[cursor].value.split('/')[0]
-          : options[cursor].group;
-      const visual = (o: FacetOption) => (o.group === '标签' ? o.value.split('/')[0] : o.group);
-      if (['h', 'l', 'ArrowLeft', 'ArrowRight'].includes(key)) {
-        const groups = [...new Set(options.map(visual))];
-        const next = groups[groups.indexOf(group) + (['l', 'ArrowRight'].includes(key) ? 1 : -1)];
-        const index = options.findIndex((o) => visual(o) === next);
-        if (index >= 0) cursor = index;
-      }
-      if (key === 'a') {
-        const current = options.filter((o) => visual(o) === group);
-        const all = current.every((o) => draft.has(o.key));
-        current.forEach((o) => {
-          if (all) draft.delete(o.key);
-          else draft.add(o.key);
-        });
-      }
-      if (key === '0') draft.clear();
+  trigger?.addEventListener(
+    'click',
+    async () => {
+      if (signal?.aborted) return;
+      trigger.disabled = true;
+      await load();
+      if (signal?.aborted) return;
+      trigger.disabled = false;
+      if (!root.querySelector('[data-object-error]')?.classList.contains('hidden')) return;
+      options = facetOptions(getItems());
+      draft = new Set(selected);
+      cursor = 0;
+      buttons.length = 0;
+      body?.replaceChildren();
+      const groups = new Map<string, HTMLElement>();
+      options.forEach((option, i) => {
+        // Tags share OR semantics, while visual columns follow the first tag segment.
+        const groupLabel = option.group === '标签' ? option.value.split('/')[0] : option.group;
+        let group = groups.get(groupLabel);
+        if (!group) {
+          group = document.createElement('section');
+          const h = document.createElement('h3');
+          h.className = 'mb-2 text-xs text-muted-foreground';
+          h.textContent = groupLabel;
+          group.append(h);
+          groups.set(groupLabel, group);
+          body?.append(group);
+        }
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className =
+          'block w-full border border-transparent px-2 py-1 text-left break-words focus:border-primary focus:bg-card focus:outline-none';
+        b.onfocus = () => {
+          cursor = i;
+        };
+        b.onclick = () => {
+          if (draft.has(option.key)) draft.delete(option.key);
+          else draft.add(option.key);
+          sync();
+        };
+        group.append(b);
+        buttons.push(b);
+      });
+      if (!options.length && body) body.textContent = '暂无可用的筛选条件。';
       sync();
-      buttons[cursor]?.focus();
-    }
-  });
-  root.addEventListener('terminal-clear', () => {
-    selected.clear();
-    paintChips();
-    apply();
-  });
+      dialog?.showModal();
+      buttons[0]?.focus();
+    },
+    { signal },
+  );
+  dialog?.querySelector('[data-facet-apply]')?.addEventListener('click', commit, { signal });
+  dialog
+    ?.querySelector('[data-facet-cancel]')
+    ?.addEventListener('click', () => dialog.close(), { signal });
+  dialog?.addEventListener(
+    'keydown',
+    (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const key = event.key;
+      if (document.documentElement.dataset.shortcuts === 'off' && key.length === 1) return;
+      if (key === 'Enter' && !(event.target as Element).closest('[data-facet-cancel]')) {
+        event.preventDefault();
+        commit();
+        return;
+      }
+      if (!buttons.length) return;
+      if (
+        ['j', 'k', 'ArrowDown', 'ArrowUp', 'h', 'l', 'ArrowLeft', 'ArrowRight', 'a', '0'].includes(
+          key,
+        )
+      ) {
+        event.preventDefault();
+        if (['j', 'ArrowDown'].includes(key)) cursor = Math.min(buttons.length - 1, cursor + 1);
+        if (['k', 'ArrowUp'].includes(key)) cursor = Math.max(0, cursor - 1);
+        const group =
+          options[cursor].group === '标签'
+            ? options[cursor].value.split('/')[0]
+            : options[cursor].group;
+        const visual = (o: FacetOption) => (o.group === '标签' ? o.value.split('/')[0] : o.group);
+        if (['h', 'l', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+          const groups = [...new Set(options.map(visual))];
+          const next = groups[groups.indexOf(group) + (['l', 'ArrowRight'].includes(key) ? 1 : -1)];
+          const index = options.findIndex((o) => visual(o) === next);
+          if (index >= 0) cursor = index;
+        }
+        if (key === 'a') {
+          const current = options.filter((o) => visual(o) === group);
+          const all = current.every((o) => draft.has(o.key));
+          current.forEach((o) => {
+            if (all) draft.delete(o.key);
+            else draft.add(o.key);
+          });
+        }
+        if (key === '0') draft.clear();
+        sync();
+        buttons[cursor]?.focus();
+      }
+    },
+    { signal },
+  );
+  root.addEventListener(
+    'terminal-clear',
+    () => {
+      selected.clear();
+      paintChips();
+      apply();
+    },
+    { signal },
+  );
   return {
+    dispose: () => {
+      if (dialog?.open) dialog.close();
+      if (ownsDialog) dialog?.remove();
+    },
     selected: () => selected,
     options: () => facetOptions(getItems()),
     restore: (keys: string[]) => {
