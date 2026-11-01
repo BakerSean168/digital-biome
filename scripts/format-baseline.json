@@ -29,8 +29,6 @@
     "src/browser/pagefind.ts": "a87c4892c2f33f291ee336b9afc2164b0ff3f8a5a366bd85463a1f334e7717f2",
     "src/browser/search-intent.test.ts": "6f32f635f0445f96886273bf771e3879be25eb0bcbf6340eea272a47cf9b0ea6",
     "src/browser/search-intent.ts": "1eb69764114d85e80377eb651854fa7d2b56e99cb1567fd10f8f49f1e9952657",
-    "src/browser/tools-catalog.test.ts": "e0c72c4a25df63d2c9efa2f58062076f2ac75656e94afb876d812405b913c521",
-    "src/browser/tools-catalog.ts": "f58a1c104ee8798c0cf37f880962e910276abaf5682d28540e4aabf2a0357b32",
     "src/components/assets/AssetCard.astro": "d445100b9782cff90b5e5fe1f0aee6c2d7465f622b294c232df6c040b9545d72",
     "src/components/assets/AssetSection.astro": "d50ce3f52a5a20e4e0c00c1af32948821a0d266878e3185976724413170bd207",
     "src/components/assets/InfrastructureAtlas.astro": "21949cb4302dca79d21af2d0d5df4a5b4738fac359f901bf5ab605e659d35e8c",

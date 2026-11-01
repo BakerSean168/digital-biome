@@ -38,3 +38,30 @@ test('obsolete Dashboard components and layout remain absent from production sou
     assert.equal(fs.existsSync(path.join(root, relative)), false, relative + ' is retired');
   }
 });
+
+test('obsolete Notes/Bookmark client controllers and their private transport loaders remain retired', () => {
+  for (const relative of [
+    'src/browser/notes-list.ts',
+    'src/browser/notes-list.test.ts',
+    'src/browser/bookmark-grid.ts',
+    'src/browser/notes-catalog.ts',
+    'src/browser/notes-catalog.test.ts',
+    'src/browser/tools-catalog.ts',
+    'src/browser/tools-catalog.test.ts',
+  ]) {
+    assert.equal(fs.existsSync(path.join(root, relative)), false, relative + ' is retired');
+  }
+});
+
+test('public Notes/Tools catalog routes and shared data owners remain available', () => {
+  for (const relative of [
+    'src/pages/data/notes-catalog.json.ts',
+    'src/pages/data/tools-catalog.json.ts',
+    'src/view-models/note-list-item.ts',
+    'src/view-models/tools-catalog.ts',
+    'src/repositories/bookmarks-repository.ts',
+    'src/components/terminal/ObjectBrowser.astro',
+  ]) {
+    assert.equal(fs.existsSync(path.join(root, relative)), true, relative + ' is protected');
+  }
+});
