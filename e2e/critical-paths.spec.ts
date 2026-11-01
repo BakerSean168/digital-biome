@@ -66,6 +66,33 @@ test('Search returns real Pagefind content and service navigation', async ({ pag
   await expect(page).toHaveURL(/\/systems\/?\?ui=gui#service-svc-litellm-model-gateway$/);
 });
 
+test('Search recovers a transient Pagefind import failure only after a user retry', async ({
+  page,
+}) => {
+  let moduleRequests = 0;
+  await page.route('**/pagefind/pagefind.js*', async (route) => {
+    moduleRequests += 1;
+    if (moduleRequests === 1) await route.abort('failed');
+    else await route.continue();
+  });
+
+  await page.goto('/?ui=gui');
+  await page.keyboard.press('Control+k');
+  await page.locator('#cmd-input').fill('typescript');
+  await expect(page.locator('#cmd-search-status')).toContainText('全文索引暂时不可用', {
+    timeout: 15_000,
+  });
+  const retry = page.locator('#cmd-search-status [data-pagefind-retry]');
+  await expect(retry).toHaveText('重试搜索');
+  expect(moduleRequests).toBe(1);
+
+  await retry.click();
+  await expect(page.locator('#cmd-results')).toContainText(/typescript/i, { timeout: 15_000 });
+  await expect(page.locator('#cmd-results')).toContainText('doc');
+  await expect(retry).toHaveCount(0);
+  expect(moduleRequests).toBeGreaterThanOrEqual(2);
+});
+
 test('Tools bounds external SSR to 16 and lazy-loads the shared catalog', async ({
   page,
   request,

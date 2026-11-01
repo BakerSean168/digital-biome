@@ -57,9 +57,15 @@ function getPagefindRuntime(value: unknown): PagefindRuntime | null {
   return null;
 }
 
+let pagefindImportAttempt = 0;
+
 function importPagefind(): Promise<unknown> {
-  const importer = new Function('return import("/pagefind/pagefind.js")') as () => Promise<unknown>;
-  return importer();
+  // Failed native ESM imports can be cached by the browser for the same URL.
+  // A new URL on explicit retry bypasses the failed module-map entry.
+  const retry = pagefindImportAttempt++ === 0 ? '' : `?retry=${pagefindImportAttempt - 1}`;
+  const url = `/pagefind/pagefind.js${retry}`;
+  // Vite must not rewrite a Pagefind runtime generated after Astro's client build.
+  return import(/* @vite-ignore */ url);
 }
 
 async function initializePagefind(importer: PagefindImporter): Promise<PagefindRuntime> {
@@ -89,11 +95,13 @@ export function normalizePagefindResult(value: unknown): PagefindResultData | nu
 export async function hydratePagefindResultsWithStatus(
   results: readonly PagefindSearchResult[],
 ): Promise<PagefindHydrationOutcome> {
-  const settled = await Promise.allSettled(results.map(result => Promise.resolve().then(() => result.data())));
+  const settled = await Promise.allSettled(
+    results.map((result) => Promise.resolve().then(() => result.data())),
+  );
   const hydrated: PagefindResultData[] = [];
   let failedCount = 0;
 
-  settled.forEach(result => {
+  settled.forEach((result) => {
     if (result.status === 'rejected') {
       failedCount += 1;
       return;
@@ -142,12 +150,17 @@ export async function searchPagefind(
   }
 }
 
-export function createPagefindAdapter(importer: PagefindImporter = importPagefind): PagefindAdapter {
+export function createPagefindAdapter(
+  importer: PagefindImporter = importPagefind,
+): PagefindAdapter {
   let loadPromise: Promise<PagefindRuntime | null> | undefined;
 
   const load = (): Promise<PagefindRuntime | null> => {
-    loadPromise ??= initializePagefind(importer).catch(error => {
+    loadPromise ??= initializePagefind(importer).catch((error) => {
       console.warn('Pagefind is not available in this environment.', error);
+      // Keep concurrent callers deduplicated, but allow a later user request to retry.
+      // No timers or automatic polling: the next explicit load triggers at most one attempt.
+      loadPromise = undefined;
       return null;
     });
     return loadPromise;
