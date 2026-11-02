@@ -226,40 +226,32 @@ const hasBrowser = ['/', '/notes', '/blog', '/dev', '/tools'].includes(
   import '../../browser/terminal-navigation';
 </script>
 <script>
+  import { clearSessionHint, getSession } from '../../browser/private-access';
+
   async function refreshAccessSession() {
     const loginControls = document.querySelectorAll<HTMLElement>('[data-auth-login]');
     const logoutControls = document.querySelectorAll<HTMLElement>('[data-auth-logout]');
     const announcer = document.querySelector<HTMLElement>('[data-auth-announcer]');
     if (!loginControls.length || !logoutControls.length) return;
 
-    try {
-      const response = await fetch('/api/private/session', {
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json' },
-        redirect: 'manual',
-      });
-      if (!response.ok) return;
+    // A cached hint only toggles the header control; the server remains authoritative.
+    if (!(await getSession())) return;
 
-      const payload: unknown = await response.json();
-      if (
-        typeof payload !== 'object' ||
-        payload === null ||
-        !('authenticated' in payload) ||
-        payload.authenticated !== true
-      ) {
-        return;
-      }
-
-      loginControls.forEach((control) => control.classList.add('hidden'));
-      logoutControls.forEach((control) => {
-        control.classList.remove('hidden');
-        control.classList.add('flex');
-      });
-      if (announcer) announcer.textContent = 'Cloudflare Access 已认证';
-    } catch {
-      // Guests keep the default login control.
-    }
+    loginControls.forEach((control) => control.classList.add('hidden'));
+    logoutControls.forEach((control) => {
+      control.classList.remove('hidden');
+      control.classList.add('flex');
+    });
+    if (announcer) announcer.textContent = 'Cloudflare Access 已认证';
   }
 
+  // Signing in or out changes the session; drop the cached hint before leaving the page.
+  document.addEventListener('click', (event) => {
+    if (
+      event.target instanceof Element &&
+      event.target.closest('[data-auth-login], [data-auth-logout]')
+    )
+      clearSessionHint();
+  });
   void refreshAccessSession();
 </script>
