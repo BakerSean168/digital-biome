@@ -26,9 +26,15 @@ interface StaticCatalogEntry {
   };
 }
 
+export interface StaticNotePreview {
+  title: string;
+  description?: string;
+}
+
 interface StaticCatalogCache {
   entries: StaticCatalogEntry[];
   slugMap: ReturnType<typeof buildSlugMap>;
+  previews: Map<string, StaticNotePreview>;
 }
 
 let catalogCache: StaticCatalogCache | null = null;
@@ -47,7 +53,10 @@ function buildFromIndex(): StaticCatalogCache {
       asset_type: e.asset_type ?? null,
     },
   }));
-  return { entries, slugMap: buildSlugMap(entries) };
+  const previews = new Map(
+    indexData.entries.map((e) => [e.id, { title: e.title, description: e.description }]),
+  );
+  return { entries, slugMap: buildSlugMap(entries), previews };
 }
 
 /** Load the static note catalog for wikilink resolution (built once per process). */
@@ -59,4 +68,9 @@ export function loadStaticNoteCatalog(): StaticCatalogCache {
 export function resolveStaticWikilink(target: string) {
   const catalog = loadStaticNoteCatalog();
   return resolveWikilinkTarget(target, catalog.slugMap, catalog.entries);
+}
+
+/** Title and frontmatter description of a note, for build-time wikilink previews. */
+export function getStaticNotePreview(noteId: string): StaticNotePreview | undefined {
+  return loadStaticNoteCatalog().previews.get(noteId);
 }
