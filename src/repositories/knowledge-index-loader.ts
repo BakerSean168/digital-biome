@@ -12,7 +12,6 @@ import type {
   LinkGraphIndex,
   TagIndex,
   AssetIndex,
-  AssetIndexEntry,
 } from '../types/knowledge-index';
 import { VISIBILITY_PRIVATE } from '../domain/constants';
 
@@ -27,15 +26,15 @@ import assetIndexData from '../data/indexes/asset-index.json';
 // JSON but required in the interface). A single `as` cast is used here;
 // the JSON structure is guaranteed by `scripts/sync/build-indexes.ts`.
 
-export function getNotesIndex(): NotesIndex {
+function getNotesIndex(): NotesIndex {
   return notesIndexData as NotesIndex;
 }
 
-export function getLinkGraphIndex(): LinkGraphIndex {
+function getLinkGraphIndex(): LinkGraphIndex {
   return linkGraphIndexData as LinkGraphIndex;
 }
 
-export function getTagIndex(): TagIndex {
+function getTagIndex(): TagIndex {
   return tagIndexData as TagIndex;
 }
 
@@ -73,28 +72,16 @@ const CONFIG_PATH_PREFIX = 'obsidian/config/';
 export function getPublicKnowledgeNoteEntriesFromIndex(): NoteIndexEntry[] {
   if (publicKnowledgeEntriesCache) return publicKnowledgeEntriesCache;
   const result = getAllNoteEntries().filter(
-    e =>
+    (e) =>
       !e.isAsset &&
       !e.draft &&
       !e.private &&
       e.visibility !== VISIBILITY_PRIVATE &&
       // Exclude operational/config documents (skills, AGENTS.md, etc.) that are
       // synced from thought-forest/config/ but must not appear as public content.
-      !e.id.startsWith(CONFIG_PATH_PREFIX)
+      !e.id.startsWith(CONFIG_PATH_PREFIX),
   );
   publicKnowledgeEntriesCache = result;
-  return result;
-}
-
-/** Public asset entries. */
-let publicAssetEntriesCache: AssetIndexEntry[] | null = null;
-
-export function getPublicAssetEntriesFromIndex(): AssetIndexEntry[] {
-  if (publicAssetEntriesCache) return publicAssetEntriesCache;
-  const result = getAssetIndex().entries.filter(
-    e => !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE
-  );
-  publicAssetEntriesCache = result;
   return result;
 }
 

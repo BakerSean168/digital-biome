@@ -44,14 +44,11 @@
     "src/pages/tools/[assetId].astro": "463a376fa91076919d390814d8536cef63fb6934a184a0c2ff0e809b00dfa8af",
     "src/repositories/assets-repository.ts": "7f9d2489f781ca6cf52822fd7c686d3f01ead96f705db4a177dff7b552a5c999",
     "src/repositories/content-entry-repository.ts": "f5321c7289e623f5505d7371a749215d8ed21d9047b74991c7bec1903d3a570e",
-    "src/repositories/knowledge-index-loader.ts": "eb91ec40804452a5e0ad227b64e989c8476946a9a148bd0e868411404c4c168f",
     "src/repositories/link-graph-repository.ts": "44d2d2f797be34e2ee75ce54932ed79aba22c8b3e35f67963366642f8c77cc16",
     "src/repositories/notes-repository.ts": "12e9eb797c91e6aa500cd1d1f2558c8c9b7dae2b242960f42abd1905e29639a0",
     "src/utils/note-catalog.test.ts": "65ba205e3b1075dfc1b0bacf5127c985aa5512c9dbef77c727c8101409922af1",
-    "src/utils/notes.ts": "5be0379377aafcc064d95e72ec5c0ab2f557240e55bd74a2ba51c7a021e32d41",
     "src/utils/remark-normalize-code-lang.ts": "cfde65ecd30f12fcb4ca73b347982438e863372fc4012e914ff7ee1ee2cb76ee",
     "src/view-models/bookmark-item.ts": "c4d613fa48b56c0e11c82f02919dd0b777c5fa59a001391584b44595d205ec49",
-    "src/view-models/tools-catalog.ts": "da02c0115cbcf16e3e78603476c8306b7c56b9f7a6e379fbbcb1f087400a638f",
     "tsconfig.json": "e45553728da413bd380517d2970f84d09dd31869f88051578df888bdda84ddd4"
   }
 }
