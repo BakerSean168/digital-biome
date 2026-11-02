@@ -3,8 +3,7 @@ import BaseLayout from './BaseLayout.astro';
 import NotesSidebar from '../components/notes/NotesSidebar.astro';
 import TableOfContents from '../components/notes/TableOfContents.astro';
 import WikilinkPreview from '../components/notes/WikilinkPreview.astro';
-import Backlinks from '../components/notes/Backlinks.astro';
-import OutgoingLinks from '../components/notes/OutgoingLinks.astro';
+import NoteLinkList from '../components/notes/NoteLinkList.astro';
 
 interface Props {
   title: string;
@@ -45,13 +44,13 @@ const gridCols = showContext
           <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
             链接到这里
           </div>
-          <Backlinks currentSlug={currentSlug} />
+          <NoteLinkList currentSlug={currentSlug} direction="in" />
         </div>
         <div>
           <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
             相关笔记
           </div>
-          <OutgoingLinks currentSlug={currentSlug} />
+          <NoteLinkList currentSlug={currentSlug} direction="out" />
         </div>
         {showSidebar && (
           <div class="mt-4 pt-4 border-t border-border/30">
