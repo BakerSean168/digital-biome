@@ -232,6 +232,8 @@ PR CI 在锁定 vault SHA 完成 `pnpm sync` 后执行 `verify:full`。
 - `/about/index.html` raw 目标 **< 360 KiB**；
 - 视觉仍保持 8 lane marquee。
 
+> 后续（2026-11）：双界面 About 改版后标签墙不再被引用，`ScrollingTagWall` 及其测试已删除；完整标签见 `/about/tags`。
+
 #### DB-OPT-103 — Shared typed Pagefind browser adapter
 
 **Write scope**

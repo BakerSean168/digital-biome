@@ -114,3 +114,29 @@ test('docs describe the verification preflight and CI watches doc changes', () =
     assert.ok(pushPaths.includes(watched), `CI push paths should include ${watched}`);
   }
 });
+
+test('retired common components and Spec Kit scaffolding stay absent', () => {
+  for (const component of ['Footer', 'LanguageToggle', 'ThemeIcon', 'ScrollingTagWall']) {
+    const file = `src/components/common/${component}.astro`;
+    assert.ok(!existsSync(path.join(ROOT, file)), `${file} is retired`);
+    assert.ok(!agents.includes(`common/${component}`), `AGENTS.md still points at ${file}`);
+    assert.ok(
+      !architecture.includes(`common/${component}`),
+      `architecture still points at ${file}`,
+    );
+  }
+  assert.ok(!agents.includes('showFooter'), 'BaseLayout has no showFooter prop');
+  for (const retired of ['.specify', 'specs', '.opencode/command/speckit.specify.md']) {
+    assert.ok(!existsSync(path.join(ROOT, retired)), `${retired} (Spec Kit) is retired`);
+  }
+  const specKitRef = /specs\/001-project-core|\.specify\/(?:memory|templates|scripts)|\/speckit\./;
+  for (const [name, doc] of Object.entries({
+    agents,
+    readme,
+    readmeZh,
+    architecture,
+    roadmap: read('ROADMAP.md'),
+  })) {
+    assert.doesNotMatch(doc, specKitRef, `${name} still references Spec Kit artifacts`);
+  }
+});

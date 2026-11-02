@@ -44,7 +44,9 @@ data-products/           # Immutable producer projection locks
 ### Route map
 
 当前公开路由、布局与交付模块以 [`docs/architecture.md` §3.0](docs/architecture.md#30-应用拓扑main-现状) 为准。
-Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
+Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`,
+the unused common components (Footer, LanguageToggle, ThemeIcon, ScrollingTagWall) and the GitHub Spec Kit scaffolding
+(`.specify/`, `specs/` and its `.opencode/` slash commands); this file and `docs/architecture.md` are the current design record.
 
 ## Commands & Development Specifications
 
@@ -52,6 +54,15 @@ Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Obse
 - **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm check` 进行 Astro、内容和 TypeScript 诊断。
 - **可复用验证门禁**：`pnpm verify` 先运行只读离线的 `pnpm preflight:data-products`（逐项对照三份 committed lock 的 SHA-256 并跑完整 publication 校验；缺失/过期缓存会指出具体 lock、文件与摘要，并提示 `pnpm sync:data-products`，绝不改 lock 或跳过校验），再运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
 - **提交前运行完整门禁**：CI/Candidate 路径先用 `pnpm sync:data-products` 验证并物化 knowledge、infra、PDS 三份 committed public lock，再运行 `pnpm verify:full`；`pnpm sync` 是同一入口，生成 ignored public projection（含 `src/data/system/pds-catalog-v1.json`），不检出 producer source 或运行 exporter；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
+
+## Engineering Principles
+
+Carried over from the retired Spec Kit constitution (2026-02); only the parts that still hold.
+
+- **静态优先**：页面默认输出静态 HTML；客户端交互放在 `src/browser/` 控制器中按页面初始化，不引入全局可变状态。
+- **性能是门禁**：第三方脚本延迟加载；`pnpm verify:full` 的性能预算失败即为回归，放宽预算须在 PR 中说明理由。
+- **简单优先（YAGNI）**：抽象须有具体调用方；不再使用的代码、资产与依赖及时删除，删除前确认无静态/动态引用。
+- **测试与文档**：交互控制器和关键用户路径须有单元测试或 `e2e/` 覆盖；新增依赖、脚本或路由时同步更新 README / AGENTS / architecture。
 
 ## Context Workflow
 
@@ -94,7 +105,7 @@ Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Obse
 
 - 所有页面必须通过 `BaseLayout.astro` 渲染 `<html>` 壳
 - 子 layout（TerminalLayout、NotesLayout）嵌套 BaseLayout；公共列表页使用 TerminalLayout + ObjectBrowser
-- BaseLayout 支持 props: `title`, `description?`, `image?`, `type?`, `bodyClass?`, `showHeader?`, `showFooter?`
+- BaseLayout 支持 props: `title`, `description?`, `image?`, `type?`, `bodyClass?`, `showHeader?`
 
 ### 标签系统
 
@@ -109,7 +120,7 @@ Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Obse
 - Lucide Icons (@lucide/astro) 集成
 - 2026-11 质量 EPIC #172：Astro 7.4、TypeScript 6.0、Tailwind 4.3；delivery manifest 拆分为 schema/validate/create/CLI；`pnpm verify` 前置 data-product preflight
 - Layout 架构：BaseLayout 作为唯一 HTML 壳，TerminalLayout / NotesLayout 嵌套 BaseLayout；旧 Dashboard UI 已退役
-- 笔记列表首屏只渲染 12 条，完整 catalog 延迟加载；About 标签墙使用有界代表性标签
+- 笔记列表首屏只渲染 12 条，完整 catalog 延迟加载；About 滚动标签墙已随双界面改版退役，完整标签见 `/about/tags`
 - SiteSearch 与 Discover 共用 typed Pagefind browser adapter
 - `pnpm verify` / `pnpm verify:full` 覆盖诊断、测试、生产构建、泄漏扫描和性能预算
 
