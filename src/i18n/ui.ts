@@ -25,9 +25,6 @@ export const ui = {
     'notes.totalCount': '共 {total} 篇笔记 (已显示 {count})',
     'notes.searchCount': '搜索结果: {total} 篇 (已显示 {count})',
     'notes.uncategorized': '未分类',
-    'footer.description': '个人知识生态网站，分享想法和工具。构建于星海之间，用代码丈量世界。',
-    'footer.links': '链接',
-    'footer.social': '社交',
   },
   en: {
     'nav.home': 'Home',
@@ -48,8 +45,5 @@ export const ui = {
     'notes.totalCount': 'Total {total} notes (showing {count})',
     'notes.searchCount': 'Search results: {total} (showing {count})',
     'notes.uncategorized': 'Uncategorized',
-    'footer.description': 'Personal knowledge ecology website, sharing ideas and tools. Built among the stars, measuring the world with code.',
-    'footer.links': 'Links',
-    'footer.social': 'Social',
   },
 } as const;

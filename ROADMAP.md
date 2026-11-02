@@ -1,8 +1,8 @@
 # Roadmap
 
-## 项目规格
+## 设计依据
 
-- [项目核心规格](specs/001-project-core/spec.md) - 整体架构和功能需求
+- [系统架构](docs/architecture.md) 与 [AGENTS.md](AGENTS.md) - 当前架构、路由与工程约定
 
 ## 状态说明
 
@@ -47,10 +47,9 @@
 
 ## 开发新功能
 
-1. 创建规格：`/speckit.specify <feature>`
-2. 生成计划：`/speckit.plan <feature>`
-3. 分解任务：`/speckit.tasks <feature>`
-4. 完成后更新本文档状态
+1. 在 GitHub Issue 中描述目标与验收标准
+2. 按 [AGENTS.md](AGENTS.md) 与 [docs/architecture.md](docs/architecture.md) 的约定实现，并通过 `pnpm verify`
+3. 完成后更新本文档状态
 
 ## 版本历史
 

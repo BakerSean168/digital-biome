@@ -36,7 +36,6 @@
     "netlify.toml",
     "wrangler.jsonc",
     "docs/**",
-    "specs/**",
     "src/**",
     "scripts/**"
   ],
