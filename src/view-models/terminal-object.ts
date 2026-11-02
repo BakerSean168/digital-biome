@@ -1,3 +1,5 @@
+import { buildKnowledgeNoteHref } from '../domain/note-routing/url-builder';
+
 /** Public presentation contract. Protected destinations stay behind privateRef. */
 export interface TerminalLink {
   title: string;
@@ -37,7 +39,34 @@ function isLink(value: unknown): value is TerminalLink {
   );
 }
 
-export function parseTerminalCatalog(value: unknown): TerminalObject[] {
+/**
+ * The public notes catalog omits `kind` and `href`: every row is a note and its
+ * href is derived from the id, which saves ~10% of the largest catalog payload.
+ */
+export type CompactNoteRow = Omit<TerminalObject, 'kind' | 'href'>;
+
+export function toCompactNoteRow(note: TerminalObject): CompactNoteRow {
+  return {
+    id: note.id,
+    title: note.title,
+    description: note.description,
+    meta: note.meta,
+    tags: note.tags,
+    relations: note.relations,
+    ...(note.privateRef === undefined ? {} : { privateRef: note.privateRef }),
+    ...(note.facets === undefined ? {} : { facets: note.facets }),
+  };
+}
+
+function expandCompactNoteRow(item: unknown): unknown {
+  if (!item || typeof item !== 'object') return item;
+  const row = item as Record<string, unknown>;
+  if (row.kind !== undefined || row.href !== undefined || typeof row.id !== 'string') return item;
+  return { ...row, kind: 'note', href: buildKnowledgeNoteHref(row.id) };
+}
+
+export function parseTerminalCatalog(input: unknown): TerminalObject[] {
+  const value = Array.isArray(input) ? input.map(expandCompactNoteRow) : input;
   if (
     !Array.isArray(value) ||
     !value.every((item) => {
