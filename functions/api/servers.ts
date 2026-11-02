@@ -160,7 +160,7 @@ async function readNezhaPublicSnapshot(
 
 async function readCachedResponse(request: Request): Promise<Response | null> {
   if (request.method !== 'GET') return null;
-  const edgeCache = (caches as unknown as { default: Cache }).default;
+  const edgeCache = caches.default;
   return (await edgeCache.match(new Request(request.url, { method: 'GET' }))) ?? null;
 }
 
@@ -170,7 +170,7 @@ function cacheResponse(
 ): void {
   if (context.request.method !== 'GET') return;
   const key = new Request(context.request.url, { method: 'GET' });
-  const edgeCache = (caches as unknown as { default: Cache }).default;
+  const edgeCache = caches.default;
   context.waitUntil(edgeCache.put(key, response.clone()));
 }
 
@@ -182,14 +182,15 @@ export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
 
   try {
     const snapshot = await readNezhaPublicSnapshot(nezhaUrl);
-    const mappedServers = snapshot.servers.map(mapServer);
-    if (mappedServers.some((server) => server === null)) {
+    const servers = snapshot.servers
+      .map(mapServer)
+      .filter((server): server is ServerItem => server !== null);
+    if (servers.length !== snapshot.servers.length) {
       return Response.json(
         { error: 'Nezha returned unsupported server telemetry.' },
         { status: 502 },
       );
     }
-    const servers = mappedServers as ServerItem[];
     const online = servers.filter((server) => server.online).length;
 
     const payload: ServerMonitorResponse = {

@@ -4,13 +4,14 @@ import {
   terminalExternal,
   terminalInfrastructure,
 } from '../../../repositories/terminal-repository';
+import { toCompactNoteRow } from '../../../view-models/terminal-object';
 export const getStaticPaths: GetStaticPaths = () =>
   ['notes', 'external', 'services', 'hosts', 'network'].map((catalog) => ({ params: { catalog } }));
 export const GET: APIRoute = async ({ params }) =>
   new Response(
     JSON.stringify(
       params.catalog === 'notes'
-        ? await terminalNotes()
+        ? (await terminalNotes()).map(toCompactNoteRow)
         : params.catalog === 'external'
           ? terminalExternal()
           : terminalInfrastructure().filter((item) =>
