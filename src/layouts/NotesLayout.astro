@@ -41,20 +41,20 @@ const gridCols = showContext
     {showContext && (
       <aside class="hidden lg:flex flex-col py-4 sticky top-6 h-fit max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar gap-8">
         <div>
-          <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
+          <div class="text-xs font-mono tracking-widest text-muted-foreground mb-4 border-b border-border/50 pb-2">
             链接到这里
           </div>
           <NoteLinkList currentSlug={currentSlug} direction="in" />
         </div>
         <div>
-          <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
+          <div class="text-xs font-mono tracking-widest text-muted-foreground mb-4 border-b border-border/50 pb-2">
             相关笔记
           </div>
           <NoteLinkList currentSlug={currentSlug} direction="out" />
         </div>
         {showSidebar && (
           <div class="mt-4 pt-4 border-t border-border/30">
-            <div class="text-xs font-mono tracking-widest text-text-muted mb-4 border-b border-border/50 pb-2">
+            <div class="text-xs font-mono tracking-widest text-muted-foreground mb-4 border-b border-border/50 pb-2">
               所有笔记
             </div>
             <NotesSidebar currentSlug={currentSlug} />
