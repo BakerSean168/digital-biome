@@ -3,12 +3,33 @@ import type { Plugin } from 'unified';
 import type { Root, Text, Parent, Link } from 'mdast';
 import { appendWikilinkAnchor, parseNoteWikilinks } from '../domain/note-routing';
 import type { ResolveResult } from '../domain/note-routing';
-import { resolveStaticWikilink } from '../domain/note-routing/static-note-catalog';
+import {
+  getStaticNotePreview,
+  resolveStaticWikilink,
+  type StaticNotePreview,
+} from '../domain/note-routing/static-note-catalog';
+
+/** Keeps the per-link `data-preview-excerpt` small; ~two lines in the hover card. */
+const PREVIEW_EXCERPT_MAX_CHARS = 48;
 
 export interface WikiLinkOptions {
   resolveTarget?: (target: string) => ResolveResult;
   classTemplate?: (result: ResolveResult) => string;
   preserveUnresolved?: boolean;
+  previewFor?: (noteId: string) => StaticNotePreview | undefined;
+}
+
+function previewProperties(preview: StaticNotePreview | undefined, text: string) {
+  const properties: Record<string, string> = {};
+  if (preview?.title && preview.title !== text) properties['data-preview-title'] = preview.title;
+  const chars = Array.from(preview?.description?.trim() ?? '');
+  if (chars.length > 0) {
+    properties['data-preview-excerpt'] =
+      chars.length > PREVIEW_EXCERPT_MAX_CHARS
+        ? `${chars.slice(0, PREVIEW_EXCERPT_MAX_CHARS).join('')}…`
+        : chars.join('');
+  }
+  return properties;
 }
 
 const defaultClassTemplate = (result: ResolveResult) =>
@@ -20,6 +41,7 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
   const resolveTarget = options.resolveTarget ?? resolveStaticWikilink;
   const classTemplate = options.classTemplate ?? defaultClassTemplate;
   const preserveUnresolved = options.preserveUnresolved ?? true;
+  const previewFor = options.previewFor ?? getStaticNotePreview;
 
   return (tree: Root) => {
     visit(tree, 'text', (node: Text, index: number | undefined, parent: Parent | undefined) => {
@@ -57,6 +79,10 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
                 className: classTemplate(resolution),
                 'data-wikilink-target': match.target,
                 'data-wikilink-status': resolution.status,
+                ...previewProperties(
+                  resolution.noteId ? previewFor(resolution.noteId) : undefined,
+                  text,
+                ),
               },
             },
             children: [{ type: 'text', value: text }],
