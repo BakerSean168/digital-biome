@@ -5,11 +5,13 @@ import {
   type BrowserSnapshot,
 } from '../view-models/browser-snapshot';
 import { objectPath } from '../view-models/terminal-filters';
-import { parseTerminalCatalog } from '../view-models/terminal-object';
 import { materializeTerminalRows, paintTerminalPreview, required } from './terminal-browser-dom';
 import { createTerminalBrowserState, visibleTerminalItems } from './terminal-browser-state';
 import { bindTerminalBrowserEvents } from './terminal-browser-events';
+import { createTerminalBrowserLoader, TERMINAL_PAGE_SIZE } from './terminal-browser-loader';
 import { initialTerminalSnapshot, updatedTerminalUrl } from './terminal-url';
+
+const DEFAULT_TOOLS_PANEL_ID = 'services';
 
 export function mountTerminalBrowser(root: HTMLElement): () => void {
   const lifecycle = new AbortController();
@@ -30,16 +32,35 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     Array.from(list.querySelectorAll<HTMLAnchorElement>('[data-object-row]')),
     catalogUrl,
   );
-  browser.retry = () => refresh();
   const stateKey = root.dataset.contextPath ?? location.pathname;
   const visible = () => {
     const panel = root.closest<HTMLElement>('[data-tools-panel]');
     const requested = document.getElementById(location.hash.slice(1));
-    const active = requested?.hasAttribute('data-tools-panel') ? requested.id : 'services';
+    const active = requested?.hasAttribute('data-tools-panel')
+      ? requested.id
+      : DEFAULT_TOOLS_PANEL_ID;
     return !signal.aborted && root.getClientRects().length > 0 && (!panel || panel.id === active);
   };
   const sortValue = (): NonNullable<BrowserSnapshot['sort']> =>
     sort?.value === 'title' ? 'title' : 'default';
+
+  const { load, showMore, refresh, hasMore, scheduleFill } = createTerminalBrowserLoader({
+    root,
+    list,
+    scroller,
+    more,
+    error,
+    status,
+    catalogUrl,
+    browser,
+    signal,
+    visible,
+    render,
+    select,
+    syncQueryUrl,
+    saveState,
+  });
+  browser.retry = () => refresh();
 
   const facets = initializeFacets(
     root,
@@ -48,7 +69,7 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     () => {
       browser.generation++;
       browser.boundaryAt = 0;
-      browser.limit = Math.max(browser.limit, 24);
+      browser.limit = Math.max(browser.limit, TERMINAL_PAGE_SIZE);
       scroller.scrollTop = 0;
       syncQueryUrl();
       render();
@@ -240,85 +261,6 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     document.dispatchEvent(new Event('biome:objects-rendered'));
   }
 
-  function hasMore() {
-    return !browser.loaded || browser.rows.length < browser.filtered.length;
-  }
-  async function showMore() {
-    if (browser.morePending || !hasMore()) return;
-    browser.morePending = true;
-    browser.boundaryAt = 0;
-    const intent = ++browser.generation;
-    const previousCount = browser.rows.length;
-    browser.retry = showMore;
-    await load();
-    browser.morePending = false;
-    if (!browser.loaded || intent !== browser.generation || !visible()) return;
-    browser.limit += 24;
-    render();
-    if (browser.rows.length > previousCount) {
-      browser.rows[previousCount]?.focus({ preventScroll: true });
-      select(previousCount, true);
-    }
-    status.textContent = `已显示 ${browser.rows.length} / ${browser.filtered.length}${hasMore() ? '' : ' · 已到末尾'}`;
-  }
-
-  async function refresh() {
-    if (signal.aborted) return;
-    const intent = ++browser.generation;
-    browser.restoring = false;
-    browser.boundaryAt = 0;
-    browser.retry = refresh;
-    syncQueryUrl();
-    saveState();
-    await load();
-    if (!browser.loaded || intent !== browser.generation || !visible()) return;
-    browser.limit = Math.max(browser.limit, 24);
-    scroller.scrollTop = 0;
-    render();
-    scheduleFill();
-  }
-
-  async function load() {
-    if (signal.aborted || browser.loaded || !catalogUrl) return;
-    if (browser.pending) return browser.pending;
-    browser.pending = (async () => {
-      error.classList.add('hidden');
-      more.disabled = true;
-      more.textContent = '正在加载…';
-      status.textContent = '正在加载…';
-      list.setAttribute('aria-busy', 'true');
-      try {
-        const response = await fetch(catalogUrl, {
-          cache: 'no-cache',
-          headers: { Accept: 'application/json' },
-          signal,
-        });
-        if (signal.aborted) return;
-        if (!response.ok) throw new Error('Catalog unavailable');
-        const payload: unknown = await response.json();
-        if (signal.aborted) return;
-        browser.items = parseTerminalCatalog(payload);
-        browser.loaded = true;
-      } catch {
-        if (!signal.aborted) {
-          error.classList.remove('hidden');
-          status.textContent = '加载失败 · 可重试';
-        }
-      } finally {
-        browser.pending = undefined;
-        if (!signal.aborted) {
-          more.disabled = false;
-          more.textContent = browser.loaded ? '显示更多' : '加载更多';
-          list.removeAttribute('aria-busy');
-          // A restored view can still reflect SSR rows when this shared request finishes.
-          // Refresh its current state; only the active caller may append or change selection.
-          if (browser.loaded && visible()) render();
-        }
-      }
-    })();
-    return browser.pending;
-  }
-
   bindTerminalBrowserEvents({
     root,
     list,
@@ -386,42 +328,6 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     },
     { signal },
   );
-  function scheduleFill() {
-    if (signal.aborted) return;
-    cancelAnimationFrame(browser.fillFrame);
-    browser.fillFrame = requestAnimationFrame(() => {
-      if (!signal.aborted) void fillViewport();
-    });
-  }
-  async function fillViewport() {
-    if (
-      !root.hasAttribute('data-auto-fill') ||
-      !visible() ||
-      !matchMedia('(min-width: 768px)').matches ||
-      browser.pending ||
-      browser.restoring ||
-      browser.fillFailed
-    )
-      return;
-    const height = browser.rows[0]?.getBoundingClientRect().height;
-    if (!height) return;
-    const target = Math.min(80, Math.ceil(scroller.clientHeight / height) + 2);
-    if (
-      target <= browser.limit ||
-      (browser.loaded && browser.rows.length >= browser.filtered.length)
-    )
-      return;
-    const intent = browser.generation;
-    browser.retry = fillViewport;
-    await load();
-    if (!browser.loaded) {
-      browser.fillFailed = true;
-      return;
-    }
-    if (intent !== browser.generation || !root.getClientRects().length) return;
-    browser.limit = Math.max(browser.limit, target);
-    render();
-  }
   const resizeObserver = new ResizeObserver(scheduleFill);
   resizeObserver.observe(scroller);
   void document.fonts.ready.then(() => {
