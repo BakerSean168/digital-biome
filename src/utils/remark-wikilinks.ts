@@ -6,7 +6,6 @@ import type { ResolveResult } from '../domain/note-routing';
 import { resolveStaticWikilink } from '../domain/note-routing/static-note-catalog';
 
 export interface WikiLinkOptions {
-  notesRoot?: string;
   resolveTarget?: (target: string) => ResolveResult;
   classTemplate?: (result: ResolveResult) => string;
   preserveUnresolved?: boolean;
@@ -18,7 +17,7 @@ const defaultClassTemplate = (result: ResolveResult) =>
     : 'wikilink wikilink-broken';
 
 export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) => {
-  const resolveTarget = options.resolveTarget ?? ((target: string) => resolveStaticWikilink(target, options.notesRoot));
+  const resolveTarget = options.resolveTarget ?? resolveStaticWikilink;
   const classTemplate = options.classTemplate ?? defaultClassTemplate;
   const preserveUnresolved = options.preserveUnresolved ?? true;
 
@@ -39,14 +38,17 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
         if (startIndex > lastIndex) {
           newNodes.push({
             type: 'text',
-            value: node.value.slice(lastIndex, startIndex)
+            value: node.value.slice(lastIndex, startIndex),
           });
         }
 
         const resolution = resolveTarget(match.target);
         const text = match.display ?? match.rawTarget;
 
-        if ((resolution.status === 'resolved' || resolution.status === 'asset') && resolution.href) {
+        if (
+          (resolution.status === 'resolved' || resolution.status === 'asset') &&
+          resolution.href
+        ) {
           const linkNode: Link = {
             type: 'link',
             url: encodeURI(appendWikilinkAnchor(resolution.href, match)),
@@ -55,9 +57,9 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
                 className: classTemplate(resolution),
                 'data-wikilink-target': match.target,
                 'data-wikilink-status': resolution.status,
-              }
+              },
             },
-            children: [{ type: 'text', value: text }]
+            children: [{ type: 'text', value: text }],
           };
           newNodes.push(linkNode);
         } else {
@@ -73,7 +75,7 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
       if (lastIndex < node.value.length) {
         newNodes.push({
           type: 'text',
-          value: node.value.slice(lastIndex)
+          value: node.value.slice(lastIndex),
         });
       }
 

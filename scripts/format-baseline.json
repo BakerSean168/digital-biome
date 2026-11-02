@@ -36,7 +36,6 @@
     "src/domain/note-routing/index.ts": "388137cb4168a1e9d27be83513d0079785b90bcde3f99b0732f9c83b5ee42deb",
     "src/domain/note-routing/slug-resolver.test.ts": "d04846d2843f76708087ed0344a10c497cb23929ff98bb6d0015141cdfb69622",
     "src/domain/note-routing/slug-resolver.ts": "89282e65197eb18fc6b8cda2e20c1cac452cb47ec658ad8ab0b8542c7a10f971",
-    "src/domain/note-routing/static-note-catalog.ts": "8048a3580a911d86d56a125a12a6fee2e8e357cbdbdd6dbf1f06dd500f7ccffb",
     "src/domain/note-routing/url-builder.test.ts": "23926ba4b30a7eb8ecc082b46edd06025ef7b23c9f179dfe0d2439607c376d2c",
     "src/domain/note-routing/url-builder.ts": "46e6d1c3738e2ace0213a4a1e6a06f188ac572f246eb64f7c5ed19a9158fb4e6",
     "src/i18n/utils.ts": "72e3866d00eb0e0c21a1573835e19afcb68ebbf87c9ef3af02ccbbbbbd672a9b",
@@ -51,7 +50,6 @@
     "src/utils/note-catalog.test.ts": "65ba205e3b1075dfc1b0bacf5127c985aa5512c9dbef77c727c8101409922af1",
     "src/utils/notes.ts": "5be0379377aafcc064d95e72ec5c0ab2f557240e55bd74a2ba51c7a021e32d41",
     "src/utils/remark-normalize-code-lang.ts": "cfde65ecd30f12fcb4ca73b347982438e863372fc4012e914ff7ee1ee2cb76ee",
-    "src/utils/remark-wikilinks.ts": "a8ea9927ad11a70f92cec9c2b554882f991bdc2c4118fadf6a871427620fce6c",
     "src/view-models/bookmark-item.ts": "c4d613fa48b56c0e11c82f02919dd0b777c5fa59a001391584b44595d205ec49",
     "src/view-models/tools-catalog.ts": "da02c0115cbcf16e3e78603476c8306b7c56b9f7a6e379fbbcb1f087400a638f",
     "tsconfig.json": "e45553728da413bd380517d2970f84d09dd31869f88051578df888bdda84ddd4"
