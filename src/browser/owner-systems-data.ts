@@ -1,3 +1,4 @@
+import { probeSession } from './private-access';
 import { personalSystemAccessTier } from '../config/personal-systems-access';
 
 /**
@@ -130,15 +131,8 @@ export async function loadOwnerSystems(
     : AbortSignal.timeout(8000);
   if (requestSignal.aborted) return denied;
 
-  try {
-    const session = await fetcher('/api/private/session', privateRequest(requestSignal));
-    if (!session.ok || requestSignal.aborted) return denied;
-    const sessionPayload: unknown = await session.json();
-    if (!record(sessionPayload) || sessionPayload.authenticated !== true || requestSignal.aborted)
-      return denied;
-  } catch {
+  if (!(await probeSession(fetcher, privateRequest(requestSignal))) || requestSignal.aborted)
     return denied;
-  }
 
   // Session verification is only a display hint; the server's Access middleware
   // remains authoritative for the separate protected catalog request.

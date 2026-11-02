@@ -1,36 +1,12 @@
 <script>
-  interface PrivateInfrastructurePayload {
-    version: 1;
-    values: Record<string, string>;
-    links: Record<string, string>;
-  }
+  import {
+    allowedPrivateHref,
+    getPrivateInfrastructure,
+    type PrivateInfrastructure,
+  } from '../../browser/private-access';
 
-  let cachedPayload: PrivateInfrastructurePayload | undefined;
+  let cachedPayload: PrivateInfrastructure | null = null;
   let pending: Promise<void> | undefined;
-
-  function isStringRecord(value: unknown): value is Record<string, string> {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      !Array.isArray(value) &&
-      Object.values(value).every((item) => typeof item === 'string')
-    );
-  }
-
-  function isPrivatePayload(value: unknown): value is PrivateInfrastructurePayload {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-    const payload = value as Partial<PrivateInfrastructurePayload>;
-    return payload.version === 1 && isStringRecord(payload.values) && isStringRecord(payload.links);
-  }
-
-  function getAllowedHref(value: string): string | null {
-    try {
-      const url = new URL(value);
-      return ['http:', 'https:', 'ssh:'].includes(url.protocol) && url.hostname ? url.href : null;
-    } catch {
-      return null;
-    }
-  }
 
   async function hydrate() {
     const valueTargets = document.querySelectorAll<HTMLElement>('[data-private-value]');
@@ -40,18 +16,8 @@
       return;
 
     try {
-      if (!cachedPayload) {
-        const response = await fetch('/api/private/infrastructure', {
-          credentials: 'same-origin',
-          headers: { Accept: 'application/json' },
-          redirect: 'manual',
-        });
-        if (!response.ok) return;
-
-        const payload: unknown = await response.json();
-        if (!isPrivatePayload(payload)) return;
-        cachedPayload = payload;
-      }
+      cachedPayload ??= await getPrivateInfrastructure();
+      if (!cachedPayload) return;
       const payload = cachedPayload;
 
       for (const target of valueTargets) {
@@ -63,7 +29,7 @@
 
       for (const target of linkTargets) {
         const key = target.dataset.privateLink;
-        const href = key ? getAllowedHref(payload.links[key] || '') : null;
+        const href = key ? allowedPrivateHref(payload.links[key] || '') : null;
         if (!href) continue;
 
         target.href = href;
@@ -79,7 +45,7 @@
 
       for (const target of linkValueTargets) {
         const key = target.dataset.privateLinkValue;
-        const href = key ? getAllowedHref(payload.links[key] || '') : null;
+        const href = key ? allowedPrivateHref(payload.links[key] || '') : null;
         if (href) target.textContent = href;
       }
     } catch {

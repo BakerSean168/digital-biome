@@ -19,14 +19,16 @@ test('search behavior and data access have separate browser module owners', () =
   const controller = read('src/browser/site-search-controller.ts');
   const services = read('src/browser/site-search-services.ts');
   const privateAdapter = read('src/browser/site-search-private.ts');
+  const privateAccess = read('src/browser/private-access.ts');
   const results = read('src/browser/site-search-results.ts');
   assert.match(controller, /export function initSiteSearch/);
   assert.match(controller, /createSearchIntentScheduler/);
   assert.match(controller, /WeakMap/);
   assert.match(services, /\/data\/system-launcher-index\.json/);
   assert.doesNotMatch(services, /\/api\/private\/infrastructure/);
-  assert.match(privateAdapter, /\/api\/private\/infrastructure/);
-  assert.match(privateAdapter, /redirect: 'manual'/);
+  assert.match(privateAdapter, /fetchPrivateInfrastructure/);
+  assert.match(privateAccess, /\/api\/private\/infrastructure/);
+  assert.match(privateAccess, /redirect: 'manual'/);
   assert.match(results, /matchSearchPalette/);
   assert.match(results, /toSearchResult/);
 });
