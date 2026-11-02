@@ -44,9 +44,8 @@ data-products/           # Immutable producer projection locks
 ### Route map
 
 当前公开路由、布局与交付模块以 [`docs/architecture.md` §3.0](docs/architecture.md#30-应用拓扑main-现状) 为准。
-Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`,
-the unused common components (Footer, LanguageToggle, ThemeIcon, ScrollingTagWall) and the GitHub Spec Kit scaffolding
-(`.specify/`, `specs/` and its `.opencode/` slash commands); this file and `docs/architecture.md` are the current design record.
+Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
+This file and `docs/architecture.md` are the current design record.
 
 ## Commands & Development Specifications
 
@@ -56,8 +55,6 @@ the unused common components (Footer, LanguageToggle, ThemeIcon, ScrollingTagWal
 - **提交前运行完整门禁**：CI/Candidate 路径先用 `pnpm sync:data-products` 验证并物化 knowledge、infra、PDS 三份 committed public lock，再运行 `pnpm verify:full`；`pnpm sync` 是同一入口，生成 ignored public projection（含 `src/data/system/pds-catalog-v1.json`），不检出 producer source 或运行 exporter；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
 
 ## Engineering Principles
-
-Carried over from the retired Spec Kit constitution (2026-02); only the parts that still hold.
 
 - **静态优先**：页面默认输出静态 HTML；客户端交互放在 `src/browser/` 控制器中按页面初始化，不引入全局可变状态。
 - **性能是门禁**：第三方脚本延迟加载；`pnpm verify:full` 的性能预算失败即为回归，放宽预算须在 PR 中说明理由。
