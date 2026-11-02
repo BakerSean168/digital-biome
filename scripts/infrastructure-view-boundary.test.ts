@@ -29,7 +29,7 @@ test('registry and resource detail reuse one semantic kind icon and one status o
   assert.match(detail, /InfrastructureKindIcon/);
   assert.match(registry, /infrastructureStatusCode/);
   assert.match(registry, /infrastructureStatusTone/);
-  assert.match(registry, /infrastructureKindLabel/);
+  assert.match(read('src/view-models/infrastructure-showcase.ts'), /infrastructureKindLabel/);
   assert.match(detail, /registeredStatus/);
   assert.match(icon, /const Icon =/);
   assert.doesNotMatch(icon, /fetch\(|data-private-link/);

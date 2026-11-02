@@ -53,8 +53,8 @@ test('Infrastructure prioritizes topology then compact registry', () => {
   assert.ok(topology >= 0, 'Infrastructure page should expose a topology section');
   assert.ok(inventory > topology, 'Resource inventory should follow topology, not precede it');
   assert.match(infrastructure, /Public fleet/);
-  assert.match(infrastructure, /Home path/);
-  assert.match(infrastructure, /Resource registry/);
+  assert.match(infrastructure, /家庭链路/);
+  assert.match(infrastructure, /资源清单/);
   assert.match(infrastructure, /<table/);
   assert.match(infrastructure, /<details/);
   assert.doesNotMatch(infrastructure, /grid grid-cols-1 gap-6 xl:grid-cols-2/);
