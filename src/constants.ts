@@ -8,21 +8,11 @@ export const SITE_DESCRIPTION =
   import.meta.env.PUBLIC_SITE_DESCRIPTION || '个人知识生态网站 - 个人介绍、简历、学习笔记、工具箱';
 export const SITE_URL = import.meta.env.PUBLIC_SITE_URL || 'https://bakersean.top';
 
-// 个人信息
-export const AUTHOR_NAME = import.meta.env.PUBLIC_AUTHOR_NAME || SITE_AUTHOR;
-export const AUTHOR_EMAIL = import.meta.env.PUBLIC_AUTHOR_EMAIL || 'your-email@example.com';
-export const AUTHOR_PHONE = import.meta.env.PUBLIC_AUTHOR_PHONE || '+86 138****8888';
-export const AUTHOR_LOCATION = import.meta.env.PUBLIC_AUTHOR_LOCATION || 'City, Country';
+const AUTHOR_EMAIL = import.meta.env.PUBLIC_AUTHOR_EMAIL || 'your-email@example.com';
 
 // 社交链接
 export const SOCIAL_LINKS = {
   github: import.meta.env.PUBLIC_GITHUB_URL || 'https://github.com/BakerSean168',
   linkedin: import.meta.env.PUBLIC_LINKEDIN_URL || 'https://linkedin.com',
   email: AUTHOR_EMAIL,
-};
-
-// 笔记配置
-export const NOTES_CONFIG = {
-  notesPerPage: 12,
-  tagsPerPage: 20,
 };

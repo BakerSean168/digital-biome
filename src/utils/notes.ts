@@ -75,7 +75,12 @@ export { toBookmarkItem } from '../view-models/bookmark-item';
 export type { BookmarkItem } from '../view-models/bookmark-item';
 
 // --- Domain routing (for convenience) ---
-export { toNoteId, toRouteSlug, buildKnowledgeNoteHref, inferVisibility } from '../domain/note-routing';
+export {
+  toNoteId,
+  toRouteSlug,
+  buildKnowledgeNoteHref,
+  inferVisibility,
+} from '../domain/note-routing';
 
 // --- Asset href (delegates to domain module) ---
 export { buildAssetHref as getAssetHref } from '../domain/note-routing';
@@ -84,56 +89,21 @@ export { buildAssetHref as getAssetHref } from '../domain/note-routing';
 export { getAllContentEntries as getAllNotes } from '../repositories/content-entry-repository';
 
 // --- Composite queries (kept here for backward compat) ---
-import type { AssetCard, HomepageSection } from '../types/notes';
+import type { AssetCard } from '../types/notes';
 import { getPublicAssets, sortByOrderThenTitle } from '../repositories/assets-repository';
 import { toAssetCard } from '../view-models/asset-card';
-
-/** Get homepage featured assets for a section. */
-export function getHomepageAssets(section: HomepageSection): AssetCard[] {
-  const assets = getPublicAssets();
-  const featured = assets
-    .filter(asset => asset.data.homepage?.featured && asset.data.homepage?.section === section)
-    .map(toAssetCard);
-  return sortByOrderThenTitle(featured);
-}
 
 /** Get public project assets explicitly selected for the project showcase. */
 export function getProjectShowcaseAssets(): AssetCard[] {
   const assets = getPublicAssets();
   return sortByOrderThenTitle(
     assets
-      .filter(asset => asset.data.asset_type === 'project'
-        && asset.data.homepage?.featured
-        && asset.data.homepage?.section === 'projects')
-      .map(toAssetCard)
+      .filter(
+        (asset) =>
+          asset.data.asset_type === 'project' &&
+          asset.data.homepage?.featured &&
+          asset.data.homepage?.section === 'projects',
+      )
+      .map(toAssetCard),
   );
-}
-
-/** Get service display groups (operations vs projects). */
-export function getServiceDisplayGroups(): {
-  operations: AssetCard[];
-  projects: AssetCard[];
-} {
-  const assets = getPublicAssets();
-  const services = assets
-    .filter(asset => asset.data.asset_type === 'service')
-    .map(toAssetCard);
-
-  return {
-    operations: sortByOrderThenTitle(
-      services.filter(asset => !asset.assetRole || asset.assetRole === 'ops' || asset.assetRole === 'portal')
-    ),
-    projects: sortByOrderThenTitle(
-      services.filter(asset => asset.assetRole === 'product' || asset.assetRole === 'showcase')
-    ),
-  };
-}
-
-/** Get infrastructure assets (host + network). */
-export function getInfrastructureAssets(): AssetCard[] {
-  const assets = getPublicAssets();
-  return assets
-    .filter(asset => asset.data.asset_type === 'host' || asset.data.asset_type === 'network')
-    .map(toAssetCard)
-    .sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'));
 }
