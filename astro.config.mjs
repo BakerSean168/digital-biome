@@ -57,10 +57,7 @@ export default defineConfig({
     // Keep the unified (remark/rehype) pipeline: Wikilinks, code-language normalisation
     // and stable heading IDs are unified plugins (Astro 7 defaults to Satteri).
     processor: unified({
-      remarkPlugins: [
-        remarkNormalizeCodeLang,
-        [remarkWikilinks, { notesRoot: './src/data/obsidian' }],
-      ],
+      remarkPlugins: [remarkNormalizeCodeLang, remarkWikilinks],
       rehypePlugins: [rehypeStableHeadingIds],
     }),
   },

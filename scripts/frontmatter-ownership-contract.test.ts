@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import test from 'node:test';
 
 const buildIndexes = fs.readFileSync('scripts/sync/build-indexes.ts', 'utf8');
-const staticCatalog = fs.readFileSync('src/domain/note-routing/static-note-catalog.ts', 'utf8');
 const sourceAdapter = fs.readFileSync('scripts/sync/source-adapter.ts', 'utf8');
 const buildSubscriptions = fs.readFileSync('scripts/sync/build-subscriptions.ts', 'utf8');
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8')) as {
@@ -12,13 +11,11 @@ const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8')) as {
 
 test('frontmatter consumers share the full-YAML adapter instead of local line scanners', () => {
   assert.match(buildIndexes, /domain\/markdown\/frontmatter/);
-  assert.match(staticCatalog, /markdown\/frontmatter/);
   assert.match(sourceAdapter, /domain\/markdown\/frontmatter/);
   assert.match(buildSubscriptions, /domain\/markdown\/frontmatter/);
 
   for (const [name, source] of [
     ['build-indexes', buildIndexes],
-    ['static-note-catalog', staticCatalog],
     ['build-subscriptions', buildSubscriptions],
   ] as const) {
     assert.doesNotMatch(
