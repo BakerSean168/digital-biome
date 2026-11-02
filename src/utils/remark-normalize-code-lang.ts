@@ -53,7 +53,7 @@ const LANG_ALIASES: Record<string, string> = {
   // 用户常犯的大写变体（来自 Obsidian 笔记）
   'config.yaml': 'yaml',
   'config.json': 'json',
-  gitignore: 'bash',   // .gitignore 文件内容按 shell 高亮
+  gitignore: 'bash', // .gitignore 文件内容按 shell 高亮
   dotenv: 'bash',
   env: 'bash',
 
@@ -64,6 +64,8 @@ const LANG_ALIASES: Record<string, string> = {
   tasks: 'plaintext',
   excalidraw: 'plaintext',
   mermaid: 'mermaid',
+  // Obsidian Bases 视图定义本身就是 YAML（filters/formulas/views），按 YAML 高亮
+  base: 'yaml',
 };
 
 const remarkNormalizeCodeLang: Plugin<[], Root> = () => {
