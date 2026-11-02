@@ -20,8 +20,6 @@
   --color-tertiary-foreground: var(--text-tertiary);
 
   --color-text-main: var(--text-main);
-  --color-text-muted: var(--text-muted);
-  --color-text-tertiary: var(--text-tertiary);
 
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
@@ -33,37 +31,7 @@
   --radius-full: 9999px;
 }
 
-/* ===== Base Theme Variables ===== */
+/* The palette lives in terminal.css (TUI) and gui.css (GUI); only the shared hover tone is defined here. */
 :root {
-  /* Light Theme (Forced to match Wabi-Sabi Dark for unity) */
-  --bg: #151614;
-  --bg-secondary: #1c1d1a;
-  --card: #1a1b19;
   --card-hover: #222320;
-  --pane: #1a1b19;
-  --border-color: #2c2d2a;
-
-  --text-main: #e2e1dd;
-  --text-muted: #a8a9a4;
-  --text-tertiary: #8b8c86;
-
-  --primary: #8b9a46; /* Moss Green Accent */
-  --primary-hover: #728038;
-}
-
-html.dark {
-  /* Dark Theme */
-  --bg: #151614;
-  --bg-secondary: #1c1d1a;
-  --card: #1a1b19;
-  --card-hover: #222320;
-  --pane: #1a1b19;
-  --border-color: #2c2d2a;
-
-  --text-main: #e2e1dd;
-  --text-muted: #a8a9a4;
-  --text-tertiary: #8b8c86;
-
-  --primary: #8b9a46;
-  --primary-hover: #728038;
 }

@@ -36,7 +36,7 @@ const emptyLabel = direction === 'in' ? '无上游引用' : '无下游关联';
     ))}
   </ul>
 ) : (
-  <div class="text-xs text-text-muted/50 font-mono italic pl-4">{emptyLabel}</div>
+  <div class="text-xs text-muted-foreground/50 font-mono italic pl-4">{emptyLabel}</div>
 )}
 
 <style>
@@ -47,7 +47,7 @@ const emptyLabel = direction === 'in' ? '无上游引用' : '无下游关联';
     width: 12px;
     height: 12px;
     margin-top: 0.125rem;
-    background-color: var(--color-text-muted);
+    background-color: var(--color-muted-foreground);
     mask: var(--note-link-icon) center / contain no-repeat;
   }
 
