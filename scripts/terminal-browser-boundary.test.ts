@@ -23,7 +23,8 @@ test('browser instance owns its state and terminates listeners, observers and pe
   assert.match(controller, /resizeObserver\.disconnect\(/);
   assert.match(controller, /facets\.dispose\(/);
   assert.match(controller, /browser\.generation\+\+/);
-  assert.match(controller, /fetch\(catalogUrl,\s*\{[\s\S]*?signal,/);
+  const loader = source('src/browser/terminal-browser-loader.ts');
+  assert.match(loader, /fetch\(catalogUrl,\s*\{[\s\S]*?signal,/);
   assert.doesNotMatch(controller, /let (items|selected|filtered|generation|pending)\b/);
 });
 
