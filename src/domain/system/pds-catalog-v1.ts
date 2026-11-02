@@ -1,3 +1,8 @@
+import {
+  assertNonEmptyString,
+  assertNonEmptyStringArray,
+  assertRecord,
+} from '../foundation/guards';
 export type PdsRepositoryRelation = 'canonical' | 'transitional' | 'archived' | 'external';
 export type PdsRepositoryLifecycle = 'active' | 'experimental' | 'deprecated' | 'archived';
 export type PdsRepositoryMetadataState = 'present' | 'external-upstream';
@@ -60,27 +65,9 @@ const LIFECYCLES = new Set<PdsRepositoryLifecycle>([
 ]);
 const METADATA_STATES = new Set<PdsRepositoryMetadataState>(['present', 'external-upstream']);
 
-function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error(`${label} must be an object`);
-  }
-}
-
-function assertNonEmptyString(value: unknown, label: string): asserts value is string {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new Error(`${label} must be a non-empty string`);
-  }
-}
-
-function assertStringArray(value: unknown, label: string): asserts value is string[] {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || !item.trim())) {
-    throw new Error(`${label} must be a string array`);
-  }
-}
-
 function optionalStringArray(value: unknown, label: string): string[] | undefined {
   if (value === undefined) return undefined;
-  assertStringArray(value, label);
+  assertNonEmptyStringArray(value, label);
   return value;
 }
 

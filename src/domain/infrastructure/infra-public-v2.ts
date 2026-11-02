@@ -1,5 +1,10 @@
 import type { HomepageConfig } from '../../types/notes';
 import { parseUsagePriority } from '../resource-order';
+import {
+  assertNonEmptyString,
+  assertNonEmptyStringArray,
+  assertRecord,
+} from '../foundation/guards';
 
 export type InfrastructureResourceKind = 'host' | 'network' | 'service' | 'platform';
 export type InfrastructureResourceStatus =
@@ -90,24 +95,6 @@ const SOURCE_REPOSITORY = 'https://github.com/BakerSean168/personal-infrastructu
 const PRIVATE_REF_RE = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 const RESOURCE_ID_RE = /^(?:host|net|svc)-[a-z0-9][a-z0-9-]*$/;
 
-function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error(`${label} must be an object`);
-  }
-}
-
-function assertString(value: unknown, label: string): asserts value is string {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw new Error(`${label} must be a non-empty string`);
-  }
-}
-
-function assertStringArray(value: unknown, label: string): asserts value is string[] {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || !item.trim())) {
-    throw new Error(`${label} must be a string array`);
-  }
-}
-
 function assertPublicUrl(value: string, label: string): void {
   let parsed: URL;
   try {
@@ -170,7 +157,7 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
 
   for (const [index, resource] of resources.entries()) {
     assertRecord(resource, `infra-public-v2.resources[${index}]`);
-    assertString(resource.id, `resource[${index}].id`);
+    assertNonEmptyString(resource.id, `resource[${index}].id`);
     if (!RESOURCE_ID_RE.test(resource.id)) {
       throw new Error(`invalid infrastructure resource id: ${resource.id}`);
     }
@@ -182,7 +169,7 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
     if (!['host', 'network', 'service', 'platform'].includes(String(resource.kind))) {
       throw new Error(`${resource.id}.kind is invalid`);
     }
-    assertString(resource.title, `${resource.id}.title`);
+    assertNonEmptyString(resource.title, `${resource.id}.title`);
     if (typeof resource.description !== 'string') {
       throw new Error(`${resource.id}.description must be a string`);
     }
@@ -193,7 +180,7 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
     ) {
       throw new Error(`${resource.id}.status is invalid`);
     }
-    assertStringArray(resource.groups, `${resource.id}.groups`);
+    assertNonEmptyStringArray(resource.groups, `${resource.id}.groups`);
     parseUsagePriority(resource.usagePriority);
     if (resource.homepage !== undefined) {
       assertRecord(resource.homepage, `${resource.id}.homepage`);
@@ -206,7 +193,7 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
             throw new Error(`${resource.id}.homepage.order must be a nonnegative integer`);
           }
         } else if (key === 'label' || key === 'description') {
-          assertString(field, `${resource.id}.homepage.${key}`);
+          assertNonEmptyString(field, `${resource.id}.homepage.${key}`);
         } else {
           throw new Error(`${resource.id}.homepage.${key} is unsupported`);
         }
@@ -217,7 +204,7 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
     if (resource.privateValues !== undefined) {
       assertRecord(resource.privateValues, `${resource.id}.privateValues`);
       for (const [key, ref] of Object.entries(resource.privateValues)) {
-        assertString(key, `${resource.id}.privateValues key`);
+        assertNonEmptyString(key, `${resource.id}.privateValues key`);
         if (typeof ref !== 'string' || !PRIVATE_REF_RE.test(ref)) {
           throw new Error(`${resource.id}.privateValues.${key} is invalid`);
         }
@@ -230,8 +217,8 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
       }
       for (const [linkIndex, link] of resource.links.entries()) {
         assertRecord(link, `${resource.id}.links[${linkIndex}]`);
-        assertString(link.label, `${resource.id}.links[${linkIndex}].label`);
-        assertString(link.kind, `${resource.id}.links[${linkIndex}].kind`);
+        assertNonEmptyString(link.label, `${resource.id}.links[${linkIndex}].label`);
+        assertNonEmptyString(link.kind, `${resource.id}.links[${linkIndex}].kind`);
         const hasUrl = typeof link.url === 'string';
         const hasPrivateRef = typeof link.privateRef === 'string';
         if (hasUrl === hasPrivateRef) {
@@ -257,9 +244,9 @@ export function parseInfraPublicV2(raw: string): InfraPublicV2 {
   const seenConnections = new Set<string>();
   for (const [index, connection] of value.payload.connections.entries()) {
     assertRecord(connection, `connection[${index}]`);
-    assertString(connection.from, `connection[${index}].from`);
-    assertString(connection.to, `connection[${index}].to`);
-    assertString(connection.kind, `connection[${index}].kind`);
+    assertNonEmptyString(connection.from, `connection[${index}].from`);
+    assertNonEmptyString(connection.to, `connection[${index}].to`);
+    assertNonEmptyString(connection.kind, `connection[${index}].kind`);
     if (!ids.has(connection.from) || !ids.has(connection.to)) {
       throw new Error(`connection[${index}] references a missing resource`);
     }

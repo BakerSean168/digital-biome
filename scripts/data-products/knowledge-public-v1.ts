@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseUsagePriority } from '../../src/domain/resource-order';
+import { assertRecord, assertStringArray } from '../../src/domain/foundation/guards';
 
 export const KNOWLEDGE_PUBLIC_V1_REPOSITORY = 'https://github.com/BakerSean168/thought-forest.git';
 
@@ -59,18 +60,6 @@ export type KnowledgePublicV1 = {
     media: Array<{ path: string; mediaType: string; sha256: string; dataBase64: string }>;
   };
 };
-
-function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error(`${label} must be an object`);
-  }
-}
-
-function assertStringArray(value: unknown, label: string): asserts value is string[] {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
-    throw new Error(`${label} must be a string array`);
-  }
-}
 
 function assertSafeRelativePath(value: string, label: string): string {
   if (
