@@ -10,84 +10,43 @@ import {
 import type { InfrastructureConnection, InfrastructureResource } from '../../utils/infrastructure';
 import InfrastructureKindIcon from './InfrastructureKindIcon.astro';
 import {
-  infrastructureKindLabel,
   infrastructureStatusCode,
   infrastructureStatusTone,
 } from '../../view-models/infrastructure-labels';
+import { buildInfrastructureShowcase, publicLink } from '../../view-models/infrastructure-showcase';
 
 interface Props {
   title: string;
   description: string;
   resources: Array<InfrastructureResource & { href?: string }>;
   connections: InfrastructureConnection[];
-  locale?: 'zh' | 'en';
 }
 
-const { title, description, resources, connections, locale = 'zh' } = Astro.props;
+const { title, description, resources, connections } = Astro.props;
 const currentPath = Astro.url.pathname;
-const resourceMap = new Map(resources.map((resource) => [resource.id, resource]));
-const activeResources = resources.filter((resource) => resource.status === 'active');
-const fleetHosts = resources.filter(
-  (resource) =>
-    resource.kind === 'host' &&
-    resource.status === 'active' &&
-    resource.groups.includes('public-fleet'),
-);
-const homelabResources = resources.filter((resource) => resource.groups.includes('homelab'));
-const homelabIds = new Set(homelabResources.map((resource) => resource.id));
-const homeConnections = connections.filter(
-  (connection) => homelabIds.has(connection.from) && homelabIds.has(connection.to),
-);
-const monitor = resourceMap.get('svc-nezha-panel');
-const control = resourceMap.get('svc-homepage-dashboard');
-const publicLink = (resource: InfrastructureResource | undefined, kinds: string[]) =>
-  resource?.links?.find((link) => link.url && kinds.includes(link.kind));
-const privateLink = (resource: InfrastructureResource | undefined, kinds: string[]) =>
-  resource?.links?.find((link) => link.privateRef && kinds.includes(link.kind));
-const monitorLink = publicLink(monitor, ['monitor', 'admin', 'app']);
-const controlLink = privateLink(control, ['app', 'admin']);
-const hostedServices = (hostId: string) =>
-  resources.filter((resource) => resource.kind === 'service' && resource.hostResourceId === hostId);
-const homeNodeIds = [
-  'net-home-optical-modem',
-  'net-home-switch',
-  'net-home-ap',
-  'host-n100-pve',
-] as const;
-const homeNodes = homeNodeIds
-  .map((id) => resourceMap.get(id))
-  .filter((resource): resource is NonNullable<typeof resource> => Boolean(resource));
-const vmNodes = resources.filter((resource) => resource.parentResourceId === 'host-n100-pve');
-const kindOrder: InfrastructureResource['kind'][] = ['host', 'service', 'network', 'platform'];
-const resourcesByKind = kindOrder.map((kind) => ({
-  kind,
-  label: infrastructureKindLabel(kind),
-  items: resources.filter((resource) => resource.kind === kind),
-}));
-const labels =
-  locale === 'en'
-    ? {
-        eyebrow: 'Infrastructure',
-        systems: 'Back to systems',
-        operations: 'Operational map',
-        operationsDescription:
-          'Current compute, home topology, and explicit producer-owned relationships.',
-        fleet: 'Public fleet',
-        home: 'Home path',
-        registry: 'Resource registry',
-        registryDescription:
-          'Complete public-safe inventory. Open a row for deeper resource details.',
-      }
-    : {
-        eyebrow: 'Infrastructure',
-        systems: '返回 Personal Systems',
-        operations: '运行拓扑',
-        operationsDescription: '先看计算节点、家庭链路与显式关系，再进入完整资源清单。',
-        fleet: '公网计算节点',
-        home: '家庭链路',
-        registry: '资源清单',
-        registryDescription: '完整 public-safe inventory；详情页负责更深的单资源信息。',
-      };
+const {
+  resourceMap,
+  activeResources,
+  fleetHosts,
+  homelabResources,
+  homeConnections,
+  monitorLink,
+  controlLink,
+  homeNodes,
+  vmNodes,
+  resourcesByKind,
+  hostedServices,
+} = buildInfrastructureShowcase(resources, connections);
+const labels = {
+  eyebrow: 'Infrastructure',
+  systems: '返回 Personal Systems',
+  operations: '运行拓扑',
+  operationsDescription: '先看计算节点、家庭链路与显式关系，再进入完整资源清单。',
+  fleet: '公网计算节点',
+  home: '家庭链路',
+  registry: '资源清单',
+  registryDescription: '完整 public-safe inventory；详情页负责更深的单资源信息。',
+};
 ---
 
 <div class="pb-16">
