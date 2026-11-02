@@ -1,3 +1,4 @@
+import { isRecord } from '../domain/foundation/guards';
 /**
  * Browser-side access to the Cloudflare Access protected `/api/private/*` endpoints.
  *
@@ -27,10 +28,6 @@ export function allowedPrivateHref(value: string): string | null {
   } catch {
     return null;
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isStringRecord(value: unknown): value is Record<string, string> {

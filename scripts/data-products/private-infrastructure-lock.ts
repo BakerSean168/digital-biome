@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { assertRecord } from '../../src/domain/foundation/guards';
 
 export const DIGITAL_BIOME_PRIVATE_INFRASTRUCTURE_PRODUCT =
   'digital-biome-private-infrastructure-v1';
@@ -18,12 +19,6 @@ export type DigitalBiomePrivateInfrastructureLock = {
   contractPath: typeof DIGITAL_BIOME_PRIVATE_INFRASTRUCTURE_CONTRACT_PATH;
   sha256: string;
 };
-
-function assertRecord(value: unknown, label: string): asserts value is Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error(`${label} must be an object`);
-  }
-}
 
 function assertExactKeys(value: Record<string, unknown>, expected: string[], label: string): void {
   const actual = Object.keys(value).sort();

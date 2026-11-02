@@ -7,6 +7,7 @@
  */
 
 import { parse } from 'yaml';
+import { isRecord } from '../foundation/guards';
 
 export type FrontmatterRecord = Record<string, unknown>;
 
@@ -15,10 +16,6 @@ export interface ParsedMarkdownFrontmatter {
   body: string;
   raw: string | null;
   hasFrontmatter: boolean;
-}
-
-function isRecord(value: unknown): value is FrontmatterRecord {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function splitMarkdownFrontmatter(text: string): { raw: string | null; body: string } {
