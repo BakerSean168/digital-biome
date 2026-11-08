@@ -115,15 +115,8 @@ export function getPinnedPortalServices(resources = getInfrastructureResources()
     .slice(0, 8);
 }
 
-export function getPortalServers(): PortalServer[] {
-  const resources = getInfrastructureResources();
-  const services = getPortalServices();
-  const order = [
-    'host-gcp-iowa-c3d-development-vps',
-    'host-aliyun-chengdu-dailyuse-vps',
-    'host-oracle-osaka-amd-proxy-vps',
-    'host-oracle-osaka-arm-development-vps',
-  ];
+export function getPortalServers(resources = getInfrastructureResources()): PortalServer[] {
+  const services = getPortalServices(resources);
   return resources
     .filter(
       (resource) =>
@@ -136,7 +129,11 @@ export function getPortalServers(): PortalServer[] {
       serviceCount: services.filter((service) => service.resource.hostResourceId === resource.id)
         .length,
     }))
-    .sort((a, b) => order.indexOf(a.resource.id) - order.indexOf(b.resource.id));
+    .sort(
+      (a, b) =>
+        compareResourcePriority(a.resource, b.resource) ||
+        compareResourceTitle(a.resource, b.resource),
+    );
 }
 
 export function publicSystemFactCounts() {

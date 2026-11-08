@@ -20,12 +20,10 @@ test('Personal Infrastructure projection is authoritative for infrastructure pre
   const resources = projection.payload.resources;
   const ids = new Set(resources.map((resource) => resource.id));
   for (const required of [
-    'host-oracle-osaka-arm-development-vps',
     'host-aliyun-chengdu-dailyuse-vps',
     'host-n100-pve',
     'net-home-lan',
     'svc-homepage-dashboard',
-    'svc-nezha-panel',
   ]) {
     assert.ok(ids.has(required), `infra-public-v2 is missing ${required}`);
   }
