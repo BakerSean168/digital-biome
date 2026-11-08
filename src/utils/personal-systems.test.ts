@@ -5,6 +5,7 @@ import {
   getPinnedPortalServices,
   getPortalServers,
   getPortalServices,
+  getServiceCatalog,
   getPortalServiceSearchIndex,
   publicSystemFactCounts,
 } from './personal-systems';
@@ -87,7 +88,10 @@ test('global Search follows available active resources and does not leak private
 test('Personal Systems fact counts reflect live resources instead of fixed legacy totals', () => {
   const facts = publicSystemFactCounts();
   assert.equal(facts.cloudHostCount, getPortalServers().length);
-  assert.equal(facts.serviceCount, getPortalServices().length);
+  assert.equal(
+    facts.serviceCount,
+    getServiceCatalog().filter((service) => service.resource.status === 'active').length,
+  );
   assert.ok(facts.domainCount > 0);
 });
 
@@ -178,4 +182,55 @@ test('homepage selection is explicit, ordered and independent of usage priority'
   assert.deepEqual(getPinnedPortalServices([resources[4], resource('svc-legacy')]), []);
   assert.deepEqual(getPinnedPortalServices([]), []);
   assert.deepEqual(getPinnedPortalServices([resource('svc-legacy')]), []);
+});
+
+test('status-aware catalog includes planning and history without changing active launchers', () => {
+  const resources = [
+    resource('svc-active'),
+    resource('svc-planned', { status: 'planned', groups: ['homelab'] }),
+    resource('svc-archived', { status: 'archived', groups: ['history'] }),
+    resource('svc-retired', {
+      status: 'retired',
+      groups: ['portal-ai'],
+      links: [
+        { label: 'old', kind: 'admin', url: 'https://retired.invalid' },
+        { label: 'old owner', kind: 'admin', privateRef: 'retired.admin' },
+      ],
+      homepage: { enabled: true, featured: true, order: 1 },
+    }),
+    resource('svc-active-other', { groups: ['showcase'] }),
+  ];
+  const catalog = getServiceCatalog(resources);
+  assert.deepEqual(
+    new Set(catalog.map((item) => item.resource.id)),
+    new Set(resources.map((item) => item.id)),
+  );
+  assert.equal(catalog.find((item) => item.resource.id === 'svc-planned')?.category, 'homelab');
+  assert.equal(catalog.find((item) => item.resource.id === 'svc-archived')?.category, 'history');
+  assert.equal(catalog.find((item) => item.resource.id === 'svc-active-other')?.category, 'other');
+  const retired = catalog.find((item) => item.resource.id === 'svc-retired');
+  assert.equal(retired?.url, undefined);
+  assert.equal(retired?.privateRef, undefined);
+  assert.equal(retired?.pinned, false);
+  assert.equal(retired?.access, 'catalog');
+  assert.deepEqual(
+    getPortalServices(resources).map((item) => item.resource.id),
+    ['svc-active'],
+  );
+  assert.deepEqual(
+    getPinnedPortalServices(resources).map((item) => item.resource.id),
+    [],
+  );
+});
+
+test('public service directory includes all publicly exported statuses, without inventing private resources', () => {
+  const projection = getInfrastructureResources();
+  const catalog = getServiceCatalog();
+  assert.deepEqual(
+    new Set(catalog.map((item) => item.resource.id)),
+    new Set(projection.filter((item) => item.kind === 'service').map((item) => item.id)),
+  );
+  assert.ok(catalog.some((item) => item.resource.status === 'planned'));
+  assert.ok(catalog.some((item) => item.resource.status === 'archived'));
+  assert.ok(catalog.every((item) => item.resource.id !== 'svc-nezha-panel'));
 });

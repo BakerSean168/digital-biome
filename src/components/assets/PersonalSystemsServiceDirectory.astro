@@ -1,0 +1,183 @@
+---
+import { ExternalLink, LockKeyhole } from '@lucide/astro';
+import type { PortalService, PortalServiceCategory } from '../../utils/personal-systems';
+import {
+  SERVICE_LIFECYCLE_FILTERS,
+  matchesServiceLifecycle,
+  serviceLifecycleGroup,
+  serviceLifecycleLabel,
+} from '../../utils/service-lifecycle';
+
+interface Props {
+  services: PortalService[];
+}
+
+const { services } = Astro.props;
+const currentPath = Astro.url.pathname;
+const categories: Array<{ id: PortalServiceCategory; label: string }> = [
+  { id: 'apps', label: 'Apps & Products' },
+  { id: 'ai', label: 'AI & Agents' },
+  { id: 'ops', label: 'Operations' },
+  { id: 'homelab', label: 'Home Lab' },
+  { id: 'history', label: 'Historical' },
+  { id: 'other', label: 'Other' },
+];
+const activeServiceCount = services.filter(
+  (service) => service.resource.status === 'active',
+).length;
+const serviceFilters = SERVICE_LIFECYCLE_FILTERS.map((option) => ({
+  ...option,
+  count: services.filter((service) => matchesServiceLifecycle(service.resource.status, option.id))
+    .length,
+}));
+---
+
+<section id="services" data-service-filter-root class="scroll-mt-24 border-b border-border/70 py-7">
+  <div class="mb-4">
+    <h2 class="text-base font-semibold text-foreground">Services</h2>
+    <p class="mt-1 text-sm text-muted-foreground">
+      按运行状态查看服务。状态来自基础设施登记，不代表实时健康检查。
+    </p>
+  </div>
+
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div
+      data-service-filter-controls
+      role="group"
+      aria-label="按服务状态筛选"
+      class="flex flex-wrap gap-2"
+    >
+      {serviceFilters.map((option) => (
+        <button
+          type="button"
+          data-service-filter={option.id}
+          aria-pressed={option.id === 'active'}
+          class="rounded-md border border-border/50 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary aria-pressed:border-border aria-pressed:bg-muted aria-pressed:font-medium aria-pressed:text-foreground"
+        >
+          {option.label} <span class="ml-1 tabular-nums">{option.count}</span>
+        </button>
+      ))}
+    </div>
+    <span
+      data-service-visible-count
+      role="status"
+      aria-live="polite"
+      class="text-xs text-muted-foreground"
+    >
+      显示 {activeServiceCount} 项
+    </span>
+  </div>
+
+  <div data-service-category-list class="space-y-7">
+    {categories.map((category) => {
+      const items = services.filter((service) => service.category === category.id);
+      if (items.length === 0) return null;
+      const activeCount = items.filter((service) => service.resource.status === 'active').length;
+      return (
+        <section data-service-category-section class:list={[activeCount === 0 && 'hidden']}>
+          <div class="mb-1 flex items-center justify-between gap-4">
+            <h3 class="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              {category.label}
+            </h3>
+            <span data-service-category-count class="text-xs text-tertiary-foreground">
+              {activeCount}
+            </span>
+          </div>
+          <div class="divide-y divide-border/35 border-y border-border/35">
+            {items.map((service) => (
+              <div
+                id={`service-${service.resource.id}`}
+                data-service-row
+                data-service-lifecycle-group={serviceLifecycleGroup(service.resource.status)}
+                class:list={[
+                  'grid scroll-mt-24 gap-2 py-3.5 md:grid-cols-[minmax(0,1.1fr)_minmax(190px,0.8fr)_80px_auto] md:items-center',
+                  service.resource.status !== 'active' && 'hidden',
+                ]}
+              >
+                <div class="flex min-w-0 items-center gap-3">
+                  <a
+                    href={`/infrastructure/${service.resource.id}`}
+                    class="min-w-0 truncate text-sm font-medium text-foreground hover:text-primary"
+                  >
+                    {service.resource.title}
+                  </a>
+                  {service.resource.status !== 'active' && (
+                    <span class="shrink-0 text-xs text-muted-foreground">
+                      {serviceLifecycleLabel(service.resource.status)}
+                    </span>
+                  )}
+                </div>
+                <span class="truncate text-sm text-muted-foreground">
+                  {service.host?.title ?? service.resource.role ?? '—'}
+                </span>
+                <span
+                  class:list={[
+                    'text-xs',
+                    service.access === 'public'
+                      ? 'text-emerald-300'
+                      : service.access === 'owner'
+                        ? 'text-amber-300'
+                        : 'text-muted-foreground',
+                  ]}
+                >
+                  {service.resource.status !== 'active'
+                    ? 'Catalog'
+                    : service.access === 'public'
+                      ? 'Public'
+                      : service.access === 'owner'
+                        ? 'Owner'
+                        : 'Catalog'}
+                </span>
+                <div class="text-sm md:text-right">
+                  {service.url ? (
+                    <a
+                      href={service.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-1 text-primary hover:text-foreground"
+                    >
+                      {service.actionLabel} <ExternalLink size={11} />
+                    </a>
+                  ) : service.privateRef ? (
+                    <a
+                      href={`/login?next=${encodeURIComponent(`${currentPath}#service-${service.resource.id}`)}`}
+                      data-private-link={service.privateRef}
+                      data-private-unlocked-label={service.actionLabel}
+                      class="inline-flex items-center gap-1 text-amber-300 hover:text-primary"
+                    >
+                      <LockKeyhole size={11} />{' '}
+                      <span data-private-link-label>{service.actionLabel}</span>
+                    </a>
+                  ) : (
+                    <a
+                      href={`/infrastructure/${service.resource.id}`}
+                      class="text-muted-foreground hover:text-primary"
+                    >
+                      Detail
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    })}
+  </div>
+  <p
+    data-service-empty
+    class:list={['mt-5 text-sm text-muted-foreground', activeServiceCount !== 0 && 'hidden']}
+  >
+    此状态暂无可公开展示的服务。
+  </p>
+  <p class="mt-4 text-xs text-muted-foreground">
+    规划与历史服务仅提供资料详情；私有历史记录不会公开，已失效的启动链接也不会保留为入口。
+  </p>
+</section>
+
+<script>
+  import { initializeServiceStatusFilters } from '../../browser/service-status-filter';
+
+  initializeServiceStatusFilters();
+  document.addEventListener('astro:page-load', initializeServiceStatusFilters);
+</script>
