@@ -2,15 +2,15 @@
   "protocolVersion": 1,
   "product": "infra-public-v2",
   "producerRepository": "BakerSean168/personal-infrastructure",
-  "sourceRevision": "c1ec38142f81cf156a662612abff470deb6529ba",
-  "releaseTag": "infra-public-v2-c1ec38142f81cf156a662612abff470deb6529ba",
+  "sourceRevision": "09fb965b23df52401ad2bb4593a4488270106697",
+  "releaseTag": "infra-public-v2-09fb965b23df52401ad2bb4593a4488270106697",
   "artifact": {
     "name": "infra-public-v2.json",
-    "sha256": "sha256:9a96b7cda5e075c1656927360d72efe10b52bb3c5c8cdc4cf421934b3694f32e"
+    "sha256": "sha256:1bd625b3a5ea51317e78dbb7c348584f7dfc0714d267b97497265ead53d3b0f6"
   },
   "manifest": {
     "name": "infra-public-v2.manifest.json",
-    "sha256": "sha256:30a8defe99f858d6251dc19d2ad1cccff1b5f92b12972f40c0213e181bf5353a"
+    "sha256": "sha256:bba5a9435c7d25e794e61741fc4f13b779498628d06daa7632e9305fe4f608a2"
   },
-  "semanticSha256": "sha256:bbd64ea350a7e3855f2a5429a8bfda8a0e49a4f8b274fd2858d812c89f292081"
+  "semanticSha256": "sha256:d6720e8cad3217fe35fce8560a3fc4e85d1bfea1778bab7914132f8aa803022f"
 }
