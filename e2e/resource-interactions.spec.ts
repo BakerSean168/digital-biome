@@ -1,5 +1,30 @@
 import { expect, test } from '@playwright/test';
 import { parseTerminalCatalog } from '../src/view-models/terminal-object';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import type { InfraPublicV2 } from '../src/domain/infrastructure/infra-public-v2';
+import { compareResourceTitle } from '../src/domain/resource-order';
+
+const currentInfraProjection = JSON.parse(
+  readFileSync(path.resolve('src/data/infrastructure/infra-public-v2.json'), 'utf8'),
+) as InfraPublicV2;
+
+function sourceFeaturedServices() {
+  return currentInfraProjection.payload.resources
+    .filter(
+      (resource) =>
+        resource.kind === 'service' &&
+        resource.status === 'active' &&
+        resource.homepage?.enabled === true &&
+        resource.homepage.featured === true,
+    )
+    .sort(
+      (a, b) =>
+        (a.homepage?.order ?? Infinity) - (b.homepage?.order ?? Infinity) ||
+        compareResourceTitle(a, b),
+    )
+    .slice(0, 8);
+}
 
 const browser = '[data-object-browser]:visible';
 const query = `${browser} [data-object-filter]`;
@@ -47,14 +72,23 @@ test('published resource curation reaches the catalog and visible browser', asyn
 
 test('desktop Tools fills the visible tab and keeps controls outside list scrolling', async ({
   page,
+  request,
 }) => {
+  // Derive the SSR count from the producer-owned service catalog. Retiring
+  // Hermes/Nezha changes its size but not the browser layout contract.
+  const response = await request.get('/data/terminal/services.json');
+  expect(response.ok()).toBe(true);
+  const serviceCount = parseTerminalCatalog(await response.json()).length;
+  expect(serviceCount).toBeGreaterThan(0);
   await page.setViewportSize({ width: 1600, height: 1000 });
   const catalogs: string[] = [];
   page.on('request', (request) => {
     if (request.url().includes('/data/terminal/')) catalogs.push(request.url());
   });
   await page.goto('/tools/?ui=tui');
-  await expect(page.locator(`${browser} [data-object-count]`)).toHaveText('22 / 22');
+  await expect(page.locator(`${browser} [data-object-count]`)).toHaveText(
+    `${serviceCount} / ${serviceCount}`,
+  );
   expect(catalogs.some((url) => url.endsWith('/external.json'))).toBe(false);
   await page.locator('[data-tools-tab="external"]').click();
   await expect.poll(() => page.locator(`${browser} [data-object-row]`).count()).toBeGreaterThan(16);
@@ -274,23 +308,28 @@ for (const mode of ['tui', 'gui']) {
       .locator(`[data-ui-only="${mode}"]`)
       .filter({ has: page.locator('[data-featured-system]') })
       .first();
+    // Match the producer's active/featured selection, rather than
+    // hardcoding retired Oracle2 identities into site acceptance tests.
+    const featured = sourceFeaturedServices();
     expect(
       await home
         .locator('[data-featured-system]')
         .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-featured-system'))),
-    ).toEqual([
-      'svc-nezha-panel',
-      'svc-memoflow-dailyuse',
-      'svc-homepage-dashboard',
-      'svc-litellm-model-gateway',
-      'svc-hermes-agent',
-    ]);
+    ).toEqual(featured.map((service) => service.id));
+    expect(featured.length).toBeGreaterThan(0);
+    expect(featured.some((service) => service.id === 'svc-memoflow-dailyuse')).toBe(true);
+    expect(featured.some((service) => service.id === 'svc-homepage-dashboard')).toBe(true);
+    expect(featured.every((service) => service.status === 'active')).toBe(true);
     await expect(home.locator('[data-featured-system]').first().locator('p')).not.toBeEmpty();
     await expect(
       home.locator('[data-featured-system]').first().locator('a').first(),
     ).toHaveAttribute('href', /^\/infrastructure\//);
-    const protectedEntry = home.locator('[data-private-link]').first();
-    await expect(protectedEntry).toContainText('登录访问');
+    // There may be no protected shortcuts after a producer removes retired
+    // private admin endpoints. Verify the lock label when any remain.
+    const protectedEntries = home.locator('[data-featured-system] [data-private-link]');
+    for (const entry of await protectedEntries.all()) {
+      await expect(entry).toContainText('登录访问');
+    }
     await expect(page.locator('img[src="/images/biome-mark.svg"]')).toHaveCount(0);
     await expect(page.locator('img[src="/favicon.svg"]').first()).toHaveAttribute('alt', '');
     await home.locator('[aria-label="精选系统"]').screenshot({

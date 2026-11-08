@@ -189,7 +189,7 @@ test('Mocked private binding unlocks both SSR and lazily rendered service links'
         values: {},
         links: {
           [privateRef]: target,
-          'svc-litellm-model-gateway.links.admin': target,
+          'svc-sub-store.links.admin': target,
         },
       }),
     }),
@@ -201,9 +201,11 @@ test('Mocked private binding unlocks both SSR and lazily rendered service links'
   await expect(link).toHaveAttribute('target', '_blank');
   const snapshot = await page.evaluate(() => JSON.stringify(history.state));
   expect(snapshot).not.toContain('owner.example.test');
-  await page.goto('/infrastructure/svc-litellm-model-gateway/?ui=gui');
+  // The old Oracle2 LiteLLM admin link has been retired. Use the current
+  // N100-owned Sub-Store private link to assert SSR unlock behavior.
+  await page.goto('/infrastructure/svc-sub-store/?ui=gui');
   await expect(
-    page.locator('[data-private-link="svc-litellm-model-gateway.links.admin"]').first(),
+    page.locator('[data-private-link="svc-sub-store.links.admin"]').first(),
   ).toHaveAttribute('href', target);
 });
 
