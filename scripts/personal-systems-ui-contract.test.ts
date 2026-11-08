@@ -7,6 +7,10 @@ const systems = fs.readFileSync(
   path.resolve('src/components/assets/PersonalSystemsHub.astro'),
   'utf8',
 );
+const serviceDirectory = fs.readFileSync(
+  path.resolve('src/components/assets/PersonalSystemsServiceDirectory.astro'),
+  'utf8',
+);
 const siteSearch = fs.readFileSync(path.resolve('src/components/common/SiteSearch.astro'), 'utf8');
 const searchServices = fs.readFileSync(path.resolve('src/browser/site-search-services.ts'), 'utf8');
 const privateUnlock = fs.readFileSync(
@@ -29,14 +33,17 @@ const infrastructure = fs.readFileSync(
 test('Personal Systems is a launcher, not a dashboard or card wall', () => {
   assert.match(systems, /Pinned/);
   assert.match(systems, /Servers/);
-  assert.match(systems, /Services/);
+  assert.match(serviceDirectory, /Services/);
+  assert.match(systems, /PersonalSystemsServiceDirectory/);
   assert.match(systems, /System Registry/);
-  assert.match(systems, /Apps & Products/);
-  assert.match(systems, /AI & Agents/);
-  assert.match(systems, /Operations/);
-  assert.match(systems, /Home Lab/);
+  assert.match(serviceDirectory, /Apps & Products/);
+  assert.match(serviceDirectory, /AI & Agents/);
+  assert.match(serviceDirectory, /Operations/);
+  assert.match(serviceDirectory, /Home Lab/);
   assert.match(systems, /data-private-link=/);
+  assert.match(serviceDirectory, /data-private-link=/);
   assert.doesNotMatch(systems, /<table/);
+  assert.doesNotMatch(serviceDirectory, /<table/);
   assert.doesNotMatch(systems, /Active services/);
   assert.doesNotMatch(systems, /Projections/);
   assert.doesNotMatch(systems, /grid gap-3 md:grid-cols-2 xl:grid-cols-3/);
@@ -62,9 +69,11 @@ test('Infrastructure prioritizes topology then compact registry', () => {
 
 test('both system surfaces keep protected targets runtime-only', () => {
   assert.match(systems, /data-private-link=/);
+  assert.match(serviceDirectory, /data-private-link=/);
   assert.match(infrastructure, /data-private-link=/);
   assert.match(infrastructure, /data-private-value=/);
   assert.doesNotMatch(systems, /\.ts\.net/);
+  assert.doesNotMatch(serviceDirectory, /\.ts\.net/);
   assert.doesNotMatch(infrastructure, /\.ts\.net/);
 });
 
@@ -86,4 +95,14 @@ test('Infrastructure detail keeps entrypoints prominent without returning to a c
   assert.doesNotMatch(infrastructureDetail, /bg-card\/70/);
   assert.doesNotMatch(infrastructureDetail, /\bgetInfrastructureResource\b/);
   assert.doesNotMatch(infrastructureDetail, /Layers3/);
+});
+
+test('lifecycle filter remains contained in the service directory and defaults active', () => {
+  assert.match(serviceDirectory, /SERVICE_LIFECYCLE_FILTERS/);
+  assert.match(serviceDirectory, /data-service-filter-root/);
+  assert.match(serviceDirectory, /data-service-category-section/);
+  assert.match(serviceDirectory, /data-service-row/);
+  assert.match(serviceDirectory, /initializeServiceStatusFilters/);
+  assert.match(serviceDirectory, /option.id === 'active'/);
+  assert.doesNotMatch(systems, /data-service-filter-root/);
 });

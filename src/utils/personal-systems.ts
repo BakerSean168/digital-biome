@@ -6,7 +6,7 @@ import { compareResourcePriority, compareResourceTitle } from '../domain/resourc
 
 const catalog = parsePdsCatalogV1(JSON.stringify(catalogData));
 
-export type PortalServiceCategory = 'apps' | 'ai' | 'ops' | 'homelab';
+export type PortalServiceCategory = 'apps' | 'ai' | 'ops' | 'homelab' | 'history' | 'other';
 
 export interface PortalService {
   resource: InfrastructureResource;
@@ -35,7 +35,7 @@ export interface PortalServiceSearchEntry {
   pinned: boolean;
 }
 
-const CATEGORY_GROUPS: Record<PortalServiceCategory, string> = {
+const CATEGORY_GROUPS: Record<Exclude<PortalServiceCategory, 'history' | 'other'>, string> = {
   apps: 'portal-apps',
   ai: 'portal-ai',
   ops: 'portal-ops',
@@ -49,7 +49,9 @@ export function getPublicSystemDomains(): PdsCatalogDomain[] {
 }
 
 function serviceCategory(resource: InfrastructureResource): PortalServiceCategory | undefined {
-  for (const category of Object.keys(CATEGORY_GROUPS) as PortalServiceCategory[]) {
+  for (const category of Object.keys(CATEGORY_GROUPS) as Array<
+    Exclude<PortalServiceCategory, 'history' | 'other'>
+  >) {
     if (resource.groups.includes(CATEGORY_GROUPS[category])) return category;
   }
   return undefined;
@@ -71,34 +73,60 @@ function actionLabel(kind: string | undefined): string {
   return 'Open';
 }
 
-export function getPortalServices(resources = getInfrastructureResources()): PortalService[] {
+/**
+ * Full public service catalog for Personal Systems, including planning and
+ * historical resources. Private/internal-only inventory is never exported to
+ * this input. Old service endpoints must never be launcher actions.
+ */
+export function getServiceCatalog(resources = getInfrastructureResources()): PortalService[] {
   const resourceMap = new Map(resources.map((resource) => [resource.id, resource]));
-
   return resources
-    .filter((resource) => resource.kind === 'service' && resource.status === 'active')
-    .flatMap((resource) => {
-      const category = serviceCategory(resource) ?? (resource.homepage ? 'apps' : undefined);
-      if (!category) return [];
-      const link = primaryLink(resource);
+    .filter((resource) => resource.kind === 'service')
+    .map((resource): PortalService => {
+      const category =
+        serviceCategory(resource) ??
+        (resource.homepage
+          ? 'apps'
+          : resource.groups.includes('homelab')
+            ? 'homelab'
+            : resource.groups.includes('history') ||
+                resource.status === 'retired' ||
+                resource.status === 'archived' ||
+                resource.status === 'decommissioning'
+              ? 'history'
+              : 'other');
+      const available = resource.status === 'active';
+      const link = available ? primaryLink(resource) : undefined;
       const access: PortalService['access'] = link?.url
         ? 'public'
         : link?.privateRef
           ? 'owner'
           : 'catalog';
-      return [
-        {
-          resource,
-          category,
-          host: resource.hostResourceId ? resourceMap.get(resource.hostResourceId) : undefined,
-          access,
-          url: link?.url,
-          privateRef: link?.privateRef,
-          actionLabel: actionLabel(link?.kind),
-          pinned: resource.homepage?.enabled === true && resource.homepage.featured === true,
-        } satisfies PortalService,
-      ];
+      return {
+        resource,
+        category,
+        host: resource.hostResourceId ? resourceMap.get(resource.hostResourceId) : undefined,
+        access,
+        url: link?.url,
+        privateRef: link?.privateRef,
+        actionLabel: actionLabel(link?.kind),
+        pinned:
+          available && resource.homepage?.enabled === true && resource.homepage.featured === true,
+      };
     })
     .sort((a, b) => compareResourcePriority(a.resource, b.resource));
+}
+
+/**
+ * Launchers and global search remain active-only; the full status-aware
+ * directory is exposed separately in getServiceCatalog().
+ */
+export function getPortalServices(resources = getInfrastructureResources()): PortalService[] {
+  return getServiceCatalog(resources).filter(
+    (service) =>
+      service.resource.status === 'active' &&
+      (serviceCategory(service.resource) !== undefined || service.resource.homepage !== undefined),
+  );
 }
 
 export function getPinnedPortalServices(resources = getInfrastructureResources()): PortalService[] {
@@ -140,7 +168,8 @@ export function publicSystemFactCounts() {
   return {
     domainCount: getPublicSystemDomains().length,
     cloudHostCount: getPortalServers().length,
-    serviceCount: getPortalServices().length,
+    serviceCount: getServiceCatalog().filter((service) => service.resource.status === 'active')
+      .length,
   };
 }
 

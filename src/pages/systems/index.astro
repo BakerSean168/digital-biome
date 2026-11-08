@@ -4,14 +4,14 @@ import PersonalSystemsHub from '../../components/assets/PersonalSystemsHub.astro
 import {
   getPinnedPortalServices,
   getPortalServers,
-  getPortalServices,
+  getServiceCatalog,
   getPublicSystemDomains,
   publicSystemFactCounts,
 } from '../../utils/personal-systems';
 
 const domains = getPublicSystemDomains();
 const servers = getPortalServers();
-const services = getPortalServices();
+const services = getServiceCatalog();
 const pinned = getPinnedPortalServices();
 const facts = publicSystemFactCounts();
 ---
