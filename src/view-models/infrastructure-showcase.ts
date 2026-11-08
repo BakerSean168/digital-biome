@@ -6,12 +6,10 @@ import type {
 import { infrastructureKindLabel } from './infrastructure-labels';
 
 /**
- * Resources the /infrastructure showcase is anchored on. They come from the
- * producer-owned infra-public-v2 product; if one is renamed or removed upstream
- * the build fails instead of silently rendering an empty section.
+ * Core home topology is required. Monitoring services are optional:
+ * decommissioning Nezha must not break the entire infrastructure page.
  */
 export const SHOWCASE_ANCHORS = {
-  monitor: 'svc-nezha-panel',
   control: 'svc-homepage-dashboard',
   homePath: ['net-home-optical-modem', 'net-home-switch', 'net-home-ap', 'host-n100-pve'],
   homeHypervisor: 'host-n100-pve',
@@ -51,6 +49,10 @@ export function buildInfrastructureShowcase<R extends InfrastructureResource>(
   const homelabResources = resources.filter((resource) => resource.groups.includes('homelab'));
   const homelabIds = new Set(homelabResources.map((resource) => resource.id));
   const homeHypervisor = anchor(SHOWCASE_ANCHORS.homeHypervisor);
+  const monitorLink = resources
+    .filter((resource) => resource.kind === 'service' && resource.status === 'active')
+    .flatMap((resource) => resource.links ?? [])
+    .find((link) => link.kind === 'monitor' && Boolean(link.url));
 
   return {
     resourceMap,
@@ -65,7 +67,7 @@ export function buildInfrastructureShowcase<R extends InfrastructureResource>(
     homeConnections: connections.filter(
       (connection) => homelabIds.has(connection.from) && homelabIds.has(connection.to),
     ),
-    monitorLink: publicLink(anchor(SHOWCASE_ANCHORS.monitor), ['monitor', 'admin', 'app']),
+    monitorLink,
     controlLink: privateLink(anchor(SHOWCASE_ANCHORS.control), ['app', 'admin']),
     homeNodes: SHOWCASE_ANCHORS.homePath.map(anchor),
     vmNodes: resources.filter((resource) => resource.parentResourceId === homeHypervisor.id),
