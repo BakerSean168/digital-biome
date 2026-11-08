@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getInfrastructureResources } from './infrastructure';
+import { getInfrastructureResources, type InfrastructureResource } from './infrastructure';
 import {
   getPinnedPortalServices,
   getPortalServers,
