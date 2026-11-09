@@ -5,6 +5,33 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.12.0](https://github.com/BakerSean168/digital-biome/compare/v0.11.1...v0.12.0) (2026-11-08)
+
+
+### Features
+
+* **systems:** filter service catalog by lifecycle state ([#244](https://github.com/BakerSean168/digital-biome/issues/244)) ([cb1f164](https://github.com/BakerSean168/digital-biome/commit/cb1f1644ef3a95aa5dc7049bada75a181054c344))
+
+
+### Bug Fixes
+
+* **digital-biome:** recover Pagefind after failed imports without unsafe eval (DB-Q08) ([#197](https://github.com/BakerSean168/digital-biome/issues/197)) ([7827d04](https://github.com/BakerSean168/digital-biome/commit/7827d04fef7fb4f2b0bb3e23fa6e029536f949d7))
+* **functions:** drop double cast in servers API via workers-types lib ([#222](https://github.com/BakerSean168/digital-biome/issues/222)) ([609d5f6](https://github.com/BakerSean168/digital-biome/commit/609d5f6a7bce62e51ba987bee483884cccc33943))
+* **functions:** remove servers API double type assertions ([#222](https://github.com/BakerSean168/digital-biome/issues/222)) ([36d90a1](https://github.com/BakerSean168/digital-biome/commit/36d90a175b096c12c8043f5b0bfe6650bf855b8c))
+* **infra:** make Personal Systems resilient to retired fleet and services ([#239](https://github.com/BakerSean168/digital-biome/issues/239)) ([1c4da59](https://github.com/BakerSean168/digital-biome/commit/1c4da5997d5172377f2273207a069b367131c5a2))
+* **infra:** make retired monitor optional in showcase ([#241](https://github.com/BakerSean168/digital-biome/issues/241)) ([eda2480](https://github.com/BakerSean168/digital-biome/commit/eda24804607780ce1855d374c16477ed7656aecd))
+* **markdown:** highlight Obsidian base fences as yaml ([#219](https://github.com/BakerSean168/digital-biome/issues/219)) ([451fe04](https://github.com/BakerSean168/digital-biome/commit/451fe0488f1a92317eb7a80d43c3e5b1e3505529))
+* **markdown:** highlight Obsidian base fences as yaml ([#219](https://github.com/BakerSean168/digital-biome/issues/219)) ([6bb21ec](https://github.com/BakerSean168/digital-biome/commit/6bb21ec16912301bbca3a07dcb10c8f9e0c2543f))
+* **security:** update undici to patched 7.30.1 ([4fb9f57](https://github.com/BakerSean168/digital-biome/commit/4fb9f577547768c11637f24a7ae810d252841a9d))
+
+
+### Performance Improvements
+
+* **digital-biome:** build-time wikilink previews with a delegated hover card (DB-R04) ([#228](https://github.com/BakerSean168/digital-biome/issues/228)) ([ad5c7e3](https://github.com/BakerSean168/digital-biome/commit/ad5c7e31fa686a5c8876cc5216e18fdac4c78b2d))
+* **digital-biome:** derive note kind/href client-side in the notes catalog (DB-R09) ([ec691b7](https://github.com/BakerSean168/digital-biome/commit/ec691b7d0e16ed84a2be5adef2a6880f4b3b4454))
+* **digital-biome:** derive note kind/href client-side in the notes catalog (DB-R09) ([aae043b](https://github.com/BakerSean168/digital-biome/commit/aae043b5d0584cf550c42219ef9d856acc9fcb33))
+* **digital-biome:** render note link icons via CSS mask in one NoteLinkList (DB-R01) ([#225](https://github.com/BakerSean168/digital-biome/issues/225)) ([32e9ccd](https://github.com/BakerSean168/digital-biome/commit/32e9ccdfe864093e9babbe88367c3c8738958f2b))
+
 ## [0.11.1](https://github.com/BakerSean168/digital-biome/compare/v0.11.0...v0.11.1) (2026-10-18)
 
 
