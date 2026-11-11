@@ -5,6 +5,18 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.13.0](https://github.com/BakerSean168/digital-biome/compare/v0.12.0...v0.13.0) (2026-11-11)
+
+
+### Features
+
+* **notes:** render Mermaid diagrams in note bodies ([#249](https://github.com/BakerSean168/digital-biome/issues/249)) ([b01f81c](https://github.com/BakerSean168/digital-biome/commit/b01f81cd855eecc6373de54242ce0cd2b404b0ba))
+
+
+### Bug Fixes
+
+* **notes:** render same-page Obsidian heading links as in-page anchors ([#247](https://github.com/BakerSean168/digital-biome/issues/247)) ([7855cd6](https://github.com/BakerSean168/digital-biome/commit/7855cd60010ee3145cfc983eb440ecbea2c08f1a))
+
 ## [0.12.0](https://github.com/BakerSean168/digital-biome/compare/v0.11.1...v0.12.0) (2026-11-08)
 
 
