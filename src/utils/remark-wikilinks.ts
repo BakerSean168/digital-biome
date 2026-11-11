@@ -37,6 +37,9 @@ const defaultClassTemplate = (result: ResolveResult) =>
     ? 'wikilink'
     : 'wikilink wikilink-broken';
 
+// Link URLs stay raw (unencoded) at the mdast level: the mdast->hast
+// conversion percent-encodes the href once. Encoding here as well produced
+// double-encoded (%25...) fragments that never match a heading id.
 export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) => {
   const resolveTarget = options.resolveTarget ?? resolveStaticWikilink;
   const classTemplate = options.classTemplate ?? defaultClassTemplate;
@@ -64,6 +67,36 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
           });
         }
 
+        // Same-page anchors ([[#Heading]], [[#Heading|Display]], [[#^block-id]])
+        // have an empty note target: they point at a heading/block inside the
+        // current note, so note resolution can never resolve them. Handle them
+        // before resolution; otherwise they fall into the unresolved branch
+        // below and render as raw [[...]] text.
+        if (!match.target && (match.heading || match.blockRef)) {
+          const samePageHref = appendWikilinkAnchor('', match);
+          if (samePageHref) {
+            const text =
+              match.display ??
+              match.heading ??
+              (match.blockRef ? `^${match.blockRef}` : match.rawTarget);
+            const linkNode: Link = {
+              type: 'link',
+              url: samePageHref,
+              data: {
+                hProperties: {
+                  className: 'wikilink',
+                  'data-wikilink-target': match.rawTarget,
+                  'data-wikilink-status': 'resolved',
+                },
+              },
+              children: [{ type: 'text', value: text }],
+            };
+            newNodes.push(linkNode);
+            lastIndex = endIndex;
+            continue;
+          }
+        }
+
         const resolution = resolveTarget(match.target);
         const text = match.display ?? match.rawTarget;
 
@@ -73,7 +106,7 @@ export const remarkWikilinks: Plugin<[WikiLinkOptions?], Root> = (options = {}) 
         ) {
           const linkNode: Link = {
             type: 'link',
-            url: encodeURI(appendWikilinkAnchor(resolution.href, match)),
+            url: appendWikilinkAnchor(resolution.href, match),
             data: {
               hProperties: {
                 className: classTemplate(resolution),

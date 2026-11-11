@@ -7,6 +7,7 @@
 
 import type { AssetType } from '../foundation/constants';
 import type { ParsedWikilink } from '../foundation/wikilink-parser';
+import { slug as githubSlug } from 'github-slugger';
 
 /**
  * Build the public href for a knowledge note.
@@ -55,22 +56,29 @@ export function remarkWikilinkHrefTemplate(slug: string): string {
 }
 
 function slugifyHeading(heading: string): string {
-  return heading
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{Letter}\p{Number}\p{Mark}\s-]/gu, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+  // Must produce the same id that rehype-stable-heading-ids assigns to the
+  // rendered heading: github-slugger plus trimming one trailing '-'.
+  // A hand-rolled approximation diverged on headings such as
+  // '2. 推荐阅读顺序 / 起点' (slugger keeps '--' where '/' was removed).
+  let slug = githubSlug(heading.trim());
+  if (slug.endsWith('-')) slug = slug.slice(0, -1);
+  return slug;
 }
 
-export function appendWikilinkAnchor(href: string, link: Pick<ParsedWikilink, 'heading' | 'blockRef'>): string {
+export function appendWikilinkAnchor(
+  href: string,
+  link: Pick<ParsedWikilink, 'heading' | 'blockRef'>,
+): string {
+  // Returns the raw fragment: the mdast->hast conversion percent-encodes
+  // link hrefs once, so encoding here as well produced double-encoded
+  // (%25...) fragments that never match a heading id.
   if (link.blockRef) {
-    return `${href}#%5E${encodeURIComponent(link.blockRef)}`;
+    return `${href}#^${link.blockRef}`;
   }
 
   if (link.heading) {
     const anchor = slugifyHeading(link.heading);
-    return anchor ? `${href}#${encodeURIComponent(anchor)}` : href;
+    return anchor ? `${href}#${anchor}` : href;
   }
 
   return href;

@@ -36,8 +36,6 @@
     "src/domain/note-routing/index.ts": "388137cb4168a1e9d27be83513d0079785b90bcde3f99b0732f9c83b5ee42deb",
     "src/domain/note-routing/slug-resolver.test.ts": "d04846d2843f76708087ed0344a10c497cb23929ff98bb6d0015141cdfb69622",
     "src/domain/note-routing/slug-resolver.ts": "89282e65197eb18fc6b8cda2e20c1cac452cb47ec658ad8ab0b8542c7a10f971",
-    "src/domain/note-routing/url-builder.test.ts": "23926ba4b30a7eb8ecc082b46edd06025ef7b23c9f179dfe0d2439607c376d2c",
-    "src/domain/note-routing/url-builder.ts": "46e6d1c3738e2ace0213a4a1e6a06f188ac572f246eb64f7c5ed19a9158fb4e6",
     "src/pages/dev/[assetId].astro": "6e01d9871faa8a189f826ba6ee50f2a1b794969246557ec05cec201d65628f15",
     "src/pages/projects/[assetId].astro": "de0a186d676473a33927756e8c41755ca74f2223248c6c8c9a89e801acbc861f",
     "src/pages/tools/[assetId].astro": "463a376fa91076919d390814d8536cef63fb6934a184a0c2ff0e809b00dfa8af",
