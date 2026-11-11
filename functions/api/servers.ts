@@ -13,7 +13,7 @@ export interface ServerItem {
 export interface ServerMonitorResponse {
   total: number;
   online: number;
-  status: 'all_normal' | 'degraded' | 'critical';
+  status: 'all_normal' | 'degraded' | 'critical' | 'suspended';
   updatedAt: string;
   servers: ServerItem[];
 }
@@ -174,11 +174,37 @@ function cacheResponse(
   context.waitUntil(edgeCache.put(key, response.clone()));
 }
 
+export function buildSuspendedPayload(now: Date = new Date()): ServerMonitorResponse {
+  return {
+    total: 0,
+    online: 0,
+    status: 'suspended',
+    updatedAt: now.toISOString(),
+    servers: [],
+  };
+}
+
+function suspendedTelemetryResponse(): Response {
+  return Response.json(buildSuspendedPayload(), {
+    status: 200,
+    headers: {
+      'Cache-Control': 'public, max-age=60, s-maxage=60',
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+}
+
 export const onRequest: PagesFunction<ObservabilityEnv> = async (context) => {
+  // Nezha was decommissioned together with its host, and the production
+  // binding does not configure a replacement. Without an explicit
+  // NEZHA_BASE_URL the endpoint reports a deliberate suspended state
+  // instead of timing out against a dead upstream; setting the binding
+  // restores live telemetry.
+  const nezhaUrl = context.env.NEZHA_BASE_URL?.trim();
+  if (!nezhaUrl) return suspendedTelemetryResponse();
+
   const cached = context.request ? await readCachedResponse(context.request) : null;
   if (cached) return cached;
-
-  const nezhaUrl = context.env.NEZHA_BASE_URL || 'https://nezha.bakersean.top';
 
   try {
     const snapshot = await readNezhaPublicSnapshot(nezhaUrl);

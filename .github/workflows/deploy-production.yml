@@ -595,8 +595,9 @@ jobs:
             "$servers_file" \
             '(.total | type == "number") and
              (.online | type == "number") and
-             (.servers | type == "array" and length > 0) and
-             (all(.servers[]; .online | type == "boolean"))' \
+             (.servers | type == "array") and
+             (all(.servers[]; .online | type == "boolean")) and
+             ((.servers | length > 0) or .status == "suspended")' \
             'Servers API'
 
           status="$(curl --silent --dump-header "$headers" --output /dev/null \

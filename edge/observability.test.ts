@@ -102,7 +102,9 @@ test('server monitoring maps explicit null public Nezha state as offline', async
       });
     },
     async () => {
-      const response = await getServers({ env: {} } as any);
+      const response = await getServers({
+        env: { NEZHA_BASE_URL: 'https://nezha.example.test/' },
+      } as any);
       const payload = (await response.json()) as any;
       assert.equal(response.status, 200);
       assert.equal(payload.online, 0);
@@ -132,7 +134,9 @@ test('server monitoring accepts an ArrayBuffer public stream frame', async () =>
       socket.emitData(encoded.buffer);
     },
     async () => {
-      const response = await getServers({ env: {} } as any);
+      const response = await getServers({
+        env: { NEZHA_BASE_URL: 'https://nezha.example.test/' },
+      } as any);
       const payload = (await response.json()) as any;
       assert.equal(response.status, 200);
       assert.equal(payload.servers[0].location, 'HK');
@@ -147,7 +151,9 @@ test('server monitoring rejects an empty public Nezha snapshot', async () => {
       socket.emitJson({ now: 1_789_000_000, online: 0, servers: [] });
     },
     async () => {
-      const response = await getServers({ env: {} } as any);
+      const response = await getServers({
+        env: { NEZHA_BASE_URL: 'https://nezha.example.test/' },
+      } as any);
       assert.equal(response.status, 502);
       assert.deepEqual(await response.json(), { error: 'Nezha telemetry is unreachable.' });
     },
@@ -164,7 +170,9 @@ test('server monitoring rejects telemetry without an authoritative online field'
       });
     },
     async () => {
-      const response = await getServers({ env: {} } as any);
+      const response = await getServers({
+        env: { NEZHA_BASE_URL: 'https://nezha.example.test/' },
+      } as any);
       assert.equal(response.status, 502);
       assert.deepEqual(await response.json(), {
         error: 'Nezha returned unsupported server telemetry.',
@@ -179,7 +187,9 @@ test('server monitoring fails closed when the public Nezha stream errors', async
       socket.emitError();
     },
     async () => {
-      const response = await getServers({ env: {} } as any);
+      const response = await getServers({
+        env: { NEZHA_BASE_URL: 'https://nezha.example.test/' },
+      } as any);
       assert.equal(response.status, 502);
       assert.deepEqual(await response.json(), { error: 'Nezha telemetry is unreachable.' });
     },
@@ -198,4 +208,23 @@ test('visitor telemetry uses an explicit local fallback without inventing a publ
   assert.ok(!('rawIp' in payload), 'The public response must not expose the unmasked address.');
   assert.equal(payload.city, 'Local');
   assert.equal(payload.asn, 'AS--');
+});
+
+test('server monitoring reports a suspended state when Nezha is not configured', async () => {
+  let socketConstructed = false;
+  await withMockWebSocket(
+    () => {
+      socketConstructed = true;
+    },
+    async () => {
+      const response = await getServers({ env: {} } as any);
+      const payload = (await response.json()) as any;
+      assert.equal(response.status, 200);
+      assert.equal(payload.status, 'suspended');
+      assert.equal(payload.total, 0);
+      assert.equal(payload.online, 0);
+      assert.deepEqual(payload.servers, []);
+    },
+  );
+  assert.equal(socketConstructed, false);
 });
