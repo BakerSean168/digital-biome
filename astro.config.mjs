@@ -5,6 +5,7 @@ import { unified } from '@astrojs/markdown-remark';
 import remarkNormalizeCodeLang from './src/utils/remark-normalize-code-lang.ts';
 import remarkWikilinks from './src/utils/remark-wikilinks.ts';
 import rehypeStableHeadingIds from './src/utils/rehype-stable-heading-ids.ts';
+import rehypeMermaidDiagrams from './src/utils/rehype-mermaid-diagrams.ts';
 
 import tailwindcss from '@tailwindcss/vite';
 
@@ -58,7 +59,7 @@ export default defineConfig({
     // and stable heading IDs are unified plugins (Astro 7 defaults to Satteri).
     processor: unified({
       remarkPlugins: [remarkNormalizeCodeLang, remarkWikilinks],
-      rehypePlugins: [rehypeStableHeadingIds],
+      rehypePlugins: [rehypeStableHeadingIds, rehypeMermaidDiagrams],
     }),
   },
 });
