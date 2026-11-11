@@ -1,0 +1,11 @@
+---
+// Client-side renderer for Mermaid diagrams in note bodies. The diagram
+// containers are produced at build time (rehype-mermaid-diagrams); this
+// script swaps each diagram source for its rendered SVG when present.
+---
+
+<script>
+  import { initMermaidDiagrams } from '../../browser/mermaid-diagrams';
+
+  void initMermaidDiagrams();
+</script>

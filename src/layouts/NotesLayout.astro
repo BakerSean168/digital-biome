@@ -3,6 +3,7 @@ import BaseLayout from './BaseLayout.astro';
 import NotesSidebar from '../components/notes/NotesSidebar.astro';
 import TableOfContents from '../components/notes/TableOfContents.astro';
 import WikilinkPreview from '../components/notes/WikilinkPreview.astro';
+import MermaidDiagrams from '../components/notes/MermaidDiagrams.astro';
 import NoteLinkList from '../components/notes/NoteLinkList.astro';
 
 interface Props {
@@ -78,4 +79,5 @@ const gridCols = showContext
     )}
   </div>
   <WikilinkPreview />
+  <MermaidDiagrams />
 </BaseLayout>
