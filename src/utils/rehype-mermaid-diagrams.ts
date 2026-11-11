@@ -1,13 +1,19 @@
 import type { Element, ElementContent, Root, Text } from 'hast';
+import { render } from 'pele';
 import { visit } from 'unist-util-visit';
 
 /**
- * Rehype plugin: turn fenced ```mermaid code blocks into diagram containers.
+ * Rehype plugin: render fenced ```mermaid code blocks as diagrams at build
+ * time with Pele (a Mermaid-syntax renderer that produces SVG strings
+ * without a DOM), and inline the SVG into the page.
  *
- * The page ships a container whose <pre class="mermaid-source"> holds the
- * diagram source, styled like a normal code block. The browser renderer
- * (src/browser/mermaid-diagrams.ts) replaces it with an SVG diagram when
- * JavaScript is available; without JavaScript the source stays readable.
+ * Each block becomes a <div class="mermaid-diagram"> wrapping the rendered
+ * SVG. The SVG carries no element ids, so any number of diagrams can share
+ * a page, and it is themed through --pele-* CSS variables (see
+ * src/styles/reading.css). A block Pele cannot parse keeps its source in a
+ * <pre class="mermaid-source"> inside a .mermaid-source-only container, so
+ * a broken diagram degrades to a readable code block instead of failing
+ * the build.
  *
  * Handles both the raw `pre > code.language-mermaid` shape (before syntax
  * highlighting) and the highlighted `pre[data-language="mermaid"]` shape
@@ -40,26 +46,46 @@ function mermaidSourceFromPre(pre: Element): string | null {
   return source.trim() ? source : null;
 }
 
+function diagramContainer(source: string): Element {
+  try {
+    const { svg } = render(source);
+    // hast's raw node kind is not in this @types/hast version's exports;
+    // the serializer Astro uses emits it verbatim, which is what we need
+    // for an already-rendered SVG string.
+    const rawSvg = { type: 'raw', value: svg } as unknown as ElementContent;
+    return {
+      type: 'element',
+      tagName: 'div',
+      properties: { className: ['mermaid-diagram'] },
+      children: [rawSvg],
+    };
+  } catch (error) {
+    console.warn(
+      `rehype-mermaid-diagrams: keeping source for an unrenderable diagram (${source.split('\n')[0]}): ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`,
+    );
+    const sourceText: Text = { type: 'text', value: source };
+    const sourcePre: Element = {
+      type: 'element',
+      tagName: 'pre',
+      properties: { className: ['mermaid-source'] },
+      children: [sourceText],
+    };
+    return {
+      type: 'element',
+      tagName: 'div',
+      properties: { className: ['mermaid-diagram', 'mermaid-source-only'] },
+      children: [sourcePre],
+    };
+  }
+}
+
 export default function rehypeMermaidDiagrams() {
   return (tree: Root) => {
     visit(tree, 'element', (node, index, parent) => {
       if (node.tagName !== 'pre' || !parent || index === undefined) return;
       const source = mermaidSourceFromPre(node);
       if (source === null) return;
-      const sourceText: Text = { type: 'text', value: source };
-      const sourcePre: Element = {
-        type: 'element',
-        tagName: 'pre',
-        properties: { className: ['mermaid-source'] },
-        children: [sourceText],
-      };
-      const container: Element = {
-        type: 'element',
-        tagName: 'div',
-        properties: { className: ['mermaid-diagram'], dataMermaidDiagram: true },
-        children: [sourcePre],
-      };
-      parent.children[index] = container;
+      parent.children[index] = diagramContainer(source);
     });
   };
 }

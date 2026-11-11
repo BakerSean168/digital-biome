@@ -35,9 +35,22 @@
 }
 
 /* ===== Mermaid diagrams =====
-   Containers are emitted by rehype-mermaid-diagrams; the browser renderer
-   swaps the source block for an SVG and adds .mermaid-rendered. */
+   Containers are emitted by rehype-mermaid-diagrams with a Pele-rendered
+   inline SVG inside; the --pele-* variables below carry the site palette
+   into the SVG. Blocks Pele cannot parse keep a .mermaid-source fallback. */
 .mermaid-diagram {
+  --pele-bg: transparent;
+  --pele-fg: #e8e6df;
+  --pele-muted: #a3a396;
+  --pele-line: #8f9779;
+  --pele-surface: #26271f;
+  --pele-surface-alt: #1e1f1c;
+  --pele-border: #5a5c4e;
+  --pele-accent: #d9a441;
+  --pele-radius: 8px;
+  --pele-font: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+  --pele-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --pele-heading-weight: 600;
   margin: 1.5rem 0;
   padding: 1rem;
   overflow-x: auto;

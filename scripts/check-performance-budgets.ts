@@ -32,6 +32,7 @@ type AssetBudget = {
 };
 
 const ASSET_BUDGETS: readonly AssetBudget[] = [
+  { label: 'dist JavaScript', extension: '.js', maxKiB: 100 },
   { label: 'dist CSS', extension: '.css', maxKiB: 190 },
   { label: 'terminal notes catalog', file: 'data/terminal/notes.json', maxKiB: 1600 },
   { label: 'terminal external catalog', file: 'data/terminal/external.json', maxKiB: 400 },
@@ -131,78 +132,6 @@ function assertAssetBudgets(): void {
   }
 }
 
-/**
- * JavaScript budgets are split by how code reaches the browser:
- *
- * - Eager JavaScript is referenced from built HTML (script tags and module
- *   preloads) plus everything those files statically import. It is what
- *   pages pay up front, so it keeps the historical 100 KiB cap.
- * - Lazy JavaScript is reachable only through dynamic import(). Today that
- *   is the Mermaid diagram runtime (library core plus one chunk per diagram
- *   type), fetched only on note pages that actually contain diagrams; it
- *   carries its own, larger cap so the on-disk total stays guarded without
- *   taxing pages that never render a diagram.
- */
-const EAGER_JAVASCRIPT_BUDGET_KIB = 100;
-const LAZY_JAVASCRIPT_BUDGET_KIB = 3840;
-
-function assertJavaScriptBudgets(): void {
-  const files = collectFiles(DIST_DIR);
-  const jsFiles = new Map<string, string>();
-  for (const filePath of files) {
-    if (path.extname(filePath) !== '.js') continue;
-    const relative = path.relative(DIST_DIR, filePath).split(path.sep).join('/');
-    jsFiles.set(relative, filePath);
-  }
-
-  const eager = new Set<string>();
-  const queue: string[] = [];
-  const markEager = (relative: string) => {
-    if (!jsFiles.has(relative) || eager.has(relative)) return;
-    eager.add(relative);
-    queue.push(relative);
-  };
-
-  for (const filePath of files) {
-    if (path.extname(filePath) !== '.html') continue;
-    const html = fs.readFileSync(filePath, 'utf8');
-    for (const match of html.matchAll(/(?:src|href)="([^"]+\.js)"/g)) {
-      const reference = (match[1] ?? '').split(/[?#]/)[0] ?? '';
-      markEager(reference.replace(/^\.?\//, ''));
-    }
-  }
-
-  while (queue.length > 0) {
-    const relative = queue.pop() as string;
-    const content = fs.readFileSync(jsFiles.get(relative) as string, 'utf8');
-    const directory = path.posix.dirname(relative);
-    for (const match of content.matchAll(/(?:from\s*|import\s+)["']\.\/([^"']+\.js)["']/g)) {
-      markEager(path.posix.normalize(path.posix.join(directory, match[1] ?? '')));
-    }
-  }
-
-  let eagerBytes = 0;
-  let lazyBytes = 0;
-  for (const [relative, filePath] of jsFiles) {
-    const bytes = fs.statSync(filePath).size;
-    if (eager.has(relative)) eagerBytes += bytes;
-    else lazyBytes += bytes;
-  }
-
-  const failures: string[] = [];
-  const report = (label: string, bytes: number, budgetKiB: number) => {
-    const status = bytes <= budgetKiB * KIB ? 'PASS' : 'FAIL';
-    console.log(`${label}: raw ${formatKiB(bytes)} / ${budgetKiB} KiB [${status}]`);
-    if (bytes > budgetKiB * KIB) failures.push(`${label} exceeds ${budgetKiB} KiB`);
-  };
-  report('dist JavaScript (eager)', eagerBytes, EAGER_JAVASCRIPT_BUDGET_KIB);
-  report('dist JavaScript (lazy)', lazyBytes, LAZY_JAVASCRIPT_BUDGET_KIB);
-
-  if (failures.length > 0) {
-    throw new Error(`JavaScript performance budgets failed:\n- ${failures.join('\n- ')}`);
-  }
-}
-
 function assertAboutMarkup(): void {
   const aboutPath = path.join(DIST_DIR, 'about', 'index.html');
   const tagsPath = path.join(DIST_DIR, 'about', 'tags', 'index.html');
@@ -257,7 +186,6 @@ if (!fs.existsSync(DIST_DIR)) {
 
 assertPageBudgets();
 assertAssetBudgets();
-assertJavaScriptBudgets();
 assertPagefindRuntimeSurface(path.join(DIST_DIR, 'pagefind'));
 assertAboutMarkup();
 reportNotesCatalog();

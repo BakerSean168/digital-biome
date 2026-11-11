@@ -23,17 +23,28 @@ function rootWith(...children: Element[]): Root {
   return { type: 'root', children };
 }
 
-test('turns a mermaid fence into a diagram container holding the source', () => {
-  const tree = rootWith(codeBlock('mermaid', 'flowchart LR\n  A --> B\n'));
+test('renders a mermaid fence to an inline SVG diagram', () => {
+  const tree = rootWith(codeBlock('mermaid', 'flowchart LR\n  A[Start] --> B[End]\n'));
   rehypeMermaidDiagrams()(tree);
   const container = tree.children[0] as Element;
   assert.equal(container.tagName, 'div');
   assert.deepEqual(container.properties?.className, ['mermaid-diagram']);
-  assert.equal(container.properties?.dataMermaidDiagram, true);
+  const raw = container.children[0] as unknown as { type: string; value: string };
+  assert.equal(raw.type, 'raw');
+  assert.ok(raw.value.includes('<svg'));
+  assert.ok(raw.value.includes('pele-flowchart'));
+  assert.ok(raw.value.includes('Start'));
+});
+
+test('keeps the source when the diagram cannot be parsed', () => {
+  const tree = rootWith(codeBlock('mermaid', 'flowchart LR\n  A --> --> B\n'));
+  rehypeMermaidDiagrams()(tree);
+  const container = tree.children[0] as Element;
+  assert.equal(container.tagName, 'div');
+  assert.deepEqual(container.properties?.className, ['mermaid-diagram', 'mermaid-source-only']);
   const sourcePre = container.children[0] as Element;
   assert.equal(sourcePre.tagName, 'pre');
-  assert.deepEqual(sourcePre.properties?.className, ['mermaid-source']);
-  assert.deepEqual(sourcePre.children[0], { type: 'text', value: 'flowchart LR\n  A --> B' });
+  assert.deepEqual(sourcePre.children[0], { type: 'text', value: 'flowchart LR\n  A --> --> B' });
 });
 
 test('leaves other code fences untouched', () => {
@@ -50,7 +61,7 @@ test('leaves an empty mermaid fence untouched', () => {
   assert.equal(tree.children[0], block);
 });
 
-test('extracts the source from a Shiki-highlighted block (line spans)', () => {
+test('renders the source from a Shiki-highlighted block (line spans)', () => {
   const lineSpan = (text: string): Element => ({
     type: 'element',
     tagName: 'span',
@@ -69,7 +80,7 @@ test('extracts the source from a Shiki-highlighted block (line spans)', () => {
         children: [
           lineSpan('flowchart LR'),
           { type: 'text', value: '\n' },
-          lineSpan('  A --> B'),
+          lineSpan('  A[Start] --> B[End]'),
           { type: 'text', value: '\n' },
         ],
       },
@@ -79,7 +90,7 @@ test('extracts the source from a Shiki-highlighted block (line spans)', () => {
   const container = tree.children[0] as Element;
   assert.equal(container.tagName, 'div');
   assert.deepEqual(container.properties?.className, ['mermaid-diagram']);
-  const sourcePre = container.children[0] as Element;
-  assert.equal(sourcePre.tagName, 'pre');
-  assert.deepEqual(sourcePre.children[0], { type: 'text', value: 'flowchart LR\n  A --> B' });
+  const raw = container.children[0] as unknown as { type: string; value: string };
+  assert.equal(raw.type, 'raw');
+  assert.ok(raw.value.includes('<svg'));
 });
