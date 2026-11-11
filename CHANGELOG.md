@@ -5,6 +5,13 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.13.1](https://github.com/BakerSean168/digital-biome/compare/v0.13.0...v0.13.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **functions:** report suspended state when Nezha telemetry is unconfigured ([#251](https://github.com/BakerSean168/digital-biome/issues/251)) ([4291efc](https://github.com/BakerSean168/digital-biome/commit/4291efc272384ecf645a7b6fc699fda083db0278))
+
 ## [0.13.0](https://github.com/BakerSean168/digital-biome/compare/v0.12.0...v0.13.0) (2026-11-11)
 
 
