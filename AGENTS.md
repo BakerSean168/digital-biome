@@ -44,6 +44,7 @@ data-products/           # Immutable producer projection locks
 ### Route map
 
 当前公开路由、布局与交付模块以 [`docs/architecture.md` §3.0](docs/architecture.md#30-应用拓扑main-现状) 为准。
+`/about` 保存长期个人介绍，`/now` 使用 `src/config/now-profile.ts` 手工维护近况和更新时间；两页统一使用 TerminalLayout 的 GUI/TUI 双模式。
 Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
 This file and `docs/architecture.md` are the current design record.
 

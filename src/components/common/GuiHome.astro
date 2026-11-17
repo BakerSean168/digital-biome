@@ -25,9 +25,14 @@ const entries = [
         <br />
         知识、作品与个人系统，在这里相连。
       </p>
-      <a href="/about" class="mt-8 hidden text-sm text-primary md:inline-block">
-        了解我和这片数字生态 →
-      </a>
+      <div class="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-primary">
+        <a href="/about" class="hover:underline">
+          关于我 →
+        </a>
+        <a href="/now" class="hover:underline">
+          最近在做什么 →
+        </a>
+      </div>
     </header>
     <nav aria-label="探索数字生态" class="gui-home-entries">
       {entries.map((entry) => (

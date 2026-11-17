@@ -31,7 +31,7 @@ export function activeNavigation(path: string): string | undefined {
   if (/^\/(notes|blog)(\/|$)/.test(route) || route === '/about/tags') return '/notes';
   if (/^\/(dev|projects)(\/|$)/.test(route)) return '/dev';
   if (/^\/(tools|systems|infrastructure)(\/|$)/.test(route)) return '/tools';
-  if (route === '/about') return '/about';
+  if (route === '/about' || route === '/now') return '/about';
   return undefined;
 }
 
@@ -40,6 +40,7 @@ export function pageMode(path: string): string {
   if (route === '/404' || route === '/404.html') return '404';
   if (route === '/friends') return 'FRIENDS';
   if (route === '/login') return 'ACCESS';
+  if (route === '/now') return 'NOW';
   return (
     PRIMARY_NAVIGATION.find((item) => item.href === activeNavigation(route))?.title.toUpperCase() ??
     'READ'
@@ -62,6 +63,14 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
     label: 'NAV' as const,
     alias: [item.href, ...item.alias],
   })),
+  {
+    type: 'cmd',
+    label: 'NAV',
+    title: 'Now',
+    desc: '最近在做什么、玩什么、看什么',
+    href: '/now',
+    alias: ['/now', 'now', '近况', '最近'],
+  },
   {
     type: 'cmd',
     label: 'NAV',

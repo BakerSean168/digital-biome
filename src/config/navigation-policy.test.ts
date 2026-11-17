@@ -24,12 +24,16 @@ test('detail routes and Library subtypes resolve to their primary destination', 
     assert.equal(activeNavigation(path), '/dev');
   for (const path of ['/systems/', '/infrastructure/host-example', '/tools/'])
     assert.equal(activeNavigation(path), '/tools');
+  assert.equal(activeNavigation('/now'), '/about');
+  assert.equal(activeNavigation('/now/'), '/about');
+  assert.equal(pageMode('/now'), 'NOW');
   assert.equal(activeNavigation('/aboutness'), undefined);
   assert.equal(activeNavigation('/toolshed'), undefined);
   assert.equal(pageMode('/friends/'), 'FRIENDS');
   assert.equal(pageMode('/login'), 'ACCESS');
 });
 test('Blog and Friends remain directly discoverable without inventing Library routes', () => {
+  assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/now'));
   assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/blog'));
   assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/friends'));
   assert.ok(!SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/library'));

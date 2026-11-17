@@ -1,0 +1,216 @@
+---
+import { ArrowUpRight, Film, Gamepad2, Server } from '@lucide/astro';
+import TerminalLayout from '../layouts/TerminalLayout.astro';
+import { NOW_UPDATED_AT, NOW_FOCUS, NOW_GAMES, NOW_MEDIA } from '../config/now-profile';
+---
+
+<TerminalLayout
+  title="Now"
+  description="BakerSean 最近在做什么、玩什么、看什么。一个持续手动更新的近况快照。"
+>
+  <article data-ui-only="gui" class="gui-about mx-auto max-w-[1120px]">
+    <header data-reading-anchor="now-title" class="border-b border-border pb-10 md:pb-14">
+      <p class="font-mono text-xs tracking-[0.24em] text-primary">PERSONAL LOG / NOW</p>
+      <div class="mt-7 grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end lg:gap-16">
+        <div>
+          <h1 class="text-3xl leading-[1.45] font-medium tracking-tight md:text-5xl">
+            这段时间，<span class="block text-primary">我在做什么。</span>
+          </h1>
+          <p class="mt-6 max-w-[39em] text-base leading-8 text-muted-foreground md:text-lg">
+            这里记录当下的项目、兴趣与日常。它不是实时状态，也不是待办清单；只是隔一段时间回来更新的一张快照。
+          </p>
+        </div>
+        <aside class="border-l border-border pl-5 md:pl-7">
+          <p class="font-mono text-xs tracking-widest text-primary">LAST UPDATED</p>
+          <time class="mt-3 block font-mono text-lg text-foreground" datetime={NOW_UPDATED_AT}>
+            {NOW_UPDATED_AT}
+          </time>
+          <p class="mt-3 text-sm leading-7 text-muted-foreground">
+            想了解更长期的兴趣、想法与我的数字生态，可以去 About。
+          </p>
+          <a
+            href="/about"
+            class="mt-5 inline-flex min-h-11 items-center gap-2 border border-border px-4 py-2 text-sm text-primary hover:border-primary/60"
+          >
+            [ ABOUT / 关于我 ] <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
+        </aside>
+      </div>
+    </header>
+
+    <section data-reading-anchor="now-focus" data-now-section="focus" class="py-12 md:py-16">
+      <div class="flex items-center gap-3 text-primary">
+        <Server size={19} aria-hidden="true" />
+        <p class="font-mono text-xs tracking-widest">01 / CURRENT FOCUS</p>
+      </div>
+      <h2 class="mt-4 text-2xl font-medium md:text-3xl">最近在折腾</h2>
+      <p class="mt-3 max-w-[42em] leading-7 text-muted-foreground">
+        有些事情并没有一个明确的完成日期，只是不断探索、慢慢改进。
+      </p>
+      <div class="mt-8 grid gap-3 md:grid-cols-3">
+        {NOW_FOCUS.map((item, index) => (
+          <article class="flex min-h-56 flex-col border border-border p-5">
+            <div class="flex items-start justify-between gap-3">
+              <p class="font-mono text-xs tracking-wider text-primary">{item.label}</p>
+              <span class="font-mono text-xs text-muted-foreground">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            </div>
+            <h3 class="mt-7 text-lg font-medium">{item.title}</h3>
+            <p class="mt-3 flex-1 text-sm leading-7 text-muted-foreground">{item.detail}</p>
+            <a
+              href={item.href}
+              class="mt-5 inline-flex min-h-10 items-center gap-1 text-sm text-primary hover:underline"
+            >
+              {item.linkLabel} <ArrowUpRight size={15} aria-hidden="true" />
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section
+      data-reading-anchor="now-games"
+      data-now-section="games"
+      class="border-t border-border py-12 md:py-16"
+    >
+      <div class="flex items-center gap-3 text-primary">
+        <Gamepad2 size={19} aria-hidden="true" />
+        <p class="font-mono text-xs tracking-widest">02 / PLAYING</p>
+      </div>
+      <h2 class="mt-4 text-2xl font-medium md:text-3xl">最近会打开的游戏</h2>
+      <p class="mt-3 leading-7 text-muted-foreground">
+        竞技游戏和复杂的模拟世界，对我来说都有吸引力。
+      </p>
+      <ul class="mt-8 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4">
+        {NOW_GAMES.map((game, index) => (
+          <li class="flex min-h-40 flex-col justify-between border border-border bg-card p-4">
+            <div class="flex items-start justify-between gap-2">
+              <span class="font-mono text-[10px] tracking-wider text-primary">{game.category}</span>
+              <span class="font-mono text-xs text-muted-foreground">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            </div>
+            <div>
+              <p class="text-lg font-medium">{game.title}</p>
+              <p class="mt-2 font-mono text-[10px] tracking-wide text-muted-foreground">
+                {game.subtitle}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section
+      data-reading-anchor="now-media"
+      data-now-section="media"
+      class="border-t border-border py-12 md:py-16"
+    >
+      <div class="flex items-center gap-3 text-primary">
+        <Film size={19} aria-hidden="true" />
+        <p class="font-mono text-xs tracking-widest">03 / WATCHING</p>
+      </div>
+      <h2 class="mt-4 text-2xl font-medium md:text-3xl">最近在看</h2>
+      <div class="mt-8 grid gap-3 md:grid-cols-2">
+        {NOW_MEDIA.map((item) => (
+          <article class="border-l-2 border-primary bg-card px-5 py-6">
+            <p class="font-mono text-xs tracking-wide text-primary">{item.status}</p>
+            <h3 class="mt-5 text-xl font-medium">{item.title}</h3>
+            <p class="mt-1 font-mono text-xs text-muted-foreground">{item.originalTitle}</p>
+            <p class="mt-5 text-sm leading-7 text-muted-foreground">{item.detail}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <footer data-reading-anchor="now-contact" class="border-t border-border py-9">
+      <p class="max-w-[45em] text-sm leading-7 text-muted-foreground">
+        这页只写最近的近况；关于我的长期兴趣、阅读和项目，可以从 About 继续探索。
+      </p>
+      <div class="mt-5 flex flex-wrap items-center gap-6 text-sm">
+        <a href="/about" class="text-primary hover:underline">
+          About →
+        </a>
+        <a href="/blog" class="text-primary hover:underline">
+          Blog →
+        </a>
+        <a href="/dev" class="text-primary hover:underline">
+          Projects →
+        </a>
+      </div>
+    </footer>
+  </article>
+
+  <article data-ui-only="tui" class="mx-auto max-w-[760px] space-y-10">
+    <header data-reading-anchor="now-title">
+      <p class="font-mono text-xs tracking-widest text-primary">/ NOW / PERSONAL LOG</p>
+      <h1 class="mt-4 text-3xl font-semibold">这段时间，我在做什么。</h1>
+      <p class="mt-4 leading-8 text-muted-foreground">这是一份手动维护的近况快照，不是实时状态。</p>
+      <p class="mt-3 text-sm text-muted-foreground">
+        最近更新：<time datetime={NOW_UPDATED_AT}>{NOW_UPDATED_AT}</time>
+      </p>
+      <a class="mt-4 inline-flex min-h-11 items-center text-primary hover:underline" href="/about">
+        [ ABOUT / 关于我 ] →
+      </a>
+    </header>
+
+    <section data-reading-anchor="now-focus" data-now-section="focus">
+      <h2 class="mb-5 text-primary">## 最近在折腾</h2>
+      <div class="space-y-6">
+        {NOW_FOCUS.map((item) => (
+          <div>
+            <p class="font-mono text-xs tracking-wider text-primary">{item.label}</p>
+            <h3 class="mt-2 font-semibold">{item.title}</h3>
+            <p class="mt-2 leading-7 text-muted-foreground">{item.detail}</p>
+            <a href={item.href} class="mt-1 inline-block text-sm text-primary hover:underline">
+              {item.linkLabel} →
+            </a>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section data-reading-anchor="now-games" data-now-section="games">
+      <h2 class="mb-5 text-primary">## 最近会玩的游戏</h2>
+      <ul class="grid list-none grid-cols-2 gap-x-6 gap-y-4 p-0">
+        {NOW_GAMES.map((game) => (
+          <li>
+            <p class="font-semibold">{game.title}</p>
+            <p class="mt-1 text-xs text-muted-foreground">{game.category}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section data-reading-anchor="now-media" data-now-section="media">
+      <h2 class="mb-5 text-primary">## 最近在看</h2>
+      <div class="space-y-5">
+        {NOW_MEDIA.map((item) => (
+          <div>
+            <p class="text-xs text-primary">{item.status}</p>
+            <h3 class="mt-1 font-semibold">{item.title}</h3>
+            <p class="mt-1 text-sm text-muted-foreground">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <footer data-reading-anchor="now-contact" class="space-y-3 border-t border-border pt-6">
+      <a class="inline-block text-primary hover:underline" href="/about">
+        About →
+      </a>
+      <p class="text-sm text-muted-foreground">
+        更多长期记录请看{' '}
+        <a href="/blog" class="text-primary hover:underline">
+          Blog
+        </a>{' '}
+        与
+        <a href="/dev" class="text-primary hover:underline">
+          Projects
+        </a>
+        。
+      </p>
+    </footer>
+  </article>
+</TerminalLayout>

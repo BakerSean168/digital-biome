@@ -53,7 +53,7 @@ flowchart LR
 | `/dev`, `/dev/[assetId]`, `/projects/[assetId]` | Project portfolio and project detail |
 | `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
 | `/systems` | Personal Systems portal (`pds-catalog-v1`) |
-| `/about`, `/about/tags` | About / resume and tag index |
+| `/about`, `/now`, `/about/tags` | Long-lived personal introduction, manually updated Now snapshot, and tag index |
 | `/blog`, `/friends` | Blog and friends links |
 | `/login` | Cloudflare Access entry |
 | `/404` | Not found |
