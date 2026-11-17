@@ -1,30 +1,5 @@
 import { expect, test } from '@playwright/test';
 import { parseTerminalCatalog } from '../src/view-models/terminal-object';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import type { InfraPublicV2 } from '../src/domain/infrastructure/infra-public-v2';
-import { compareResourceTitle } from '../src/domain/resource-order';
-
-const currentInfraProjection = JSON.parse(
-  readFileSync(path.resolve('src/data/infrastructure/infra-public-v2.json'), 'utf8'),
-) as InfraPublicV2;
-
-function sourceFeaturedServices() {
-  return currentInfraProjection.payload.resources
-    .filter(
-      (resource) =>
-        resource.kind === 'service' &&
-        resource.status === 'active' &&
-        resource.homepage?.enabled === true &&
-        resource.homepage.featured === true,
-    )
-    .sort(
-      (a, b) =>
-        (a.homepage?.order ?? Infinity) - (b.homepage?.order ?? Infinity) ||
-        compareResourceTitle(a, b),
-    )
-    .slice(0, 8);
-}
 
 const browser = '[data-object-browser]:visible';
 const query = `${browser} [data-object-filter]`;
@@ -299,50 +274,45 @@ test('navigation reports its first target immediately and clears on page restora
 });
 
 for (const mode of ['tui', 'gui']) {
-  test(`${mode} homepage shares its brand and exposes public service introductions`, async ({
+  test(`${mode} homepage shows identity, Slash Pages and separate three-item recent lists`, async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(`/?ui=${mode}`);
-    const home = page
-      .locator(`[data-ui-only="${mode}"]`)
-      .filter({ has: page.locator('[data-featured-system]') })
-      .first();
-    // Match the producer's active/featured selection, rather than
-    // hardcoding retired Oracle2 identities into site acceptance tests.
-    const featured = sourceFeaturedServices();
-    expect(
-      await home
-        .locator('[data-featured-system]')
-        .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-featured-system'))),
-    ).toEqual(featured.map((service) => service.id));
-    expect(featured.length).toBeGreaterThan(0);
-    expect(featured.some((service) => service.id === 'svc-memoflow-dailyuse')).toBe(true);
-    expect(featured.some((service) => service.id === 'svc-homepage-dashboard')).toBe(true);
-    expect(featured.every((service) => service.status === 'active')).toBe(true);
-    await expect(home.locator('[data-featured-system]').first().locator('p')).not.toBeEmpty();
+    const home = page.locator(`section[data-ui-only="${mode}"]`).first();
+    await expect(home.getByRole('heading', { name: 'BakerSean' })).toBeVisible();
+    await expect(home.locator('img[src="/favicon.svg"]')).toHaveAttribute('alt', '');
+    await expect(home.locator('[data-home-bio]')).toContainText('programmer');
+    await expect(home.locator('[data-home-bio]')).toContainText('tinkerer');
+    await expect(home.locator('[data-home-bio]')).toContainText('gamer');
+    await expect(home.locator('[data-home-bio]')).toContainText('reader');
+
+    const slashLinks = home.locator('[data-home-slash-links] a');
+    await expect(slashLinks).toHaveCount(6);
+    for (const route of ['/about', '/now', '/uses', '/projects', '/blog', '/notes'])
+      await expect(home.locator(`[data-home-slash-links] a[href^="${route}"]`)).toBeVisible();
+    await expect(home.locator('[data-home-slash-links] a[href^="/now"] kbd')).toHaveText('g n');
+    await expect(home.locator('[data-home-recent="blogs"] ol li')).toHaveCount(3);
+    await expect(home.locator('[data-home-recent="notes"] ol li')).toHaveCount(3);
+    await expect(home.locator('[data-home-recent="blogs"]')).toContainText('Recent Blogs');
+    await expect(home.locator('[data-home-recent="notes"]')).toContainText('Recent Notes');
+    await expect(home.locator('[data-home-recent="blogs"] a[href^="/blog"]')).toBeVisible();
     await expect(
-      home.locator('[data-featured-system]').first().locator('a').first(),
-    ).toHaveAttribute('href', /^\/infrastructure\//);
-    // There may be no protected shortcuts after a producer removes retired
-    // private admin endpoints. Verify the lock label when any remain.
-    const protectedEntries = home.locator('[data-featured-system] [data-private-link]');
-    for (const entry of await protectedEntries.all()) {
-      await expect(entry).toContainText('登录访问');
-    }
-    await expect(page.locator('img[src="/images/biome-mark.svg"]')).toHaveCount(0);
-    await expect(page.locator('img[src="/favicon.svg"]').first()).toHaveAttribute('alt', '');
-    await home.locator('[aria-label="精选系统"]').screenshot({
-      path: `.artifacts/resource-interactions/homepage-${mode}.png`,
-    });
+      home.locator('[data-home-recent="notes"] a[href^="/notes"]').first(),
+    ).toBeVisible();
+
+    await expect(home).not.toContainText('公开分享与个人使用');
+    await expect(home).not.toContainText('知识持续积累');
+    await expect(home).not.toContainText('写下的、做出的、运行着的和收藏的');
+    await expect(home.locator('[data-featured-system]')).toHaveCount(0);
+    await expect(home.getByRole('heading', { name: '精选系统' })).toHaveCount(0);
+
     expect(
       await page
         .locator('#site-content')
         .evaluate((node) => getComputedStyle(node).viewTransitionName),
     ).toBe('none');
-    await home.locator('[data-featured-system]').first().locator('a').first().click();
-    await expect(page.locator('main')).not.toContainText('portal-pinned');
-    await expect(page.locator('main')).toContainText('登记状态');
+    await home.screenshot({ path: `.artifacts/resource-interactions/homepage-${mode}.png` });
   });
 
   test(`${mode} resource controls and mobile dialogs fit supported viewport widths`, async ({
@@ -386,3 +356,31 @@ for (const mode of ['tui', 'gui']) {
     await page.screenshot({ path: `.artifacts/resource-interactions/mobile-${mode}.png` });
   });
 }
+
+test('mobile Home keeps the mark and name together with compact Slash Page links', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const mode of ['gui', 'tui']) {
+    await page.goto(`/?ui=${mode}`);
+    const home = page.locator(`section[data-ui-only="${mode}"]`).first();
+    const layout = await home.locator('[data-home-identity]').evaluate((node) => {
+      const icon = node.querySelector('img')?.getBoundingClientRect();
+      const title = node.querySelector('h1')?.getBoundingClientRect();
+      if (!icon || !title) throw new Error('Home identity is missing its mark or title');
+      return {
+        markRight: icon.right,
+        nameLeft: title.left,
+        centerDelta: Math.abs((icon.top + icon.bottom) / 2 - (title.top + title.bottom) / 2),
+        width: document.body.scrollWidth,
+        viewport: innerWidth,
+      };
+    });
+    expect(layout.markRight).toBeLessThan(layout.nameLeft);
+    expect(layout.centerDelta).toBeLessThan(40);
+    expect(layout.width).toBeLessThanOrEqual(layout.viewport);
+    await expect(home.locator('[data-home-slash-links] a')).toHaveCount(6);
+    await expect(home.locator('[data-home-recent="blogs"] li')).toHaveCount(3);
+    await expect(home.locator('[data-home-recent="notes"] li')).toHaveCount(3);
+  }
+});

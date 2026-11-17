@@ -264,18 +264,16 @@ html[data-ui='gui'] [data-page-title] {
   color: var(--text-main);
 }
 .gui-home {
-  padding-top: 18px;
+  padding-top: 12px;
 }
 .gui-home-intro {
   display: grid;
-  gap: 32px;
+  gap: 22px;
 }
 .gui-home-writing {
   display: grid;
-  gap: 32px;
-  margin-top: 40px;
-  padding-top: 32px;
-  border-top: 1px solid var(--border-color);
+  gap: 28px;
+  margin-top: 30px;
 }
 .gui-about-columns {
   display: grid;
@@ -284,15 +282,13 @@ html[data-ui='gui'] [data-page-title] {
 }
 @media (min-width: 900px) {
   .gui-home-intro {
-    grid-template-columns: minmax(0, 1fr) minmax(350px, 445px);
-    gap: 80px;
-    min-height: 260px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
   }
   .gui-home-writing {
-    grid-template-columns: 1fr 1fr;
-    gap: 72px;
-    margin-top: 64px;
-    padding-top: 28px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+    margin-top: 34px;
   }
   .gui-about {
     padding-top: 4px;

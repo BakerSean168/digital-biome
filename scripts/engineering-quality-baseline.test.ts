@@ -81,7 +81,7 @@ function buildStaticGraph(): Map<string, string[]> {
 const graph = buildStaticGraph();
 const relative = (file: string) => path.relative(ROOT, file).replaceAll(path.sep, '/');
 
-test('public landing and category routes share the active TerminalLayout and ObjectBrowser', () => {
+test('public pages share TerminalLayout and catalog pages retain ObjectBrowser', () => {
   for (const route of [
     'src/pages/index.astro',
     'src/pages/notes/index.astro',
@@ -92,10 +92,16 @@ test('public landing and category routes share the active TerminalLayout and Obj
   ]) {
     const imports = graph.get(path.join(ROOT, route))?.map(relative) ?? [];
     assert.ok(imports.includes('src/layouts/TerminalLayout.astro'), route + ' lost TerminalLayout');
-    assert.ok(
-      imports.includes('src/components/terminal/ObjectBrowser.astro'),
-      route + ' lost ObjectBrowser',
-    );
+    if (route !== 'src/pages/index.astro')
+      assert.ok(
+        imports.includes('src/components/terminal/ObjectBrowser.astro'),
+        route + ' lost ObjectBrowser',
+      );
+    else
+      assert.ok(
+        !imports.includes('src/components/terminal/ObjectBrowser.astro'),
+        'Home must stay a compact, unfiltered reading page',
+      );
   }
   const terminalImports = graph.get(path.join(ROOT, 'src/layouts/TerminalLayout.astro')) ?? [];
   assert.ok(terminalImports.map(relative).includes('src/layouts/BaseLayout.astro'));

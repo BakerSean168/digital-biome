@@ -159,6 +159,7 @@ test('Facet cancellation and catalog failure do not commit a partial filter', as
     route.fulfill({ status: 503, body: 'unavailable' }),
   );
   await page.goto('/uses/#external');
+  await expect(page.locator('html')).toHaveAttribute('data-browser-ready', 'true');
   await page.keyboard.press('f');
   await expect(page.locator(`${browser} [data-object-error]`)).toBeVisible();
   await expect(page.locator('dialog[open]')).toHaveCount(0);
