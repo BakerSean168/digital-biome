@@ -1,197 +1,337 @@
 ---
+import { ArrowUpRight, BookOpen, Film, Gamepad2, GitBranch, Network, Server } from '@lucide/astro';
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
 import { SOCIAL_LINKS } from '../../constants';
-const areas = [
-  {
-    title: 'Notes',
-    href: '/notes',
-    description: '知识笔记。概念、方法和学习过程，持续补充、彼此连接。',
-  },
-  { title: 'Blog', href: '/blog', description: '博客文章。相对完整的叙述、工程记录与个人思考。' },
-  {
-    title: 'Projects',
-    href: '/dev',
-    description: '我做过和正在做的作品，从问题、实现到可访问的成果。',
-  },
-  {
-    title: 'Tools',
-    href: '/tools',
-    description: '自托管服务、外部资源、主机和网络。找到用途，再到达入口。',
-  },
-];
+import {
+  ABOUT_AREAS,
+  ABOUT_SNAPSHOT,
+  ABOUT_SYSTEMS,
+  COMPUTER_INTERESTS,
+  GAMES,
+  RECENT_MEDIA,
+} from '../../config/about-profile';
 ---
 
 <TerminalLayout
   title="About"
-  description="BakerSean 与 Digital Biome：个人知识、作品和基础设施的关联。"
+  description="关于 BakerSean：计算机、家庭服务器、游戏、故事和一些正在思考的问题。"
 >
-  <article data-ui-only="gui" class="gui-about">
-    <header data-reading-anchor="about-title">
-      <p class="mb-5 text-sm text-primary">About</p>
-      <h1 class="text-2xl leading-normal md:text-[32px]">构建系统，也记录系统之外的生活。</h1>
-      <p class="mt-5 text-muted-foreground">BakerSean</p>
-    </header>
-    <div class="gui-about-columns">
-      <div>
-        <p data-reading-anchor="about-intro" class="max-w-[38em] text-muted-foreground md:text-lg">
-          这里是 Digital
-          Biome，我的个人数字生态。它把知识、写作、项目与正在使用的资源放在一起，让我看清自己拥有什么，也让你了解我在思考和构建什么。
-        </p>
-        <section data-reading-anchor="about-practice" class="mt-10 md:mt-16">
-          <h2 class="text-lg md:text-2xl">我在做什么</h2>
-          <p class="mt-6 leading-relaxed text-muted-foreground md:text-lg">
-            学习、编程，搭建自己的数字基础设施。
-            <br />
-            把一次次探索沉淀成笔记，把想法做成可使用的项目，再让这些工具融入日常。
+  <article data-ui-only="gui" class="gui-about mx-auto max-w-[1120px]">
+    <header data-reading-anchor="about-title" class="border-b border-border pb-10 md:pb-14">
+      <p class="font-mono text-xs tracking-[0.24em] text-primary">PERSONAL LOG / ABOUT</p>
+      <div class="mt-7 grid gap-9 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end lg:gap-16">
+        <div>
+          <h1 class="text-3xl leading-[1.45] font-medium tracking-tight md:text-5xl">
+            你好，我是 BakerSean。
+            <span class="block text-primary">喜欢折腾，也喜欢观察。</span>
+          </h1>
+          <p
+            data-reading-anchor="about-intro"
+            class="mt-7 max-w-[35em] text-base leading-8 text-muted-foreground md:text-lg"
+          >
+            对计算机相关的东西很感兴趣。写代码、搭服务器、研究网络，偶尔把一个小想法做成真正能用的东西。离开屏幕的时候，也会打游戏、看故事，或者想一些没有标准答案的问题。
           </p>
-          <p class="mt-6 leading-relaxed text-muted-foreground">
-            我关心知识之间的联系，也关心系统如何长期可靠地运行。
-            <br class="hidden md:block" />
-            这片数字生态随着实践慢慢生长。
+        </div>
+        <aside class="border-l border-border pl-5 md:pl-7">
+          <p class="font-mono text-xs tracking-widest text-primary">CURRENTLY / {ABOUT_SNAPSHOT}</p>
+          <p class="mt-3 leading-7 text-muted-foreground">
+            这是一个会慢慢变化的自我介绍，不是简历。这里记录我正在喜欢、探索和思考的东西。
           </p>
-        </section>
-        <section data-reading-anchor="about-content" class="mt-10 md:mt-16">
-          <h2 class="mb-6 text-lg md:text-2xl">这里有什么</h2>
-          <dl class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-5 gap-y-5 text-sm">
-            {areas.map((area) => (
-              <>
-                <dt>
-                  <a href={area.href} class="hover:text-primary">
-                    {area.title}
-                  </a>
-                </dt>
-                <dd class="text-muted-foreground">{area.description}</dd>
-              </>
-            ))}
-          </dl>
-        </section>
+          <nav aria-label="关于我的兴趣" class="mt-5 flex flex-wrap gap-x-5 gap-y-3 text-sm">
+            <a class="text-primary hover:underline" href="#about-computers">
+              计算机
+            </a>
+            <a class="text-primary hover:underline" href="#about-games">
+              游戏
+            </a>
+            <a class="text-primary hover:underline" href="#about-media">
+              最近在看
+            </a>
+            <a class="text-primary hover:underline" href="#about-ideas">
+              阅读与思想
+            </a>
+          </nav>
+        </aside>
       </div>
-      <aside data-reading-anchor="about-ecosystem">
-        <h2 class="mb-6 text-lg">背后的生态</h2>
-        <dl class="space-y-6">
-          <div>
-            <dt>
-              <a href="/notes" class="hover:text-primary">
-                Thought Forest
-              </a>
-            </dt>
-            <dd class="mt-2 text-sm text-muted-foreground">知识笔记与独立写作</dd>
-          </div>
-          <div>
-            <dt>
-              <a href="/systems" class="hover:text-primary">
-                Personal Digital System
-              </a>
-            </dt>
-            <dd class="mt-2 text-sm text-muted-foreground">项目与系统的关系</dd>
-          </div>
-          <div>
-            <dt>
-              <a href="/infrastructure" class="hover:text-primary">
-                Personal Infrastructure
-              </a>
-            </dt>
-            <dd class="mt-2 text-sm text-muted-foreground">主机、网络与运行中的服务</dd>
-          </div>
-        </dl>
-      </aside>
-    </div>
-    <nav
-      data-reading-anchor="about-contact"
-      aria-label="更多关于我"
-      class="mt-10 flex flex-wrap gap-6 text-primary"
-    >
-      <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
-        GitHub ↗
-      </a>
-      <a href="/friends">Friends →</a>
-      <a href="/about/tags">知识标签 →</a>
-    </nav>
-    <p data-reading-anchor="about-access" class="mt-12 text-sm text-muted-foreground">
-      公开内容可以直接阅读。部分服务仅供个人使用，需要通过 Access
-      验证身份。页面展示入口，访问权限由服务与认证系统负责。
-    </p>
-  </article>
-  <article data-ui-only="tui" class="max-w-[720px] space-y-7">
-    <header data-reading-anchor="about-title">
-      <h1 class="text-3xl font-semibold">BakerSean</h1>
-      <p class="mt-2 text-muted-foreground">构建系统，也记录系统之外的生活。</p>
     </header>
-    <p data-reading-anchor="about-intro">
-      这里是 Digital
-      Biome，我的个人数字生态。它把知识、写作、项目与正在使用的资源放在一起，让我看清自己拥有什么，也让你了解我在思考和构建什么。
-    </p>
-    <section data-reading-anchor="about-practice">
-      <h2 class="mb-3 text-primary">
-        <span class="text-muted-foreground">## </span>我在做什么
-      </h2>
-      <p>
-        学习、编程、搭建自己的数字基础设施。把一次次探索沉淀成笔记，把想法做成可使用的项目，再让这些工具融入日常。
-      </p>
-      <p class="mt-3">
-        我关心知识之间的联系，也关心系统如何长期可靠地运行。这片数字生态随着我的实践慢慢生长。
+
+    <section id="about-computers" data-about-section="computers" class="py-12 md:py-16">
+      <div class="flex items-center gap-3 text-primary">
+        <Server size={19} aria-hidden="true" />
+        <p class="font-mono text-xs tracking-widest">01 / THE MACHINE ROOM</p>
+      </div>
+      <div class="mt-4 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <h2 class="text-2xl font-medium md:text-3xl">一直在折腾的东西</h2>
+        <p class="max-w-[35em] leading-7 text-muted-foreground">
+          从屏幕上的代码到家里的设备，我喜欢弄清它们是怎么连接、怎么运行的。
+        </p>
+      </div>
+      <div class="mt-8 grid gap-3 md:grid-cols-3">
+        {COMPUTER_INTERESTS.map((interest) => (
+          <article class="min-h-48 border border-border p-5 transition-colors hover:border-primary/50">
+            <span class="font-mono text-xs text-primary">{interest.number} /</span>
+            <h3 class="mt-7 text-lg font-medium">{interest.title}</h3>
+            <p class="mt-3 text-sm leading-7 text-muted-foreground">{interest.detail}</p>
+          </article>
+        ))}
+      </div>
+      <p class="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
+        <Network size={16} aria-hidden="true" />
+        家庭网络、云服务器、自托管服务，以及各种还没折腾完的小系统。
       </p>
     </section>
-    <section data-reading-anchor="about-content">
-      <h2 class="mb-3 text-primary">
-        <span class="text-muted-foreground">## </span>这里有什么
-      </h2>
-      <dl class="grid grid-cols-[90px_1fr] gap-x-5 gap-y-3 sm:grid-cols-[150px_1fr]">
-        {areas.map((area) => (
+
+    <section
+      id="about-games"
+      data-about-section="games"
+      class="border-t border-border py-12 md:py-16"
+    >
+      <div class="flex items-center gap-3 text-primary">
+        <Gamepad2 size={19} aria-hidden="true" />
+        <p class="font-mono text-xs tracking-widest">02 / AFTER HOURS</p>
+      </div>
+      <h2 class="mt-4 text-2xl font-medium md:text-3xl">偶尔也在游戏里待很久</h2>
+      <p class="mt-3 leading-7 text-muted-foreground">
+        常玩的游戏有这些。既喜欢和朋友竞技，也喜欢在复杂的模拟世界里慢慢探索。
+      </p>
+      <ul class="mt-8 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4">
+        {GAMES.map((game, index) => (
+          <li class="flex min-h-40 flex-col justify-between border border-border bg-card p-4">
+            <div class="flex items-start justify-between gap-2">
+              <span class="font-mono text-[10px] tracking-wider text-primary">{game.category}</span>
+              <span class="font-mono text-xs text-muted-foreground">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+            </div>
+            <div>
+              <p class="text-lg font-medium">{game.title}</p>
+              <p class="mt-2 font-mono text-[10px] tracking-wide text-muted-foreground">
+                {game.subtitle}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section
+      id="about-media"
+      data-about-section="media"
+      class="border-t border-border py-12 md:py-16"
+    >
+      <div class="flex items-center gap-3 text-primary">
+        <Film size={19} aria-hidden="true" />
+        <p class="font-mono text-xs tracking-widest">03 / WATCHLIST</p>
+      </div>
+      <div class="mt-4 flex flex-col justify-between gap-3 md:flex-row md:items-end">
+        <h2 class="text-2xl font-medium md:text-3xl">最近在看</h2>
+        <p class="font-mono text-xs text-muted-foreground">SNAPSHOT / {ABOUT_SNAPSHOT}</p>
+      </div>
+      <div class="mt-8 grid gap-3 md:grid-cols-2">
+        {RECENT_MEDIA.map((item) => (
+          <article class="border-l-2 border-primary bg-card px-5 py-6">
+            <p class="font-mono text-xs tracking-wide text-primary">{item.status}</p>
+            <h3 class="mt-5 text-xl font-medium">{item.title}</h3>
+            <p class="mt-1 font-mono text-xs text-muted-foreground">{item.originalTitle}</p>
+            <p class="mt-5 text-sm leading-7 text-muted-foreground">{item.detail}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section
+      id="about-ideas"
+      data-about-section="ideas"
+      class="grid gap-9 border-t border-border py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-16 md:py-16"
+    >
+      <div>
+        <div class="flex items-center gap-3 text-primary">
+          <BookOpen size={19} aria-hidden="true" />
+          <p class="font-mono text-xs tracking-widest">04 / THINGS I THINK ABOUT</p>
+        </div>
+        <h2 class="mt-4 text-2xl font-medium md:text-3xl">读一点，也想一点</h2>
+        <p class="mt-6 leading-8 text-muted-foreground">
+          思想上，我目前比较接近叔本华对欲望、痛苦和生活的观察。之前也接触过齐奥朗的观点，对那些不轻易给生活下结论的思考很感兴趣。
+        </p>
+        <p class="mt-4 leading-8 text-muted-foreground">
+          这不是想给自己贴上某个流派的标签。很多问题还没想明白，也许以后会改变看法。
+        </p>
+      </div>
+      <div class="flex flex-col justify-end gap-3">
+        <div class="border-t border-border py-4">
+          <p class="font-mono text-xs tracking-widest text-primary">ARTHUR SCHOPENHAUER</p>
+          <p class="mt-2 text-sm text-muted-foreground">欲望、意志，以及人与世界的关系</p>
+        </div>
+        <div class="border-t border-border py-4">
+          <p class="font-mono text-xs tracking-widest text-primary">EMIL CIORAN</p>
+          <p class="mt-2 text-sm text-muted-foreground">悲观主义、怀疑与格言式的思考</p>
+        </div>
+      </div>
+    </section>
+
+    <section data-about-section="ecosystem" class="border-t border-border py-12 md:py-16">
+      <p class="font-mono text-xs tracking-widest text-primary">05 / DIGITAL BIOME</p>
+      <h2 class="mt-4 text-2xl font-medium md:text-3xl">这些兴趣留下的痕迹</h2>
+      <p class="mt-4 max-w-[45em] leading-8 text-muted-foreground">
+        笔记、文章、项目和自建系统，慢慢构成了这片 Digital Biome。想继续逛逛，可以从这里开始。
+      </p>
+      <div class="mt-8 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+        {ABOUT_AREAS.map((area) => (
+          <a
+            href={area.href}
+            class="group flex min-h-28 items-start justify-between gap-4 border-t border-border py-4 hover:border-primary/50"
+          >
+            <div>
+              <h3 class="text-lg font-medium group-hover:text-primary">{area.title}</h3>
+              <p class="mt-2 text-sm leading-6 text-muted-foreground">{area.description}</p>
+            </div>
+            <ArrowUpRight
+              size={18}
+              aria-hidden="true"
+              class="mt-1 shrink-0 text-muted-foreground group-hover:text-primary"
+            />
+          </a>
+        ))}
+      </div>
+      <div class="mt-8 grid gap-5 border-t border-border pt-7 md:grid-cols-3">
+        {ABOUT_SYSTEMS.map((system) => (
+          <div>
+            <a class="text-sm font-medium hover:text-primary" href={system.href}>
+              {system.title}
+            </a>
+            <p class="mt-2 text-sm leading-6 text-muted-foreground">{system.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <footer data-reading-anchor="about-contact" class="border-t border-border py-9">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-4 text-sm">
+        <a
+          href={SOCIAL_LINKS.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 text-primary hover:underline"
+        >
+          <GitBranch size={16} aria-hidden="true" /> GitHub{' '}
+          <ArrowUpRight size={14} aria-hidden="true" />
+        </a>
+        <a href="/friends" class="text-primary hover:underline">
+          Friends
+        </a>
+        <a href="/about/tags" class="text-primary hover:underline">
+          知识标签
+        </a>
+      </div>
+      <p
+        data-reading-anchor="about-access"
+        class="mt-7 max-w-[50em] text-xs leading-6 text-muted-foreground"
+      >
+        这里介绍的是公开的一面。部分个人服务只在授权后开放，基础设施的内部信息不会出现在公开页面。
+      </p>
+    </footer>
+  </article>
+
+  <article data-ui-only="tui" class="mx-auto max-w-[760px] space-y-10">
+    <header data-reading-anchor="about-title">
+      <p class="font-mono text-xs tracking-widest text-primary">/ ABOUT / {ABOUT_SNAPSHOT}</p>
+      <h1 class="mt-4 text-3xl font-semibold">BakerSean</h1>
+      <p class="mt-3 text-lg">喜欢折腾，也喜欢观察。</p>
+      <p data-reading-anchor="about-intro" class="mt-5 leading-8 text-muted-foreground">
+        对计算机相关的东西很感兴趣。写代码、搭服务器、研究网络，偶尔把一个小想法做成真正能用的东西。离开屏幕的时候，也会打游戏、看故事，或者想一些没有标准答案的问题。
+      </p>
+    </header>
+
+    <section data-about-section="computers">
+      <h2 class="mb-5 text-primary">## 计算机 / HomeLab</h2>
+      <div class="space-y-5">
+        {COMPUTER_INTERESTS.map((interest) => (
+          <div>
+            <h3 class="font-semibold">{interest.title}</h3>
+            <p class="mt-1 leading-7 text-muted-foreground">{interest.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section data-about-section="games">
+      <h2 class="mb-5 text-primary">## 常玩的游戏</h2>
+      <ul class="grid list-none grid-cols-2 gap-x-6 gap-y-4 p-0">
+        {GAMES.map((game) => (
+          <li>
+            <span class="font-semibold">{game.title}</span>
+            <span class="mt-1 block text-xs text-muted-foreground">{game.category}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section data-about-section="media">
+      <h2 class="mb-5 text-primary">## 最近在看 / {ABOUT_SNAPSHOT}</h2>
+      <div class="space-y-5">
+        {RECENT_MEDIA.map((item) => (
+          <div>
+            <p class="text-xs text-primary">{item.status}</p>
+            <h3 class="mt-1 font-semibold">{item.title}</h3>
+            <p class="mt-1 text-sm text-muted-foreground">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section data-about-section="ideas">
+      <h2 class="mb-5 text-primary">## 阅读与思想</h2>
+      <p class="leading-8">
+        目前比较接近叔本华对欲望和痛苦的观察，也接触过齐奥朗的观点。对这些问题感兴趣，但不想因此给自己贴上固定的标签。
+      </p>
+    </section>
+
+    <section data-about-section="ecosystem">
+      <h2 class="mb-5 text-primary">## Digital Biome 里有什么</h2>
+      <dl class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-4 text-sm">
+        {ABOUT_AREAS.map((area) => (
           <>
             <dt>
-              <a class="text-primary" href={area.href}>
+              <a href={area.href} class="text-primary hover:underline">
                 {area.title}
               </a>
             </dt>
-            <dd>{area.description}</dd>
+            <dd class="text-muted-foreground">{area.description}</dd>
           </>
         ))}
       </dl>
+      <div class="mt-7 space-y-3">
+        {ABOUT_SYSTEMS.map((system) => (
+          <p>
+            <a href={system.href} class="text-primary hover:underline">
+              {system.title}
+            </a>
+            <span class="text-muted-foreground"> — {system.description}</span>
+          </p>
+        ))}
+      </div>
     </section>
-    <section data-reading-anchor="about-ecosystem">
-      <h2 class="mb-3 text-primary">
-        <span class="text-muted-foreground">## </span>背后的生态
-      </h2>
-      <p>
-        Soft Forest 是知识生长的地方。Personal Digital System 组织我的项目与个人系统，Personal
-        Infrastructure 承载运行中的服务。Digital Biome 是它们面向自己和访客的展示与访问层。
-      </p>
-      <p class="mt-3">
-        <a class="border-b border-border hover:text-primary" href="/systems">
-          探索 Personal System →
-        </a>
-      </p>
-    </section>
-    <section data-reading-anchor="about-access">
-      <h2 class="mb-3 text-primary">
-        <span class="text-muted-foreground">## </span>公开与私有
-      </h2>
-      <p>
-        公开内容可以直接阅读。部分服务仅供个人使用，需要通过 Access
-        验证身份。页面展示入口，访问权限由服务与认证系统负责。
-      </p>
-    </section>
-    <section data-reading-anchor="about-contact">
-      <h2 class="mb-3 text-primary">
-        <span class="text-muted-foreground">## </span>找到我
-      </h2>
+
+    <footer data-reading-anchor="about-contact" class="space-y-5 border-t border-border pt-6">
       <div class="flex flex-wrap gap-6">
         <a
-          class="border-b border-border hover:text-primary"
+          class="text-primary hover:underline"
           href={SOCIAL_LINKS.github}
           target="_blank"
           rel="noopener noreferrer"
         >
-          GitHub ↗
+          GitHub
         </a>
-        <a class="border-b border-border hover:text-primary" href="/friends">
-          Friends →
+        <a class="text-primary hover:underline" href="/friends">
+          Friends
         </a>
-        <a class="border-b border-border hover:text-primary" href="/about/tags">
-          知识标签 →
+        <a class="text-primary hover:underline" href="/about/tags">
+          知识标签
         </a>
       </div>
-    </section>
+      <p data-reading-anchor="about-access" class="text-sm text-muted-foreground">
+        公开页面只展示个人兴趣与公开资源，内部服务仍需要授权访问。
+      </p>
+    </footer>
   </article>
 </TerminalLayout>
