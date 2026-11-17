@@ -132,6 +132,9 @@ import { NOW_UPDATED_AT, NOW_FOCUS, NOW_GAMES, NOW_MEDIA } from '../config/now-p
         <a href="/about" class="text-primary hover:underline">
           About →
         </a>
+        <a href="/uses" class="text-primary hover:underline">
+          Uses →
+        </a>
         <a href="/blog" class="text-primary hover:underline">
           Blog →
         </a>
@@ -197,9 +200,14 @@ import { NOW_UPDATED_AT, NOW_FOCUS, NOW_GAMES, NOW_MEDIA } from '../config/now-p
     </section>
 
     <footer data-reading-anchor="now-contact" class="space-y-3 border-t border-border pt-6">
-      <a class="inline-block text-primary hover:underline" href="/about">
-        About →
-      </a>
+      <div class="flex flex-wrap gap-6">
+        <a class="text-primary hover:underline" href="/about">
+          About →
+        </a>
+        <a class="text-primary hover:underline" href="/uses">
+          Uses →
+        </a>
+      </div>
       <p class="text-sm text-muted-foreground">
         更多长期记录请看{' '}
         <a href="/blog" class="text-primary hover:underline">

@@ -7,13 +7,10 @@ import {
   terminalNotes,
   terminalBlogs,
   terminalProjects,
-  terminalInfrastructure,
-  terminalExternal,
 } from '../repositories/terminal-repository';
 import { getPinnedPortalServices } from '../utils/personal-systems';
 const notes = await terminalNotes();
 const blogs = terminalBlogs();
-const resources = terminalInfrastructure();
 const projects = terminalProjects();
 const pinned = getPinnedPortalServices();
 const recent = [...notes.slice(0, 3), ...blogs.slice(0, 2)].sort((a, b) =>
@@ -50,12 +47,8 @@ const recent = [...notes.slice(0, 3), ...blogs.slice(0, 2)].sort((a, b) =>
       <a class="hover:text-primary" href="/dev">
         [gp] projects　<span class="text-muted-foreground">{projects.length} 个作品</span>
       </a>
-      <a class="hover:text-primary" href="/tools">
-        [gt] tools　
-        <span class="text-muted-foreground">
-          {resources.filter((item) => item.kind === 'service').length} 服务 ·{' '}
-          {terminalExternal().length} 外部资源
-        </span>
+      <a class="hover:text-primary" href="/uses">
+        [gu] uses　<span class="text-muted-foreground">硬件 · 软件 · 服务 · 网站</span>
       </a>
       <a class="hover:text-primary" href="/about">
         [ga] about

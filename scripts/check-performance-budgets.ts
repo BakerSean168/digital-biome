@@ -20,6 +20,7 @@ const PAGE_BUDGETS: readonly PageBudget[] = [
   { route: '/notes', file: 'notes/index.html', rawKiB: 200, gzipKiB: 60 },
   { route: '/about', file: 'about/index.html', rawKiB: 200, gzipKiB: 32 },
   { route: '/now', file: 'now/index.html', rawKiB: 160, gzipKiB: 24 },
+  { route: '/uses', file: 'uses/index.html', rawKiB: 160, gzipKiB: 24 },
   { route: '/about/tags', file: 'about/tags/index.html', rawKiB: 220, gzipKiB: 24 },
   { route: '/tools', file: 'tools/index.html', rawKiB: 96, gzipKiB: 16 },
 ];

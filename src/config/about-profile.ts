@@ -1,7 +1,8 @@
 /**
  * Hand-edited, public-facing About copy.
  * Long-lived identity and interests only; short-lived updates belong in now-profile.ts.
- */ export const COMPUTER_INTERESTS = [
+ */
+export const COMPUTER_INTERESTS = [
   {
     number: '01',
     title: '编程与自动化',
@@ -27,7 +28,7 @@ export const ABOUT_AREAS = [
   },
   { title: 'Blog', href: '/blog', description: '比较完整的文章、经历与思考。' },
   { title: 'Projects', href: '/dev', description: '做过和正在做的项目。' },
-  { title: 'Tools', href: '/tools', description: '收集的工具、服务与资源。' },
+  { title: 'Uses', href: '/uses', description: '正在使用的硬件、软件、服务与网站。' },
 ] as const;
 
 export const ABOUT_SYSTEMS = [

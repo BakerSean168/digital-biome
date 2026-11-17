@@ -14,7 +14,7 @@ test('dock and first search destinations share the same names, routes and order'
   );
   assert.deepEqual(
     PRIMARY_NAVIGATION.map((item) => item.title),
-    ['Home', 'Library', 'Projects', 'Tools', 'About'],
+    ['Home', 'Library', 'Projects', 'Uses', 'About'],
   );
 });
 test('detail routes and Library subtypes resolve to their primary destination', () => {
@@ -23,7 +23,10 @@ test('detail routes and Library subtypes resolve to their primary destination', 
   for (const path of ['/dev/example', '/projects/example'])
     assert.equal(activeNavigation(path), '/dev');
   for (const path of ['/systems/', '/infrastructure/host-example', '/tools/'])
-    assert.equal(activeNavigation(path), '/tools');
+    assert.equal(activeNavigation(path), '/uses');
+  assert.equal(activeNavigation('/uses'), '/uses');
+  assert.equal(activeNavigation('/uses/'), '/uses');
+  assert.equal(pageMode('/tools'), 'TOOLS');
   assert.equal(activeNavigation('/now'), '/about');
   assert.equal(activeNavigation('/now/'), '/about');
   assert.equal(pageMode('/now'), 'NOW');
@@ -34,6 +37,7 @@ test('detail routes and Library subtypes resolve to their primary destination', 
 });
 test('Blog and Friends remain directly discoverable without inventing Library routes', () => {
   assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/now'));
+  assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/tools'));
   assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/blog'));
   assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/friends'));
   assert.ok(!SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/library'));

@@ -49,7 +49,8 @@ flowchart LR
 | --- | --- |
 | `/` | Home (GUI/TUI) |
 | `/notes`, `/notes/[...slug]` | Knowledge garden list and note pages |
-| `/tools`, `/tools/[assetId]` | Tools catalog and tool detail |
+| `/uses` | Personal hardware, software, services and websites overview; service and bookmark cards reuse the public owner projections |
+| `/tools`, `/tools/[assetId]` | Full status-aware Tools catalog and resource detail, retained for existing links and filtering |
 | `/dev`, `/dev/[assetId]`, `/projects/[assetId]` | Project portfolio and project detail |
 | `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
 | `/systems` | Personal Systems portal (`pds-catalog-v1`) |

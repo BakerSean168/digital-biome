@@ -223,6 +223,7 @@ test('Mobile GUI details close back to the same list, with no outer scrolling', 
   for (const route of [
     '/',
     '/about',
+    '/uses',
     '/tools',
     '/notes',
     '/blog',
