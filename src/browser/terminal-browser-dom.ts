@@ -58,7 +58,7 @@ export function paintTerminalPreview(
     ),
     element('p', 'object-detail-description mt-3 break-words', item.description),
     tags,
-    open,
+    ...(preview.closest('[data-preview-only]') ? [] : [open]),
   );
   if (item.relations.length) {
     const related = element('div', 'mt-5 border-t border-border pt-3');

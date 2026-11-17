@@ -42,7 +42,7 @@ CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thoug
 
 ## 项目展示模型
 
-`/dev` 页面消费 Thought Forest 中 **公开的 `asset_type: project` 记录**。一个重点项目可以暴露三个职责不同的入口：
+`/projects` 页面消费 Thought Forest 中 **公开的 `asset_type: project` 记录**。一个重点项目可以暴露三个职责不同的入口：
 
 1. **在线产品** —— 真正运行中的生产应用。
 2. **项目介绍页** —— 基于 GitHub Pages 的轻量介绍站，重点解释产品故事和工程亮点。

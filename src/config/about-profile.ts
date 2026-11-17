@@ -27,7 +27,7 @@ export const ABOUT_AREAS = [
     description: '零散的知识笔记、概念和学习过程。',
   },
   { title: 'Blog', href: '/blog', description: '比较完整的文章、经历与思考。' },
-  { title: 'Projects', href: '/dev', description: '做过和正在做的项目。' },
+  { title: 'Projects', href: '/projects', description: '做过和正在做的项目。' },
   { title: 'Uses', href: '/uses', description: '正在使用的硬件、软件、服务与网站。' },
 ] as const;
 

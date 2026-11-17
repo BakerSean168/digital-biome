@@ -2,7 +2,7 @@
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
 import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
 import { terminalInfrastructure, terminalExternal } from '../../repositories/terminal-repository';
-import { USES_HARDWARE, USES_SOFTWARE, USES_UPDATED_AT } from '../../config/uses-profile';
+import { usesHardwareObjects, usesSoftwareObjects } from '../../view-models/uses-personal-objects';
 
 const resources = terminalInfrastructure();
 const external = terminalExternal();
@@ -49,35 +49,7 @@ const tabs = [
   title="Uses"
   description="我实际使用的硬件、软件、网站、自托管服务以及家庭网络与服务器。"
 >
-  <header data-ui-only="gui" class="mb-5">
-    <div class="flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
-      <div>
-        <p class="font-mono text-xs tracking-[0.18em] text-primary">PERSONAL LOG / USES</p>
-        <h1 data-reading-anchor="uses-title" class="mt-3 text-[32px] font-medium">
-          我正在使用的东西
-        </h1>
-        <p class="mt-2 max-w-[50em] text-sm leading-6 text-muted-foreground">
-          实际使用的设备、软件、服务和网站。不是简历中的技能表，也包含正在折腾的个人数字空间。
-        </p>
-      </div>
-      <div class="font-mono text-xs text-muted-foreground">
-        UPDATED <time datetime={USES_UPDATED_AT}>{USES_UPDATED_AT}</time>
-      </div>
-    </div>
-  </header>
-  <header data-ui-only="tui" class="mb-5">
-    <p class="font-mono text-xs tracking-widest text-primary">/ USES / PERSONAL LOG</p>
-    <h1 data-reading-anchor="uses-title" class="mt-2 text-2xl font-semibold">
-      我正在使用的东西。
-    </h1>
-    <p class="mt-2 text-sm leading-6 text-muted-foreground">
-      硬件、软件、自托管服务、网站和家庭网络。
-      <time datetime={USES_UPDATED_AT} class="ml-2 font-mono">
-        {USES_UPDATED_AT}
-      </time>
-    </p>
-  </header>
-
+  <h1 class="sr-only">Uses / 我在使用的东西</h1>
   <nav
     aria-label="Uses 分类"
     class="content-tabs mb-3 flex flex-nowrap gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:gap-3"
@@ -108,23 +80,14 @@ const tabs = [
     data-reading-anchor="uses-hardware"
     class="mb-8 scroll-mt-5"
   >
-    <div class="mb-5">
-      <h2 class="text-lg font-medium">Hardware / 硬件</h2>
-      <p class="mt-2 text-sm leading-6 text-muted-foreground">
-        从主力电脑到家庭服务器，以及日常接触的设备。
-      </p>
-    </div>
-    <div data-uses-scroll class="min-h-0 flex-1 overflow-y-auto pr-1">
-      <div class="grid gap-x-8 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
-        {USES_HARDWARE.map((item) => (
-          <article data-uses-hardware-item class="min-w-0 border-t border-border py-4">
-            <p class="font-mono text-xs tracking-wider text-primary">{item.group}</p>
-            <h3 class="mt-3 font-medium">{item.name}</h3>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-          </article>
-        ))}
-      </div>
-    </div>
+    <ObjectBrowser
+      items={usesHardwareObjects()}
+      label="硬件设备"
+      contextPath="/uses#hardware"
+      queryParam="facet"
+      defaultSortLabel="默认顺序"
+      previewOnly
+    />
   </section>
 
   <section
@@ -135,29 +98,14 @@ const tabs = [
     class="mb-8 scroll-mt-5"
     hidden
   >
-    <div class="mb-5">
-      <h2 class="text-lg font-medium">Software / 软件</h2>
-      <p class="mt-2 text-sm leading-6 text-muted-foreground">
-        实际在用的操作系统、终端、编辑器与自托管工具。
-      </p>
-    </div>
-    <div data-uses-scroll class="min-h-0 flex-1 overflow-y-auto pr-1">
-      <div class="grid gap-x-8 gap-y-8 md:grid-cols-3">
-        {USES_SOFTWARE.map((group) => (
-          <div data-uses-software-group class="min-w-0 border-t border-border pt-4">
-            <h3 class="font-mono text-xs tracking-wider text-primary">{group.group}</h3>
-            <dl class="mt-5 space-y-5">
-              {group.items.map((item) => (
-                <div>
-                  <dt class="font-medium">{item.name}</dt>
-                  <dd class="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ))}
-      </div>
-    </div>
+    <ObjectBrowser
+      items={usesSoftwareObjects()}
+      label="日常软件"
+      contextPath="/uses#software"
+      queryParam="facet"
+      defaultSortLabel="默认顺序"
+      previewOnly
+    />
   </section>
 
   {groups.map((group) => (
@@ -168,17 +116,6 @@ const tabs = [
       class="mb-8 scroll-mt-5"
       hidden
     >
-      <h2 class="sr-only">{group.title}</h2>
-      <details data-uses-description class="mb-3 text-xs text-muted-foreground">
-        <summary class="cursor-pointer">
-          {group.id === 'services' ? '服务与应用 · 状态来自登记' : group.description}
-        </summary>
-        <p class="py-2">
-          {group.id === 'services'
-            ? group.description
-            : '文本与分类筛选可组合使用；登记信息不代表实时可用性。'}
-        </p>
-      </details>
       <ObjectBrowser
         items={group.items.slice(0, group.id === 'external' ? 16 : 12)}
         total={group.items.length}

@@ -10,7 +10,12 @@ export const PRIMARY_NAVIGATION = [
     desc: 'Notes 知识笔记 · Blog 博客文章',
     alias: ['library', 'notes', '知识', '笔记'],
   },
-  { title: 'Projects', href: '/dev', desc: '项目、作品与代码', alias: ['projects', 'dev', '项目'] },
+  {
+    title: 'Projects',
+    href: '/projects',
+    desc: '项目、作品与代码',
+    alias: ['projects', 'dev', '项目'],
+  },
   {
     title: 'Uses',
     href: '/uses',
@@ -23,15 +28,22 @@ export const PRIMARY_NAVIGATION = [
     desc: '关于 BakerSean 与这片数字生态',
     alias: ['about', '关于'],
   },
+  {
+    title: 'Now',
+    href: '/now',
+    desc: '最近在做什么、玩什么、看什么',
+    alias: ['now', '近况', '最近'],
+  },
 ] as const;
 
 export function activeNavigation(path: string): string | undefined {
   const route = path.replace(/\/+$/, '') || '/';
   if (route === '/') return '/';
   if (/^\/(notes|blog)(\/|$)/.test(route) || route === '/about/tags') return '/notes';
-  if (/^\/(dev|projects)(\/|$)/.test(route)) return '/dev';
+  if (/^\/(dev|projects)(\/|$)/.test(route)) return '/projects';
   if (/^\/(uses|systems|infrastructure)(\/|$)/.test(route)) return '/uses';
-  if (route === '/about' || route === '/now') return '/about';
+  if (route === '/about') return '/about';
+  if (route === '/now') return '/now';
   return undefined;
 }
 
@@ -63,14 +75,6 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
     label: 'NAV' as const,
     alias: [item.href, ...item.alias],
   })),
-  {
-    type: 'cmd',
-    label: 'NAV',
-    title: 'Now',
-    desc: '最近在做什么、玩什么、看什么',
-    href: '/now',
-    alias: ['/now', 'now', '近况', '最近'],
-  },
   {
     type: 'cmd',
     label: 'NAV',

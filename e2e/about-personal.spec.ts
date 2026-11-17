@@ -11,7 +11,7 @@ test('About describes long-lived interests and links to Now without becoming a r
   await expect(about).toContainText('家庭网络');
   await expect(about).toContainText('叔本华');
   await expect(about.locator('a[href^="/now"]').first()).toBeVisible();
-  await expect(about.locator('a[href^="/dev"]').first()).toHaveAttribute('href', /\/dev/);
+  await expect(about.locator('a[href^="/projects"]').first()).toHaveAttribute('href', /\/projects/);
   await expect(about).not.toContainText('期望薪资');
   await expect(about).not.toContainText('绝命毒师');
 });

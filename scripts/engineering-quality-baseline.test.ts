@@ -86,7 +86,7 @@ test('public landing and category routes share the active TerminalLayout and Obj
     'src/pages/index.astro',
     'src/pages/notes/index.astro',
     'src/pages/uses/index.astro',
-    'src/pages/dev/index.astro',
+    'src/pages/projects/index.astro',
     'src/pages/blog/index.astro',
     'src/pages/friends.astro',
   ]) {

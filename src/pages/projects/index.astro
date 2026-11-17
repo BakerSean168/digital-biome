@@ -1,0 +1,23 @@
+---
+import TerminalLayout from '../../layouts/TerminalLayout.astro';
+import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
+import { terminalProjects } from '../../repositories/terminal-repository';
+---
+
+<TerminalLayout title="Projects" description="从想法到可使用的作品。">
+  <h1 data-page-title class="sr-only">
+    Projects
+  </h1>
+  <nav aria-label="项目类别" class="content-tabs mb-3">
+    <a
+      href="/projects"
+      data-terminal-tab="1"
+      aria-current="page"
+      class="inline-block border border-primary px-3 py-0.5 text-primary"
+    >
+      <span data-ui-only="tui">1 </span>projects
+    </a>
+  </nav>
+  <p class="mb-5 text-muted-foreground">从想法到可使用的作品。选择一个项目，查看它的入口与关联。</p>
+  <ObjectBrowser items={terminalProjects()} label="项目" contextPath="/projects" />
+</TerminalLayout>

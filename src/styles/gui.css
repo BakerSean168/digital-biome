@@ -213,6 +213,9 @@ html[data-ui='gui'] .terminal-row [data-object-direct] {
 html[data-ui='gui'] .terminal-row[aria-current='true'] {
   background: var(--card);
 }
+[data-preview-only] [data-object-direct] {
+  display: none !important;
+}
 html[data-ui='gui'] [data-object-preview] {
   border: 0;
   padding: 0;

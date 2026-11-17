@@ -50,7 +50,8 @@ flowchart LR
 | `/` | Home (GUI/TUI) |
 | `/notes`, `/notes/[...slug]` | Knowledge garden list and note pages |
 | `/uses`, `/uses/[assetId]` | Personal hardware/software and complete searchable service, website, host, and network catalog; tool asset detail |
-| `/dev`, `/dev/[assetId]`, `/projects/[assetId]` | Project portfolio and project detail |
+| `/projects`, `/projects/[assetId]` | Canonical project collection and individual project details |
+| `/dev`, `/dev/[assetId]` | Legacy collection redirect to `/projects`; historical service-asset detail route retained |
 | `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
 | `/systems` | Personal Systems portal (`pds-catalog-v1`) |
 | `/about`, `/now`, `/about/tags` | Long-lived personal introduction, manually updated Now snapshot, and tag index |

@@ -42,7 +42,7 @@ CI and Candidate builds pin Thought Forest through `data-products/knowledge-publ
 
 ## Project showcase model
 
-The `/dev` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three destinations with distinct responsibilities:
+The `/projects` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three destinations with distinct responsibilities:
 
 1. **Live** — the real production application.
 2. **Project Page** — a lightweight GitHub Pages introduction focused on product story and engineering highlights.
