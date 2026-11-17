@@ -408,7 +408,19 @@ test('About switches modes while reading inside a definition list', async ({ pag
     );
   const before = await position();
   await page.locator('[data-ui-mode-choice="tui"]').click();
-  await expect.poll(async () => Math.abs((await position()) - before)).toBeLessThan(4);
+  await expect(page.locator('[data-reading-anchor="about-content"]:visible')).toBeInViewport();
+  await expect
+    .poll(async () => {
+      const delta = Math.abs((await position()) - before);
+      const reachedEnd = await page
+        .locator('#site-content')
+        .evaluate(
+          (element) =>
+            Math.abs(element.scrollHeight - element.clientHeight - element.scrollTop) < 2,
+        );
+      return delta < 4 || reachedEnd;
+    })
+    .toBe(true);
 });
 
 test('About keeps the reading section visible when the shorter mode reaches its scroll limit', async ({
