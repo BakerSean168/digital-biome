@@ -65,3 +65,9 @@ test('public Notes/Uses catalog routes and shared data owners remain available',
     assert.equal(fs.existsSync(path.join(root, relative)), true, relative + ' is protected');
   }
 });
+
+test('legacy project collection has a permanent Cloudflare Pages redirect', () => {
+  const redirects = fs.readFileSync(path.join(root, 'public/_redirects'), 'utf8');
+  assert.match(redirects, /^\/dev \/projects 301$/m);
+  assert.match(redirects, /^\/dev\/ \/projects\/ 301$/m);
+});

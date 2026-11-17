@@ -1,0 +1,3 @@
+# Canonical project collection; Astro's prerendered meta redirect remains for local preview.
+/dev /projects 301
+/dev/ /projects/ 301
