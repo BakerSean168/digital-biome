@@ -44,7 +44,7 @@ test('URL projection preserves unrelated parameters, ui mode and hash while filt
 
 test('empty query, default sorting and arbitrary facet keys clear only owned parameters', () => {
   const url = updatedTerminalUrl(
-    'https://example.test/tools/?ui=gui&q=old&sort=title&facet=x#services',
+    'https://example.test/uses/?ui=gui&q=old&sort=title&facet=x#services',
     'facet',
     '',
     'default',

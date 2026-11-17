@@ -1,75 +1,76 @@
 import { expect, test } from '@playwright/test';
 
-test('Uses describes actual hardware and software and exposes only published website links', async ({
-  page,
-}) => {
+test('Uses is one integrated hardware, software and resource directory', async ({ page }) => {
   await page.goto('/uses/?ui=gui');
+  await expect(page.getByRole('heading', { name: /我正在使用的东西/ })).toBeVisible();
+  await expect(
+    page.locator('header[data-ui-only="gui"] time[datetime="2026-11-17"]'),
+  ).toBeVisible();
+  await expect(page.locator('[data-uses-tab]')).toHaveCount(6);
+  await expect(page.locator('[data-uses-tab="hardware"]')).toHaveAttribute('aria-current', 'true');
+  await expect(
+    page.locator('[data-uses-panel]:not([hidden]) [data-uses-hardware-item]'),
+  ).toHaveCount(7);
+  await expect(page.locator('#hardware')).toContainText('N100');
+  await expect(page.locator('#hardware')).toContainText('ATK F1 V3');
 
-  const uses = page.locator('article[data-ui-only="gui"]');
-  await expect(uses.getByRole('heading', { name: /我正在使用的/ })).toBeVisible();
-  await expect(uses.locator('time[datetime="2026-11-17"]')).toBeVisible();
-  await expect(uses.locator('[data-uses-section]')).toHaveCount(4);
-  await expect(uses.locator('[data-uses-hardware-item]')).toHaveCount(7);
-  await expect(uses.locator('[data-uses-software-group]')).toHaveCount(3);
-  await expect(uses).toContainText('Intel N100');
-  await expect(uses).toContainText('ATK F1 V3');
-  await expect(uses).toContainText('Neovim / AstroNvim');
-  await expect(uses.locator('[data-uses-website]')).toHaveCount(4);
-  await expect(uses.locator('a[href$="#services"]')).toBeVisible();
-  await expect(uses.locator('a[href$="#external"]')).toBeVisible();
-  await expect(uses).not.toContainText('期望薪资');
+  await page.locator('[data-uses-tab="software"]').click();
+  await expect(page.locator('[data-uses-tab="software"]')).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('#software [data-uses-software-group]')).toHaveCount(3);
+  await expect(page.locator('#software')).toContainText('Neovim / AstroNvim');
+  await expect(page.locator('#hardware')).toBeHidden();
 
-  for (const href of await uses
-    .locator('[data-uses-service] a')
-    .evaluateAll((links) =>
-      links.map((element) => (element as HTMLAnchorElement).getAttribute('href')),
-    )) {
-    expect(href).toMatch(/^\/infrastructure\/[\w-]+$/);
-  }
-  for (const site of await uses.locator('[data-uses-website] a').all()) {
-    const href = await site.getAttribute('href');
-    expect(href).toMatch(/^https?:\/\//);
-    await expect(site).toHaveAttribute('rel', /noopener/);
-  }
+  await page.locator('[data-uses-tab="services"]').click();
+  await expect(page.locator('[data-object-browser]:visible')).toHaveCount(1);
+  await expect(page.locator('[data-uses-tab="services"]')).toHaveAttribute('aria-current', 'true');
+  await expect(page).toHaveURL(/\/uses\/?(?:\?ui=gui)?#services$/);
+
+  await page.locator('[data-uses-tab="external"]').click();
+  await expect(page.locator('[data-uses-tab="external"]')).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('[data-object-browser]:visible [data-object-row]')).toHaveCount(16);
+  await expect(page.locator('#external')).toContainText('ChatGPT');
 });
 
-test('Uses is the primary navigation destination while legacy Tools remains a functional catalog', async ({
-  page,
-}) => {
+test('Uses owns the only published resource route and details', async ({ page, request }) => {
   await page.goto('/?ui=tui');
   const usesLink = page.locator('[data-terminal-dock] a[href^="/uses"]');
   await expect(usesLink).toBeVisible();
   await usesLink.click();
-  await expect(page).toHaveURL(/\/uses\/?(?:\?ui=tui)?$/);
-  await expect(page.locator('article[data-ui-only="tui"]')).toContainText(
-    'SteelSeries Arctis Nova 5',
-  );
+  await expect(page.locator('[data-uses-tab="hardware"]')).toHaveAttribute('aria-current', 'true');
 
-  await page.locator('article[data-ui-only="tui"] a[href$="#external"]').first().click();
-  await expect(page).toHaveURL(/\/tools(?:\/?\?ui=tui)?#external$/);
-  await expect(page.locator('[data-tools-tab="external"]')).toHaveAttribute('aria-current', 'true');
-  await expect(page.locator('[data-terminal-dock] a[href^="/uses"]')).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  await page.locator('[data-uses-tab="hosts"]').click();
+  await expect(page.locator('#hosts [data-object-browser]')).toBeVisible();
+  await page.locator('[data-uses-tab="network"]').click();
+  await expect(page.locator('#network [data-object-browser]')).toBeVisible();
+
+  const retired = await request.get('/tools/');
+  expect(retired.status()).toBe(404);
+  const retiredCatalog = await request.get('/data/tools-catalog.json');
+  expect(retiredCatalog.status()).toBe(404);
+  const usesCatalog = await request.get('/data/uses-catalog.json');
+  expect(usesCatalog.ok()).toBe(true);
 });
 
-test('Uses stays readable on a phone and keeps software and hardware in TUI', async ({ page }) => {
+test('Uses fits a phone screen and keeps resource tabs working after GUI/TUI changes', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/uses/?ui=gui');
+  await page.goto('/uses/?ui=gui#software');
 
   const width = await page.evaluate(() => ({
     body: document.body.scrollWidth,
-    viewport: window.innerWidth,
     content: document.getElementById('site-content')?.scrollWidth ?? Infinity,
+    viewport: innerWidth,
   }));
   expect(width.body).toBeLessThanOrEqual(width.viewport);
   expect(width.content).toBeLessThanOrEqual(width.viewport);
+  await expect(page.locator('#software')).toContainText('Obsidian');
 
   await page.locator('[data-ui-mode-choice="tui"]').click();
-  const tui = page.locator('article[data-ui-only="tui"]');
-  await expect(tui).toContainText('N100');
-  await expect(tui).toContainText('Obsidian');
-  await expect(tui).toContainText('Services');
-  await expect(tui).toContainText('Websites');
+  await expect(page.locator('html')).toHaveAttribute('data-ui', 'tui');
+  await expect(page.locator('[data-uses-tab="software"]')).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('#software')).toContainText('Docker Compose');
+
+  await page.locator('[data-uses-tab="external"]').click();
+  await expect(page.locator('#external [data-object-browser]')).toBeVisible();
 });

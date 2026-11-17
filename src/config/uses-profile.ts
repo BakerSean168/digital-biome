@@ -50,14 +50,3 @@ export const USES_SOFTWARE = [
     ],
   },
 ] as const;
-
-/**
- * Picks from the published Thought Forest bookmark projection, not handwritten
- * outbound URLs. Missing entries are simply omitted.
- */
-export const USES_FEATURED_BOOKMARK_IDS = [
-  'obsidian/chatgpt',
-  'obsidian/bilibili',
-  'obsidian/linux-do',
-  'obsidian/youtube',
-] as const;

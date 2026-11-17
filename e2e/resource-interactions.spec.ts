@@ -55,7 +55,7 @@ test('published resource curation reaches the catalog and visible browser', asyn
   expect(catalog.find((item) => item.id === 'obsidian/google-stitch')?.href).toBe(
     'https://stitch.withgoogle.com/',
   );
-  await page.goto('/tools/?ui=tui#external');
+  await page.goto('/uses/?ui=tui#external');
   await expect(page.locator(`${browser} [data-object-row] strong`).nth(1)).toHaveText('ChatGPT');
   await page.locator(query).fill('Google Stitch');
   // Curated ordering may put a resource mentioning Stitch before its title match.
@@ -70,7 +70,7 @@ test('published resource curation reaches the catalog and visible browser', asyn
   );
 });
 
-test('desktop Tools fills the visible tab and keeps controls outside list scrolling', async ({
+test('desktop Uses fills the visible tab and keeps controls outside list scrolling', async ({
   page,
   request,
 }) => {
@@ -85,18 +85,18 @@ test('desktop Tools fills the visible tab and keeps controls outside list scroll
   page.on('request', (request) => {
     if (request.url().includes('/data/terminal/')) catalogs.push(request.url());
   });
-  await page.goto('/tools/?ui=tui');
+  await page.goto('/uses/?ui=tui#services');
   await expect(page.locator(`${browser} [data-object-count]`)).toHaveText(
     `${serviceCount} / ${serviceCount}`,
   );
   expect(catalogs.some((url) => url.endsWith('/external.json'))).toBe(false);
-  await page.locator('[data-tools-tab="external"]').click();
+  await page.locator('[data-uses-tab="external"]').click();
   await expect.poll(() => page.locator(`${browser} [data-object-row]`).count()).toBeGreaterThan(16);
-  const toolbar = await page.locator('[data-tools-tabs]').boundingBox();
+  const toolbar = await page.locator('[data-uses-tabs]').boundingBox();
   await page.locator(`${browser} [data-object-scroll]`).evaluate((node) => {
     node.scrollTop = node.scrollHeight;
   });
-  expect((await page.locator('[data-tools-tabs]').boundingBox())?.y).toBe(toolbar?.y);
+  expect((await page.locator('[data-uses-tabs]').boundingBox())?.y).toBe(toolbar?.y);
   expect(await page.locator('#site-content').evaluate((node) => node.scrollTop)).toBe(0);
   await expect(page.locator(query)).toBeInViewport();
 });
@@ -104,7 +104,7 @@ test('desktop Tools fills the visible tab and keeps controls outside list scroll
 test('command prefix gives immediate feedback and cancellation preserves the browser', async ({
   page,
 }) => {
-  await page.goto('/tools/?ui=tui#external');
+  await page.goto('/uses/?ui=tui#external');
   await page.locator(query).fill('github');
   await expect(page.locator(selected)).toContainText(/github/i);
   await page.locator(query).press('Enter');
@@ -140,7 +140,7 @@ test('command prefix gives immediate feedback and cancellation preserves the bro
 test('commands expire, clear on focus, offer clickable relations, and can be disabled', async ({
   page,
 }) => {
-  await page.goto('/tools/?ui=tui');
+  await page.goto('/uses/?ui=tui#services');
   const feedback = page.locator('[data-command-feedback]');
   await page.keyboard.press('g');
   await expect(feedback).toContainText('命令已超时', { timeout: 3500 });
@@ -165,7 +165,7 @@ test('commands expire, clear on focus, offer clickable relations, and can be dis
 
 test('boundary J needs two fresh presses and selects the first appended row', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
-  await page.goto('/tools/?ui=tui#external');
+  await page.goto('/uses/?ui=tui#external');
   await expect.poll(() => page.locator(`${browser} [data-object-row]`).count()).toBeGreaterThan(16);
   const count = await page.locator(`${browser} [data-object-row]`).count();
   await page.locator(`${browser} [data-object-row]`).last().focus();
@@ -191,7 +191,7 @@ test('failed catalog preserves rows and retry; a stale request cannot select acr
   await page.route('**/data/terminal/external.json', (route) =>
     route.fulfill({ status: 503, body: 'unavailable' }),
   );
-  await page.goto('/tools/?ui=tui#external');
+  await page.goto('/uses/?ui=tui#external');
   await page.locator(`${browser} [data-object-more]`).click();
   await expect(page.locator(`${browser} [data-object-error]`)).toBeVisible();
   await expect(page.locator(`${browser} [data-object-row]`)).toHaveCount(16);
@@ -206,9 +206,9 @@ test('failed catalog preserves rows and retry; a stale request cannot select acr
   });
   await page.locator(`${browser} [data-object-retry]`).click();
   await expect(page.locator(`${browser} [data-object-status]`)).toHaveText('正在加载…');
-  await page.locator('[data-tools-tab="services"]').click();
-  await expect(page.locator('[data-tools-tab="services"]')).toHaveAttribute('aria-current', 'true');
-  await page.locator('[data-tools-tab="external"]').click();
+  await page.locator('[data-uses-tab="services"]').click();
+  await expect(page.locator('[data-uses-tab="services"]')).toHaveAttribute('aria-current', 'true');
+  await page.locator('[data-uses-tab="external"]').click();
   // Complete the shared request only after restoring the original SSR rows.
   // Completion must refresh their catalog state without replaying the stale append.
   release();
@@ -219,11 +219,11 @@ test('failed catalog preserves rows and retry; a stale request cannot select acr
   await expect(page.locator(`${browser} [data-object-row]`)).toHaveCount(40);
 });
 
-test('Tools shares query and sorting, and preserves a scroll anchor across mode and history', async ({
+test('Uses shares query and sorting, and preserves a scroll anchor across mode and history', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1600, height: 1000 });
-  await page.goto('/tools/?ui=tui#external');
+  await page.goto('/uses/?ui=tui#external');
   await page.locator(query).fill('github');
   await page.locator(`${browser} [data-object-sort]`).selectOption('title');
   await expect(page).toHaveURL(/q=github/);
@@ -241,7 +241,7 @@ test('Tools shares query and sorting, and preserves a scroll anchor across mode 
   const before = await page
     .locator(`${browser} [data-object-scroll]`)
     .evaluate((node) => node.scrollTop);
-  await page.locator('[data-tools-tab="services"]').click();
+  await page.locator('[data-uses-tab="services"]').click();
   await page.goBack();
   await expect(page.locator(`${selected} strong`)).toHaveText(title);
   await expect
@@ -348,7 +348,7 @@ for (const mode of ['tui', 'gui']) {
   test(`${mode} resource controls and mobile dialogs fit supported viewport widths`, async ({
     page,
   }) => {
-    await page.goto(`/tools/?ui=${mode}#external`);
+    await page.goto(`/uses/?ui=${mode}#external`);
     for (const [width, height] of [
       [1366, 768],
       [1600, 1000],
@@ -356,7 +356,7 @@ for (const mode of ['tui', 'gui']) {
     ]) {
       await page.setViewportSize({ width, height });
       await expect(page.locator(query)).toBeInViewport();
-      await expect(page.locator('[data-tools-tabs]')).toBeInViewport();
+      await expect(page.locator('[data-uses-tabs]')).toBeInViewport();
       expect(
         await page
           .locator(`${browser} [data-object-scroll]`)

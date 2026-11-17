@@ -1,16 +1,16 @@
 import type { Bookmark } from '../types/notes';
 
-export const INITIAL_TOOL_CARD_COUNT = 16;
+export const INITIAL_USES_CARD_COUNT = 16;
 
-export interface ToolCatalogGroup {
+export interface UsesCatalogGroup {
   name: string;
   slug: string;
   bookmarks: Bookmark[];
 }
 
-export function buildToolCatalogGroups(
+export function buildUsesCatalogGroups(
   bookmarksByCategory: ReadonlyMap<string, Bookmark[]>,
-): ToolCatalogGroup[] {
+): UsesCatalogGroup[] {
   return Array.from(bookmarksByCategory.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, bookmarks]) => ({

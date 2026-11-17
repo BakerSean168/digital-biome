@@ -30,7 +30,7 @@
     animation: biome-page-enter 160ms ease-out both;
   }
 }
-html[data-browser-ready] .browser-page [data-tools-description] {
+html[data-browser-ready] .browser-page [data-uses-description] {
   display: block;
 }
 html[data-browser-ready] .browser-page [data-filter-bar] {
@@ -77,7 +77,7 @@ html[data-browser-ready] .browser-page [data-object-list] {
   html[data-browser-ready] .browser-page [data-page-title] {
     margin-bottom: 12px;
   }
-  html[data-browser-ready] .browser-page [data-tools-panel]:not([hidden]),
+  html[data-browser-ready] .browser-page [data-uses-panel]:not([hidden]),
   html[data-browser-ready] .browser-page [data-object-browser] {
     display: flex;
     flex: 1;
@@ -91,6 +91,7 @@ html[data-browser-ready] .browser-page [data-object-list] {
     grid-template-rows: minmax(0, 1fr);
     gap: 28px;
   }
+  html[data-browser-ready] .browser-page [data-uses-scroll],
   html[data-browser-ready] .browser-page [data-object-scroll],
   html[data-browser-ready] .browser-page [data-browser-columns] > [data-object-preview] {
     min-height: 0;

@@ -49,8 +49,7 @@ flowchart LR
 | --- | --- |
 | `/` | Home (GUI/TUI) |
 | `/notes`, `/notes/[...slug]` | Knowledge garden list and note pages |
-| `/uses` | Personal hardware, software, services and websites overview; service and bookmark cards reuse the public owner projections |
-| `/tools`, `/tools/[assetId]` | Full status-aware Tools catalog and resource detail, retained for existing links and filtering |
+| `/uses`, `/uses/[assetId]` | Personal hardware/software and complete searchable service, website, host, and network catalog; tool asset detail |
 | `/dev`, `/dev/[assetId]`, `/projects/[assetId]` | Project portfolio and project detail |
 | `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
 | `/systems` | Personal Systems portal (`pds-catalog-v1`) |
@@ -58,7 +57,7 @@ flowchart LR
 | `/blog`, `/friends` | Blog and friends links |
 | `/login` | Cloudflare Access entry |
 | `/404` | Not found |
-| `/data/notes-catalog.json`, `/data/tools-catalog.json`, `/data/terminal/[catalog].json`, `/data/system-launcher-index.json` | Public JSON catalogs |
+| `/data/notes-catalog.json`, `/data/uses-catalog.json`, `/data/terminal/[catalog].json`, `/data/system-launcher-index.json` | Public JSON catalogs |
 
 已退役且由契约测试阻止回归：Dashboard/BiomeTree UI 与 `DashboardLayout`、Observability 页面、`/discover`、`/about/refactor`。
 

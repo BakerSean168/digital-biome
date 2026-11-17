@@ -139,7 +139,7 @@ html[data-ui='gui'] .content-tabs a[aria-current='page'] {
   background: var(--card);
   color: var(--primary);
 }
-html[data-ui='gui'] [data-tools-description] {
+html[data-ui='gui'] [data-uses-description] {
   display: none;
 }
 html[data-ui='gui'] [data-filter-bar] {

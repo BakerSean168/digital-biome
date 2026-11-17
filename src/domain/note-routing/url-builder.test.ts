@@ -21,7 +21,7 @@ describe('buildKnowledgeNoteHref', () => {
 describe('buildAssetHref', () => {
   test('maps each asset type to its section', () => {
     assert.equal(buildAssetHref({ asset_id: 'svc-x', asset_type: 'service' }), '/services/svc-x');
-    assert.equal(buildAssetHref({ asset_id: 'tool-x', asset_type: 'tool' }), '/tools/tool-x');
+    assert.equal(buildAssetHref({ asset_id: 'tool-x', asset_type: 'tool' }), '/uses/tool-x');
     assert.equal(buildAssetHref({ asset_id: 'proj-x', asset_type: 'project' }), '/projects/proj-x');
     assert.equal(
       buildAssetHref({ asset_id: 'host-x', asset_type: 'host' }),

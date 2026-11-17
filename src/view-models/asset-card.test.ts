@@ -74,14 +74,14 @@ describe('toAssetCard', () => {
 
   test('defaults tags and links to empty arrays', () => {
     const entry = {
-      id: 'obsidian/assets/tools/x',
+      id: 'obsidian/assets/uses/x',
       data: { asset_id: 'tool-x', asset_type: 'tool', title: 'X' },
     } as unknown as AssetNoteEntry;
 
     const card = toAssetCard(entry);
     assert.deepEqual(card.tags, []);
     assert.deepEqual(card.links, []);
-    assert.equal(card.href, '/tools/tool-x');
+    assert.equal(card.href, '/uses/tool-x');
   });
 });
 

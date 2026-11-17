@@ -85,7 +85,7 @@ test('public landing and category routes share the active TerminalLayout and Obj
   for (const route of [
     'src/pages/index.astro',
     'src/pages/notes/index.astro',
-    'src/pages/tools/index.astro',
+    'src/pages/uses/index.astro',
     'src/pages/dev/index.astro',
     'src/pages/blog/index.astro',
     'src/pages/friends.astro',
@@ -125,7 +125,7 @@ test('public page static dependency graph does not pull in retired Dashboard or 
 test('public JSON catalogs and protected Pages Functions remain distinct entry points', () => {
   for (const route of [
     'src/pages/data/notes-catalog.json.ts',
-    'src/pages/data/tools-catalog.json.ts',
+    'src/pages/data/uses-catalog.json.ts',
     'src/pages/data/terminal/[catalog].json.ts',
     'src/pages/data/system-launcher-index.json.ts',
   ]) {

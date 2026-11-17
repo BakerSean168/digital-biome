@@ -46,19 +46,19 @@ test('obsolete Notes/Bookmark client controllers and their private transport loa
     'src/browser/bookmark-grid.ts',
     'src/browser/notes-catalog.ts',
     'src/browser/notes-catalog.test.ts',
-    'src/browser/tools-catalog.ts',
-    'src/browser/tools-catalog.test.ts',
+    'src/browser/uses-catalog.ts',
+    'src/browser/uses-catalog.test.ts',
   ]) {
     assert.equal(fs.existsSync(path.join(root, relative)), false, relative + ' is retired');
   }
 });
 
-test('public Notes/Tools catalog routes and shared data owners remain available', () => {
+test('public Notes/Uses catalog routes and shared data owners remain available', () => {
   for (const relative of [
     'src/pages/data/notes-catalog.json.ts',
-    'src/pages/data/tools-catalog.json.ts',
+    'src/pages/data/uses-catalog.json.ts',
     'src/view-models/note-list-item.ts',
-    'src/view-models/tools-catalog.ts',
+    'src/view-models/uses-catalog.ts',
     'src/repositories/bookmarks-repository.ts',
     'src/components/terminal/ObjectBrowser.astro',
   ]) {

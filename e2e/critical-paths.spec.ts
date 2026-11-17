@@ -93,13 +93,13 @@ test('Search recovers a transient Pagefind import failure only after a user retr
   expect(moduleRequests).toBeGreaterThanOrEqual(2);
 });
 
-test('Tools bounds external SSR to 16 and lazy-loads the shared catalog', async ({
+test('Uses bounds external SSR to 16 and lazy-loads the shared catalog', async ({
   page,
   request,
 }) => {
-  const response = await request.get('/tools/');
+  const response = await request.get('/uses/');
   expect((await response.text()).match(/data-terminal-kind="external"/g)).toHaveLength(16);
-  await page.goto('/tools/?ui=gui#external');
+  await page.goto('/uses/?ui=gui#external');
   await expect(page.locator(rows)).toHaveCount(16);
   await page.locator(`${browser} [data-object-more]`).click();
   await expect(page.locator(rows)).toHaveCount(
@@ -110,7 +110,7 @@ test('Tools bounds external SSR to 16 and lazy-loads the shared catalog', async 
 test('Mode choice preserves selection, query, facets and category; back restores entry state', async ({
   page,
 }) => {
-  await page.goto('/tools/?ui=tui#services');
+  await page.goto('/uses/?ui=tui#services');
   await page.keyboard.press('i');
   await expect(page.locator(query)).toBeFocused();
   await page.locator(query).fill('');
@@ -130,11 +130,11 @@ test('Mode choice preserves selection, query, facets and category; back restores
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-ui', 'gui');
   await expect(page.locator(`${rows}[aria-current="true"] strong`)).toHaveText(title);
-  await page.locator('[data-tools-tab="external"]').click();
+  await page.locator('[data-uses-tab="external"]').click();
   await page.locator(query).fill('github');
   await expect(page.locator(rows).first()).toContainText(/github/i);
   await page.goBack();
-  await expect(page.locator('[data-tools-tab="services"]')).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('[data-uses-tab="services"]')).toHaveAttribute('aria-current', 'true');
   await expect(page.locator(`${browser} [data-facet-chips] button`)).toHaveText(chips);
   await page.goForward();
   await expect(page.locator(query)).toHaveValue('github');
@@ -158,7 +158,7 @@ test('Facet cancellation and catalog failure do not commit a partial filter', as
   await page.route('**/data/terminal/external.json', (route) =>
     route.fulfill({ status: 503, body: 'unavailable' }),
   );
-  await page.goto('/tools/#external');
+  await page.goto('/uses/#external');
   await page.keyboard.press('f');
   await expect(page.locator(`${browser} [data-object-error]`)).toBeVisible();
   await expect(page.locator('dialog[open]')).toHaveCount(0);
@@ -194,7 +194,7 @@ test('Mocked private binding unlocks both SSR and lazily rendered service links'
       }),
     }),
   );
-  await page.goto('/tools/?ui=gui');
+  await page.goto('/uses/?ui=gui#services');
   await page.locator(`${browser} [data-object-more]`).click();
   const link = page.locator(`${rows}[data-private-link="${sample.privateRef}"]`);
   await expect(link).toHaveAttribute('href', target);
@@ -213,7 +213,7 @@ test('Mobile GUI details close back to the same list, with no outer scrolling', 
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/tools/?ui=gui#external');
+  await page.goto('/uses/?ui=gui#external');
   const title = await page.locator(`${rows} strong`).first().innerText();
   await page.locator(`${rows} strong`).first().click();
   await expect(page.locator('[data-object-detail][open]')).toContainText(title);
@@ -224,7 +224,7 @@ test('Mobile GUI details close back to the same list, with no outer scrolling', 
     '/',
     '/about',
     '/uses',
-    '/tools',
+    '/uses',
     '/notes',
     '/blog',
     '/dev',
@@ -301,7 +301,7 @@ test('Reading keeps its visible heading on mode change and TOC tracks decorated 
 test('IME confirmation stays in input and Search close keeps native Enter behavior', async ({
   page,
 }) => {
-  await page.goto('/tools?ui=gui');
+  await page.goto('/uses?ui=gui#services');
   const input = page.locator(query);
   await input.focus();
   const cancelled = await input.evaluate(
@@ -337,10 +337,10 @@ test('IME confirmation stays in input and Search close keeps native Enter behavi
   expect(page.url()).toBe(url);
 });
 
-test('Modified Tools tab clicks leave browser navigation intact', async ({ page }) => {
-  await page.goto('/tools?ui=gui#services');
+test('Modified Uses tab clicks leave browser navigation intact', async ({ page }) => {
+  await page.goto('/uses?ui=gui#services');
   for (const modifier of ['ctrlKey', 'metaKey']) {
-    const prevented = await page.locator('[data-tools-tab="external"]').evaluate((element, key) => {
+    const prevented = await page.locator('[data-uses-tab="external"]').evaluate((element, key) => {
       let suppressed = false;
       element.addEventListener(
         'click',

@@ -10,7 +10,7 @@ function mockRow(id: string): HTMLAnchorElement {
         id,
         kind: 'external',
         title: id,
-        href: '/tools',
+        href: '/uses',
         description: id,
         meta: '',
         tags: [],

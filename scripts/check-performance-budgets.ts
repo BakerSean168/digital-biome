@@ -5,7 +5,7 @@ import { INITIAL_NOTE_CARD_COUNT } from './notes-catalog-boundary';
 import { assertAboutMarkupBoundary } from './about-markup-boundary';
 import { assertPagefindRuntimeSurface } from './pagefind-runtime-surface';
 import { assertTerminalCatalogBoundary } from './terminal-catalog-boundary';
-import { INITIAL_TOOL_CARD_COUNT } from '../src/view-models/tools-catalog';
+import { INITIAL_USES_CARD_COUNT } from '../src/view-models/uses-catalog';
 
 type PageBudget = {
   route: string;
@@ -22,7 +22,6 @@ const PAGE_BUDGETS: readonly PageBudget[] = [
   { route: '/now', file: 'now/index.html', rawKiB: 160, gzipKiB: 24 },
   { route: '/uses', file: 'uses/index.html', rawKiB: 160, gzipKiB: 24 },
   { route: '/about/tags', file: 'about/tags/index.html', rawKiB: 220, gzipKiB: 24 },
-  { route: '/tools', file: 'tools/index.html', rawKiB: 96, gzipKiB: 16 },
 ];
 
 type AssetBudget = {
@@ -39,7 +38,7 @@ const ASSET_BUDGETS: readonly AssetBudget[] = [
   { label: 'terminal notes catalog', file: 'data/terminal/notes.json', maxKiB: 1600 },
   { label: 'terminal external catalog', file: 'data/terminal/external.json', maxKiB: 400 },
   { label: 'notes catalog', file: 'data/notes-catalog.json', maxKiB: 1400 },
-  { label: 'tools catalog', file: 'data/tools-catalog.json', maxKiB: 80, gzipKiB: 24 },
+  { label: 'uses catalog', file: 'data/uses-catalog.json', maxKiB: 80, gzipKiB: 24 },
 ];
 
 function collectFiles(directory: string): string[] {
@@ -166,19 +165,19 @@ function reportNotesCatalog(): void {
   );
 }
 
-function reportToolsCatalog(): void {
+function reportUsesCatalog(): void {
   const catalogPath = path.join(DIST_DIR, 'data', 'terminal', 'external.json');
-  const toolsPath = path.join(DIST_DIR, 'tools', 'index.html');
-  if (!fs.existsSync(catalogPath) || !fs.existsSync(toolsPath)) {
-    throw new Error('Tools catalog or /tools HTML is missing from dist.');
+  const usesPath = path.join(DIST_DIR, 'uses', 'index.html');
+  if (!fs.existsSync(catalogPath) || !fs.existsSync(usesPath)) {
+    throw new Error('Uses catalog or /uses HTML is missing from dist.');
   }
 
-  const toolsHtml = fs.readFileSync(toolsPath, 'utf8');
+  const usesHtml = fs.readFileSync(usesPath, 'utf8');
   const catalogPayload: unknown = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
-  assertTerminalCatalogBoundary(toolsHtml, catalogPayload, 'external', INITIAL_TOOL_CARD_COUNT);
+  assertTerminalCatalogBoundary(usesHtml, catalogPayload, 'external', INITIAL_USES_CARD_COUNT);
 
   console.log(
-    `tools catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_TOOL_CARD_COUNT} SSR cards)`,
+    `uses catalog: ${formatKiB(fs.statSync(catalogPath).size)} (lazy-loaded; ${INITIAL_USES_CARD_COUNT} SSR cards)`,
   );
 }
 
@@ -191,5 +190,5 @@ assertAssetBudgets();
 assertPagefindRuntimeSurface(path.join(DIST_DIR, 'pagefind'));
 assertAboutMarkup();
 reportNotesCatalog();
-reportToolsCatalog();
+reportUsesCatalog();
 console.log('Performance budget check passed.');
