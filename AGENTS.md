@@ -46,7 +46,7 @@ data-products/           # Immutable producer projection locks
 当前公开路由、布局与交付模块以 [`docs/architecture.md` §3.0](docs/architecture.md#30-应用拓扑main-现状) 为准。
 `/projects` 是项目展示集合的 canonical 路由；旧 `/dev` 集合地址只做跳转，`/dev/[assetId]` 的历史服务详情暂时保留。
 `/now` 是与 `/about`、`/uses` 同级的主导航项。
-`/about` 保存长期个人介绍，`/now` 使用 `src/config/now-profile.ts` 手工维护近况和更新时间；`/uses` 使用 `src/config/uses-profile.ts` 维护公开硬件/软件，服务与网站摘要从已有公开数据投影读取；均使用 TerminalLayout 的 GUI/TUI 双模式。完整的服务、收藏网站、主机、网络目录及筛选统一归入 `/uses`，不再保留 `/tools` 独立路由；内部入口与敏感信息不可出现在公开页面。
+`/about` 保存长期个人介绍，不在正文中承担跨页导航；`/now` 使用 `src/config/now-profile.ts` 的 `NOW_ENTRIES` 与 `src/components/common/NowEntry.astro` 手工维护独立条目和更新时间，不按固定类别写死页面布局，也不输出正文跳转链接；`/uses` 使用 `src/config/uses-profile.ts` 维护公开硬件/软件，服务与网站摘要从已有公开数据投影读取；均使用 TerminalLayout 的 GUI/TUI 双模式。完整的服务、收藏网站、主机、网络目录及筛选统一归入 `/uses`，不再保留 `/tools` 独立路由；内部入口与敏感信息不可出现在公开页面。
 Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
 This file and `docs/architecture.md` are the current design record.
 
@@ -55,6 +55,7 @@ This file and `docs/architecture.md` are the current design record.
 - **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步。
 - **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm check` 进行 Astro、内容和 TypeScript 诊断。
 - **可复用验证门禁**：`pnpm verify` 先运行只读离线的 `pnpm preflight:data-products`（逐项对照三份 committed lock 的 SHA-256 并跑完整 publication 校验；缺失/过期缓存会指出具体 lock、文件与摘要，并提示 `pnpm sync:data-products`，绝不改 lock 或跳过校验），再运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
+- **代码规模门禁**：维护中的 TS/JS/Astro/CSS/HTML 模块必须不超过 500 行，由 `scripts/code-size-contract.test.ts` 在基础设施单元测试中执行；生成内容、公开数据投影与第三方代码不属于人工维护源码。
 - **提交前运行完整门禁**：CI/Candidate 路径先用 `pnpm sync:data-products` 验证并物化 knowledge、infra、PDS 三份 committed public lock，再运行 `pnpm verify:full`；`pnpm sync` 是同一入口，生成 ignored public projection（含 `src/data/system/pds-catalog-v1.json`），不检出 producer source 或运行 exporter；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
 
 ## Engineering Principles

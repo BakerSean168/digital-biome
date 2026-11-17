@@ -21,7 +21,7 @@ It is both an Astro website and an engineering project about turning personal kn
 
 - **Knowledge garden** — Obsidian / Thought Forest notes, tags, wikilinks, backlinks, and full-text search.
 - **Project portfolio** — projects are presented through the problem they solve, their product loop, and engineering highlights, with direct links to GitHub, the project page, and the live product.
-- **About / Now / Uses** — long-lived personal interests at `/about`, current activities at `/now`, and a curated public inventory of hardware, software, services, and sites at `/uses`.
+- **About / Now / Uses** — self-contained personal interests at `/about`, independent, manually editable project/game/media entries at `/now`, and a curated public inventory of hardware, software, services, and sites at `/uses`.
 - **Uses catalog** — `/uses` combines personal hardware and software with the full searchable service, bookmark, host and network catalog in GUI and TUI modes.
 - **Infrastructure atlas** — visualization of public assets, hosts, networks, and service relationships while preserving private/internal boundaries.
 - **Personal Systems portal** — `/systems` presents the Personal Digital System catalog (`pds-catalog-v1`).

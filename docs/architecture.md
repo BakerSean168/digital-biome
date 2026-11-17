@@ -54,7 +54,7 @@ flowchart LR
 | `/dev`, `/dev/[assetId]` | Legacy collection redirect to `/projects`; historical service-asset detail route retained |
 | `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
 | `/systems` | Personal Systems portal (`pds-catalog-v1`) |
-| `/about`, `/now`, `/about/tags` | Long-lived personal introduction, manually updated Now snapshot, and tag index |
+| `/about`, `/now`, `/about/tags` | Self-contained long-lived introduction, manually updated typed Now activity cards, and tag index |
 | `/blog`, `/friends` | Blog and friends links |
 | `/login` | Cloudflare Access entry |
 | `/404` | Not found |

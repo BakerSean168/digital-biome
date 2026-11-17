@@ -1,58 +1,32 @@
-# Roadmap
+# Roadmap — Digital Biome
 
-## 设计依据
+Updated: 2026-11-17. This is the repository-local roadmap, **not** a complete export of the GitHub Projects board (the current token lacks `read:project`).
 
-- [系统架构](docs/architecture.md) 与 [AGENTS.md](AGENTS.md) - 当前架构、路由与工程约定
+## Delivery boundaries
 
-## 状态说明
+- **Current architecture**: Astro static knowledge garden, Blog, Projects, Uses, About, Now, Personal Systems and Infrastructure. See [architecture](docs/architecture.md).
+- **Draft PR #255 (not published)**: Home simplification; About and Now as self-contained slash pages; unified Uses catalog; canonical `/projects`; typed Now activity cards and code-size guard.
+- Retired surfaces: the old Dashboard/BiomeTree UI and the old in-site Resume page are **not** current homepage features. Avoid reintroducing them from historical checklists.
 
-- ✅ 完成
-- 🚧 进行中
-- 📋 待办
-- 💡 想法
+## Next actions
 
----
+| Priority | Item                                                         | Status               | Evidence / next action                                                                              |
+| -------- | ------------------------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------- |
+| P1       | Review and publish PR #255                                   | Pending review       | Confirm protected CI and visual acceptance; follow Release → Production Promotion.                  |
+| P1       | Enforce ≤500 lines per maintained code file                  | Implemented in PR    | `scripts/code-size-contract.test.ts`; included in `pnpm verify` via infrastructure tests.           |
+| P2       | Component/ownership audit                                    | Reviewed             | [2026-11-17 maintainability review](docs/reviews/now-about-and-code-maintainability-2026-11-17.md). |
+| P2       | Split InfrastructureShowcase by lifecycle/topology ownership | Deferred             | 396-line component; split only with privacy and E2E parity.                                         |
+| P2       | Split mixed critical-path E2E scenarios                      | Deferred             | Current test file is 435 lines; retain behavioral coverage.                                         |
+| P2       | RSS, Umami visits and image optimization                     | Backlog — revalidate | Historical suggestions from the old roadmap; do not claim current implementation without checking.  |
+| P2       | Performance / SEO                                            | Ongoing              | Keep Pagefind, route privacy and HTML bundle budget checks in `pnpm verify:full`.                   |
+| P3       | Comments / theme experiments                                 | Ideas                | No implementation started.                                                                          |
 
-## 核心功能
+## Work protocol
 
-| 功能 | 状态 | 优先级 | 规格 |
-|------|------|--------|------|
-| Dashboard 启动页 | ✅ | P0 | - |
-| Notes 笔记系统 | ✅ | P0 | - |
-| Resume 简历页 | ✅ | P0 | - |
-| 书签管理 | ✅ | P1 | - |
-| 响应式设计 | ✅ | P1 | - |
+1. Describe the change and acceptance criteria in a PR or Issue.
+2. Preserve published routes, private/access boundaries, source projection contracts and GUI/TUI behavior.
+3. Keep maintained source files within 500 lines; split by responsibilities, not arbitrary line chunks.
+4. Run `pnpm verify:full` and `pnpm test:e2e` before merging.
+5. Ship through the existing Candidate → Release → Production workflow; a green Draft PR does **not** mean the site is live.
 
-## 待开发功能
-
-| 功能 | 状态 | 优先级 | 规格 |
-|------|------|--------|------|
-| 全局搜索 (Pagefind) | ✅ | P1 | - |
-| 双链支持 `[[wikilink]]` | ✅ | P1 | - |
-| 层级标签系统 | ✅ | P1 | - |
-| RSS 订阅 | 📋 | P2 | - |
-| 访问统计 (Umami) | 📋 | P2 | - |
-| 暗色模式切换 | 💡 | P3 | - |
-| 评论系统 (Giscus) | 💡 | P3 | - |
-
-## 优化项
-
-| 项目 | 状态 | 优先级 |
-|------|------|--------|
-| SEO 优化 | 📋 | P1 |
-| 性能优化 (Core Web Vitals) | 📋 | P1 |
-| 图片优化 | 📋 | P2 |
-
----
-
-## 开发新功能
-
-1. 在 GitHub Issue 中描述目标与验收标准
-2. 按 [AGENTS.md](AGENTS.md) 与 [docs/architecture.md](docs/architecture.md) 的约定实现，并通过 `pnpm verify`
-3. 完成后更新本文档状态
-
-## 版本历史
-
-| 版本 | 日期 | 变更 |
-|------|------|------|
-| 0.1.0 | 2026-02-22 | 初始版本，核心功能完成 |
+Historical `v0.1.0` roadmap statuses are archived in Git history.

@@ -23,28 +23,24 @@ export const COMPUTER_INTERESTS = [
 export const ABOUT_AREAS = [
   {
     title: 'Notes',
-    href: '/notes',
     description: '零散的知识笔记、概念和学习过程。',
   },
-  { title: 'Blog', href: '/blog', description: '比较完整的文章、经历与思考。' },
-  { title: 'Projects', href: '/projects', description: '做过和正在做的项目。' },
-  { title: 'Uses', href: '/uses', description: '正在使用的硬件、软件、服务与网站。' },
+  { title: 'Blog', description: '比较完整的文章、经历与思考。' },
+  { title: 'Projects', description: '做过和正在做的项目。' },
+  { title: 'Uses', description: '正在使用的硬件、软件、服务与网站。' },
 ] as const;
 
 export const ABOUT_SYSTEMS = [
   {
     title: 'Thought Forest',
-    href: '/notes',
     description: '记笔记、写东西，也整理思考。',
   },
   {
     title: 'Personal Digital System',
-    href: '/systems',
     description: '把日常使用的项目和系统连接起来。',
   },
   {
     title: 'Personal Infrastructure',
-    href: '/infrastructure',
     description: '承载这些服务的设备与网络。',
   },
 ] as const;

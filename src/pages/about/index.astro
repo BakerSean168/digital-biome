@@ -1,7 +1,6 @@
 ---
-import { ArrowUpRight, BookOpen, GitBranch, Network, Server } from '@lucide/astro';
+import { BookOpen, Network, Server } from '@lucide/astro';
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
-import { SOCIAL_LINKS } from '../../constants';
 import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/about-profile';
 ---
 
@@ -29,25 +28,8 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
         <aside class="border-l border-border pl-5 md:pl-7">
           <p class="font-mono text-xs tracking-widest text-primary">ABOUT / BEHIND THE SCREEN</p>
           <p class="mt-3 leading-7 text-muted-foreground">
-            这是相对长期不变的自我介绍。最近在玩什么、看什么，单独记在 Now。
+            写下一些相对稳定的兴趣和想法，不急着给自己贴标签。
           </p>
-          <nav aria-label="关于我的兴趣" class="mt-5 flex flex-wrap gap-x-5 gap-y-3 text-sm">
-            <a class="text-primary hover:underline" href="#about-computers">
-              计算机
-            </a>
-            <a class="text-primary hover:underline" href="#about-interests">
-              生活兴趣
-            </a>
-            <a class="text-primary hover:underline" href="#about-ideas">
-              阅读与思想
-            </a>
-          </nav>
-          <a
-            href="/now"
-            class="mt-7 inline-flex min-h-11 items-center gap-2 border border-primary/40 px-4 py-2 font-mono text-sm text-primary hover:border-primary hover:bg-card"
-          >
-            [ NOW / 最近在做什么 ] <ArrowUpRight size={16} aria-hidden="true" />
-          </a>
         </aside>
       </div>
     </header>
@@ -105,16 +87,10 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
         <div class="border-t border-border pt-5">
           <h3 class="font-medium">故事与影像</h3>
           <p class="mt-3 text-sm leading-7 text-muted-foreground">
-            会看剧、动画和故事解说。最近看的东西会不断变化，不一定能在这里一直列完。
+            会看剧、动画和故事解说。更在意故事本身，以及它们留下的情绪和问题。
           </p>
         </div>
       </div>
-      <a
-        href="/now"
-        class="mt-7 inline-flex min-h-11 items-center gap-2 text-sm text-primary hover:underline"
-      >
-        这段时间的游戏与片单放在 Now <ArrowUpRight size={16} aria-hidden="true" />
-      </a>
     </section>
 
     <section
@@ -155,24 +131,16 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
       <p class="font-mono text-xs tracking-widest text-primary">04 / DIGITAL BIOME</p>
       <h2 class="mt-4 text-2xl font-medium md:text-3xl">这些兴趣留下的痕迹</h2>
       <p class="mt-4 max-w-[45em] leading-8 text-muted-foreground">
-        笔记、文章、项目和自建系统，慢慢构成了这片 Digital Biome。想继续逛逛，可以从这里开始。
+        笔记、文章、项目和自建系统慢慢构成了 Digital Biome，也是我记录与实践这些兴趣的方式。
       </p>
       <div class="mt-8 grid gap-x-8 gap-y-3 sm:grid-cols-2">
         {ABOUT_AREAS.map((area) => (
-          <a
-            href={area.href}
-            class="group flex min-h-28 items-start justify-between gap-4 border-t border-border py-4 hover:border-primary/50"
-          >
+          <div class="flex min-h-24 items-start border-t border-border py-4">
             <div>
-              <h3 class="text-lg font-medium group-hover:text-primary">{area.title}</h3>
+              <h3 class="text-lg font-medium">{area.title}</h3>
               <p class="mt-2 text-sm leading-6 text-muted-foreground">{area.description}</p>
             </div>
-            <ArrowUpRight
-              size={18}
-              aria-hidden="true"
-              class="mt-1 shrink-0 text-muted-foreground group-hover:text-primary"
-            />
-          </a>
+          </div>
         ))}
       </div>
       <div
@@ -181,38 +149,16 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
       >
         {ABOUT_SYSTEMS.map((system) => (
           <div>
-            <a class="text-sm font-medium hover:text-primary" href={system.href}>
-              {system.title}
-            </a>
+            <h3 class="text-sm font-medium">{system.title}</h3>
             <p class="mt-2 text-sm leading-6 text-muted-foreground">{system.description}</p>
           </div>
         ))}
       </div>
     </section>
 
-    <footer data-reading-anchor="about-contact" class="border-t border-border py-9">
-      <div class="flex flex-wrap items-center gap-x-6 gap-y-4 text-sm">
-        <a
-          href={SOCIAL_LINKS.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 text-primary hover:underline"
-        >
-          <GitBranch size={16} aria-hidden="true" /> GitHub{' '}
-          <ArrowUpRight size={14} aria-hidden="true" />
-        </a>
-        <a href="/friends" class="text-primary hover:underline">
-          Friends
-        </a>
-        <a href="/about/tags" class="text-primary hover:underline">
-          知识标签
-        </a>
-      </div>
-      <p
-        data-reading-anchor="about-access"
-        class="mt-7 max-w-[50em] text-xs leading-6 text-muted-foreground"
-      >
-        这里介绍的是公开的一面。部分个人服务只在授权后开放，基础设施的内部信息不会出现在公开页面。
+    <footer data-reading-anchor="about-contact" class="border-t border-border py-7">
+      <p data-reading-anchor="about-access" class="text-sm leading-7 text-muted-foreground">
+        喜欢探索、构建，也喜欢用文字留下自己的观察。
       </p>
     </footer>
   </article>
@@ -225,9 +171,6 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
       <p data-reading-anchor="about-intro" class="mt-5 leading-8 text-muted-foreground">
         对计算机相关的东西很感兴趣。写代码、搭服务器、研究网络，偶尔把一个小想法做成真正能用的东西。离开屏幕的时候，也会打游戏、看故事，或者想一些没有标准答案的问题。
       </p>
-      <a href="/now" class="mt-5 inline-flex min-h-11 items-center text-primary hover:underline">
-        [ NOW / 最近在做什么 ] →
-      </a>
     </header>
 
     <section data-reading-anchor="about-practice" data-about-section="computers">
@@ -247,13 +190,6 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
       <p class="leading-8">
         也喜欢游戏、电影、剧集和故事解说。既会和朋友一起玩竞技游戏，也喜欢沉浸在矮人要塞这样的模拟世界里。
       </p>
-      <p class="mt-3 text-muted-foreground">
-        当前在玩什么、看什么会变化，详见{' '}
-        <a href="/now" class="text-primary hover:underline">
-          Now →
-        </a>
-        。
-      </p>
     </section>
 
     <section data-about-section="ideas">
@@ -266,16 +202,12 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
     <section data-reading-anchor="about-content" data-about-section="ecosystem">
       <h2 class="mb-5 text-primary">## Digital Biome 里有什么</h2>
       <p class="mb-9 leading-7 text-muted-foreground">
-        笔记、文章、项目和自建系统，慢慢构成了这片 Digital Biome。想继续逛逛，可以从这里开始。
+        笔记、文章、项目和自建系统慢慢构成了 Digital Biome，也是我记录与实践这些兴趣的方式。
       </p>
       <dl class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-4 text-sm">
         {ABOUT_AREAS.map((area) => (
           <>
-            <dt>
-              <a href={area.href} class="text-primary hover:underline">
-                {area.title}
-              </a>
-            </dt>
+            <dt class="font-medium">{area.title}</dt>
             <dd class="text-muted-foreground">{area.description}</dd>
           </>
         ))}
@@ -283,34 +215,16 @@ import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/abo
       <div data-reading-anchor="about-ecosystem" class="mt-7 space-y-3">
         {ABOUT_SYSTEMS.map((system) => (
           <p>
-            <a href={system.href} class="text-primary hover:underline">
-              {system.title}
-            </a>
+            <strong>{system.title}</strong>
             <span class="text-muted-foreground"> — {system.description}</span>
           </p>
         ))}
       </div>
     </section>
 
-    <footer data-reading-anchor="about-contact" class="space-y-5 border-t border-border pt-6">
-      <div class="flex flex-wrap gap-6">
-        <a
-          class="text-primary hover:underline"
-          href={SOCIAL_LINKS.github}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub
-        </a>
-        <a class="text-primary hover:underline" href="/friends">
-          Friends
-        </a>
-        <a class="text-primary hover:underline" href="/about/tags">
-          知识标签
-        </a>
-      </div>
+    <footer data-reading-anchor="about-contact" class="border-t border-border pt-6">
       <p data-reading-anchor="about-access" class="text-sm text-muted-foreground">
-        公开页面只展示个人兴趣与公开资源，内部服务仍需要授权访问。
+        喜欢探索、构建，也喜欢用文字留下自己的观察。
       </p>
     </footer>
   </article>
