@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { NOW_ENTRIES, NOW_UPDATED_AT } from '../src/config/now-profile';
-import { getPublicBlogHref } from '../src/utils/public-blog-links';
+import { publishedBlogHref } from './published-blog-href';
 
 const linkedProjects = NOW_ENTRIES.filter(
-  (entry) => entry.blogSlug && getPublicBlogHref(entry.blogSlug),
+  (entry) => entry.blogSlug && publishedBlogHref(entry.blogSlug),
 );
 
 test('Now shows a shared page banner above its compact icon list', async ({ page }) => {
@@ -20,7 +20,7 @@ test('Now shows a shared page banner above its compact icon list', async ({ page
   for (const entry of linkedProjects) {
     await expect(now.getByRole('link', { name: entry.title, exact: true })).toHaveAttribute(
       'href',
-      getPublicBlogHref(entry.blogSlug ?? '') ?? '',
+      publishedBlogHref(entry.blogSlug ?? '') ?? '',
     );
   }
   await expect(now).not.toContainText('BUILDING');

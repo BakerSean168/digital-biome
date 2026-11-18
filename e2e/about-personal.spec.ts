@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { ABOUT_RELATED_BLOGS, ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../src/config/about-profile';
-import { getPublicBlogHref } from '../src/utils/public-blog-links';
+import { publishedBlogHref } from './published-blog-href';
 
 const publishedRelatedBlogs = ABOUT_RELATED_BLOGS.filter((item) =>
-  getPublicBlogHref(item.blogSlug),
+  publishedBlogHref(item.blogSlug),
 );
 
 test('About is a personal essay with one banner, last updated and six sections', async ({
@@ -36,7 +36,7 @@ test('About is a personal essay with one banner, last updated and six sections',
   for (const relation of publishedRelatedBlogs) {
     await expect(about.getByRole('link', { name: relation.phrase, exact: true })).toHaveAttribute(
       'href',
-      getPublicBlogHref(relation.blogSlug) ?? '',
+      publishedBlogHref(relation.blogSlug) ?? '',
     );
   }
   await expect(about.locator('article, aside, dl, footer')).toHaveCount(0);
