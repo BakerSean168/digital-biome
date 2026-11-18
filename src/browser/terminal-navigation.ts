@@ -240,17 +240,30 @@ document.addEventListener('keydown', (event) => {
     history.back();
   }
   if (['j', 'k', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
-    if (!browser || (target.closest('a, button') && !target.closest('[data-object-row]'))) return;
+    if (browser) {
+      if (target.closest('a, button') && !target.closest('[data-object-row]')) return;
+      event.preventDefault();
+      browser.dispatchEvent(
+        new CustomEvent('terminal-select', {
+          detail: {
+            delta: event.key === 'j' || event.key === 'ArrowDown' ? 1 : -1,
+            key: event.key,
+            repeat: event.repeat,
+          },
+        }),
+      );
+      return;
+    }
+    // Reading pages scroll inside #site-content, not the document body.
+    // Keep native Arrow key behavior and existing resource-browser selection.
+    if (event.key !== 'j' && event.key !== 'k') return;
+    const content = document.getElementById('site-content');
+    const readingPage = Array.from(
+      content?.querySelectorAll<HTMLElement>('[data-reading-scroll]') ?? [],
+    ).some((article) => article.getClientRects().length > 0);
+    if (!content || !readingPage) return;
     event.preventDefault();
-    browser.dispatchEvent(
-      new CustomEvent('terminal-select', {
-        detail: {
-          delta: event.key === 'j' || event.key === 'ArrowDown' ? 1 : -1,
-          key: event.key,
-          repeat: event.repeat,
-        },
-      }),
-    );
+    content.scrollBy({ top: event.key === 'j' ? 80 : -80, behavior: 'auto' });
   }
   if ((event.key === 'Enter' || event.key === 'o') && !target.closest('a, button')) {
     event.preventDefault();

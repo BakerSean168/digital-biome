@@ -7,7 +7,7 @@ import { NOW_ENTRIES, NOW_UPDATED_AT } from '../config/now-profile';
 
 <TerminalLayout title="Now" description="最近在开发、在玩、在看的一些东西。">
   {(['gui', 'tui'] as const).map((mode) => (
-    <article data-ui-only={mode} class="mx-auto w-full max-w-[820px]">
+    <article data-ui-only={mode} data-reading-scroll class="mx-auto w-full max-w-[820px]">
       <SlashPageHeader
         label="NOW"
         title="最近在做什么"

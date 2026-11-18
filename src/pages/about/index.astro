@@ -11,6 +11,7 @@ import { ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../../config/about-profile';
   {(['gui', 'tui'] as const).map((mode) => (
     <article
       data-ui-only={mode}
+      data-reading-scroll
       class:list={['mx-auto w-full max-w-[820px]', mode === 'gui' ? 'gui-about' : '']}
     >
       <SlashPageHeader
