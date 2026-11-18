@@ -6,6 +6,20 @@ import { assertTrustedPRCheckRun } from './pr-ci-evidence';
 
 const repository = 'BakerSean168/digital-biome';
 
+/** Exact allowlist for lock-only PR approval; manual aliases are product-scoped. */
+export function isTrustedApprovalWorkflowRef(ref: string | undefined, product: string | undefined) {
+  const prefix = `${repository}/.github/workflows/`;
+  if (
+    ref === `${prefix}sync-data-products.yml@refs/heads/main` ||
+    ref === `${prefix}reconcile-data-products.yml@refs/heads/main`
+  ) return true;
+  if (ref === `${prefix}sync-pds-catalog-v1.yml@refs/heads/main`)
+    return product === 'pds-catalog-v1';
+  if (ref === `${prefix}sync-infra-public-v2.yml@refs/heads/main`)
+    return product === 'infra-public-v2';
+  return false;
+}
+
 function gh(args: string[]) {
   return execFileSync('gh', args, {
     encoding: 'utf8',
@@ -24,10 +38,7 @@ function main() {
   if (
     process.env.GITHUB_REPOSITORY !== repository ||
     process.env.GITHUB_REF !== 'refs/heads/main' ||
-    ![
-      `${repository}/.github/workflows/sync-data-products.yml@refs/heads/main`,
-      `${repository}/.github/workflows/reconcile-data-products.yml@refs/heads/main`,
-    ].includes(process.env.GITHUB_WORKFLOW_REF ?? '')
+    !isTrustedApprovalWorkflowRef(process.env.GITHUB_WORKFLOW_REF, process.env.PRODUCT)
   )
     throw new Error('Untrusted PR CI approval workflow provenance');
 
