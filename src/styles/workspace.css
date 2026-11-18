@@ -38,14 +38,19 @@ html[data-ui] .browser-page [data-uses-description] {
   display: block;
 }
 html[data-ui] .browser-page [data-filter-bar] {
+  justify-content: flex-start;
+  gap: 12px;
   margin-bottom: 12px;
 }
 html[data-ui] .browser-page [data-filter-bar] label {
   flex: 0 0 auto;
 }
 html[data-ui] .browser-page [data-filter-bar] label:first-child {
-  flex: 1 1 10rem;
+  flex: 0 1 14rem;
   min-width: min(10rem, 100%);
+}
+html[data-ui] .browser-page [data-object-filter] {
+  width: 100%;
 }
 html[data-ui] .browser-page [data-object-list] {
   max-height: none;

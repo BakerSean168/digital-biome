@@ -127,3 +127,61 @@ test('Uses, Projects and Library tabs share consistent height across modes and s
     }
   }
 });
+
+test('catalog status feedback never shifts rows and desktop filters stay together', async ({
+  page,
+}) => {
+  for (const mode of ['gui', 'tui']) {
+    for (const path of catalogs) {
+      await page.setViewportSize({ width: 1366, height: 850 });
+      await page.goto(`${path}?ui=${mode}`);
+      await expect(page.locator('html')).toHaveAttribute('data-browser-ready', 'true');
+      const layout = await page.locator('[data-object-browser]:visible').evaluate((root) => {
+        const status = root.querySelector<HTMLElement>('[data-object-status]');
+        const bar = root.querySelector<HTMLElement>('[data-filter-bar]');
+        const columns = root.querySelector<HTMLElement>('[data-browser-columns]');
+        const search = bar?.querySelector<HTMLElement>('label:first-child');
+        const sort = bar?.querySelector<HTMLElement>('label:has([data-object-sort])');
+        const facet = bar?.querySelector<HTMLElement>('[data-facet-trigger]');
+        const count = bar?.querySelector<HTMLElement>('[data-object-count]');
+        if (!status || !bar || !columns || !search || !sort || !facet || !count)
+          throw new Error('Catalog toolbar or feedback region is missing');
+        const bounds = (element: HTMLElement) => {
+          const { x, y, width, height, right } = element.getBoundingClientRect();
+          return { x, y, width, height, right };
+        };
+        const before = bounds(columns);
+        const statusStyle = getComputedStyle(status);
+        status.textContent = '已显示全部';
+        const after = bounds(columns);
+        const positions = [search, sort, facet, count].map(bounds);
+        status.textContent = '';
+        return {
+          before,
+          after,
+          statusPosition: statusStyle.position,
+          statusWidth: statusStyle.width,
+          positions,
+        };
+      });
+      expect(layout.statusPosition).toBe('absolute');
+      expect(layout.before.y).toBeCloseTo(layout.after.y, 1);
+      expect(layout.before.height).toBeCloseTo(layout.after.height, 1);
+      for (let index = 0; index < layout.positions.length - 1; index++) {
+        const current = layout.positions[index];
+        const next = layout.positions[index + 1];
+        expect(
+          Math.abs(next.y + next.height / 2 - (current.y + current.height / 2)),
+          `${path} ${mode} toolbar control wrapped`,
+        ).toBeLessThan(3);
+        expect(
+          next.x - current.right,
+          `${path} ${mode} toolbar controls must be grouped, not spaced apart`,
+        ).toBeLessThan(28);
+      }
+      expect(
+        await page.locator('[data-object-browser]:visible [data-object-status]').textContent(),
+      ).not.toContain('已显示全部');
+    }
+  }
+});

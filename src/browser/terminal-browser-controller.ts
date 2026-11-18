@@ -203,14 +203,12 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     const item = browser.filtered[browser.selected];
     const source = browser.rows[browser.selected];
     if (!browser.pending && error.classList.contains('hidden')) {
+      // Ordinary completion is already represented by the result count.
+      // Only announce an actionable boundary to assistive technology.
       status.textContent =
-        browser.selected === browser.rows.length - 1 && browser.rows.length > 0
-          ? hasMore()
-            ? '已到当前末尾 · 连按 J 加载更多'
-            : '已到末尾'
-          : browser.loaded && browser.rows.length >= browser.filtered.length
-            ? '已显示全部'
-            : '';
+        browser.selected === browser.rows.length - 1 && browser.rows.length > 0 && hasMore()
+          ? '已到当前末尾 · 连按 J 加载更多'
+          : '';
     }
     if (remember) saveState();
     if (!item || !source) {
