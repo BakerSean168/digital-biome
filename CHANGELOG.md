@@ -5,6 +5,18 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.14.0](https://github.com/BakerSean168/digital-biome/compare/v0.13.1...v0.14.0) (2026-11-18)
+
+
+### Features
+
+* **personal:** refine About Now Uses and link published Blogs ([a6285c1](https://github.com/BakerSean168/digital-biome/commit/a6285c1d68e7729574f90f2a1607bfbec4566815))
+
+
+### Bug Fixes
+
+* **data:** allow trusted manual PDS/infra reconciliation aliases to approve PR CI ([#259](https://github.com/BakerSean168/digital-biome/issues/259)) ([f72c641](https://github.com/BakerSean168/digital-biome/commit/f72c6417824d33aabae77a6c6ec8c92ad15a2560))
+
 ## [0.13.1](https://github.com/BakerSean168/digital-biome/compare/v0.13.0...v0.13.1) (2026-11-11)
 
 
