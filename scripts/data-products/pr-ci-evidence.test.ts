@@ -65,7 +65,8 @@ test('PR approval is fail-closed on unrelated event, head, branch, number, autho
 });
 
 test('PR approval trusts exact main workflows and only product-matching manual aliases', () => {
-  const ref = (name: string) => `BakerSean168/digital-biome/.github/workflows/${name}.yml@refs/heads/main`;
+  const ref = (name: string) =>
+    `BakerSean168/digital-biome/.github/workflows/${name}.yml@refs/heads/main`;
   for (const product of ['knowledge-public-v1', 'pds-catalog-v1', 'infra-public-v2']) {
     assert.equal(isTrustedApprovalWorkflowRef(ref('sync-data-products'), product), true);
     assert.equal(isTrustedApprovalWorkflowRef(ref('reconcile-data-products'), product), true);
@@ -74,7 +75,10 @@ test('PR approval trusts exact main workflows and only product-matching manual a
   assert.equal(isTrustedApprovalWorkflowRef(ref('sync-infra-public-v2'), 'infra-public-v2'), true);
   assert.equal(isTrustedApprovalWorkflowRef(ref('sync-pds-catalog-v1'), 'infra-public-v2'), false);
   assert.equal(isTrustedApprovalWorkflowRef(ref('sync-infra-public-v2'), 'pds-catalog-v1'), false);
-  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-knowledge-public-v1'), 'knowledge-public-v1'), false);
+  assert.equal(
+    isTrustedApprovalWorkflowRef(ref('sync-knowledge-public-v1'), 'knowledge-public-v1'),
+    false,
+  );
   assert.equal(isTrustedApprovalWorkflowRef(ref('deploy-production'), 'pds-catalog-v1'), false);
   assert.equal(
     isTrustedApprovalWorkflowRef(
