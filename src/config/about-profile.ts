@@ -64,3 +64,53 @@ export const ABOUT_SECTIONS = [
     ],
   },
 ] as const;
+
+/**
+ * Optional in-sentence Blog references. The paragraph copy above stays untouched.
+ * Visibility is checked against the published knowledge index at build time.
+ * Entries pointing to drafts remain plain text until their authors publish them.
+ */
+export const ABOUT_RELATED_BLOGS = [
+  {
+    sectionId: 'computers',
+    paragraphIndex: 0,
+    phrase: '如果当时已经有 AI 出现的话',
+    blogSlug: 'how-i-work-with-ai',
+  },
+  {
+    sectionId: 'computers',
+    paragraphIndex: 1,
+    phrase: '通过各种免费途径去薅了不少的 VPS',
+    blogSlug: 'oracle-vps',
+  },
+  {
+    sectionId: 'computers',
+    paragraphIndex: 1,
+    phrase: '没有时间限制的也被封号了',
+    blogSlug: 'oracle-cloud-vps-connectivity-troubleshooting',
+  },
+  {
+    sectionId: 'computers',
+    paragraphIndex: 2,
+    phrase: '用 N100 搭建了一个家庭服务器',
+    blogSlug: 'home-network-homelab-build-and-recovery',
+  },
+  {
+    sectionId: 'knowledge',
+    paragraphIndex: 0,
+    phrase: '去了解它的参数',
+    blogSlug: 'why-i-use-atomic-notes',
+  },
+  {
+    sectionId: 'nihilism',
+    paragraphIndex: 0,
+    phrase: '人生是没有意义的',
+    blogSlug: 'meaning-of-life',
+  },
+  {
+    sectionId: 'rehabilitation',
+    paragraphIndex: 1,
+    phrase: '对体态康复有了朴素的认识',
+    blogSlug: 'bodysense',
+  },
+] as const;

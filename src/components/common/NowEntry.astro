@@ -1,11 +1,13 @@
 ---
 import { Clapperboard, CodeXml, Gamepad2 } from '@lucide/astro';
 import type { NowEntry } from '../../config/now-profile';
+import { getPublicBlogHref } from '../../utils/public-blog-links';
 
 interface Props {
   entry: NowEntry;
 }
 const { entry } = Astro.props;
+const blogHref = entry.blogSlug ? getPublicBlogHref(entry.blogSlug) : undefined;
 const iconLabels = {
   project: '正在开发',
   game: '正在玩',
@@ -29,7 +31,18 @@ const iconLabels = {
   </span>
   <div class="min-w-0 flex-1">
     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-      <h2 class="text-base font-medium leading-6">{entry.title}</h2>
+      <h2 class="text-base font-medium leading-6">
+        {blogHref ? (
+          <a
+            href={blogHref}
+            class="text-primary underline decoration-primary/50 underline-offset-4 hover:text-primary-hover"
+          >
+            {entry.title}
+          </a>
+        ) : (
+          entry.title
+        )}
+      </h2>
       {entry.secondaryName && (
         <span class="font-mono text-xs text-muted-foreground">{entry.secondaryName}</span>
       )}

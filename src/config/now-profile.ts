@@ -1,6 +1,6 @@
 /**
  * Individual public activities. Reorder or edit entries without touching page markup.
- * Kinds only select a recognizable icon; no labels or cross-page links are displayed.
+ * Kinds select an icon; project names may link to a verified public Blog.
  */
 // Manually maintained snapshot date for the public /now page.
 export const NOW_UPDATED_AT = '2026-11-18';
@@ -13,6 +13,8 @@ export interface NowEntry {
   title: string;
   secondaryName?: string;
   description: string;
+  /** Optional Blog slug; only linked if published in the current knowledge projection. */
+  blogSlug?: string;
 }
 
 export const NOW_ENTRIES: readonly NowEntry[] = [
@@ -21,12 +23,14 @@ export const NOW_ENTRIES: readonly NowEntry[] = [
     kind: 'project',
     title: 'MemoFlow',
     description: '持续完善目标、任务、提醒与笔记之间的使用体验。',
+    blogSlug: 'memoflow',
   },
   {
     id: 'bodysense',
     kind: 'project',
     title: 'BodySense',
     description: '继续完善体态问诊、评估与诊断流程。',
+    blogSlug: 'bodysense',
   },
   {
     id: 'league-of-legends',

@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { NOW_ENTRIES, NOW_UPDATED_AT } from '../src/config/now-profile';
+import { getPublicBlogHref } from '../src/utils/public-blog-links';
+
+const linkedProjects = NOW_ENTRIES.filter(
+  (entry) => entry.blogSlug && getPublicBlogHref(entry.blogSlug),
+);
 
 test('Now shows a shared page banner above its compact icon list', async ({ page }) => {
   await page.goto('/now/?ui=gui');
@@ -11,7 +16,13 @@ test('Now shows a shared page banner above its compact icon list', async ({ page
   await expect(now.locator('[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
   await expect(now.locator('li[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
   await expect(now.locator('time')).toHaveCount(1);
-  await expect(now.locator('a')).toHaveCount(0);
+  await expect(now.locator('a')).toHaveCount(linkedProjects.length);
+  for (const entry of linkedProjects) {
+    await expect(now.getByRole('link', { name: entry.title, exact: true })).toHaveAttribute(
+      'href',
+      getPublicBlogHref(entry.blogSlug ?? '') ?? '',
+    );
+  }
   await expect(now).not.toContainText('BUILDING');
   await expect(now).not.toContainText('PLAYING');
   await expect(now).not.toContainText('PERSONAL PROJECT');

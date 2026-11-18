@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../src/config/about-profile';
+import { ABOUT_RELATED_BLOGS, ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../src/config/about-profile';
+import { getPublicBlogHref } from '../src/utils/public-blog-links';
+
+const publishedRelatedBlogs = ABOUT_RELATED_BLOGS.filter((item) =>
+  getPublicBlogHref(item.blogSlug),
+);
 
 test('About is a personal essay with one banner, last updated and six sections', async ({
   page,
@@ -27,7 +32,13 @@ test('About is a personal essay with one banner, last updated and six sections',
   await expect(about).toContainText('简洁 != 简单');
   await expect(about).toContainText('坐骨神经痛');
   await expect(about).toContainText('右肩');
-  await expect(about.locator('a')).toHaveCount(0);
+  await expect(about.locator('a')).toHaveCount(publishedRelatedBlogs.length);
+  for (const relation of publishedRelatedBlogs) {
+    await expect(about.getByRole('link', { name: relation.phrase, exact: true })).toHaveAttribute(
+      'href',
+      getPublicBlogHref(relation.blogSlug) ?? '',
+    );
+  }
   await expect(about.locator('article, aside, dl, footer')).toHaveCount(0);
   await expect(about).not.toContainText('喜欢折腾，也喜欢观察');
   await expect(about).not.toContainText('Digital Biome 里有什么');

@@ -46,7 +46,7 @@ data-products/           # Immutable producer projection locks
 当前公开路由、布局与交付模块以 [`docs/architecture.md` §3.0](docs/architecture.md#30-应用拓扑main-现状) 为准。
 `/projects` 是项目展示集合的 canonical 路由；旧 `/dev` 集合地址只做跳转，`/dev/[assetId]` 的历史服务详情暂时保留。
 `/now` 是与 `/about`、`/uses` 同级的主导航项。
-`/about` 保存长期个人介绍，不在正文中承担跨页导航；`/now` 使用 `src/config/now-profile.ts` 的 `NOW_ENTRIES` 与 `src/components/common/NowEntry.astro` 手工维护独立条目；只展示清晰的类型图标、中英文名称和简短描述，不输出可见的页标题、日期、状态/分类标签或正文跳转链接；`/uses` 使用 `src/config/uses-profile.ts` 维护公开硬件/软件，服务与网站摘要从已有公开数据投影读取；均使用 TerminalLayout 的 GUI/TUI 双模式。完整的服务、收藏网站、主机、网络目录及筛选统一归入 `/uses`，不再保留 `/tools` 独立路由；内部入口与敏感信息不可出现在公开页面。
+`/about` 保存长期个人介绍，正文只允许语义相关、已公开 Blog 的句内链接（草稿不生成链接），不添加重复 Slash Pages 导航；`/now` 使用 `src/config/now-profile.ts` 的 `NOW_ENTRIES` 与 `src/components/common/NowEntry.astro` 手工维护独立条目；只展示清晰的类型图标、中英文名称和简短描述，不输出额外状态/分类标签或跨 Slash Pages 跳转，只有已公开的相关项目 Blog 可以在名称上形成链接；`/uses` 使用 `src/config/uses-profile.ts` 维护公开硬件/软件，服务与网站摘要从已有公开数据投影读取；均使用 TerminalLayout 的 GUI/TUI 双模式。完整的服务、收藏网站、主机、网络目录及筛选统一归入 `/uses`，不再保留 `/tools` 独立路由；内部入口与敏感信息不可出现在公开页面。
 Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
 This file and `docs/architecture.md` are the current design record.
 
