@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { assertTrustedPRCheckRun } from './pr-ci-evidence';
+import { isTrustedApprovalWorkflowRef } from './approve-pr-ci';
 
 const sha = 'a'.repeat(40);
 const prNumber = 147;
@@ -61,4 +62,32 @@ test('PR approval is fail-closed on unrelated event, head, branch, number, autho
   assert.throws(() => assertTrustedPRCheckRun(run, 0, sha, product));
   assert.throws(() => assertTrustedPRCheckRun(run, prNumber, 'not a SHA', product));
   assert.throws(() => assertTrustedPRCheckRun(run, prNumber, sha, 'infra-public-v2'));
+});
+
+test('PR approval trusts exact main workflows and only product-matching manual aliases', () => {
+  const ref = (name: string) => `BakerSean168/digital-biome/.github/workflows/${name}.yml@refs/heads/main`;
+  for (const product of ['knowledge-public-v1', 'pds-catalog-v1', 'infra-public-v2']) {
+    assert.equal(isTrustedApprovalWorkflowRef(ref('sync-data-products'), product), true);
+    assert.equal(isTrustedApprovalWorkflowRef(ref('reconcile-data-products'), product), true);
+  }
+  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-pds-catalog-v1'), 'pds-catalog-v1'), true);
+  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-infra-public-v2'), 'infra-public-v2'), true);
+  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-pds-catalog-v1'), 'infra-public-v2'), false);
+  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-infra-public-v2'), 'pds-catalog-v1'), false);
+  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-knowledge-public-v1'), 'knowledge-public-v1'), false);
+  assert.equal(isTrustedApprovalWorkflowRef(ref('deploy-production'), 'pds-catalog-v1'), false);
+  assert.equal(
+    isTrustedApprovalWorkflowRef(
+      'other/digital-biome/.github/workflows/sync-pds-catalog-v1.yml@refs/heads/main',
+      'pds-catalog-v1',
+    ),
+    false,
+  );
+  assert.equal(
+    isTrustedApprovalWorkflowRef(
+      'BakerSean168/digital-biome/.github/workflows/sync-pds-catalog-v1.yml@refs/heads/feature',
+      'pds-catalog-v1',
+    ),
+    false,
+  );
 });
