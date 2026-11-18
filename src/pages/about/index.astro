@@ -2,10 +2,10 @@
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
 import SlashPageHeader from '../../components/common/SlashPageHeader.astro';
 import { ABOUT_RELATED_BLOGS, ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../../config/about-profile';
-import { linkTextParts } from '../../utils/public-blog-links';
+import { renderLinkedTextHtml } from '../../utils/public-blog-links';
 
-function getParagraphParts(sectionId: string, paragraphIndex: number, paragraph: string) {
-  return linkTextParts(
+function getParagraphHtml(sectionId: string, paragraphIndex: number, paragraph: string) {
+  return renderLinkedTextHtml(
     paragraph,
     ABOUT_RELATED_BLOGS.filter(
       (relation) => relation.sectionId === sectionId && relation.paragraphIndex === paragraphIndex,
@@ -50,20 +50,10 @@ function getParagraphParts(sectionId: string, paragraphIndex: number, paragraph:
             </h2>
             <div class="mt-4 space-y-4">
               {section.paragraphs.map((paragraph, paragraphIndex) => (
-                <p class:list={['leading-8 text-muted-foreground', 'text-base']}>
-                  {getParagraphParts(section.id, paragraphIndex, paragraph).map((part) =>
-                    part.href ? (
-                      <a
-                        href={part.href}
-                        class="text-primary underline decoration-primary/50 underline-offset-4 hover:text-primary-hover"
-                      >
-                        {part.text}
-                      </a>
-                    ) : (
-                      part.text
-                    ),
-                  )}
-                </p>
+                <p
+                  class="leading-8 text-base text-muted-foreground"
+                  set:html={getParagraphHtml(section.id, paragraphIndex, paragraph)}
+                />
               ))}
             </div>
           </section>

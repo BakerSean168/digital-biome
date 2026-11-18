@@ -34,10 +34,10 @@ test('About is a personal essay with one banner, last updated and six sections',
   await expect(about).toContainText('右肩');
   await expect(about.locator('a')).toHaveCount(publishedRelatedBlogs.length);
   for (const relation of publishedRelatedBlogs) {
-    await expect(about.getByRole('link', { name: relation.phrase, exact: true })).toHaveAttribute(
-      'href',
-      publishedBlogHref(relation.blogSlug) ?? '',
-    );
+    const link = about.getByRole('link', { name: relation.phrase, exact: true });
+    await expect(link).toHaveAttribute('href', /^\/notes\/obsidian\/blogs\//);
+    const target = new URL((await link.getAttribute('href')) ?? '', page.url());
+    expect(target.pathname).toBe(publishedBlogHref(relation.blogSlug));
   }
   await expect(about.locator('article, aside, dl, footer')).toHaveCount(0);
   await expect(about).not.toContainText('喜欢折腾，也喜欢观察');
@@ -57,7 +57,7 @@ test('About retains the same full text in terminal mode and global navigation wo
     await expect(block.getByRole('heading', { name: section.title, exact: true })).toBeVisible();
     await expect(block.locator('p')).toHaveText([...section.paragraphs]);
   }
-  await expect(about.locator('a')).toHaveCount(0);
+  await expect(about.locator('a')).toHaveCount(publishedRelatedBlogs.length);
 
   await page.locator('[data-terminal-dock] a[href^="/now"]').click();
   await expect(page).toHaveURL(/\/now\/?\?ui=tui$/);

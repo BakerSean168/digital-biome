@@ -18,10 +18,10 @@ test('Now shows a shared page banner above its compact icon list', async ({ page
   await expect(now.locator('time')).toHaveCount(1);
   await expect(now.locator('a')).toHaveCount(linkedProjects.length);
   for (const entry of linkedProjects) {
-    await expect(now.getByRole('link', { name: entry.title, exact: true })).toHaveAttribute(
-      'href',
-      publishedBlogHref(entry.blogSlug ?? '') ?? '',
-    );
+    const link = now.getByRole('link', { name: entry.title, exact: true });
+    await expect(link).toHaveAttribute('href', /^\/notes\/obsidian\/blogs\//);
+    const target = new URL((await link.getAttribute('href')) ?? '', page.url());
+    expect(target.pathname).toBe(publishedBlogHref(entry.blogSlug ?? ''));
   }
   await expect(now).not.toContainText('BUILDING');
   await expect(now).not.toContainText('PLAYING');
@@ -71,7 +71,7 @@ test('Now stays compact in both modes on a phone, without horizontal overflow', 
   await expect(now).toContainText('BodySense');
   await expect(now).toContainText('矮人要塞');
   await expect(now).toContainText('绝命毒师');
-  await expect(now.locator('a')).toHaveCount(0);
+  await expect(now.locator('a')).toHaveCount(linkedProjects.length);
   await expect(now.locator('time')).toHaveCount(1);
 });
 test('Now is a peer in the six-item dock and Projects has a canonical root', async ({ page }) => {

@@ -49,3 +49,29 @@ export function linkTextParts(
   if (cursor < paragraph.length) parts.push({ text: paragraph.slice(cursor) });
   return parts.length > 0 ? parts : [{ text: paragraph }];
 }
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+/**
+ * Astro formatting can add spaces between JSX fragments. Render precisely
+ * adjacent text and links, escaping both content and attributes first.
+ */
+export function renderLinkedTextHtml(
+  paragraph: string,
+  relations: readonly RelatedBlogPhrase[],
+): string {
+  return linkTextParts(paragraph, relations)
+    .map((part) => {
+      const text = escapeHtml(part.text);
+      if (!part.href) return text;
+      return `<a href="${escapeHtml(part.href)}" class="text-primary underline decoration-primary/50 underline-offset-4 hover:text-primary-hover">${text}</a>`;
+    })
+    .join('');
+}
