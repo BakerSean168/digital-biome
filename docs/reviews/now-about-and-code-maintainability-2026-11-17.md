@@ -8,9 +8,7 @@ Review date: 2026-11-17. Scope: draft branch for PR #255, not a production relea
 - Counted maintained TypeScript, JavaScript, Astro, CSS and HTML files. Generated projections (`src/data/`), generated Pagefind output and JSON/content records are **not** application source-code modules.
 - Initial maximum was **435 lines** (`e2e/critical-paths.spec.ts`), followed by **396** (`src/components/assets/InfrastructureShowcase.astro`), **386** (`e2e/resource-interactions.spec.ts`), **350** (`src/browser/terminal-browser-controller.ts`) and **330** (`scripts/sync/build-indexes.ts`).
 - **No maintained code file exceeded 500 lines.** Added `scripts/code-size-contract.test.ts` to enforce the bound in the regular `test:infrastructure` suite.
-- Repository `ROADMAP.md` was out of date (for example, it still described the old Dashboard and Resume pages as current). It is revised in this branch.
-- GitHub currently shows issue [#168](https://github.com/BakerSean168/digital-biome/issues/168) as the open repository Issue sampled during this review.
-- The **GitHub Projects TODO board could not be read**: the connected `gh` token lacks `read:project`. The following is a repository/Issues audit, **not** a claim that every Projects board card was inspected.
+- Scope is limited to maintained application code, component boundaries and existing regression coverage; unrelated project-management materials are excluded.
 
 ## 2. Verified findings and disposition
 
@@ -37,6 +35,4 @@ Review date: 2026-11-17. Scope: draft branch for PR #255, not a production relea
 1. Complete local static/type, lint, source-line and browser checks for PR #255.
 2. Confirm the same commit passes the protected GitHub CI; keep the PR Draft pending visual acceptance.
 3. Only split the deferred modules when their owner area next changes, keeping current contracts and acceptance tests.
-4. If a full GitHub Projects board review is required, grant read-only Projects access (`read:project`), then reconcile board cards with this audit; do not infer unseen card status.
-
 This report does not recommend any new production dependency or data source.
