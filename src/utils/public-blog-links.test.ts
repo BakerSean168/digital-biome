@@ -9,7 +9,8 @@ test('related Blog phrases are present in the unchanged About copy', () => {
     const section = ABOUT_SECTIONS.find((item) => item.id === relation.sectionId);
     assert.ok(section, `Missing About section: ${relation.sectionId}`);
     const paragraph = section.paragraphs[relation.paragraphIndex];
-    assert.ok(paragraph?.includes(relation.phrase), `Phrase missing: ${relation.phrase}`);
+    assert.ok(paragraph, `Paragraph missing for: ${relation.sectionId}`);
+    assert.ok(paragraph.includes(relation.phrase), `Phrase missing: ${relation.phrase}`);
     const parts = linkTextParts(paragraph, [relation]);
     assert.equal(parts.map((part) => part.text).join(''), paragraph);
   }
