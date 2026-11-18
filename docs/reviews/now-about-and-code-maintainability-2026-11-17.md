@@ -24,10 +24,10 @@ Review date: 2026-11-17. Scope: draft branch for PR #255, not a production relea
 
 ## 3. Current Now content contract
 
-- `project`: two independent entries, **MemoFlow** and **阿里三项目** (the latter is transcribed exactly as requested; the repository has no verified formal project description).
+- `project`: two independent entries, **MemoFlow** and **BodySense** (corrected from a voice transcription error by the user).
 - `game`: League of Legends / MOBA, PUBG / Battle Royale, CS:GO / Tactical FPS, Dwarf Fortress / Simulation.
 - `watching`: Breaking Bad / TV series only.
-- Each record can be added, removed, recategorized or reordered in `src/config/now-profile.ts`. `NOW_UPDATED_AT` is manually updated; no live-game or streaming claims.
+- Each record can be added, removed, recategorized or reordered in `src/config/now-profile.ts`; visual output is icon + name (Chinese/English where applicable) + one-line description. No per-item status or category badges, update-date banner, live-game or streaming claims.
 - About and Now articles contain no external or internal outbound links; the global site navigation remains the single access point to other slash pages.
 
 ## 4. Follow-up and acceptance
@@ -35,4 +35,4 @@ Review date: 2026-11-17. Scope: draft branch for PR #255, not a production relea
 1. Complete local static/type, lint, source-line and browser checks for PR #255.
 2. Confirm the same commit passes the protected GitHub CI; keep the PR Draft pending visual acceptance.
 3. Only split the deferred modules when their owner area next changes, keeping current contracts and acceptance tests.
-This report does not recommend any new production dependency or data source.
+   This report does not recommend any new production dependency or data source.

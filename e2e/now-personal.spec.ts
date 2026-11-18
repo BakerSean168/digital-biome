@@ -1,53 +1,66 @@
 import { expect, test } from '@playwright/test';
-import { NOW_ENTRIES, NOW_UPDATED_AT } from '../src/config/now-profile';
+import { NOW_ENTRIES } from '../src/config/now-profile';
 
-test('Now displays editable peer entries instead of fixed focus/game/media sections', async ({
+test('Now is a compact icon, bilingual name and description list without labels or heading', async ({
   page,
 }) => {
   await page.goto('/now/?ui=gui');
   const now = page.locator('article[data-ui-only="gui"]');
 
-  await expect(now.getByRole('heading', { name: '最近在做什么' })).toBeVisible();
-  await expect(now.locator(`time[datetime="${NOW_UPDATED_AT}"]`)).toBeVisible();
+  await expect(now.locator('h1')).toHaveClass(/sr-only/);
   await expect(now.locator('[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
-  for (const kind of new Set(NOW_ENTRIES.map((entry) => entry.kind))) {
-    await expect(now.locator(`[data-now-kind="${kind}"]`)).toHaveCount(
-      NOW_ENTRIES.filter((entry) => entry.kind === kind).length,
-    );
-  }
-  for (const entry of NOW_ENTRIES) {
-    const card = now.locator(`[data-now-item="${entry.id}"]`);
-    await expect(card).toContainText(entry.title);
-    await expect(card).toContainText(entry.category);
-  }
+  await expect(now.locator('li[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
+  await expect(now.locator('time')).toHaveCount(0);
   await expect(now.locator('a')).toHaveCount(0);
+  await expect(now).not.toContainText('BUILDING');
+  await expect(now).not.toContainText('PLAYING');
+  await expect(now).not.toContainText('PERSONAL PROJECT');
+  await expect(now).not.toContainText('MOBA');
+  await expect(now).not.toContainText('阿里三');
+
+  for (const entry of NOW_ENTRIES) {
+    const row = now.locator(`[data-now-item="${entry.id}"]`);
+    await expect(row).toContainText(entry.title);
+    await expect(row).toContainText(entry.description);
+    if (entry.secondaryName) await expect(row).toContainText(entry.secondaryName);
+    await expect(row.locator('span[role="img"] svg')).toHaveCount(1);
+    await expect(row.locator('span[role="img"]')).toHaveAttribute(
+      'aria-label',
+      entry.kind === 'project' ? '正在开发' : entry.kind === 'game' ? '正在玩' : '正在看',
+    );
+    await expect(row.locator('h2')).toHaveCount(1);
+    await expect(row.locator('p')).toHaveCount(1);
+  }
+  await expect(now.locator('[data-now-item="bodysense"]')).toContainText('BodySense');
   await expect(page.locator('[data-terminal-dock] a[href^="/now"]')).toHaveAttribute(
     'aria-current',
     'page',
   );
 });
 
-test('Now keeps the same standalone items across phone GUI/TUI modes', async ({ page }) => {
+test('Now stays compact in both modes on a phone, without horizontal overflow', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/now/?ui=gui');
 
-  const widths = await page.evaluate(() => ({
+  const width = await page.evaluate(() => ({
     document: document.body.scrollWidth,
     content: document.getElementById('site-content')?.scrollWidth ?? Infinity,
     viewport: innerWidth,
   }));
-  expect(widths.document).toBeLessThanOrEqual(widths.viewport);
-  expect(widths.content).toBeLessThanOrEqual(widths.viewport);
+  expect(width.document).toBeLessThanOrEqual(width.viewport);
+  expect(width.content).toBeLessThanOrEqual(width.viewport);
 
   await page.locator('[data-ui-mode-choice="tui"]').click();
   const now = page.locator('article[data-ui-only="tui"]');
   await expect(now.locator('[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
+  await expect(now).toContainText('BodySense');
   await expect(now).toContainText('矮人要塞');
   await expect(now).toContainText('绝命毒师');
   await expect(now.locator('a')).toHaveCount(0);
-  await expect(now.locator(`time[datetime="${NOW_UPDATED_AT}"]`)).toBeVisible();
+  await expect(now.locator('time')).toHaveCount(0);
 });
-
 test('Now is a peer in the six-item dock and Projects has a canonical root', async ({ page }) => {
   await page.goto('/now/?ui=gui');
   const nav = page.getByRole('navigation', { name: '主导航' });

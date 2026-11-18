@@ -1,47 +1,24 @@
 ---
 import TerminalLayout from '../layouts/TerminalLayout.astro';
 import NowEntry from '../components/common/NowEntry.astro';
-import { NOW_ENTRIES, NOW_UPDATED_AT } from '../config/now-profile';
+import { NOW_ENTRIES } from '../config/now-profile';
 ---
 
-<TerminalLayout
-  title="Now"
-  description="最近正在做的项目、玩的游戏和在看的作品，一组持续更新的个人记录。"
->
-  <article data-ui-only="gui" class="gui-about mx-auto max-w-[960px]">
-    <header data-reading-anchor="now-title" class="mb-7 border-b border-border pb-6">
-      <div class="flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
-        <span class="tracking-[0.18em] text-primary">/ NOW</span>
-        <time class="text-muted-foreground" datetime={NOW_UPDATED_AT}>
-          {NOW_UPDATED_AT}
-        </time>
-      </div>
-      <h1 class="mt-5 text-3xl font-medium tracking-tight md:text-4xl">最近在做什么</h1>
-      <p class="mt-3 text-sm leading-7 text-muted-foreground">
-        最近在做、在玩、在看。每条记录都可以随时增加、更新或移除。
-      </p>
-    </header>
-    <div data-reading-anchor="now-items" data-now-feed class="grid gap-x-5 gap-y-4 md:grid-cols-2">
-      {NOW_ENTRIES.map((entry) => (
-        <NowEntry entry={entry} mode="gui" />
-      ))}
-    </div>
-  </article>
-
-  <article data-ui-only="tui" class="mx-auto max-w-[800px]">
-    <header data-reading-anchor="now-title" class="mb-6 border-b border-border pb-5">
-      <div class="flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
-        <span class="tracking-widest text-primary">/ NOW / PERSONAL LOG</span>
-        <time class="text-muted-foreground" datetime={NOW_UPDATED_AT}>
-          {NOW_UPDATED_AT}
-        </time>
-      </div>
-      <h1 class="mt-4 text-2xl font-semibold">最近在做什么</h1>
-    </header>
-    <div data-reading-anchor="now-items" data-now-feed class="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-      {NOW_ENTRIES.map((entry) => (
-        <NowEntry entry={entry} mode="tui" />
-      ))}
-    </div>
-  </article>
+<TerminalLayout title="Now" description="最近在开发、在玩、在看的一些东西。">
+  {(['gui', 'tui'] as const).map((mode) => (
+    <article data-ui-only={mode} class="mx-auto w-full max-w-[960px]">
+      <h1 data-reading-anchor="now-title" class="sr-only">
+        Now
+      </h1>
+      <ul
+        data-reading-anchor="now-items"
+        data-now-feed
+        class="grid grid-cols-1 gap-x-8 md:grid-cols-2"
+      >
+        {NOW_ENTRIES.map((entry) => (
+          <NowEntry entry={entry} />
+        ))}
+      </ul>
+    </article>
+  ))}
 </TerminalLayout>

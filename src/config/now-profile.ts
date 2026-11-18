@@ -1,70 +1,63 @@
 /**
- * Public, manually curated current activities.
- * Add, remove, or reorder individual entries; the page has no fixed sections.
- * No live activity inference, private server details, or outgoing links.
+ * Individual public activities. Reorder or edit entries without touching page markup.
+ * Kinds only select a recognizable icon; no labels or cross-page links are displayed.
  */
-export const NOW_UPDATED_AT = '2026-11-17';
-
 export type NowKind = 'project' | 'game' | 'watching';
 
 export interface NowEntry {
   id: string;
   kind: NowKind;
-  category: string;
   title: string;
-  subtitle?: string;
-  status?: string;
-  detail?: string;
+  secondaryName?: string;
+  description: string;
 }
 
 export const NOW_ENTRIES: readonly NowEntry[] = [
   {
     id: 'memoflow',
     kind: 'project',
-    category: 'PERSONAL PROJECT',
-    title: '完善 MemoFlow',
-    status: '进行中',
-    detail: '继续完善目标、任务、提醒和笔记之间的使用体验。',
+    title: 'MemoFlow',
+    description: '持续完善目标、任务、提醒与笔记之间的使用体验。',
   },
   {
-    id: 'ali-three',
+    id: 'bodysense',
     kind: 'project',
-    category: 'PERSONAL PROJECT',
-    title: '阿里三项目',
-    status: '进行中',
+    title: 'BodySense',
+    description: '继续完善体态问诊、评估与诊断流程。',
   },
   {
     id: 'league-of-legends',
     kind: 'game',
-    category: 'MOBA',
     title: '英雄联盟',
-    subtitle: 'League of Legends',
+    secondaryName: 'League of Legends',
+    description: '最近在玩的团队竞技游戏。',
   },
   {
     id: 'pubg',
     kind: 'game',
-    category: 'BATTLE ROYALE',
     title: 'PUBG',
+    secondaryName: '绝地求生',
+    description: '多人战术生存射击。',
   },
   {
     id: 'counter-strike',
     kind: 'game',
-    category: 'TACTICAL FPS',
     title: 'CS:GO',
+    secondaryName: '反恐精英：全球攻势',
+    description: '竞技射击。',
   },
   {
     id: 'dwarf-fortress',
     kind: 'game',
-    category: 'SIMULATION',
     title: '矮人要塞',
-    subtitle: 'Dwarf Fortress',
+    secondaryName: 'Dwarf Fortress',
+    description: '经营模拟与故事生成。',
   },
   {
     id: 'breaking-bad',
     kind: 'watching',
-    category: 'TV SERIES',
     title: '绝命毒师',
-    subtitle: 'Breaking Bad',
-    status: '正在看',
+    secondaryName: 'Breaking Bad',
+    description: '最近正在看的剧集。',
   },
 ];
