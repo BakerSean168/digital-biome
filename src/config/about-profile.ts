@@ -1,46 +1,44 @@
 /**
- * Hand-edited, public-facing About copy.
- * Long-lived identity and interests only; short-lived updates belong in now-profile.ts.
+ * Public About copy. Keep the author's personal observations and uncertainty intact.
+ * The six entries are shared by GUI and TUI; neither page adds navigation or unrelated cards.
  */
-export const COMPUTER_INTERESTS = [
-  {
-    number: '01',
-    title: '编程与自动化',
-    detail: '喜欢把重复的事情交给程序，也喜欢从一个想法开始，慢慢做出能实际使用的工具。',
-  },
-  {
-    number: '02',
-    title: '云服务器与自托管',
-    detail: '租用云服务器、部署服务、维护自己的小系统。折腾的过程本身就很有意思。',
-  },
-  {
-    number: '03',
-    title: '家庭网络与 Homelab',
-    detail: '对路由、网络、家庭服务器和设备之间的连接很感兴趣，享受把它们一点点组织起来。',
-  },
-] as const;
+export const ABOUT_UPDATED_AT = '2026-11-18';
 
-export const ABOUT_AREAS = [
+export const ABOUT_SECTIONS = [
   {
-    title: 'Notes',
-    description: '零散的知识笔记、概念和学习过程。',
-  },
-  { title: 'Blog', description: '比较完整的文章、经历与思考。' },
-  { title: 'Projects', description: '做过和正在做的项目。' },
-  { title: 'Uses', description: '正在使用的硬件、软件、服务与网站。' },
-] as const;
-
-export const ABOUT_SYSTEMS = [
-  {
-    title: 'Thought Forest',
-    description: '记笔记、写东西，也整理思考。',
+    id: 'computers',
+    anchor: 'about-practice',
+    title: '对计算机相关的事物有兴趣',
+    text: '我对计算机相关的事物一直有兴趣，但回头看，很多探索似乎都浮于表面，没有真正深入。以前折腾《饥荒》联机，照着教程反复操作、不断尝试，花了一个下午，连续四五个小时还是没解决。我没能深入底层原理，也没能扩展信息边界，找到更好的现成工具。大概是当时搜集信息的能力比较差，网络信息的质量也不太好吧。如果那时已经有 AI，结果会不会大不相同？后来通过各种免费途径薅了不少 VPS，用来部署服务或充当开发机。大部分有时间限制，少数没有时间限制的后来也被封号了，难受。现在用 N100 搭了一台家庭服务器，折腾软路由，也部署了密码管理工具之类的服务。',
   },
   {
-    title: 'Personal Digital System',
-    description: '把日常使用的项目和系统连接起来。',
+    id: 'knowledge',
+    anchor: 'about-knowledge',
+    title: '也许是对知识本身感兴趣',
+    text: '买东西或者对某个事物产生兴趣的时候，总想了解它的参数和性质。比如一只鼠标，关键部位有哪些？传感器、模具、微动应该是主要的部分。传感器具体又有哪些型号？它们有什么区别？就这样沿着一个问题，慢慢往下了解。',
   },
   {
-    title: 'Personal Infrastructure',
-    description: '承载这些服务的设备与网络。',
+    id: 'games',
+    anchor: 'about-interests',
+    title: '游戏玩家',
+    text: '七八岁就开始玩游戏。从 4399 小游戏、逆战、穿越火线，到英雄联盟、开罗系列、未转变者、我的世界、星露谷物语、饥荒、矮人要塞、CS:GO……英雄联盟应该是玩得最久的，无论是持续时间还是游戏时长。现在也已经转变成大乱斗玩家了。',
+  },
+  {
+    id: 'nihilism',
+    anchor: 'about-ideas',
+    title: '有点积极有点消极的虚无主义者',
+    text: '客观角度讲，我觉得人生没有既定的意义，所谓意义更像人给自己搭建的牢笼——或者灯塔？死亡本身未必是最可怕、最需要逃离的，痛苦才是。而活着时的社会关系，会不会又是痛苦的根源？乐观一点看，正因为没有预设的意义，我们才可以更自由地活，自己为自己构建意义。但似乎又没那么自由：自己构建的意义，常常会和社会赋予的意义发生矛盾。',
+  },
+  {
+    id: 'simplicity',
+    anchor: 'about-lifestyle',
+    title: '低欲望、贫穷、简洁',
+    text: '主要的开销是基础电子产品和必要的食物，比如鸡胸肉、奶粉。桌子是用 1.5 cm 厚的木板、废旧桌子、包装盒和书本拼装出来的；理想中的桌子则是原木桌面加铁架子。穿衣服倾向于两层：里面一件短袖，外面一层保暖。简洁不等于简单，更像是一种实用性方面的优雅。',
+  },
+  {
+    id: 'rehabilitation',
+    anchor: 'about-content',
+    title: '体态康复和健身爱好者？',
+    text: '更多是为了维持身体的动态平衡，抵抗生活习惯对健康的影响。我看过一些相关书籍和视频，了解了不少肌肉，对体态康复有了朴素的认识，但仍然无法准确地感觉自己的身体，也没能彻底解决不适。有时甚至难以准确描述和判断：一处是臀腿部位的不适，之前有严重的坐骨神经痛，现在恢复了许多，但仍有残留；另一处是右肩的不适，以前能一次做七八十个标准俯卧撑，如今做俯卧撑时却有明显的不适感。',
   },
 ] as const;

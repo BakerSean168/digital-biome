@@ -1,231 +1,57 @@
 ---
-import { BookOpen, Network, Server } from '@lucide/astro';
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
-import { ABOUT_AREAS, ABOUT_SYSTEMS, COMPUTER_INTERESTS } from '../../config/about-profile';
+import { ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../../config/about-profile';
 ---
 
 <TerminalLayout
   title="About"
-  description="关于 BakerSean：计算机、家庭服务器、游戏、故事和一些正在思考的问题。"
+  description="关于我：计算机、知识、游戏、生活方式，以及一些还没想明白的问题。"
 >
-  <article data-ui-only="gui" class="gui-about mx-auto max-w-[1120px]">
-    <header data-reading-anchor="about-title" class="border-b border-border pb-10 md:pb-14">
-      <p class="font-mono text-xs tracking-[0.24em] text-primary">PERSONAL LOG / ABOUT</p>
-      <div class="mt-7 grid gap-9 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end lg:gap-16">
-        <div>
-          <h1 class="text-3xl leading-[1.45] font-medium tracking-tight md:text-5xl">
-            你好，我是 BakerSean。
-            <span class="block text-primary">构建系统，也记录系统之外的生活。</span>
-          </h1>
-          <p class="mt-3 text-sm text-muted-foreground">喜欢折腾，也喜欢观察。</p>
-          <p
-            data-reading-anchor="about-intro"
-            class="mt-7 max-w-[35em] text-base leading-8 text-muted-foreground md:text-lg"
+  {(['gui', 'tui'] as const).map((mode) => (
+    <article
+      data-ui-only={mode}
+      class:list={['mx-auto w-full max-w-[820px]', mode === 'gui' ? 'gui-about' : '']}
+    >
+      <header data-reading-anchor="about-title" class="border-b border-border pb-7 md:pb-9">
+        <p class="font-mono text-xs tracking-[0.2em] text-primary">/ ABOUT</p>
+        <h1 class:list={['mt-4 font-medium', mode === 'gui' ? 'text-4xl md:text-5xl' : 'text-3xl']}>
+          About
+        </h1>
+        <p class="mt-5 font-mono text-xs text-muted-foreground">
+          Last updated
+          <time datetime={ABOUT_UPDATED_AT} class="ml-2">
+            {ABOUT_UPDATED_AT}
+          </time>
+        </p>
+      </header>
+
+      <div class="divide-y divide-border">
+        {ABOUT_SECTIONS.map((section) => (
+          <section
+            id={`${mode}-about-${section.id}`}
+            data-about-section={section.id}
+            data-reading-anchor={section.anchor}
+            class="py-8 md:py-10"
           >
-            对计算机相关的东西很感兴趣。写代码、搭服务器、研究网络，偶尔把一个小想法做成真正能用的东西。离开屏幕的时候，也会打游戏、看故事，或者想一些没有标准答案的问题。
-          </p>
-        </div>
-        <aside class="border-l border-border pl-5 md:pl-7">
-          <p class="font-mono text-xs tracking-widest text-primary">ABOUT / BEHIND THE SCREEN</p>
-          <p class="mt-3 leading-7 text-muted-foreground">
-            写下一些相对稳定的兴趣和想法，不急着给自己贴标签。
-          </p>
-        </aside>
-      </div>
-    </header>
-
-    <section
-      id="about-computers"
-      data-reading-anchor="about-practice"
-      data-about-section="computers"
-      class="py-12 md:py-16"
-    >
-      <div class="flex items-center gap-3 text-primary">
-        <Server size={19} aria-hidden="true" />
-        <p class="font-mono text-xs tracking-widest">01 / THE MACHINE ROOM</p>
-      </div>
-      <div class="mt-4 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <h2 class="text-2xl font-medium md:text-3xl">一直在折腾的东西</h2>
-        <p class="max-w-[35em] leading-7 text-muted-foreground">
-          从屏幕上的代码到家里的设备，我喜欢弄清它们是怎么连接、怎么运行的。
-        </p>
-      </div>
-      <div class="mt-8 grid gap-3 md:grid-cols-3">
-        {COMPUTER_INTERESTS.map((interest) => (
-          <article class="min-h-48 border border-border p-5 transition-colors hover:border-primary/50">
-            <span class="font-mono text-xs text-primary">{interest.number} /</span>
-            <h3 class="mt-7 text-lg font-medium">{interest.title}</h3>
-            <p class="mt-3 text-sm leading-7 text-muted-foreground">{interest.detail}</p>
-          </article>
+            <h2
+              class:list={[
+                'font-medium leading-relaxed',
+                mode === 'gui' ? 'text-xl md:text-2xl' : 'text-lg',
+              ]}
+            >
+              {section.title}
+            </h2>
+            <p
+              class:list={[
+                'mt-4 whitespace-normal leading-8 text-muted-foreground',
+                mode === 'gui' ? 'text-base' : 'text-sm md:text-base',
+              ]}
+            >
+              {section.text}
+            </p>
+          </section>
         ))}
       </div>
-      <p class="mt-5 flex items-center gap-2 text-sm text-muted-foreground">
-        <Network size={16} aria-hidden="true" />
-        家庭网络、云服务器、自托管服务，以及各种还没折腾完的小系统。
-      </p>
-    </section>
-
-    <section
-      id="about-interests"
-      data-reading-anchor="about-interests"
-      data-about-section="interests"
-      class="border-t border-border py-12 md:py-16"
-    >
-      <p class="font-mono text-xs tracking-widest text-primary">02 / AWAY FROM THE TERMINAL</p>
-      <h2 class="mt-4 text-2xl font-medium md:text-3xl">屏幕之外的兴趣</h2>
-      <p class="mt-4 max-w-[43em] leading-8 text-muted-foreground">
-        除了计算机，我也喜欢游戏、电影、剧集和各种有意思的故事。
-        有时和朋友一起玩竞技游戏，有时一个人在模拟世界里沉浸很久。
-      </p>
-      <div class="mt-8 grid gap-3 md:grid-cols-2">
-        <div class="border-t border-border pt-5">
-          <h3 class="font-medium">游戏</h3>
-          <p class="mt-3 text-sm leading-7 text-muted-foreground">
-            喜欢英雄联盟、PUBG、CS:GO，也喜欢像矮人要塞这样复杂又自由的游戏。
-          </p>
-        </div>
-        <div class="border-t border-border pt-5">
-          <h3 class="font-medium">故事与影像</h3>
-          <p class="mt-3 text-sm leading-7 text-muted-foreground">
-            会看剧、动画和故事解说。更在意故事本身，以及它们留下的情绪和问题。
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <section
-      id="about-ideas"
-      data-about-section="ideas"
-      class="grid gap-9 border-t border-border py-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-16 md:py-16"
-    >
-      <div>
-        <div class="flex items-center gap-3 text-primary">
-          <BookOpen size={19} aria-hidden="true" />
-          <p class="font-mono text-xs tracking-widest">03 / THINGS I THINK ABOUT</p>
-        </div>
-        <h2 class="mt-4 text-2xl font-medium md:text-3xl">读一点，也想一点</h2>
-        <p class="mt-6 leading-8 text-muted-foreground">
-          思想上，我目前比较接近叔本华对欲望、痛苦和生活的观察。之前也接触过齐奥朗的观点，对那些不轻易给生活下结论的思考很感兴趣。
-        </p>
-        <p class="mt-4 leading-8 text-muted-foreground">
-          这不是想给自己贴上某个流派的标签。很多问题还没想明白，也许以后会改变看法。
-        </p>
-      </div>
-      <div class="flex flex-col justify-end gap-3">
-        <div class="border-t border-border py-4">
-          <p class="font-mono text-xs tracking-widest text-primary">ARTHUR SCHOPENHAUER</p>
-          <p class="mt-2 text-sm text-muted-foreground">欲望、意志，以及人与世界的关系</p>
-        </div>
-        <div class="border-t border-border py-4">
-          <p class="font-mono text-xs tracking-widest text-primary">EMIL CIORAN</p>
-          <p class="mt-2 text-sm text-muted-foreground">悲观主义、怀疑与格言式的思考</p>
-        </div>
-      </div>
-    </section>
-
-    <section
-      data-reading-anchor="about-content"
-      data-about-section="ecosystem"
-      class="border-t border-border py-12 md:py-16"
-    >
-      <p class="font-mono text-xs tracking-widest text-primary">04 / DIGITAL BIOME</p>
-      <h2 class="mt-4 text-2xl font-medium md:text-3xl">这些兴趣留下的痕迹</h2>
-      <p class="mt-4 max-w-[45em] leading-8 text-muted-foreground">
-        笔记、文章、项目和自建系统慢慢构成了 Digital Biome，也是我记录与实践这些兴趣的方式。
-      </p>
-      <div class="mt-8 grid gap-x-8 gap-y-3 sm:grid-cols-2">
-        {ABOUT_AREAS.map((area) => (
-          <div class="flex min-h-24 items-start border-t border-border py-4">
-            <div>
-              <h3 class="text-lg font-medium">{area.title}</h3>
-              <p class="mt-2 text-sm leading-6 text-muted-foreground">{area.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div
-        data-reading-anchor="about-ecosystem"
-        class="mt-8 grid gap-5 border-t border-border pt-7 md:grid-cols-3"
-      >
-        {ABOUT_SYSTEMS.map((system) => (
-          <div>
-            <h3 class="text-sm font-medium">{system.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">{system.description}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-
-    <footer data-reading-anchor="about-contact" class="border-t border-border py-7">
-      <p data-reading-anchor="about-access" class="text-sm leading-7 text-muted-foreground">
-        喜欢探索、构建，也喜欢用文字留下自己的观察。
-      </p>
-    </footer>
-  </article>
-
-  <article data-ui-only="tui" class="mx-auto max-w-[760px] space-y-10">
-    <header data-reading-anchor="about-title">
-      <p class="font-mono text-xs tracking-widest text-primary">/ ABOUT / PERSONAL</p>
-      <h1 class="mt-4 text-3xl font-semibold">BakerSean</h1>
-      <p class="mt-3 text-lg">喜欢折腾，也喜欢观察。</p>
-      <p data-reading-anchor="about-intro" class="mt-5 leading-8 text-muted-foreground">
-        对计算机相关的东西很感兴趣。写代码、搭服务器、研究网络，偶尔把一个小想法做成真正能用的东西。离开屏幕的时候，也会打游戏、看故事，或者想一些没有标准答案的问题。
-      </p>
-    </header>
-
-    <section data-reading-anchor="about-practice" data-about-section="computers">
-      <h2 class="mb-5 text-primary">## 计算机 / HomeLab</h2>
-      <div class="space-y-5">
-        {COMPUTER_INTERESTS.map((interest) => (
-          <div>
-            <h3 class="font-semibold">{interest.title}</h3>
-            <p class="mt-1 leading-7 text-muted-foreground">{interest.detail}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-
-    <section data-reading-anchor="about-interests" data-about-section="interests">
-      <h2 class="mb-5 text-primary">## 屏幕之外</h2>
-      <p class="leading-8">
-        也喜欢游戏、电影、剧集和故事解说。既会和朋友一起玩竞技游戏，也喜欢沉浸在矮人要塞这样的模拟世界里。
-      </p>
-    </section>
-
-    <section data-about-section="ideas">
-      <h2 class="mb-5 text-primary">## 阅读与思想</h2>
-      <p class="leading-8">
-        目前比较接近叔本华对欲望和痛苦的观察，也接触过齐奥朗的观点。对这些问题感兴趣，但不想因此给自己贴上固定的标签。
-      </p>
-    </section>
-
-    <section data-reading-anchor="about-content" data-about-section="ecosystem">
-      <h2 class="mb-5 text-primary">## Digital Biome 里有什么</h2>
-      <p class="mb-9 leading-7 text-muted-foreground">
-        笔记、文章、项目和自建系统慢慢构成了 Digital Biome，也是我记录与实践这些兴趣的方式。
-      </p>
-      <dl class="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-4 text-sm">
-        {ABOUT_AREAS.map((area) => (
-          <>
-            <dt class="font-medium">{area.title}</dt>
-            <dd class="text-muted-foreground">{area.description}</dd>
-          </>
-        ))}
-      </dl>
-      <div data-reading-anchor="about-ecosystem" class="mt-7 space-y-3">
-        {ABOUT_SYSTEMS.map((system) => (
-          <p>
-            <strong>{system.title}</strong>
-            <span class="text-muted-foreground"> — {system.description}</span>
-          </p>
-        ))}
-      </div>
-    </section>
-
-    <footer data-reading-anchor="about-contact" class="border-t border-border pt-6">
-      <p data-reading-anchor="about-access" class="text-sm text-muted-foreground">
-        喜欢探索、构建，也喜欢用文字留下自己的观察。
-      </p>
-    </footer>
-  </article>
+    </article>
+  ))}
 </TerminalLayout>

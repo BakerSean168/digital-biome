@@ -263,7 +263,8 @@ test('Tag directory remains complete while About uses bounded content', async ({
   expect(expected).toBeGreaterThan(100);
   await expect(page.locator('a.tag-chip')).toHaveCount(expected);
   await page.goto('/about/?ui=gui');
-  await expect(page.locator('h1:visible')).toContainText('构建系统');
+  await expect(page.locator('h1:visible')).toHaveText('About');
+  await expect(page.locator('article[data-ui-only="gui"] [data-about-section]')).toHaveCount(6);
   await expect(page.locator('[data-heatmap-grid]')).toHaveCount(0);
 });
 
@@ -370,10 +371,10 @@ test('About retains full content and a shared reading anchor across mobile modes
   await page.goto('/about?ui=gui');
   await expect(
     page.locator('[data-ui-only="gui"] [data-reading-anchor="about-content"]'),
-  ).toContainText('Notes');
+  ).toContainText('坐骨神经痛');
   await expect(
     page.locator('[data-ui-only="gui"] [data-reading-anchor="about-content"]'),
-  ).toContainText('Blog');
+  ).toContainText('右肩');
   const key = '[data-reading-anchor="about-practice"]:visible';
   await page.locator(key).evaluate((element) => element.scrollIntoView({ block: 'start' }));
   const position = () =>
@@ -391,7 +392,7 @@ test('About retains full content and a shared reading anchor across mobile modes
   await expect.poll(async () => Math.abs((await position()) - before)).toBeLessThan(4);
 });
 
-test('About switches modes while reading inside a definition list', async ({ page }) => {
+test('About switches modes while reading the final personal section', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 650 });
   await page.goto('/about?ui=gui');
   const section = page.locator('[data-reading-anchor="about-content"]:visible');

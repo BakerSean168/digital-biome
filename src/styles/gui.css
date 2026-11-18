@@ -275,11 +275,6 @@ html[data-ui='gui'] [data-page-title] {
   gap: 28px;
   margin-top: 30px;
 }
-.gui-about-columns {
-  display: grid;
-  gap: 36px;
-  margin-top: 48px;
-}
 @media (min-width: 900px) {
   .gui-home-intro {
     grid-template-columns: minmax(0, 1fr);
@@ -292,11 +287,6 @@ html[data-ui='gui'] [data-page-title] {
   }
   .gui-about {
     padding-top: 4px;
-  }
-  .gui-about-columns {
-    grid-template-columns: minmax(0, 650px) minmax(0, 1fr);
-    gap: 120px;
-    margin-top: 48px;
   }
 }
 @media (max-width: 767px) {
