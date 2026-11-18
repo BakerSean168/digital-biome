@@ -49,15 +49,16 @@ flowchart LR
 | --- | --- |
 | `/` | Home (GUI/TUI) |
 | `/notes`, `/notes/[...slug]` | Knowledge garden list and note pages |
-| `/tools`, `/tools/[assetId]` | Tools catalog and tool detail |
-| `/dev`, `/dev/[assetId]`, `/projects/[assetId]` | Project portfolio and project detail |
+| `/uses`, `/uses/[assetId]` | Personal hardware/software and complete searchable service, website, host, and network catalog; tool asset detail |
+| `/projects`, `/projects/[assetId]` | Canonical project collection and individual project details |
+| `/dev`, `/dev/[assetId]` | Legacy collection redirect to `/projects`; historical service-asset detail route retained |
 | `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
 | `/systems` | Personal Systems portal (`pds-catalog-v1`) |
-| `/about`, `/about/tags` | About / resume and tag index |
+| `/about`, `/now`, `/about/tags` | Self-contained long-lived introduction, manually updated typed Now activity cards, and tag index |
 | `/blog`, `/friends` | Blog and friends links |
 | `/login` | Cloudflare Access entry |
 | `/404` | Not found |
-| `/data/notes-catalog.json`, `/data/tools-catalog.json`, `/data/terminal/[catalog].json`, `/data/system-launcher-index.json` | Public JSON catalogs |
+| `/data/notes-catalog.json`, `/data/uses-catalog.json`, `/data/terminal/[catalog].json`, `/data/system-launcher-index.json` | Public JSON catalogs |
 
 已退役且由契约测试阻止回归：Dashboard/BiomeTree UI 与 `DashboardLayout`、Observability 页面、`/discover`、`/about/refactor`。
 

@@ -22,7 +22,7 @@ export function buildKnowledgeNoteHref(noteId: string): string {
  * Build the public href for an asset note.
  * Pattern depends on asset_type:
  *   service -> /services/<asset_id>
- *   tool    -> /tools/<asset_id>
+ *   tool    -> /uses/<asset_id>
  *   host    -> /infrastructure/<asset_id>
  *   network -> /infrastructure/<asset_id>
  *   project -> /projects/<asset_id>
@@ -37,7 +37,7 @@ export function buildAssetHref(asset: { asset_id?: string; asset_type?: AssetTyp
   }
 
   if (asset.asset_type === 'tool') {
-    return `/tools/${asset.asset_id}`;
+    return `/uses/${asset.asset_id}`;
   }
 
   if (asset.asset_type === 'project') {

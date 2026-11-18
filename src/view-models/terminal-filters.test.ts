@@ -29,9 +29,6 @@ test('facets OR values within a group and AND across groups', () => {
   assert.equal(applyFacets(rows, options, new Set()).length, 3);
 });
 test('selected object path is public UI context, not its private destination', () => {
-  assert.equal(
-    objectPath('/tools/hosts', 'iStoreOS 旁路由 VM'),
-    '~/tools/hosts/istoreos-旁路由-vm',
-  );
-  assert.equal(objectPath('/tools/hosts'), '~/tools/hosts');
+  assert.equal(objectPath('/uses/hosts', 'iStoreOS 旁路由 VM'), '~/uses/hosts/istoreos-旁路由-vm');
+  assert.equal(objectPath('/uses/hosts'), '~/uses/hosts');
 });

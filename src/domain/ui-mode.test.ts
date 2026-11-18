@@ -3,14 +3,14 @@ import test from 'node:test';
 import { parseUiMode, resolveUiMode, urlAfterModeChoice, withUiMode } from './ui-mode';
 
 test('URL mode overrides a valid preference; invalid inputs fall back to TUI', () => {
-  assert.equal(resolveUiMode(new URL('https://biome.test/tools?ui=gui'), 'tui'), 'gui');
-  assert.equal(resolveUiMode(new URL('https://biome.test/tools?ui=bad'), 'gui'), 'gui');
+  assert.equal(resolveUiMode(new URL('https://biome.test/uses?ui=gui'), 'tui'), 'gui');
+  assert.equal(resolveUiMode(new URL('https://biome.test/uses?ui=bad'), 'gui'), 'gui');
   assert.equal(resolveUiMode(new URL('https://biome.test/'), null), 'tui');
   for (const value of ['GUI', '', null, {}, 1]) assert.equal(parseUiMode(value), undefined);
 });
 
 test('manual switching retains route, query and hash and has a storage-failure fallback', () => {
-  const current = new URL('https://biome.test/tools?ui=tui&q=some%20tool#hosts');
+  const current = new URL('https://biome.test/uses?ui=tui&q=some%20tool#hosts');
   const saved = urlAfterModeChoice(current, 'gui', true);
   assert.equal(saved.searchParams.get('q'), 'some tool');
   assert.equal(saved.hash, '#hosts');
@@ -20,7 +20,7 @@ test('manual switching retains route, query and hash and has a storage-failure f
 });
 
 test('temporary mode follows content navigation without changing external or auth endpoints', () => {
-  const current = new URL('https://biome.test/tools?ui=gui');
+  const current = new URL('https://biome.test/uses?ui=gui');
   assert.equal(
     withUiMode('/notes?tag=tech%2Fweb#reading', current),
     '/notes?tag=tech%2Fweb&ui=gui#reading',

@@ -132,7 +132,7 @@ export function terminalInfrastructure(): TerminalObject[] {
       },
       href:
         primary?.url ??
-        (primary?.privateRef ? '/login?next=%2Ftools' : `/infrastructure/${resource.id}`),
+        (primary?.privateRef ? '/login?next=%2Fuses' : `/infrastructure/${resource.id}`),
       privateRef: primary?.privateRef,
       relations: [
         { title: '资源详情', href: `/infrastructure/${resource.id}` },

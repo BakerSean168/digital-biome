@@ -13,7 +13,7 @@
   <a href="https://github.com/BakerSean168/thought-forest"><strong>Thought Forest</strong></a>
 </p>
 
-Digital Biome 是我的个人数字空间：它把 **知识库、项目作品集、个人履历、数字资产与基础设施可视化** 放在同一个站点里。内容并不是手工复制到前端，而是由 Thought Forest 作为知识真值源，经同步、脱敏、索引和构建流程，把适合公开的部分投影到 Web。
+Digital Biome 是我的个人数字空间：它把 **知识库、项目作品集、个人介绍与近况、数字资产和基础设施可视化** 放在同一个站点里。内容并不是手工复制到前端，而是由 Thought Forest 作为知识真值源，经同步、脱敏、索引和构建流程，把适合公开的部分投影到 Web。
 
 它既是一个 Astro 网站，也是一个关于“如何把个人知识与工程实践组织成长期可维护数字资产”的工程项目。
 
@@ -21,8 +21,8 @@ Digital Biome 是我的个人数字空间：它把 **知识库、项目作品集
 
 - **知识花园** —— Obsidian / Thought Forest 笔记、标签、wikilink、反向链接与全文搜索。
 - **项目作品集** —— 以产品问题、核心闭环和工程亮点展示项目，并同时连接 GitHub、项目介绍页和生产环境。
-- **个人介绍与履历** —— 个人资料、履历、标签与持续学习轨迹。
-- **工具目录** —— 精选外部工具与书签，支持 GUI 与终端（TUI）两种浏览模式。
+- **About / Now / Uses** —— `/about` 独立记录长期兴趣与思考；`/now` 通过可增删的项目、游戏、影视条目手动维护近期活动；`/uses` 展示公开的硬件、软件、服务与网站。
+- **Uses 个人清单** —— `/uses` 统一展示硬件、软件、完整服务、网站、主机与网络资源，保留原有筛选与访问能力。
 - **基础设施地图** —— 对公开资产、主机、网络和服务关系进行可视化，同时保留 private/internal 边界。
 - **个人系统门户** —— `/systems` 展示 Personal Digital System 目录（`pds-catalog-v1`）。
 
@@ -42,7 +42,7 @@ CI / Candidate 通过 `data-products/knowledge-public-v1.lock.json` 固定 Thoug
 
 ## 项目展示模型
 
-`/dev` 页面消费 Thought Forest 中 **公开的 `asset_type: project` 记录**。一个重点项目可以暴露三个职责不同的入口：
+`/projects` 页面消费 Thought Forest 中 **公开的 `asset_type: project` 记录**。一个重点项目可以暴露三个职责不同的入口：
 
 1. **在线产品** —— 真正运行中的生产应用。
 2. **项目介绍页** —— 基于 GitHub Pages 的轻量介绍站，重点解释产品故事和工程亮点。

@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getBookmarksByCategory } from '../../utils/notes';
-import { buildToolCatalogGroups } from '../../view-models/tools-catalog';
+import { buildUsesCatalogGroups } from '../../view-models/uses-catalog';
 
 export const prerender = true;
 
 export const GET: APIRoute = async () => {
-  const catalog = buildToolCatalogGroups(getBookmarksByCategory());
+  const catalog = buildUsesCatalogGroups(getBookmarksByCategory());
   return new Response(JSON.stringify(catalog), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',

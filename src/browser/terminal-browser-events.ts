@@ -47,7 +47,7 @@ export function bindTerminalBrowserEvents(deps: TerminalBrowserEventDependencies
       if (!target || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       if ((event.target as Element).closest('[data-object-direct]')) return;
       // Native keyboard activation opens the link; pointer selection reveals its preview.
-      if (event.detail === 0) return;
+      if (event.detail === 0 && !root.hasAttribute('data-preview-only')) return;
       event.preventDefault();
       select(browser.rows.indexOf(target));
       if (

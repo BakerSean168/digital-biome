@@ -10,12 +10,17 @@ export const PRIMARY_NAVIGATION = [
     desc: 'Notes 知识笔记 · Blog 博客文章',
     alias: ['library', 'notes', '知识', '笔记'],
   },
-  { title: 'Projects', href: '/dev', desc: '项目、作品与代码', alias: ['projects', 'dev', '项目'] },
   {
-    title: 'Tools',
-    href: '/tools',
-    desc: '服务、外部资源、主机与网络',
-    alias: ['tools', 'services', '工具', '服务'],
+    title: 'Projects',
+    href: '/projects',
+    desc: '项目、作品与代码',
+    alias: ['projects', 'dev', '项目'],
+  },
+  {
+    title: 'Uses',
+    href: '/uses',
+    desc: '我在使用的硬件、软件、服务与网站',
+    alias: ['uses', 'tools', '硬件', '软件', '设备', '服务目录', '我在使用'],
   },
   {
     title: 'About',
@@ -23,15 +28,22 @@ export const PRIMARY_NAVIGATION = [
     desc: '关于 BakerSean 与这片数字生态',
     alias: ['about', '关于'],
   },
+  {
+    title: 'Now',
+    href: '/now',
+    desc: '最近在做什么、玩什么、看什么',
+    alias: ['now', '近况', '最近'],
+  },
 ] as const;
 
 export function activeNavigation(path: string): string | undefined {
   const route = path.replace(/\/+$/, '') || '/';
   if (route === '/') return '/';
   if (/^\/(notes|blog)(\/|$)/.test(route) || route === '/about/tags') return '/notes';
-  if (/^\/(dev|projects)(\/|$)/.test(route)) return '/dev';
-  if (/^\/(tools|systems|infrastructure)(\/|$)/.test(route)) return '/tools';
+  if (/^\/(dev|projects)(\/|$)/.test(route)) return '/projects';
+  if (/^\/(uses|systems|infrastructure)(\/|$)/.test(route)) return '/uses';
   if (route === '/about') return '/about';
+  if (route === '/now') return '/now';
   return undefined;
 }
 
@@ -40,6 +52,7 @@ export function pageMode(path: string): string {
   if (route === '/404' || route === '/404.html') return '404';
   if (route === '/friends') return 'FRIENDS';
   if (route === '/login') return 'ACCESS';
+  if (route === '/now') return 'NOW';
   return (
     PRIMARY_NAVIGATION.find((item) => item.href === activeNavigation(route))?.title.toUpperCase() ??
     'READ'

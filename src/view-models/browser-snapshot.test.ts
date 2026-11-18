@@ -6,13 +6,13 @@ test('independent category state survives writes without replacing router-owned 
   const services = { query: 'model', facets: ['access'], selectedId: 'litellm', limit: 24 };
   const hosts = { query: '', facets: [], selectedId: 'oracle', limit: 12 };
   const state = withBrowserSnapshot(
-    withBrowserSnapshot({ router: 1 }, '/tools#services', services),
-    '/tools#hosts',
+    withBrowserSnapshot({ router: 1 }, '/uses#services', services),
+    '/uses#hosts',
     hosts,
   );
   assert.equal(state.router, 1);
-  assert.deepEqual(readBrowserSnapshot(state, '/tools#services'), services);
-  assert.deepEqual(readBrowserSnapshot(state, '/tools#hosts'), hosts);
+  assert.deepEqual(readBrowserSnapshot(state, '/uses#services'), services);
+  assert.deepEqual(readBrowserSnapshot(state, '/uses#hosts'), hosts);
   assert.equal(readBrowserSnapshot(state, '/notes'), undefined);
 });
 

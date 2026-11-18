@@ -1,78 +1,114 @@
 ---
-import FeaturedSystems from './FeaturedSystems.astro';
+import { HOME_SLASH_LINKS, HOME_WORDS } from '../../config/home-profile';
 import type { TerminalObject } from '../../view-models/terminal-object';
-import type { getPinnedPortalServices } from '../../utils/personal-systems';
+
 interface Props {
   notes: TerminalObject[];
   blogs: TerminalObject[];
-  pinned: ReturnType<typeof getPinnedPortalServices>;
 }
-const { notes, blogs, pinned } = Astro.props;
-const entries = [
-  { label: 'Library', href: '/notes', purpose: '知识笔记与独立写作' },
-  { label: 'Projects', href: '/dev', purpose: '从想法到可使用的作品' },
-  { label: 'Tools', href: '/tools', purpose: '服务、资源与运行环境' },
-];
+const { notes, blogs } = Astro.props;
 ---
 
-<section data-ui-only="gui" class="gui-home">
+<section data-ui-only="gui" class="gui-home mx-auto w-full max-w-5xl">
   <div class="gui-home-intro">
-    <header>
-      <p class="mb-5 text-sm text-primary">个人数字生态</p>
-      <h1 class="text-[32px] leading-tight md:text-5xl">BakerSean</h1>
-      <p class="mt-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-        写下的，做出的，正在使用的。
-        <br />
-        知识、作品与个人系统，在这里相连。
-      </p>
-      <a href="/about" class="mt-8 hidden text-sm text-primary md:inline-block">
-        了解我和这片数字生态 →
-      </a>
-    </header>
-    <nav aria-label="探索数字生态" class="gui-home-entries">
-      {entries.map((entry) => (
-        <a
-          href={entry.href}
-          class="group flex min-h-16 items-center gap-5 border-b border-border py-4 md:min-h-20"
+    <header data-home-identity class="flex items-center gap-4 md:gap-5">
+      <img
+        src="/favicon.svg"
+        width="64"
+        height="64"
+        alt=""
+        class="h-12 w-12 shrink-0 brightness-0 invert md:h-16 md:w-16"
+      />
+      <div class="min-w-0">
+        <h1 class="text-[28px] leading-tight font-semibold md:text-[42px]">BakerSean</h1>
+        <p
+          data-home-bio
+          class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground md:text-base"
         >
-          <span class="w-[90px] shrink-0 font-semibold group-hover:text-primary md:w-[138px] md:text-2xl md:font-normal">
-            {entry.label}
-          </span>
-          <span class="text-sm text-muted-foreground md:text-base">{entry.purpose}</span>
+          {HOME_WORDS.map((word, index) => (
+            <>
+              {index > 0 && <span aria-hidden="true">·</span>}
+              <a
+                href={word.href}
+                class="underline decoration-border underline-offset-4 hover:text-primary"
+              >
+                {word.word}
+              </a>
+            </>
+          ))}
+        </p>
+      </div>
+    </header>
+
+    <nav
+      data-home-slash-links
+      aria-label="Slash Pages"
+      class="grid grid-cols-2 gap-x-8 border-t border-border pt-4 sm:grid-cols-3"
+    >
+      {HOME_SLASH_LINKS.map((link) => (
+        <a
+          href={link.href}
+          class="group flex min-h-11 min-w-0 items-center justify-between gap-3 border-b border-border py-2 text-sm"
+        >
+          <span class="font-mono group-hover:text-primary">{link.label}</span>
+          {link.shortcut && (
+            <kbd class="shrink-0 font-mono text-xs text-muted-foreground">{link.shortcut}</kbd>
+          )}
         </a>
       ))}
     </nav>
   </div>
+
   <div class="gui-home-writing">
-    <section>
-      <h2 class="text-lg">
-        <a href="/blog" class="hover:text-primary">
-          Blog
+    <section data-home-recent="blogs" aria-labelledby="home-gui-blogs">
+      <div class="mb-4 flex items-baseline justify-between gap-4">
+        <h2 id="home-gui-blogs" class="text-lg font-medium">
+          Recent Blogs
+        </h2>
+        <a href="/blog" class="shrink-0 font-mono text-xs text-primary hover:underline">
+          /blog →
         </a>
-      </h2>
-      <p class="mt-3 text-sm text-muted-foreground">完整的叙述与个人思考</p>
-      {blogs.slice(0, 1).map((post) => (
-        <a href={post.href} class="mt-6 block hover:text-primary md:mt-10">
-          <h3 class="text-lg md:text-2xl">{post.title}</h3>
-          <p class="mt-4 text-xs text-muted-foreground">{post.meta}</p>
-        </a>
-      ))}
-    </section>
-    <section>
-      <h2 class="text-lg">
-        <a href="/notes" class="hover:text-primary">
-          Notes
-        </a>
-      </h2>
-      <p class="mt-3 text-sm text-muted-foreground">持续补充，彼此连接的知识</p>
-      <div class="mt-6 space-y-4 md:mt-10">
-        {notes.slice(0, 2).map((note) => (
-          <a href={note.href} class="block text-base hover:text-primary md:text-lg">
-            {note.title}
-          </a>
-        ))}
       </div>
+      <ol class="border-t border-border">
+        {blogs.slice(0, 3).map((post) => (
+          <li class="border-b border-border">
+            <a
+              href={post.href}
+              class="flex min-h-12 min-w-0 items-center justify-between gap-4 py-2 hover:text-primary"
+            >
+              <span class="min-w-0 text-sm leading-6 md:text-base">{post.title}</span>
+              {post.meta && (
+                <span class="shrink-0 font-mono text-xs text-muted-foreground">{post.meta}</span>
+              )}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+    <section data-home-recent="notes" aria-labelledby="home-gui-notes">
+      <div class="mb-4 flex items-baseline justify-between gap-4">
+        <h2 id="home-gui-notes" class="text-lg font-medium">
+          Recent Notes
+        </h2>
+        <a href="/notes" class="shrink-0 font-mono text-xs text-primary hover:underline">
+          /notes →
+        </a>
+      </div>
+      <ol class="border-t border-border">
+        {notes.slice(0, 3).map((note) => (
+          <li class="border-b border-border">
+            <a
+              href={note.href}
+              class="flex min-h-12 min-w-0 items-center justify-between gap-4 py-2 hover:text-primary"
+            >
+              <span class="min-w-0 text-sm leading-6 md:text-base">{note.title}</span>
+              {note.meta && (
+                <span class="shrink-0 font-mono text-xs text-muted-foreground">{note.meta}</span>
+              )}
+            </a>
+          </li>
+        ))}
+      </ol>
     </section>
   </div>
-  <FeaturedSystems services={pinned} class="mt-10 md:mt-20" />
 </section>

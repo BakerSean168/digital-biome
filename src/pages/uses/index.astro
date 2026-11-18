@@ -1,0 +1,178 @@
+---
+import TerminalLayout from '../../layouts/TerminalLayout.astro';
+import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
+import { terminalInfrastructure, terminalExternal } from '../../repositories/terminal-repository';
+import { usesHardwareObjects, usesSoftwareObjects } from '../../view-models/uses-personal-objects';
+
+const resources = terminalInfrastructure();
+const external = terminalExternal();
+const groups = [
+  {
+    id: 'services',
+    label: 'services',
+    title: '自托管服务',
+    description:
+      '自托管服务与应用，包含登记中的不同生命周期状态。Access 入口需要身份验证；状态来自资源登记，不代表实时健康。',
+    items: resources.filter((item) => item.kind === 'service'),
+  },
+  {
+    id: 'external',
+    label: 'websites',
+    title: '网站与资源',
+    description: '经常用到或收藏的外部网站、工具与资源，由公开书签数据提供。',
+    items: external,
+  },
+  {
+    id: 'hosts',
+    label: 'hosts',
+    title: '主机与设备',
+    description: '承载服务的服务器、主机与虚拟机，具体状态来自资源登记。',
+    items: resources.filter((item) => item.kind === 'host'),
+  },
+  {
+    id: 'network',
+    label: 'network',
+    title: '网络与平台',
+    description: '连接个人基础设施的网络、平台与服务关系。',
+    items: resources.filter((item) => item.kind === 'network' || item.kind === 'platform'),
+  },
+];
+const tabs = [
+  { id: 'hardware', label: 'hardware', title: '硬件设备' },
+  { id: 'software', label: 'software', title: '日常软件' },
+  ...groups.map(({ id, label, title }) => ({ id, label, title })),
+];
+---
+
+<TerminalLayout
+  browser
+  title="Uses"
+  description="我实际使用的硬件、软件、网站、自托管服务以及家庭网络与服务器。"
+>
+  <h1 class="sr-only">Uses / 我在使用的东西</h1>
+  <nav
+    aria-label="Uses 分类"
+    class="content-tabs mb-3 flex flex-nowrap gap-3 overflow-x-auto sm:flex-wrap sm:overflow-visible"
+    data-uses-tabs
+  >
+    {tabs.map((tab, i) => (
+      <a
+        href={`#${tab.id}`}
+        data-uses-tab={tab.id}
+        data-terminal-tab={i + 1}
+        aria-current={i === 0 ? 'true' : 'false'}
+        class="shrink-0 whitespace-nowrap border border-border px-3 py-0.5 text-muted-foreground aria-[current=true]:border-primary aria-[current=true]:text-primary"
+      >
+        <span data-ui-only="tui" class="font-mono">
+          {i + 1} {tab.label}
+        </span>
+        <span data-ui-only="gui">
+          {tab.title} <span class="hidden font-mono text-xs sm:inline">{tab.label}</span>
+        </span>
+      </a>
+    ))}
+  </nav>
+
+  <section
+    id="hardware"
+    data-uses-panel
+    data-uses-section="hardware"
+    data-reading-anchor="uses-hardware"
+    class="mb-8 scroll-mt-5"
+  >
+    <ObjectBrowser
+      items={usesHardwareObjects()}
+      label="硬件设备"
+      contextPath="/uses#hardware"
+      queryParam="facet"
+      defaultSortLabel="默认顺序"
+      previewOnly
+    />
+  </section>
+
+  <section
+    id="software"
+    data-uses-panel
+    data-uses-section="software"
+    data-reading-anchor="uses-software"
+    class="mb-8 scroll-mt-5"
+    hidden
+  >
+    <ObjectBrowser
+      items={usesSoftwareObjects()}
+      label="日常软件"
+      contextPath="/uses#software"
+      queryParam="facet"
+      defaultSortLabel="默认顺序"
+      previewOnly
+    />
+  </section>
+
+  {groups.map((group) => (
+    <section
+      id={group.id}
+      data-uses-panel
+      data-uses-section={group.id}
+      class="mb-8 scroll-mt-5"
+      hidden
+    >
+      <ObjectBrowser
+        items={group.items.slice(0, group.id === 'external' ? 16 : 12)}
+        total={group.items.length}
+        catalog={
+          group.items.length > (group.id === 'external' ? 16 : 12)
+            ? `/data/terminal/${group.id}.json`
+            : undefined
+        }
+        label={group.label}
+        autoFill
+        defaultSortLabel="优先级"
+        queryParam="facet"
+        contextPath={`/uses#${group.id}`}
+      />
+    </section>
+  ))}
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-uses-tab]'));
+    const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-uses-panel]'));
+    const aliases: Record<string, string> = {
+      'uses-hardware': 'hardware',
+      'uses-software': 'software',
+      'uses-services': 'services',
+      'uses-websites': 'external',
+    };
+    function activate() {
+      const requested = location.hash.slice(1);
+      const normalized = aliases[requested] ?? requested;
+      const active = panels.some((panel) => panel.id === normalized) ? normalized : 'hardware';
+      panels.forEach((panel) => {
+        if (!panel.hidden && panel.id !== active)
+          panel
+            .querySelector('[data-object-browser]')
+            ?.dispatchEvent(new Event('terminal-deactivate'));
+        panel.hidden = panel.id !== active;
+        if (!panel.hidden)
+          panel
+            .querySelector('[data-object-browser]')
+            ?.dispatchEvent(new Event('terminal-activate'));
+      });
+      tabs.forEach((tab) =>
+        tab.setAttribute('aria-current', String(tab.dataset.usesTab === active)),
+      );
+    }
+    tabs.forEach((tab) =>
+      tab.addEventListener('click', (event) => {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        const url = new URL(tab.href);
+        for (const key of ['q', 'sort', 'facet']) url.searchParams.delete(key);
+        history.pushState(history.state, '', url);
+        activate();
+      }),
+    );
+    window.addEventListener('popstate', activate);
+    window.addEventListener('hashchange', activate);
+    activate();
+  </script>
+</TerminalLayout>

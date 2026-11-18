@@ -11,7 +11,7 @@ import { bindTerminalBrowserEvents } from './terminal-browser-events';
 import { createTerminalBrowserLoader, TERMINAL_PAGE_SIZE } from './terminal-browser-loader';
 import { initialTerminalSnapshot, updatedTerminalUrl } from './terminal-url';
 
-const DEFAULT_TOOLS_PANEL_ID = 'services';
+const DEFAULT_USES_PANEL_ID = 'hardware';
 
 export function mountTerminalBrowser(root: HTMLElement): () => void {
   const lifecycle = new AbortController();
@@ -34,11 +34,11 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
   );
   const stateKey = root.dataset.contextPath ?? location.pathname;
   const visible = () => {
-    const panel = root.closest<HTMLElement>('[data-tools-panel]');
+    const panel = root.closest<HTMLElement>('[data-uses-panel]');
     const requested = document.getElementById(location.hash.slice(1));
-    const active = requested?.hasAttribute('data-tools-panel')
+    const active = requested?.hasAttribute('data-uses-panel')
       ? requested.id
-      : DEFAULT_TOOLS_PANEL_ID;
+      : DEFAULT_USES_PANEL_ID;
     return !signal.aborted && root.getClientRects().length > 0 && (!panel || panel.id === active);
   };
   const sortValue = (): NonNullable<BrowserSnapshot['sort']> =>
@@ -203,14 +203,12 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     const item = browser.filtered[browser.selected];
     const source = browser.rows[browser.selected];
     if (!browser.pending && error.classList.contains('hidden')) {
+      // Ordinary completion is already represented by the result count.
+      // Only announce an actionable boundary to assistive technology.
       status.textContent =
-        browser.selected === browser.rows.length - 1 && browser.rows.length > 0
-          ? hasMore()
-            ? '已到当前末尾 · 连按 J 加载更多'
-            : '已到末尾'
-          : browser.loaded && browser.rows.length >= browser.filtered.length
-            ? '已显示全部'
-            : '';
+        browser.selected === browser.rows.length - 1 && browser.rows.length > 0 && hasMore()
+          ? '已到当前末尾 · 连按 J 加载更多'
+          : '';
     }
     if (remember) saveState();
     if (!item || !source) {

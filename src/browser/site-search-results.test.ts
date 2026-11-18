@@ -7,8 +7,8 @@ const routes: SearchNavigationCommand[] = [
   {
     type: 'cmd',
     label: 'NAV',
-    title: 'Tools',
-    href: '/tools',
+    title: 'Uses',
+    href: '/uses',
     desc: 'Resources',
     alias: ['tools'],
   },
@@ -32,7 +32,7 @@ test('blank Search preserves all navigation and the first six pinned public serv
     routes,
     Array.from({ length: 8 }, (_, index) => service(index)),
   );
-  assert.equal(matched[0].href, '/tools');
+  assert.equal(matched[0].href, '/uses');
   assert.equal(matched.length, 7);
   assert.equal(matched.at(-1)?.title, 'Service 5');
 });
@@ -40,7 +40,7 @@ test('blank Search preserves all navigation and the first six pinned public serv
 test('Search preserves case-normalized command and service matches without auto-exposing private URLs', () => {
   assert.deepEqual(
     matchSearchPalette('TOOLS', routes, [service(0)]).map((item) => item.href),
-    ['/tools'],
+    ['/uses'],
   );
   assert.deepEqual(
     matchSearchPalette('service-1', routes, [service(0), service(1)]).map((item) => item.href),

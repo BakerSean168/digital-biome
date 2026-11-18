@@ -1,0 +1,52 @@
+---
+import { Clapperboard, CodeXml, Gamepad2 } from '@lucide/astro';
+import type { NowEntry } from '../../config/now-profile';
+import { getPublicBlogHref } from '../../utils/public-blog-links';
+
+interface Props {
+  entry: NowEntry;
+}
+const { entry } = Astro.props;
+const blogHref = entry.blogSlug ? getPublicBlogHref(entry.blogSlug) : undefined;
+const iconLabels = {
+  project: '正在开发',
+  game: '正在玩',
+  watching: '正在看',
+} satisfies Record<NowEntry['kind'], string>;
+---
+
+<li
+  data-now-item={entry.id}
+  data-now-kind={entry.kind}
+  class="flex min-w-0 gap-4 border-b border-border py-4 md:py-5"
+>
+  <span
+    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-primary/35 bg-primary/5 text-primary"
+    aria-label={iconLabels[entry.kind]}
+    role="img"
+  >
+    {entry.kind === 'project' && <CodeXml size={25} stroke-width={1.8} aria-hidden="true" />}
+    {entry.kind === 'game' && <Gamepad2 size={25} stroke-width={1.8} aria-hidden="true" />}
+    {entry.kind === 'watching' && <Clapperboard size={25} stroke-width={1.8} aria-hidden="true" />}
+  </span>
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+      <h2 class="text-base font-medium leading-6">
+        {blogHref ? (
+          <a
+            href={blogHref}
+            class="text-primary underline decoration-primary/50 underline-offset-4 hover:text-primary-hover"
+          >
+            {entry.title}
+          </a>
+        ) : (
+          entry.title
+        )}
+      </h2>
+      {entry.secondaryName && (
+        <span class="font-mono text-xs text-muted-foreground">{entry.secondaryName}</span>
+      )}
+    </div>
+    <p class="mt-1 text-sm leading-6 text-muted-foreground">{entry.description}</p>
+  </div>
+</li>

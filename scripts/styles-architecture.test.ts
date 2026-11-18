@@ -59,6 +59,12 @@ test('active reading, terminal, GUI and browser workspace styles are preserved',
   assert.match(cssFile('terminal.css'), /--font-mono: 'JetBrains Mono'/);
   assert.match(cssFile('gui.css'), /html\[data-ui='gui'\] \.terminal-site/);
   assert.match(cssFile('gui.css'), /\.gui-home-intro/);
-  assert.match(cssFile('workspace.css'), /html\[data-browser-ready\]/);
+  assert.match(cssFile('workspace.css'), /\.browser-page \[data-filter-bar\]/);
+  assert.match(cssFile('workspace.css'), /\.browser-page \[data-browser-workspace\]/);
+  assert.doesNotMatch(
+    cssFile('workspace.css'),
+    /html\[data-browser-ready\]/,
+    'Workspace geometry must be stable before JavaScript initializes object browsers',
+  );
   assert.match(cssFile('workspace.css'), /@view-transition/);
 });

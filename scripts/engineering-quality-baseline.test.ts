@@ -81,21 +81,27 @@ function buildStaticGraph(): Map<string, string[]> {
 const graph = buildStaticGraph();
 const relative = (file: string) => path.relative(ROOT, file).replaceAll(path.sep, '/');
 
-test('public landing and category routes share the active TerminalLayout and ObjectBrowser', () => {
+test('public pages share TerminalLayout and catalog pages retain ObjectBrowser', () => {
   for (const route of [
     'src/pages/index.astro',
     'src/pages/notes/index.astro',
-    'src/pages/tools/index.astro',
-    'src/pages/dev/index.astro',
+    'src/pages/uses/index.astro',
+    'src/pages/projects/index.astro',
     'src/pages/blog/index.astro',
     'src/pages/friends.astro',
   ]) {
     const imports = graph.get(path.join(ROOT, route))?.map(relative) ?? [];
     assert.ok(imports.includes('src/layouts/TerminalLayout.astro'), route + ' lost TerminalLayout');
-    assert.ok(
-      imports.includes('src/components/terminal/ObjectBrowser.astro'),
-      route + ' lost ObjectBrowser',
-    );
+    if (route !== 'src/pages/index.astro')
+      assert.ok(
+        imports.includes('src/components/terminal/ObjectBrowser.astro'),
+        route + ' lost ObjectBrowser',
+      );
+    else
+      assert.ok(
+        !imports.includes('src/components/terminal/ObjectBrowser.astro'),
+        'Home must stay a compact, unfiltered reading page',
+      );
   }
   const terminalImports = graph.get(path.join(ROOT, 'src/layouts/TerminalLayout.astro')) ?? [];
   assert.ok(terminalImports.map(relative).includes('src/layouts/BaseLayout.astro'));
@@ -125,7 +131,7 @@ test('public page static dependency graph does not pull in retired Dashboard or 
 test('public JSON catalogs and protected Pages Functions remain distinct entry points', () => {
   for (const route of [
     'src/pages/data/notes-catalog.json.ts',
-    'src/pages/data/tools-catalog.json.ts',
+    'src/pages/data/uses-catalog.json.ts',
     'src/pages/data/terminal/[catalog].json.ts',
     'src/pages/data/system-launcher-index.json.ts',
   ]) {

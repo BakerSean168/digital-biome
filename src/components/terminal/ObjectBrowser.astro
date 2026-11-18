@@ -10,6 +10,7 @@ interface Props {
   contextPath?: string;
   autoFill?: boolean;
   defaultSortLabel?: string;
+  previewOnly?: boolean;
 }
 const {
   items,
@@ -21,12 +22,14 @@ const {
   contextPath = Astro.url.pathname,
   autoFill = false,
   defaultSortLabel = '默认顺序',
+  previewOnly = false,
 } = Astro.props;
 const first = items[0];
 ---
 
 <section
   data-object-browser
+  data-preview-only={previewOnly || undefined}
   data-context-path={contextPath}
   data-query-param={queryParam}
   data-catalog={catalog}
@@ -81,12 +84,7 @@ const first = items[0];
       ></div>
     </>
   )}
-  <p
-    data-object-status
-    role="status"
-    aria-live="polite"
-    class="mb-2 text-xs text-muted-foreground empty:hidden"
-  ></p>
+  <p data-object-status role="status" aria-live="polite" class="sr-only"></p>
   <div data-browser-columns class="grid gap-7 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
     <div data-object-scroll class="min-w-0">
       <div
@@ -176,15 +174,17 @@ const first = items[0];
               </span>
             ))}
           </p>
-          <a
-            class="mt-5 inline-block text-primary"
-            href={first.href}
-            data-private-link={first.privateRef}
-            target={/^https?:/.test(first.href) ? '_blank' : undefined}
-            rel="noopener noreferrer"
-          >
-            {first.privateRef ? 'Access →' : '打开 ↗'}
-          </a>
+          {!previewOnly && (
+            <a
+              class="mt-5 inline-block text-primary"
+              href={first.href}
+              data-private-link={first.privateRef}
+              target={/^https?:/.test(first.href) ? '_blank' : undefined}
+              rel="noopener noreferrer"
+            >
+              {first.privateRef ? 'Access →' : '打开 ↗'}
+            </a>
+          )}
           {first.relations.length > 0 && (
             <div class="mt-5 border-t border-border pt-3">
               <h3 class="mb-2 text-xs text-muted-foreground">关联</h3>

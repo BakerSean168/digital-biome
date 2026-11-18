@@ -13,7 +13,7 @@
   <a href="https://github.com/BakerSean168/thought-forest"><strong>Thought Forest</strong></a>
 </p>
 
-Digital Biome is my personal digital space. It brings together a knowledge garden, project portfolio, resume, digital assets, and infrastructure visualization in one site. Content is not manually copied into the frontend: Thought Forest acts as the canonical knowledge source, and a synchronization, redaction, indexing, and build pipeline projects the public subset onto the web.
+Digital Biome is my personal digital space. It brings together a knowledge garden, personal About and Now pages, project portfolio, digital assets, and infrastructure visualization in one site. Content is not manually copied into the frontend: Thought Forest acts as the canonical knowledge source, and a synchronization, redaction, indexing, and build pipeline projects the public subset onto the web.
 
 It is both an Astro website and an engineering project about turning personal knowledge and technical practice into long-lived, maintainable digital assets.
 
@@ -21,8 +21,8 @@ It is both an Astro website and an engineering project about turning personal kn
 
 - **Knowledge garden** — Obsidian / Thought Forest notes, tags, wikilinks, backlinks, and full-text search.
 - **Project portfolio** — projects are presented through the problem they solve, their product loop, and engineering highlights, with direct links to GitHub, the project page, and the live product.
-- **About / Resume** — personal profile, resume, tags, and continuous learning history.
-- **Tools catalog** — curated external tools and bookmarks, browsable in GUI and terminal (TUI) modes.
+- **About / Now / Uses** — self-contained personal interests at `/about`, independent, manually editable project/game/media entries at `/now`, and a curated public inventory of hardware, software, services, and sites at `/uses`.
+- **Uses catalog** — `/uses` combines personal hardware and software with the full searchable service, bookmark, host and network catalog in GUI and TUI modes.
 - **Infrastructure atlas** — visualization of public assets, hosts, networks, and service relationships while preserving private/internal boundaries.
 - **Personal Systems portal** — `/systems` presents the Personal Digital System catalog (`pds-catalog-v1`).
 
@@ -42,7 +42,7 @@ CI and Candidate builds pin Thought Forest through `data-products/knowledge-publ
 
 ## Project showcase model
 
-The `/dev` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three destinations with distinct responsibilities:
+The `/projects` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three destinations with distinct responsibilities:
 
 1. **Live** — the real production application.
 2. **Project Page** — a lightweight GitHub Pages introduction focused on product story and engineering highlights.

@@ -1,0 +1,24 @@
+---
+interface Props {
+  label: 'ABOUT' | 'NOW';
+  title: string;
+  updatedAt: string;
+  readingAnchor: string;
+  mode: 'gui' | 'tui';
+}
+
+const { label, title, updatedAt, readingAnchor, mode } = Astro.props;
+---
+
+<header data-reading-anchor={readingAnchor} class="border-b border-border pb-7 md:pb-9">
+  <p class="font-mono text-xs tracking-[0.2em] text-primary">/ {label}</p>
+  <h1 class:list={['mt-4 font-medium', mode === 'gui' ? 'text-4xl md:text-5xl' : 'text-3xl']}>
+    {title}
+  </h1>
+  <p class="mt-5 font-mono text-xs text-muted-foreground">
+    Last updated
+    <time datetime={updatedAt} class="ml-2">
+      {updatedAt}
+    </time>
+  </p>
+</header>
