@@ -4,7 +4,7 @@ import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
 import { terminalProjects } from '../../repositories/terminal-repository';
 ---
 
-<TerminalLayout title="Projects" description="从想法到可使用的作品。">
+<TerminalLayout browser title="Projects" description="个人项目与作品。">
   <h1 data-page-title class="sr-only">
     Projects
   </h1>
@@ -18,6 +18,5 @@ import { terminalProjects } from '../../repositories/terminal-repository';
       <span data-ui-only="tui">1 </span>projects
     </a>
   </nav>
-  <p class="mb-5 text-muted-foreground">从想法到可使用的作品。选择一个项目，查看它的入口与关联。</p>
   <ObjectBrowser items={terminalProjects()} label="项目" contextPath="/projects" />
 </TerminalLayout>
