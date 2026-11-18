@@ -86,3 +86,44 @@ test('Library tabs and Projects retain usable filters after navigation', async (
   await page.locator('[data-object-filter]').fill('MemoFlow');
   await expect(page.locator('[data-object-row]:visible').first()).toContainText('MemoFlow');
 });
+
+test('Uses, Projects and Library tabs share consistent height across modes and screen sizes', async ({
+  page,
+}) => {
+  const pages = ['/projects/', '/notes/', '/blog/', '/uses/'];
+  for (const width of [1366, 390]) {
+    await page.setViewportSize({ width, height: 850 });
+    for (const mode of ['gui', 'tui']) {
+      const heights: number[] = [];
+      for (const path of pages) {
+        await page.goto(`${path}?ui=${mode}`);
+        const measured = await page.locator('.content-tabs').evaluate((nav) => {
+          const tabs = Array.from(nav.querySelectorAll('a'));
+          const values = tabs.map((tab) => tab.getBoundingClientRect().height);
+          return {
+            heights: values,
+            navHeight: nav.getBoundingClientRect().height,
+            horizontalOverflow: nav.scrollWidth > nav.clientWidth + 1,
+            pageOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+          };
+        });
+        expect(measured.heights.length).toBeGreaterThan(0);
+        expect(Math.max(...measured.heights) - Math.min(...measured.heights)).toBeLessThan(1);
+        expect(measured.pageOverflow, `${path} ${mode} overflows at ${width}px`).toBe(false);
+        heights.push(measured.heights[0]);
+        if (path === '/uses/' && width === 390) {
+          expect(measured.horizontalOverflow).toBe(true);
+          await page.locator('[data-uses-tab="network"]').click();
+          await expect(page.locator('[data-uses-tab="network"]')).toHaveAttribute(
+            'aria-current',
+            'true',
+          );
+        }
+      }
+      expect(
+        Math.max(...heights) - Math.min(...heights),
+        `Catalog tabs differ in ${mode} at ${width}px: ${heights.join(', ')}`,
+      ).toBeLessThan(1);
+    }
+  }
+});

@@ -52,7 +52,7 @@ const tabs = [
   <h1 class="sr-only">Uses / 我在使用的东西</h1>
   <nav
     aria-label="Uses 分类"
-    class="content-tabs mb-3 flex flex-nowrap gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:gap-3"
+    class="content-tabs mb-3 flex flex-nowrap gap-3 overflow-x-auto sm:flex-wrap sm:overflow-visible"
     data-uses-tabs
   >
     {tabs.map((tab, i) => (
@@ -61,7 +61,7 @@ const tabs = [
         data-uses-tab={tab.id}
         data-terminal-tab={i + 1}
         aria-current={i === 0 ? 'true' : 'false'}
-        class="min-h-10 shrink-0 whitespace-nowrap border border-border px-3 py-2 text-sm text-muted-foreground aria-[current=true]:border-primary aria-[current=true]:text-primary"
+        class="shrink-0 whitespace-nowrap border border-border px-3 py-0.5 text-muted-foreground aria-[current=true]:border-primary aria-[current=true]:text-primary"
       >
         <span data-ui-only="tui" class="font-mono">
           {i + 1} {tab.label}
