@@ -41,14 +41,18 @@ import { ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../../config/about-profile';
             >
               {section.title}
             </h2>
-            <p
-              class:list={[
-                'mt-4 whitespace-normal leading-8 text-muted-foreground',
-                mode === 'gui' ? 'text-base' : 'text-sm md:text-base',
-              ]}
-            >
-              {section.text}
-            </p>
+            <div class="mt-4 space-y-4">
+              {section.paragraphs.map((paragraph) => (
+                <p
+                  class:list={[
+                    'leading-8 text-muted-foreground',
+                    mode === 'gui' ? 'text-base' : 'text-sm md:text-base',
+                  ]}
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
           </section>
         ))}
       </div>

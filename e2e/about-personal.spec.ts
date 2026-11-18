@@ -14,15 +14,15 @@ test('About is a personal essay with one banner, last updated and six sections',
   for (const section of ABOUT_SECTIONS) {
     const block = about.locator(`[data-about-section="${section.id}"]`);
     await expect(block.getByRole('heading', { name: section.title, exact: true })).toBeVisible();
-    await expect(block.locator('p')).toHaveText(section.text);
+    await expect(block.locator('p')).toHaveText([...section.paragraphs]);
   }
 
-  await expect(about).toContainText('《饥荒》联机');
+  await expect(about).toContainText('饥荒联机');
   await expect(about).toContainText('N100');
   await expect(about).toContainText('传感器');
   await expect(about).toContainText('大乱斗玩家');
   await expect(about).toContainText('虚无主义者');
-  await expect(about).toContainText('简洁不等于简单');
+  await expect(about).toContainText('简洁 != 简单');
   await expect(about).toContainText('坐骨神经痛');
   await expect(about).toContainText('右肩');
   await expect(about.locator('a')).toHaveCount(0);
@@ -42,7 +42,7 @@ test('About retains the same full text in terminal mode and global navigation wo
   for (const section of ABOUT_SECTIONS) {
     const block = about.locator(`[data-about-section="${section.id}"]`);
     await expect(block.getByRole('heading', { name: section.title, exact: true })).toBeVisible();
-    await expect(block.locator('p')).toHaveText(section.text);
+    await expect(block.locator('p')).toHaveText([...section.paragraphs]);
   }
   await expect(about.locator('a')).toHaveCount(0);
 
