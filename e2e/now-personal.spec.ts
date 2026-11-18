@@ -1,16 +1,16 @@
 import { expect, test } from '@playwright/test';
-import { NOW_ENTRIES } from '../src/config/now-profile';
+import { NOW_ENTRIES, NOW_UPDATED_AT } from '../src/config/now-profile';
 
-test('Now is a compact icon, bilingual name and description list without labels or heading', async ({
-  page,
-}) => {
+test('Now shows a shared page banner above its compact icon list', async ({ page }) => {
   await page.goto('/now/?ui=gui');
   const now = page.locator('article[data-ui-only="gui"]');
 
-  await expect(now.locator('h1')).toHaveClass(/sr-only/);
+  await expect(now.getByRole('heading', { name: '最近在做什么', exact: true })).toBeVisible();
+  await expect(now.locator('header')).toContainText('/ NOW');
+  await expect(now.locator('header time')).toHaveAttribute('datetime', NOW_UPDATED_AT);
   await expect(now.locator('[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
   await expect(now.locator('li[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
-  await expect(now.locator('time')).toHaveCount(0);
+  await expect(now.locator('time')).toHaveCount(1);
   await expect(now.locator('a')).toHaveCount(0);
   await expect(now).not.toContainText('BUILDING');
   await expect(now).not.toContainText('PLAYING');
@@ -54,12 +54,14 @@ test('Now stays compact in both modes on a phone, without horizontal overflow', 
 
   await page.locator('[data-ui-mode-choice="tui"]').click();
   const now = page.locator('article[data-ui-only="tui"]');
+  await expect(now.locator('h1')).toHaveText('最近在做什么');
+  await expect(now.locator('header time')).toHaveAttribute('datetime', NOW_UPDATED_AT);
   await expect(now.locator('[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
   await expect(now).toContainText('BodySense');
   await expect(now).toContainText('矮人要塞');
   await expect(now).toContainText('绝命毒师');
   await expect(now.locator('a')).toHaveCount(0);
-  await expect(now.locator('time')).toHaveCount(0);
+  await expect(now.locator('time')).toHaveCount(1);
 });
 test('Now is a peer in the six-item dock and Projects has a canonical root', async ({ page }) => {
   await page.goto('/now/?ui=gui');

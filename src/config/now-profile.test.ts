@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { NOW_ENTRIES } from './now-profile';
+import { NOW_ENTRIES, NOW_UPDATED_AT } from './now-profile';
+
+test('Now snapshot date is an explicit valid date', () => {
+  assert.match(NOW_UPDATED_AT, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(!Number.isNaN(Date.parse(NOW_UPDATED_AT)));
+});
 
 test('Now is a set of independent typed records with an icon, name and short description', () => {
   assert.equal(new Set(NOW_ENTRIES.map((entry) => entry.id)).size, NOW_ENTRIES.length);

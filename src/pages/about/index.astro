@@ -1,5 +1,6 @@
 ---
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
+import SlashPageHeader from '../../components/common/SlashPageHeader.astro';
 import { ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../../config/about-profile';
 ---
 
@@ -12,18 +13,13 @@ import { ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../../config/about-profile';
       data-ui-only={mode}
       class:list={['mx-auto w-full max-w-[820px]', mode === 'gui' ? 'gui-about' : '']}
     >
-      <header data-reading-anchor="about-title" class="border-b border-border pb-7 md:pb-9">
-        <p class="font-mono text-xs tracking-[0.2em] text-primary">/ ABOUT</p>
-        <h1 class:list={['mt-4 font-medium', mode === 'gui' ? 'text-4xl md:text-5xl' : 'text-3xl']}>
-          About
-        </h1>
-        <p class="mt-5 font-mono text-xs text-muted-foreground">
-          Last updated
-          <time datetime={ABOUT_UPDATED_AT} class="ml-2">
-            {ABOUT_UPDATED_AT}
-          </time>
-        </p>
-      </header>
+      <SlashPageHeader
+        label="ABOUT"
+        title="BakerSean"
+        updatedAt={ABOUT_UPDATED_AT}
+        readingAnchor="about-title"
+        mode={mode}
+      />
 
       <div class="divide-y divide-border">
         {ABOUT_SECTIONS.map((section) => (

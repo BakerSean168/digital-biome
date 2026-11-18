@@ -1,19 +1,24 @@
 ---
 import TerminalLayout from '../layouts/TerminalLayout.astro';
 import NowEntry from '../components/common/NowEntry.astro';
-import { NOW_ENTRIES } from '../config/now-profile';
+import SlashPageHeader from '../components/common/SlashPageHeader.astro';
+import { NOW_ENTRIES, NOW_UPDATED_AT } from '../config/now-profile';
 ---
 
 <TerminalLayout title="Now" description="最近在开发、在玩、在看的一些东西。">
   {(['gui', 'tui'] as const).map((mode) => (
-    <article data-ui-only={mode} class="mx-auto w-full max-w-[960px]">
-      <h1 data-reading-anchor="now-title" class="sr-only">
-        Now
-      </h1>
+    <article data-ui-only={mode} class="mx-auto w-full max-w-[820px]">
+      <SlashPageHeader
+        label="NOW"
+        title="最近在做什么"
+        updatedAt={NOW_UPDATED_AT}
+        readingAnchor="now-title"
+        mode={mode}
+      />
       <ul
         data-reading-anchor="now-items"
         data-now-feed
-        class="grid grid-cols-1 gap-x-8 md:grid-cols-2"
+        class="mt-6 grid grid-cols-1 gap-x-8 md:mt-8 md:grid-cols-2"
       >
         {NOW_ENTRIES.map((entry) => (
           <NowEntry entry={entry} />

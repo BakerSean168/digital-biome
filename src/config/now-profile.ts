@@ -2,6 +2,9 @@
  * Individual public activities. Reorder or edit entries without touching page markup.
  * Kinds only select a recognizable icon; no labels or cross-page links are displayed.
  */
+// Manually maintained snapshot date for the public /now page.
+export const NOW_UPDATED_AT = '2026-11-18';
+
 export type NowKind = 'project' | 'game' | 'watching';
 
 export interface NowEntry {

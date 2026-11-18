@@ -263,7 +263,7 @@ test('Tag directory remains complete while About uses bounded content', async ({
   expect(expected).toBeGreaterThan(100);
   await expect(page.locator('a.tag-chip')).toHaveCount(expected);
   await page.goto('/about/?ui=gui');
-  await expect(page.locator('h1:visible')).toHaveText('About');
+  await expect(page.locator('h1:visible')).toHaveText('BakerSean');
   await expect(page.locator('article[data-ui-only="gui"] [data-about-section]')).toHaveCount(6);
   await expect(page.locator('[data-heatmap-grid]')).toHaveCount(0);
 });

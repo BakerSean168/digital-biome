@@ -7,7 +7,9 @@ test('About is a personal essay with one banner, last updated and six sections',
   await page.goto('/about/?ui=gui');
   const about = page.locator('article[data-ui-only="gui"]');
 
-  await expect(about.getByRole('heading', { name: 'About', exact: true })).toBeVisible();
+  await expect(about.getByRole('heading', { name: 'BakerSean', exact: true })).toBeVisible();
+  await expect(about.locator('header')).toContainText('/ ABOUT');
+  await expect(about.locator('h1')).toHaveText('BakerSean');
   await expect(about.locator('header time')).toHaveAttribute('datetime', ABOUT_UPDATED_AT);
   await expect(about.locator('[data-about-section]')).toHaveCount(6);
 
