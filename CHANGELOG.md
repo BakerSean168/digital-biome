@@ -5,6 +5,20 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.16.0](https://github.com/BakerSean168/digital-biome/compare/v0.15.1...v0.16.0) (2026-11-19)
+
+
+### Features
+
+* **site:** explain empty Slash Page collections ([4ad6e6e](https://github.com/BakerSean168/digital-biome/commit/4ad6e6e17c3c063a8cf18d80fc16f7e9df64360b))
+* **site:** Obsidian-backed projects, uses, bookmarks and slash pages ([4475480](https://github.com/BakerSean168/digital-biome/commit/4475480db571c2baf425a2de8a6aebb84246aaef))
+
+
+### Bug Fixes
+
+* **navigation:** avoid overlapping cross-document view transitions ([3d4563b](https://github.com/BakerSean168/digital-biome/commit/3d4563b4438456cfd30d64df005424b8800e0fd3))
+* **site:** remove page overlap and render empty Slash Page states ([6f5713f](https://github.com/BakerSean168/digital-biome/commit/6f5713fadd4d6dde7f9b452ef3a114390df8127d))
+
 ## [0.15.1](https://github.com/BakerSean168/digital-biome/compare/v0.15.0...v0.15.1) (2026-11-19)
 
 
