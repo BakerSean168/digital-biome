@@ -5,6 +5,13 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.15.0](https://github.com/BakerSean168/digital-biome/compare/v0.14.0...v0.15.0) (2026-11-19)
+
+
+### Features
+
+* **site:** make About and Now Obsidian-backed with Vault layout compatibility ([7e665d0](https://github.com/BakerSean168/digital-biome/commit/7e665d065974873e86ba78103828ac9fa5fba7c4))
+
 ## [0.14.0](https://github.com/BakerSean168/digital-biome/compare/v0.13.1...v0.14.0) (2026-11-18)
 
 
