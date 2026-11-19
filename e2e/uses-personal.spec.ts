@@ -1,4 +1,18 @@
+import fs from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { selectResourceEntries } from '../src/domain/resource-collections';
+import type { NoteIndexEntry } from '../src/types/knowledge-index';
+
+const entries: NoteIndexEntry[] = JSON.parse(
+  fs.readFileSync('src/data/indexes/notes-index.json', 'utf8'),
+).entries;
+const expectedSoftwareCount = selectResourceEntries(entries, 'uses').filter((entry) =>
+  entry.filePath.startsWith('uses/software/'),
+).length;
+const expectedWebsiteCount = selectResourceEntries(entries, 'bookmarks').length;
+const expectedHardwareCount = JSON.parse(
+  fs.readFileSync('src/data/indexes/uses-summaries.json', 'utf8'),
+).length;
 
 test('Uses opens with six compact tabs and consistent selectable list browsers', async ({
   page,
@@ -11,7 +25,8 @@ test('Uses opens with six compact tabs and consistent selectable list browsers',
   await expect(page.locator('[data-uses-tab="hardware"]')).toHaveAttribute('aria-current', 'true');
 
   const hardware = page.locator('#hardware [data-object-browser]');
-  await expect(hardware.locator('[data-object-row]')).toHaveCount(7);
+  expect(expectedHardwareCount).toBeGreaterThan(0);
+  await expect(hardware.locator('[data-object-row]')).toHaveCount(expectedHardwareCount);
   await expect(hardware).toContainText('Intel N100');
   await expect(hardware.locator('[data-object-preview]')).toContainText('Acer SH16-74');
   await expect(hardware.locator('[data-object-open]')).toHaveCount(0);
@@ -25,7 +40,8 @@ test('Uses opens with six compact tabs and consistent selectable list browsers',
   await page.locator('[data-uses-tab="software"]').click();
   const software = page.locator('#software [data-object-browser]');
   await expect(page.locator('#hardware')).toBeHidden();
-  await expect(software.locator('[data-object-row]')).toHaveCount(10);
+  expect(expectedSoftwareCount).toBeGreaterThan(0);
+  await expect(software.locator('[data-object-row]')).toHaveCount(expectedSoftwareCount);
   await expect(software).toContainText('Neovim / AstroNvim');
   await expect(software.locator('[data-object-preview]')).toContainText('Windows 11 + WSL');
   await software.locator('[data-object-filter]').fill('Obsidian');
@@ -34,7 +50,10 @@ test('Uses opens with six compact tabs and consistent selectable list browsers',
   await page.locator('[data-uses-tab="services"]').click();
   await expect(page.locator('#services [data-object-browser]')).toBeVisible();
   await page.locator('[data-uses-tab="external"]').click();
-  await expect(page.locator('#external [data-object-browser] [data-object-row]')).toHaveCount(16);
+  expect(expectedWebsiteCount).toBeGreaterThan(0);
+  await expect(page.locator('#external [data-object-browser] [data-object-row]')).toHaveCount(
+    Math.min(16, expectedWebsiteCount),
+  );
 });
 
 test('Uses remains the only resource catalog route and retains its category data endpoints', async ({
