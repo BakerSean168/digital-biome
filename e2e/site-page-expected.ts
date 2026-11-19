@@ -5,18 +5,13 @@ import { ABOUT_RELATED_BLOGS, ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../src/co
 import { NOW_ENTRIES, NOW_UPDATED_AT } from '../src/config/now-profile';
 import { parseAboutBody, parseNowBody } from '../src/domain/site-pages/content';
 import { publishedBlogHref } from './published-blog-href';
+import { parsePublishedSitePage } from './site-page-frontmatter';
 
 function pageSource(name: 'about' | 'now') {
   const file = path.resolve(process.cwd(), 'src', 'data', 'obsidian', 'pages', name + '.md');
   if (!fs.existsSync(file)) return undefined;
   const content = fs.readFileSync(file, 'utf8');
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/.exec(content);
-  if (!match) throw new Error('Missing Obsidian site-page frontmatter: ' + file);
-  const updatedAt = /^updated:\s*["']?(\d{4}-\d{2}-\d{2})/m.exec(match[1])?.[1];
-  const title = /^title:\s*["']?(.+?)["']?\s*$/m.exec(match[1])?.[1];
-  if (!title) throw new Error('Missing title in Obsidian site page: ' + file);
-  if (!updatedAt) throw new Error('Missing updated timestamp: ' + file);
-  return { body: match[2], updatedAt, title };
+  return parsePublishedSitePage(content, file);
 }
 
 export const aboutSource = (() => {
