@@ -8,32 +8,11 @@
  * JS to add data-browser-ready caused the filter toolbar to shift after paint.
  * data-browser-ready remains an interaction signal, never a layout prerequisite.
  */
-@keyframes biome-page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  @view-transition {
-    navigation: auto;
-  }
-  #site-content {
-    view-transition-name: page-content;
-  }
-  ::view-transition-old(root),
-  ::view-transition-new(root),
-  ::view-transition-old(page-content) {
-    animation: none;
-  }
-  ::view-transition-new(page-content) {
-    animation: biome-page-enter 160ms ease-out both;
-  }
-}
+/* Cross-document View Transitions retain an image of the previous page during
+ * navigation. In this app they produce a visible old/new content overlap,
+ * especially when the next page is expensive to render in development.
+ * Keep document navigation atomic rather than opting in globally.
+ */
 html[data-ui] .browser-page [data-uses-description] {
   display: block;
 }
