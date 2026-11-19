@@ -10,6 +10,7 @@ interface Props {
   contextPath?: string;
   autoFill?: boolean;
   defaultSortLabel?: string;
+  emptyMessage?: string;
   previewOnly?: boolean;
 }
 const {
@@ -22,6 +23,7 @@ const {
   contextPath = Astro.url.pathname,
   autoFill = false,
   defaultSortLabel = '默认顺序',
+  emptyMessage = '没有匹配的内容。',
   previewOnly = false,
 } = Astro.props;
 const first = items[0];
@@ -136,7 +138,7 @@ const first = items[0];
         data-object-empty
         class:list={['py-5 text-muted-foreground', items.length > 0 && 'hidden']}
       >
-        没有匹配的内容。
+        {emptyMessage}
       </p>
       <button
         data-object-more

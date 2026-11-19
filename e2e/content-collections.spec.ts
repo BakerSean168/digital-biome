@@ -53,8 +53,15 @@ for (const name of ['blogroll', 'carry', 'defaults'] as const) {
       expected.map((row) => row.asset_id ?? row.id),
     );
     await page.goto(`/${name}/?ui=gui`);
-    if (!expected.length) await expect(page.locator('[data-object-empty]')).toBeVisible();
-    else await expect(page.locator('[data-object-row]').first()).toBeVisible();
+    if (!expected.length) {
+      const messages = {
+        blogroll: '个人博客',
+        carry: '随身携带',
+        defaults: '默认使用',
+      };
+      await expect(page.locator('[data-object-empty]')).toBeVisible();
+      await expect(page.locator('[data-object-empty]')).toContainText(messages[name]);
+    } else await expect(page.locator('[data-object-row]').first()).toBeVisible();
   });
 }
 
