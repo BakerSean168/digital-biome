@@ -43,6 +43,14 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   console.log('Syncing Obsidian notes...');
   console.log(`  notes : ${layout.notesSource} -> ${layout.notesDest}`);
   console.log(`  assets: ${layout.assetNotesSource} -> ${layout.assetNotesDest}`);
+  for (const [name, source, dest] of [
+    ['projects', layout.projectsSource, layout.projectsDest],
+    ['uses', layout.usesSource, layout.usesDest],
+  ] as const) {
+    if (source && (await import('node:fs')).existsSync(source)) {
+      console.log(`  ${name}: ${source} -> ${dest}`);
+    }
+  }
   if (layout.configSource) console.log(`  config: ${layout.configSource} -> ${layout.configDest}`);
   if (layout.blogsSource) console.log(`  blogs : ${layout.blogsSource} -> ${layout.blogsDest}`);
   if (layout.pagesSource && (await import('node:fs')).existsSync(layout.pagesSource))
@@ -96,6 +104,22 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
       validationSummary,
       protectedInfrastructureUrls,
     );
+    for (const [source, dest] of [
+      [layout.projectsSource, layout.projectsDest],
+      [layout.usesSource, layout.usesDest],
+    ] as const) {
+      if (source && fs.existsSync(source)) {
+        await validateSourceFiles(
+          source,
+          dest,
+          layout,
+          withFavicons,
+          stats,
+          validationSummary,
+          protectedInfrastructureUrls,
+        );
+      }
+    }
     if (layout.configSource && fs.existsSync(layout.configSource)) {
       await validateSourceFiles(
         layout.configSource,
@@ -217,6 +241,14 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
     stats,
     protectedInfrastructureUrls,
   );
+  for (const [source, dest] of [
+    [layout.projectsSource, layout.projectsDest],
+    [layout.usesSource, layout.usesDest],
+  ] as const) {
+    if (source && (await import('node:fs')).existsSync(source)) {
+      await syncFiles(source, dest, layout, withFavicons, stats, protectedInfrastructureUrls);
+    }
+  }
 
   // Sync config directory
   if (layout.configSource) {
@@ -264,10 +296,10 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   }
 
   // Build static JSON indexes from synced markdown
-  buildIndexes(layout.notesDest);
+  const indexDir = path.join(process.cwd(), 'src', 'data', 'indexes');
+  buildIndexes(layout.notesDest, indexDir);
 
   // Merge upstream asset-index fields
-  const indexDir = path.join(process.cwd(), 'src', 'data', 'indexes');
   const upstreamKnowledgeIndexDir = path.resolve(
     process.cwd(),
     notesConfig.upstream.generatedPath,
@@ -277,6 +309,13 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   // full YAML parser. Route/filePath, dates and stricter local visibility remain local-owned.
   reconcileNoteIndex(upstreamKnowledgeIndexDir, indexDir, protectedInfrastructureUrls);
   rebuildDerivedIndexes(indexDir);
+  const fs = await import('node:fs');
+  const summariesPath = path.join(upstreamKnowledgeIndexDir, 'uses-summaries.json');
+  const { parseUsesSummaries } = await import('../../src/domain/uses-summary');
+  const summaries = parseUsesSummaries(
+    fs.existsSync(summariesPath) ? JSON.parse(fs.readFileSync(summariesPath, 'utf8')) : [],
+  );
+  fs.writeFileSync(path.join(indexDir, 'uses-summaries.json'), JSON.stringify(summaries));
 
   mergeAssetIndex(upstreamKnowledgeIndexDir, indexDir);
 

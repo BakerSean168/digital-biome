@@ -1,3 +1,6 @@
+import { mergeUsesServices } from '../domain/uses-services';
+import { getAllNoteEntries } from './knowledge-index-loader';
+import { selectResourceEntries, toResourceObject } from '../domain/resource-collections';
 import { getBlogPosts } from './blogs-repository';
 import { formatArchiveMonth } from '../domain/blog/archive-month';
 import { getBookmarks } from './bookmarks-repository';
@@ -79,7 +82,7 @@ export function terminalProjects(): TerminalObject[] {
 }
 
 export function terminalExternal(): TerminalObject[] {
-  return getBookmarks()
+  const bookmarks = getBookmarks()
     .filter((bookmark) => /^https?:\/\//i.test(bookmark.url) && isSafeTerminalHref(bookmark.url))
     .sort((a, b) => compareResourcePriority({ ...a, id: a.slug }, { ...b, id: b.slug }))
     .map((bookmark) => ({
@@ -92,13 +95,19 @@ export function terminalExternal(): TerminalObject[] {
       tags: bookmark.categories,
       relations: [],
     }));
+  const byId = new Map<string, TerminalObject>(bookmarks.map((item) => [item.id, item]));
+  for (const entry of selectResourceEntries(getAllNoteEntries(), 'uses')) {
+    if (entry.filePath.startsWith('uses/websites/') && !byId.has(entry.id))
+      byId.set(entry.id, toResourceObject(entry));
+  }
+  return [...byId.values()];
 }
 
 export function terminalInfrastructure(): TerminalObject[] {
   const resources = getInfrastructureResources();
   const portals = new Map(getPortalServices().map((service) => [service.resource.id, service]));
   const connections = getInfrastructureConnections();
-  return [...resources].sort(compareResourcePriority).map((resource) => {
+  const objects = [...resources].sort(compareResourcePriority).map((resource) => {
     const portal = portals.get(resource.id);
     const primary = portal
       ? { url: portal.url, privateRef: portal.privateRef }
@@ -142,4 +151,5 @@ export function terminalInfrastructure(): TerminalObject[] {
       ],
     };
   });
+  return mergeUsesServices(objects, getAllNoteEntries());
 }

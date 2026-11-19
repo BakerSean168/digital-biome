@@ -140,3 +140,5 @@ That separation is intentional:
 ## Repository status & license
 
 Digital Biome is a **public source repository**, but it currently does **not** include an open-source license. Public visibility alone does not grant permission to copy, modify, or redistribute the code; copyright remains with the repository owner unless a license is added later.
+
+Obsidian collections provide /bookmarks, /blogroll, /carry and /defaults. Optional Markdown pages provide /colophon, /ai, /ideas and /canon.

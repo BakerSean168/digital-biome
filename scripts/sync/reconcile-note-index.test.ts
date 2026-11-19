@@ -6,8 +6,8 @@ import test from 'node:test';
 import { reconcileNote, reconcileNoteIndex, toUpstreamSourcePath } from './reconcile-note-index';
 
 test('maps published destinations back to their Thought Forest source namespaces', () => {
-  assert.equal(toUpstreamSourcePath('typescript.md'), 'z/typescript.md');
-  assert.equal(toUpstreamSourcePath('nested/topic.md'), 'z/nested/topic.md');
+  assert.equal(toUpstreamSourcePath('typescript.md'), 'notes/typescript.md');
+  assert.equal(toUpstreamSourcePath('nested/topic.md'), 'notes/nested/topic.md');
   assert.equal(toUpstreamSourcePath('assets/services/example.md'), 'assets/services/example.md');
   assert.equal(toUpstreamSourcePath('config/skills/example.md'), 'config/skills/example.md');
   assert.equal(toUpstreamSourcePath('blogs/example.md'), null);
@@ -25,7 +25,7 @@ test('resource priority is owned upstream and clearing it removes stale local pr
     usagePriority: 99,
   };
   const upstream = {
-    sourcePath: 'z/example.md',
+    sourcePath: 'notes/example.md',
     title: 'Example',
     tags: [],
     aliases: [],
@@ -87,7 +87,7 @@ test('re-applies Digital Biome publication redaction to upstream metadata', () =
       visibility: 'public',
     },
     {
-      sourcePath: 'z/example.md',
+      sourcePath: 'notes/example.md',
       title: 'Host 10.20.30.40',
       description: 'proxy http://10.20.30.40:7890 and https://private.example/admin',
       tags: ['host/10.20.30.40'],
@@ -113,7 +113,7 @@ test('reconciles matching upstream notes and leaves blogs/local-only entries unt
     path.join(upstreamDir, 'notes-index.json'),
     JSON.stringify([
       {
-        sourcePath: 'z/a.md',
+        sourcePath: 'notes/a.md',
         title: 'Canonical A',
         tags: ['type/concept', 'status/growing'],
         aliases: ['A'],

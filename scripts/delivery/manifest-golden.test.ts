@@ -90,7 +90,7 @@ function goldens() {
       gitSha: sha('a'),
       ciRunId: '12345',
       dataProducts: Object.fromEntries(
-        [knowledgeReleaseFixture(), pdsReleaseFixture(), infraReleaseFixture()].map((f) => [
+        [knowledgeReleaseFixture(1), pdsReleaseFixture(), infraReleaseFixture()].map((f) => [
           f.lock.product,
           f.lock,
         ]),

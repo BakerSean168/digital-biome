@@ -31,8 +31,6 @@
     "src/domain/foundation/index.ts": "79dae34bbe27995cf82c406501dafe857212be89d510e69258215a2fc250fddd",
     "src/domain/foundation/wikilink-parser.ts": "9228e1c8cddf967bdde3e1ca24d95965ecb3977637d2d21312ba2e63b4363cfd",
     "src/domain/note-routing/index.ts": "388137cb4168a1e9d27be83513d0079785b90bcde3f99b0732f9c83b5ee42deb",
-    "src/domain/note-routing/slug-resolver.test.ts": "d04846d2843f76708087ed0344a10c497cb23929ff98bb6d0015141cdfb69622",
-    "src/domain/note-routing/slug-resolver.ts": "89282e65197eb18fc6b8cda2e20c1cac452cb47ec658ad8ab0b8542c7a10f971",
     "src/pages/dev/[assetId].astro": "6e01d9871faa8a189f826ba6ee50f2a1b794969246557ec05cec201d65628f15",
     "src/pages/projects/[assetId].astro": "de0a186d676473a33927756e8c41755ca74f2223248c6c8c9a89e801acbc861f",
     "src/repositories/assets-repository.ts": "7f9d2489f781ca6cf52822fd7c686d3f01ead96f705db4a177dff7b552a5c999",
@@ -40,7 +38,6 @@
     "src/repositories/link-graph-repository.ts": "44d2d2f797be34e2ee75ce54932ed79aba22c8b3e35f67963366642f8c77cc16",
     "src/repositories/notes-repository.ts": "12e9eb797c91e6aa500cd1d1f2558c8c9b7dae2b242960f42abd1905e29639a0",
     "src/utils/note-catalog.test.ts": "65ba205e3b1075dfc1b0bacf5127c985aa5512c9dbef77c727c8101409922af1",
-    "src/view-models/bookmark-item.ts": "c4d613fa48b56c0e11c82f02919dd0b777c5fa59a001391584b44595d205ec49",
     "tsconfig.json": "e45553728da413bd380517d2970f84d09dd31869f88051578df888bdda84ddd4"
   }
 }

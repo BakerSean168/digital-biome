@@ -28,25 +28,23 @@ const upstreamGenerated = resolveUpstreamGeneratedPath();
 
 export const notesConfig = {
   vault: {
-    /** 常规知识笔记目录 (z/) */
-    notesPath: [vaultPath('notes'), vaultPath('z')],
+    /** 常规知识笔记目录 */
+    notesPath: vaultPath('notes'),
 
     /**
      * 资产笔记目录 (assets/services, assets/subscriptions, assets/hosts...)
      */
     assetNotesPath: vaultPath('assets'),
+    projectsPath: vaultPath('projects'),
+    usesPath: vaultPath('uses'),
 
     /**
      * Dashboard 等配置文件目录（同步到 obsidian/config/ 子目录）
      */
     configPath: vaultPath('config'),
 
-    /**
-     * 二进制附件与媒体资源目录。
-     * Thought Forest 已将原始附件迁移到 sources/attachments；保留旧路径作为
-     * 兼容回退，便于旧 checkout / 历史 submodule 仍可构建。
-     */
-    mediaPath: [vaultPath('sources/attachments'), vaultPath('attachments/images')],
+    /** 公开投影中的媒体目录。 */
+    mediaPath: vaultPath('sources/attachments'),
 
     /** 博客文章目录 (<selected-source>/blogs) */
     blogsPath: vaultPath('blogs'),

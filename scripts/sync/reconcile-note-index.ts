@@ -14,6 +14,12 @@ import { redactIPv4Addresses, redactProtectedInfrastructureUrls } from './markdo
 
 interface UpstreamNote {
   usagePriority?: number | null;
+  bookmarked?: boolean;
+  showOnUses?: boolean;
+  defaultFor?: string[];
+  order?: number;
+  homepageOrder?: number;
+  infraResourceId?: string;
   sourcePath: string;
   title: string;
   description?: string;
@@ -62,29 +68,24 @@ export function toUpstreamSourcePath(localFilePath: string): string | null {
   const normalized = localFilePath.replace(/\\/g, '/').replace(/^\.\//, '');
   if (!normalized || normalized.startsWith('../')) return null;
   if (normalized.startsWith('blogs/')) return null;
-  if (normalized.startsWith('pages/')) return normalized;
+  if (
+    normalized.startsWith('pages/') ||
+    normalized.startsWith('projects/') ||
+    normalized.startsWith('uses/')
+  )
+    return normalized;
   if (normalized.startsWith('assets/') || normalized.startsWith('config/')) return normalized;
-  return `z/${normalized}`;
+  return `notes/${normalized}`;
 }
 
-/**
- * Resolve metadata from either version of Thought Forest's physical Vault layout.
- * The local index keeps canonical route-oriented relative file paths, while the
- * producer moved its source from z/ to notes/. Keep the fallback in one place so
- * consumers and authority tests enforce the same exact source correspondence.
- */
+/** Match the one canonical producer layout. */
 export function findUpstreamNoteByLocalPath<T extends { sourcePath: string }>(
   bySourcePath: ReadonlyMap<string, T>,
   localFilePath: string,
 ): T | undefined {
   const sourcePath = toUpstreamSourcePath(localFilePath);
   if (!sourcePath) return undefined;
-  return (
-    bySourcePath.get(sourcePath) ??
-    (sourcePath.startsWith('z/')
-      ? bySourcePath.get(`notes/${sourcePath.slice('z/'.length)}`)
-      : undefined)
-  );
+  return bySourcePath.get(sourcePath);
 }
 
 export function reconcileNote(
@@ -96,6 +97,12 @@ export function reconcileNote(
 
   return {
     ...local,
+    bookmarked: upstream.bookmarked,
+    showOnUses: upstream.showOnUses,
+    defaultFor: upstream.defaultFor,
+    order: upstream.order,
+    homepageOrder: upstream.homepageOrder,
+    infraResourceId: upstream.infraResourceId,
     usagePriority: parseUsagePriority(upstream.usagePriority),
     title: sanitizePublishedMetadataText(upstream.title.trim(), protectedInfrastructureUrls),
     description: sanitizeOptionalMetadataText(upstream.description, protectedInfrastructureUrls),

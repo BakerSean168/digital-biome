@@ -334,3 +334,32 @@ identically. This implementation supports the reviewed safe-integer domain and
 rejects non-integral/unsafe numbers and negative zero; broader numeric support
 needs a protocol decision and shared fixtures. A mismatched producer semantic
 digest fails closed.
+
+## Obsidian collection cutover
+
+The application requires `knowledge-public-v1` payload `schemaVersion: 2`. The
+product/manifest/lock identities stay unchanged. Schema 1 is rejected before
+materialization; the previous consumer rejects schema 2. This makes both mixed
+versions fail rather than omit migrated Projects or the 17 personal Uses rows.
+Immutable historical Release verification and delivery manifest rollback remain
+available; source-directory fallbacks and editable TS snapshots are removed.
+
+Merge/publication is a separate operation. Review the Thought Forest producer
+PR first, publish its tested revision through the normal workflow, then update
+this repository's committed knowledge lock from the exact verified Release
+(artifact, manifest and semantic digests). Rerun `pnpm sync:data-products` and
+`pnpm verify:full` on that lock before merging the consumer. Until then, CI is
+expected to reject the existing schema 1 lock. Do not replace it with a lock for
+an unpublished local export. Main branches and production are not modified by
+this implementation task.
+
+For isolated integration validation, use a real producer checkout:
+
+```bash
+THOUGHT_FOREST_ROOT=/path/to/thought-forest pnpm test:collections:integration
+```
+
+This runs the actual producer, materializer and sync against disposable Markdown
+fixtures, including summary revocation, sold devices, URL changes, default
+conflicts, deletion, tampering and mixed-version rejection. Fixture content is
+never copied into the real public source or published.

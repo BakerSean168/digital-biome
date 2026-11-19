@@ -1,18 +1,19 @@
 import { semanticSha256, sha256 } from '../semantic-digest';
 import { parsePublicDataProductLock } from '../lock-v1';
 
-export function knowledgeReleaseFixture() {
+export function knowledgeReleaseFixture(schemaVersion = 2) {
   const revision = '0123456789abcdef0123456789abcdef01234567';
   const product = 'knowledge-public-v1';
   const repository = 'BakerSean168/thought-forest';
   const projection = {
-    schemaVersion: 1,
+    schemaVersion,
     product,
     generated: true,
     editable: false,
     producer: 'pds://system/component/thought-forest',
     source: { repository: `https://github.com/${repository}.git`, revision },
     payload: {
+      ...(schemaVersion === 2 ? { usesSummaries: [] } : {}),
       notes: [],
       assets: [],
       tags: [],

@@ -115,7 +115,7 @@ test('materialized current Release event resolves to the exact committed knowled
   });
   fixture.downloads.set(11, artifact);
   fixture.downloads.set(12, manifest);
-  const next = await computeNextLock(
+  const result = computeNextLock(
     'event',
     {
       action: 'data-product-published',
@@ -132,7 +132,11 @@ test('materialized current Release event resolves to the exact committed knowled
     },
     fixture.transport,
   );
-  assert.equal(next.serialized, currentRaw);
+  if (JSON.parse(artifact.toString('utf8')).schemaVersion === 1) {
+    await assert.rejects(result, /require schemaVersion 2/);
+  } else {
+    assert.equal((await result).serialized, currentRaw);
+  }
 });
 
 test('validly shaped event still must match exact fetched publication digests', async () => {

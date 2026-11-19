@@ -17,7 +17,7 @@ const revision = '0123456789abcdef0123456789abcdef01234567';
 
 function projection(): KnowledgePublicV1 {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     product: 'knowledge-public-v1',
     generated: true,
     editable: false,
@@ -27,6 +27,7 @@ function projection(): KnowledgePublicV1 {
       revision,
     },
     payload: {
+      usesSummaries: [],
       notes: [],
       assets: [],
       tags: [],

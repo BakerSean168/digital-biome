@@ -37,7 +37,10 @@ describe('resolveWikilinkTarget', () => {
     const entries = [
       note('obsidian/life/reading', { title: '阅读', aliases: ['Reading', 'book'] }),
     ];
-    assert.equal(resolve('vue', [note('obsidian/vue-computed', { title: 'Vue' })])!.status, 'resolved');
+    assert.equal(
+      resolve('vue', [note('obsidian/vue-computed', { title: 'Vue' })])!.status,
+      'resolved',
+    );
     assert.equal(resolve('阅读', entries).status, 'resolved');
     assert.equal(resolve('BOOK', entries).status, 'resolved');
     assert.equal(resolve('life/reading', entries).status, 'resolved');
@@ -135,10 +138,7 @@ describe('resolveWikilinkTarget', () => {
   });
 
   test('endsWith fallback reports ambiguous matches', () => {
-    const entries = [
-      note('obsidian/tech/a/guide', {}),
-      note('obsidian/dev/a/guide', {}),
-    ];
+    const entries = [note('obsidian/tech/a/guide', {}), note('obsidian/dev/a/guide', {})];
     assert.deepEqual(resolve('a/guide', entries), {
       status: 'ambiguous',
       candidates: ['obsidian/tech/a/guide', 'obsidian/dev/a/guide'],
@@ -150,4 +150,33 @@ describe('resolveWikilinkTarget', () => {
     assert.equal(resolve('does-not-exist', entries).status, 'missing');
     assert.equal(resolve('', entries).status, 'missing');
   });
+});
+
+test('collection physical paths resolve to permanent IDs without changing external URLs', () => {
+  const entries = [
+    {
+      id: 'obsidian/youtube',
+      sourcePath: 'uses/websites/youtube.md',
+      data: { title: 'YouTube', visibility: 'public' },
+    },
+    {
+      id: 'obsidian/tools/keyboard',
+      sourcePath: 'uses/hardware/keyboard.md',
+      data: {
+        title: 'Keyboard',
+        visibility: 'public',
+        asset_id: 'tool-keyboard',
+        asset_type: 'tool' as const,
+      },
+    },
+  ];
+  const map = buildSlugMap(entries);
+  assert.equal(
+    resolveWikilinkTarget('uses/websites/youtube', map, entries).href,
+    '/notes/obsidian/youtube',
+  );
+  assert.equal(
+    resolveWikilinkTarget('uses/hardware/keyboard', map, entries).href,
+    '/uses/tool-keyboard',
+  );
 });

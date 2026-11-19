@@ -1,0 +1,21 @@
+---
+import TerminalLayout from '../layouts/TerminalLayout.astro';
+import ObjectBrowser from '../components/terminal/ObjectBrowser.astro';
+import { getResourceCollection } from '../repositories/resource-collections-repository';
+
+const items = getResourceCollection('blogroll');
+---
+
+<TerminalLayout browser title="Blogroll" description="阅读与推荐的博客">
+  <h1 data-page-title class="sr-only">
+    Blogroll
+  </h1>
+  <ObjectBrowser
+    items={items.slice(0, 16)}
+    total={items.length}
+    catalog={items.length > 16 ? '/data/terminal/blogroll.json' : undefined}
+    autoFill
+    label="阅读与推荐的博客"
+    contextPath="/blogroll"
+  />
+</TerminalLayout>

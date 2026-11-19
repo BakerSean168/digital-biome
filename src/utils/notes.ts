@@ -71,8 +71,6 @@ export type { NoteWithDate } from '../repositories/recent-activity-repository';
 export { toAssetCard, inferAssetRole } from '../view-models/asset-card';
 export { toNoteListItem } from '../view-models/note-list-item';
 export type { NoteListItem } from '../view-models/note-list-item';
-export { toBookmarkItem } from '../view-models/bookmark-item';
-export type { BookmarkItem } from '../view-models/bookmark-item';
 
 // --- Domain routing (for convenience) ---
 export {
