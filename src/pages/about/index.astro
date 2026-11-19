@@ -1,10 +1,24 @@
 ---
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
 import SlashPageHeader from '../../components/common/SlashPageHeader.astro';
-import { ABOUT_RELATED_BLOGS, ABOUT_SECTIONS, ABOUT_UPDATED_AT } from '../../config/about-profile';
+import { ABOUT_RELATED_BLOGS } from '../../config/about-profile';
+import { getAboutPage } from '../../repositories/site-page-repository';
+import { renderAboutParagraphHtml } from '../../domain/site-pages/content';
+import { resolveStaticWikilink } from '../../domain/note-routing/static-note-catalog';
 import { renderLinkedTextHtml } from '../../utils/public-blog-links';
 
+const about = await getAboutPage();
+
 function getParagraphHtml(sectionId: string, paragraphIndex: number, paragraph: string) {
+  if (about.fromObsidian) {
+    return renderAboutParagraphHtml(paragraph, (target) => {
+      const normalized = target.startsWith('notes/') ? target.slice(6) : target;
+      const resolved = resolveStaticWikilink(normalized);
+      return resolved.status === 'resolved' || resolved.status === 'asset'
+        ? resolved.href
+        : undefined;
+    });
+  }
   return renderLinkedTextHtml(
     paragraph,
     ABOUT_RELATED_BLOGS.filter(
@@ -26,14 +40,14 @@ function getParagraphHtml(sectionId: string, paragraphIndex: number, paragraph: 
     >
       <SlashPageHeader
         label="ABOUT"
-        title="BakerSean"
-        updatedAt={ABOUT_UPDATED_AT}
+        title={about.title}
+        updatedAt={about.updatedAt}
         readingAnchor="about-title"
         mode={mode}
       />
 
       <div class="divide-y divide-border">
-        {ABOUT_SECTIONS.map((section) => (
+        {about.sections.map((section) => (
           <section
             id={`${mode}-about-${section.id}`}
             data-about-section={section.id}

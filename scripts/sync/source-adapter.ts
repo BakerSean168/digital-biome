@@ -4,11 +4,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import { processContent, detectYamlRisks } from './markdown-transform';
+import { splitMarkdownFrontmatter } from '../../src/domain/markdown/frontmatter';
 import { cacheFavicon } from './favicon-cache';
 import { collectFiles } from './fs-utils';
+import { detectYamlRisks, processContent } from './markdown-transform';
 import type { SourceLayout, SyncStats } from './types';
-import { splitMarkdownFrontmatter } from '../../src/domain/markdown/frontmatter';
 
 export interface ValidationSummary {
   markdownFiles: number;
@@ -63,6 +63,11 @@ export function collectExpectedFiles(layout: SourceLayout): Set<string> {
     }
   }
 
+  if (layout.pagesSource && fs.existsSync(layout.pagesSource)) {
+    for (const f of collectFiles(layout.pagesSource, layout.pagesSource)) {
+      if (f.endsWith('.md')) expectedFiles.add(path.join('pages', f));
+    }
+  }
   return expectedFiles;
 }
 

@@ -6,19 +6,19 @@
  * JSON imports at build time, so there is no runtime file I/O.
  */
 
-import type {
-  NotesIndex,
-  NoteIndexEntry,
-  LinkGraphIndex,
-  TagIndex,
-  AssetIndex,
-} from '../types/knowledge-index';
-import { VISIBILITY_PRIVATE } from '../domain/constants';
+import assetIndexData from '../data/indexes/asset-index.json';
+import linkGraphIndexData from '../data/indexes/link-graph.json';
 
 import notesIndexData from '../data/indexes/notes-index.json';
-import linkGraphIndexData from '../data/indexes/link-graph.json';
 import tagIndexData from '../data/indexes/tag-index.json';
-import assetIndexData from '../data/indexes/asset-index.json';
+import { VISIBILITY_PRIVATE } from '../domain/constants';
+import type {
+  AssetIndex,
+  LinkGraphIndex,
+  NoteIndexEntry,
+  NotesIndex,
+  TagIndex,
+} from '../types/knowledge-index';
 
 // ── Raw index access ──
 // JSON default imports have a narrow inferred type that doesn't always
@@ -79,7 +79,9 @@ export function getPublicKnowledgeNoteEntriesFromIndex(): NoteIndexEntry[] {
       e.visibility !== VISIBILITY_PRIVATE &&
       // Exclude operational/config documents (skills, AGENTS.md, etc.) that are
       // synced from thought-forest/config/ but must not appear as public content.
-      !e.id.startsWith(CONFIG_PATH_PREFIX),
+      !e.id.startsWith(CONFIG_PATH_PREFIX) &&
+      // Special content pages are rendered exclusively at /about and /now.
+      !e.id.startsWith('obsidian/pages/'),
   );
   publicKnowledgeEntriesCache = result;
   return result;

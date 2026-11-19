@@ -29,7 +29,7 @@ const upstreamGenerated = resolveUpstreamGeneratedPath();
 export const notesConfig = {
   vault: {
     /** 常规知识笔记目录 (z/) */
-    notesPath: vaultPath('z'),
+    notesPath: [vaultPath('notes'), vaultPath('z')],
 
     /**
      * 资产笔记目录 (assets/services, assets/subscriptions, assets/hosts...)
@@ -50,6 +50,9 @@ export const notesConfig = {
 
     /** 博客文章目录 (<selected-source>/blogs) */
     blogsPath: vaultPath('blogs'),
+
+    /** Optional special pages in the private Vault (from the public projection). */
+    pagesPath: vaultPath('pages'),
 
     /** 要包含的文件模式 */
     include: ['**/*.md'],
