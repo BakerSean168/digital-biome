@@ -1,12 +1,11 @@
 ---
 import { Clapperboard, CodeXml, Gamepad2 } from '@lucide/astro';
-import type { NowEntry } from '../../config/now-profile';
 import type { NowPageEntry } from '../../domain/site-pages/content';
 import { resolveStaticWikilink } from '../../domain/note-routing/static-note-catalog';
 import { getPublicBlogHref } from '../../utils/public-blog-links';
 
 interface Props {
-  entry: NowEntry | NowPageEntry;
+  entry: NowPageEntry;
 }
 const { entry } = Astro.props;
 const target = 'linkTarget' in entry ? entry.linkTarget : undefined;
@@ -21,7 +20,7 @@ const iconLabels = {
   project: '正在开发',
   game: '正在玩',
   watching: '正在看',
-} satisfies Record<NowEntry['kind'], string>;
+} satisfies Record<NowPageEntry['kind'], string>;
 ---
 
 <li

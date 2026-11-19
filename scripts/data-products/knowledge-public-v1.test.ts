@@ -15,7 +15,7 @@ import {
 
 function fixture(): KnowledgePublicV1 {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     product: 'knowledge-public-v1',
     generated: true,
     editable: false,
@@ -25,11 +25,12 @@ function fixture(): KnowledgePublicV1 {
       revision: 'abcdef1234567890abcdef1234567890abcdef12',
     },
     payload: {
+      usesSummaries: [],
       notes: [
         {
           id: 'obsidian/example',
           collection: 'knowledge',
-          sourcePath: 'z/example.md',
+          sourcePath: 'notes/example.md',
           slug: 'example',
           title: 'Example',
           aliases: [],
@@ -44,7 +45,7 @@ function fixture(): KnowledgePublicV1 {
         },
       ],
       assets: [],
-      tags: [{ tag: 'demo', count: 1, samplePaths: ['z/example.md'] }],
+      tags: [{ tag: 'demo', count: 1, samplePaths: ['notes/example.md'] }],
       linkGraph: [{ sourceId: 'obsidian/example', outgoing: [], backlinks: [] }],
       media: [],
     },
@@ -70,11 +71,11 @@ test('resource priority reaches materialized Markdown and the local note index',
     );
     assert.equal(index[0].usagePriority, 1);
     assert.match(
-      fs.readFileSync(path.join(source.sourceRoot, 'z/example.md'), 'utf8'),
+      fs.readFileSync(path.join(source.sourceRoot, 'notes/example.md'), 'utf8'),
       /usage_priority: 1/,
     );
     const output = path.join(root, 'local-index');
-    buildIndexes(path.join(source.sourceRoot, 'z'), output);
+    buildIndexes(path.join(source.sourceRoot, 'notes'), output);
     const local = JSON.parse(fs.readFileSync(path.join(output, 'notes-index.json'), 'utf8'));
     assert.equal(local.entries[0].usagePriority, 1);
   } finally {
@@ -160,7 +161,7 @@ test('retrospective blog archive month survives the public projection and site i
   assert.throws(() => parseKnowledgePublicV1(JSON.stringify(value)), /archiveMonth/);
 });
 
-test('materializes a projection as an isolated legacy-compatible sync source', () => {
+test('materializes a projection as an isolated public sync source', () => {
   const value = fixture();
   const media = Buffer.from('public-image');
   value.payload.media.push({
@@ -177,7 +178,10 @@ test('materializes a projection as an isolated legacy-compatible sync source', (
     const result = materializeKnowledgePublicV1Source(projection, sourceRoot);
 
     assert.equal(result.sourceRevision, projection.source.revision);
-    assert.equal(fs.readFileSync(path.join(sourceRoot, 'z', 'example.md'), 'utf8'), '# Example\n');
+    assert.equal(
+      fs.readFileSync(path.join(sourceRoot, 'notes', 'example.md'), 'utf8'),
+      '# Example\n',
+    );
     const noteIndex = JSON.parse(
       fs.readFileSync(
         path.join(sourceRoot, 'generated', 'knowledge-index', 'notes-index.json'),
@@ -242,6 +246,7 @@ test('relocated notes and public singleton pages materialize without changing st
       parseKnowledgePublicV1(JSON.stringify(projection)),
       path.join(root, 'source'),
     );
+    assert.equal(fs.existsSync(path.join(source.sourceRoot, 'notes')), true);
     assert.equal(fs.existsSync(path.join(source.sourceRoot, 'z')), false);
     assert.equal(fs.existsSync(path.join(source.sourceRoot, 'notes/example.md')), true);
     assert.match(

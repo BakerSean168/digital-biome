@@ -36,6 +36,15 @@ export function collectExpectedFiles(layout: SourceLayout): Set<string> {
     ),
   );
 
+  for (const [name, source] of [
+    ['projects', layout.projectsSource],
+    ['uses', layout.usesSource],
+  ] as const) {
+    if (!source || !fs.existsSync(source)) continue;
+    for (const file of collectFiles(source, source)) {
+      if (file.endsWith('.md')) expectedFiles.add(path.join(name, file));
+    }
+  }
   if (fs.existsSync(layout.assetNotesSource)) {
     const assetNoteFiles = collectFiles(layout.assetNotesSource, layout.assetNotesSource);
     for (const f of assetNoteFiles) {

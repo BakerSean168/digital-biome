@@ -11,7 +11,14 @@ import { verifyPublication } from './verify-publication';
 
 const revision = '0123456789abcdef0123456789abcdef01234567';
 const payloads = {
-  'knowledge-public-v1': { notes: [], assets: [], tags: [], linkGraph: [], media: [] },
+  'knowledge-public-v1': {
+    usesSummaries: [],
+    notes: [],
+    assets: [],
+    tags: [],
+    linkGraph: [],
+    media: [],
+  },
   'pds-catalog-v1': {
     domains: [],
     repositories: [],
@@ -35,7 +42,7 @@ const payloads = {
 
 function fixture(d: (typeof publicDataProducts)[number]) {
   const artifact = {
-    schemaVersion: d.product === 'infra-public-v2' ? 2 : 1,
+    schemaVersion: d.product === 'pds-catalog-v1' ? 1 : 2,
     product: d.product,
     producer: d.producer,
     generated: true,

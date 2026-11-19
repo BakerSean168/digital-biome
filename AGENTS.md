@@ -18,6 +18,7 @@ fails CI when the stack versions, layouts or route map below drift from the code
 src/
 ├── components/          # Astro components
 │   ├── assets/          # Infrastructure and asset views
+│   ├── site/            # Obsidian authored page rendering
 │   ├── common/          # Header, search, GUI home, private unlock, shared UI
 │   ├── notes/           # Notes navigation and reading views
 │   └── terminal/        # ObjectBrowser / LibraryTabs (TUI catalog views)
@@ -46,7 +47,7 @@ data-products/           # Immutable producer projection locks
 当前公开路由、布局与交付模块以 [`docs/architecture.md` §3.0](docs/architecture.md#30-应用拓扑main-现状) 为准。
 `/projects` 是项目展示集合的 canonical 路由；旧 `/dev` 集合地址只做跳转，`/dev/[assetId]` 的历史服务详情暂时保留。
 `/now` 是与 `/about`、`/uses` 同级的主导航项。
-`/about` 保存长期个人介绍，正文只允许语义相关、已公开 Blog 的句内链接（草稿不生成链接），不添加重复 Slash Pages 导航；`/now` 使用 `src/config/now-profile.ts` 的 `NOW_ENTRIES` 与 `src/components/common/NowEntry.astro` 手工维护独立条目；只展示清晰的类型图标、中英文名称和简短描述，不输出额外状态/分类标签或跨 Slash Pages 跳转，只有已公开的相关项目 Blog 可以在名称上形成链接；`/uses` 使用 `src/config/uses-profile.ts` 维护公开硬件/软件，服务与网站摘要从已有公开数据投影读取；均使用 TerminalLayout 的 GUI/TUI 双模式。完整的服务、收藏网站、主机、网络目录及筛选统一归入 `/uses`，不再保留 `/tools` 独立路由；内部入口与敏感信息不可出现在公开页面。
+`/about` 与 `/now` 的唯一文案来源为 Thought Forest `pages/about.md`、`pages/now.md`，保留稳定块引用和已公开 Blog 的句内链接。`/uses` 的个人资源由 `uses/` 的属性筛选，私有设备仅通过独立白名单摘要展示；完整服务、主机、网络目录仍由公开基础设施投影提供。所有页面沿用 TerminalLayout 的 GUI/TUI 模式，内部入口与敏感信息不可出现在公开页面。
 Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
 This file and `docs/architecture.md` are the current design record.
 
@@ -154,3 +155,7 @@ Production 不依赖仓库 gitlink。当前 Release（manifest v5；v3/v4 仅保
 固定的 Personal Infrastructure revision + SHA-256 读取 `digital-biome-private-infrastructure-v1`
 RuntimeBinding，然后部署既有 immutable Pages artifact。v1/v2 delivery schema 已退休。
 <!-- MANUAL ADDITIONS END -->
+
+## Obsidian content collections
+
+Projects and Uses are authored in Thought Forest projects/ and uses/. Resource properties select /bookmarks, /blogroll, /carry and /defaults. Optional pages /colophon, /ai, /ideas and /canon render public Markdown or an empty state. Private device summaries remain isolated from general indexes.

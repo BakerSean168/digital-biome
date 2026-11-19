@@ -44,6 +44,12 @@ const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
 interface RawFrontmatter {
   usagePriority?: number;
+  homepageOrder?: number;
+  infraResourceId?: string;
+  bookmarked?: boolean;
+  showOnUses?: boolean;
+  defaultFor?: string[];
+  order?: number;
   title?: string;
   description?: string;
   tags: string[];
@@ -69,6 +75,14 @@ interface RawFrontmatter {
 function projectLocalFrontmatter(data: FrontmatterRecord): RawFrontmatter {
   return {
     usagePriority: parseUsagePriority(data.usage_priority),
+    homepageOrder: typeof data.homepage_order === 'number' ? data.homepage_order : undefined,
+    infraResourceId: frontmatterString(data.infra_resource_id),
+    bookmarked: typeof data.bookmarked === 'boolean' ? data.bookmarked : undefined,
+    showOnUses: typeof data.show_on_uses === 'boolean' ? data.show_on_uses : undefined,
+    defaultFor: Array.isArray(data.default_for)
+      ? frontmatterStringArray(data.default_for)
+      : undefined,
+    order: typeof data.order === 'number' ? data.order : undefined,
     title: frontmatterString(data.title),
     description: frontmatterString(data.description),
     tags: frontmatterStringArray(data.tags),
@@ -164,12 +178,15 @@ function processNoteFile(filePath: string, notesRoot: string): ProcessedNote {
   }
   const body = parsed.body;
 
-  const isAsset = id.startsWith(ASSET_NOTE_PREFIX);
+  const isAsset =
+    id.startsWith(ASSET_NOTE_PREFIX) ||
+    relativePath.startsWith('projects/') ||
+    relativePath.startsWith('uses/hardware/');
   const visibility = inferVisibility({
     draft: fm.draft,
     private: fm.private,
     visibility: fm.visibility,
-    isAsset,
+    isAsset: isAsset || relativePath.startsWith('uses/'),
   });
 
   // Parse outgoing links from body — uses foundation wikilink parser
@@ -207,6 +224,12 @@ export function buildIndexes(notesRoot?: string, outputRoot?: string): void {
 
   const notes = files.map((f) => processNoteFile(f, root));
 
+  const ids = new Set<string>();
+  for (const note of notes) {
+    if (ids.has(note.id)) throw new Error('Canonical Note ID collision: ' + note.id);
+    ids.add(note.id);
+  }
+
   // Build note id set for wikilink resolution
   const noteIds = new Set(notes.map((n) => n.id));
   const noteIdBasenameMap = new Map<string, string[]>();
@@ -232,6 +255,12 @@ export function buildIndexes(notesRoot?: string, outputRoot?: string): void {
   // ── notes-index.json ──
   const notesIndexEntries = notes.map((n) => ({
     usagePriority: n.fm.usagePriority,
+    homepageOrder: n.fm.homepageOrder,
+    infraResourceId: n.fm.infraResourceId,
+    bookmarked: n.fm.bookmarked,
+    showOnUses: n.fm.showOnUses,
+    defaultFor: n.fm.defaultFor,
+    order: n.fm.order,
     id: n.id,
     title: n.fm.title ?? '',
     description: n.fm.description,

@@ -23,6 +23,8 @@ export function buildSourceLayout(notesConfig: {
   vault: {
     notesPath: string | string[];
     assetNotesPath: string | string[];
+    projectsPath?: string;
+    usesPath?: string;
     mediaPath: string | string[];
     configPath?: string | string[];
     blogsPath?: string | string[];
@@ -40,6 +42,14 @@ export function buildSourceLayout(notesConfig: {
 
   const notesDest = path.join(process.cwd(), notesConfig.output.notes);
   const assetNotesDest = path.join(notesDest, 'assets');
+  const projectsSource = notesConfig.vault.projectsPath
+    ? resolveCandidatePath(notesConfig.vault.projectsPath)
+    : null;
+  const usesSource = notesConfig.vault.usesPath
+    ? resolveCandidatePath(notesConfig.vault.usesPath)
+    : null;
+  const projectsDest = path.join(notesDest, 'projects');
+  const usesDest = path.join(notesDest, 'uses');
   const assetsDest = path.join(process.cwd(), notesConfig.output.assets);
   const faviconsDest = path.join(process.cwd(), 'public', 'favicons');
 
@@ -61,12 +71,16 @@ export function buildSourceLayout(notesConfig: {
     vaultRoot,
     notesSource,
     assetNotesSource,
+    projectsSource,
+    usesSource,
     configSource,
     blogsSource,
     pagesSource,
     mediaSource,
     notesDest,
     assetNotesDest,
+    projectsDest,
+    usesDest,
     configDest,
     blogsDest,
     pagesDest,

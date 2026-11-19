@@ -42,6 +42,12 @@ const notes = defineCollection({
       // Knowledge lifecycle states (growing, evergreen, seed, ...) coexist with asset
       // lifecycle states. Keep the generic content collection aligned with the public contract.
       status: optionalString(),
+      homepage_order: optionalNumber(),
+      infra_resource_id: optionalString(),
+      bookmarked: optionalBooleanish(),
+      show_on_uses: optionalBooleanish(),
+      default_for: optionalStringArray(),
+      order: optionalNumber(),
       aliases: optionalStringArray(),
       category: optionalString(),
       asset_id: optionalString(),
@@ -114,6 +120,10 @@ const notes = defineCollection({
       type: data.type ?? 'note',
       icon: data.icon ?? undefined,
       status: data.status ?? undefined,
+      bookmarked: data.bookmarked ?? undefined,
+      show_on_uses: data.show_on_uses ?? undefined,
+      default_for: data.default_for ?? undefined,
+      order: data.order ?? undefined,
       asset_id: data.asset_id ?? undefined,
       asset_type: data.asset_type ?? undefined,
       asset_role: data.asset_role ?? undefined,

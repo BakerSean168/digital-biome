@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { parseUsesSummaries, type UsesSummary } from '../../src/domain/uses-summary';
 import fs from 'node:fs';
 import path from 'node:path';
 import { assertRecord, assertStringArray } from '../../src/domain/foundation/guards';
@@ -15,6 +16,12 @@ export type KnowledgePublicNote = {
   aliases: string[];
   description?: string;
   usagePriority?: number | null;
+  homepageOrder?: number;
+  infraResourceId?: string;
+  bookmarked?: boolean;
+  showOnUses?: boolean;
+  defaultFor?: string[];
+  order?: number;
   url?: string;
   icon?: string;
   category?: string;
@@ -49,6 +56,7 @@ export type KnowledgePublicV1 = {
   producer: string;
   source: { repository: string; revision: string };
   payload: {
+    usesSummaries: UsesSummary[];
     notes: KnowledgePublicNote[];
     assets: KnowledgePublicAsset[];
     tags: Array<{ tag: string; count: number; samplePaths: string[] }>;
@@ -74,6 +82,7 @@ function assertSafeRelativePath(value: string, label: string): string {
 }
 
 function assertProjectionShape(projection: KnowledgePublicV1): void {
+  parseUsesSummaries(projection.payload.usesSummaries);
   const seenIds = new Set<string>();
   const seenSourcePaths = new Set<string>();
 
@@ -92,6 +101,28 @@ function assertProjectionShape(projection: KnowledgePublicV1): void {
     assertStringArray(note.aliases, `${note.id}.aliases`);
     assertStringArray(note.tags, `${note.id}.tags`);
     parseUsagePriority(note.usagePriority);
+    for (const field of ['bookmarked', 'showOnUses'] as const) {
+      if (note[field] !== undefined && typeof note[field] !== 'boolean') {
+        throw new Error(`knowledge-public-v1 note ${note.id}.${field} must be a boolean`);
+      }
+    }
+    if (
+      note.homepageOrder !== undefined &&
+      (!Number.isInteger(note.homepageOrder) || note.homepageOrder < 0)
+    )
+      throw new Error('Invalid homepageOrder');
+    if (
+      note.infraResourceId !== undefined &&
+      (typeof note.infraResourceId !== 'string' ||
+        !/^[a-z0-9][a-z0-9-]+$/.test(note.infraResourceId))
+    )
+      throw new Error('Invalid infraResourceId');
+    if (note.defaultFor !== undefined) {
+      assertStringArray(note.defaultFor, `${note.id}.defaultFor`);
+    }
+    if (note.order !== undefined && (!Number.isInteger(note.order) || note.order < 0)) {
+      throw new Error(`knowledge-public-v1 note ${note.id}.order must be a nonnegative integer`);
+    }
     if (
       note.archiveMonth !== undefined &&
       (note.collection !== 'blog' ||
@@ -170,13 +201,15 @@ export function parseKnowledgePublicV1(raw: string): KnowledgePublicV1 {
   const value: unknown = JSON.parse(raw);
   assertRecord(value, 'knowledge-public-v1');
   if (
-    value.schemaVersion !== 1 ||
+    value.schemaVersion !== 2 ||
     value.product !== 'knowledge-public-v1' ||
     value.generated !== true ||
     value.editable !== false ||
     value.producer !== 'pds://system/component/thought-forest'
   ) {
-    throw new Error('knowledge-public-v1 envelope mismatch');
+    throw new Error(
+      'knowledge-public-v1 envelope mismatch: content collections require schemaVersion 2; publish the producer and upgrade the immutable lock before consumer cutover',
+    );
   }
   assertRecord(value.source, 'knowledge-public-v1.source');
   if (
@@ -260,7 +293,14 @@ export function materializeKnowledgePublicV1Source(
   }
   fs.mkdirSync(sourceRoot, { recursive: true });
 
-  for (const directory of ['assets', 'config', 'blogs', 'sources/attachments']) {
+  for (const directory of [
+    'assets',
+    'config',
+    'blogs',
+    'projects',
+    'uses',
+    'sources/attachments',
+  ]) {
     fs.mkdirSync(path.join(sourceRoot, directory), { recursive: true });
   }
 
@@ -269,7 +309,7 @@ export function materializeKnowledgePublicV1Source(
   );
   for (const note of projection.payload.notes) {
     if (
-      !['z/', 'notes/', 'assets/', 'config/', 'blogs/', 'pages/'].some((prefix) =>
+      !['notes/', 'assets/', 'config/', 'blogs/', 'pages/', 'projects/', 'uses/'].some((prefix) =>
         note.sourcePath.startsWith(prefix),
       )
     ) {
@@ -295,6 +335,10 @@ export function materializeKnowledgePublicV1Source(
   const indexedNotes = projection.payload.notes
     .filter((note) => note.collection !== 'blog')
     .map(({ markdown: _markdown, collection: _collection, ...note }) => note);
+  writeJson(
+    path.join(indexRoot, 'uses-summaries.json'),
+    parseUsesSummaries(projection.payload.usesSummaries),
+  );
   writeJson(path.join(indexRoot, 'notes-index.json'), indexedNotes);
   writeJson(path.join(indexRoot, 'asset-index.json'), projection.payload.assets);
   writeJson(path.join(indexRoot, 'link-graph.json'), projection.payload.linkGraph);

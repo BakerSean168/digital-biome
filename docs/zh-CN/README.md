@@ -139,3 +139,5 @@ Thought Forest 持有规范化的知识和资产元数据；Digital Biome 负责
 ## 仓库状态与许可
 
 Digital Biome 是一个 **公开源码仓库**，但当前 **没有附带开源许可证**。仅公开可见并不代表授予复制、修改或再分发代码的许可；除非未来明确加入许可证，否则版权仍由仓库所有者保留。
+
+Obsidian collections provide /bookmarks, /blogroll, /carry and /defaults. Optional Markdown pages provide /colophon, /ai, /ideas and /canon.

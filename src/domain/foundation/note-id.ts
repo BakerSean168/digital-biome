@@ -22,7 +22,14 @@
  *   toNoteId('z/foo')                   // 'obsidian/z/foo'
  */
 export function toNoteId(relativePath: string): string {
-  return `obsidian/${relativePath.replace(/\.md$/, '')}`;
+  const normalized = relativePath.replace(/\\/g, '/').replace(/\.md$/, '');
+  if (normalized.startsWith('uses/hardware/')) {
+    return `obsidian/tools/${normalized.slice('uses/hardware/'.length)}`;
+  }
+  if (normalized.startsWith('uses/websites/')) {
+    return `obsidian/${normalized.slice('uses/websites/'.length)}`;
+  }
+  return `obsidian/${normalized}`;
 }
 
 /** Strip the `obsidian/` prefix to get the vault-relative path. */
@@ -43,7 +50,11 @@ export function noteIdToBasename(noteId: string): string {
 
 /** Check whether a note id refers to an asset note. */
 export function isAssetNoteId(noteId: string): boolean {
-  return noteId.startsWith('obsidian/assets/');
+  return (
+    noteId.startsWith('obsidian/assets/') ||
+    noteId.startsWith('obsidian/projects/') ||
+    noteId.startsWith('obsidian/tools/')
+  );
 }
 
 /**

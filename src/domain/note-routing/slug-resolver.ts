@@ -25,6 +25,7 @@ export interface ResolveResult {
 
 interface NoteEntry {
   id: string;
+  sourcePath?: string;
   data: {
     title?: string | null;
     aliases?: string[] | null;
@@ -49,9 +50,7 @@ interface SlugMapEntry {
  * Keys are normalized (lowercase, trimmed) identifiers;
  * values are arrays of note ids that match that key.
  */
-export function buildSlugMap(
-  entries: NoteEntry[]
-): Map<string, SlugMapEntry[]> {
+export function buildSlugMap(entries: NoteEntry[]): Map<string, SlugMapEntry[]> {
   const map = new Map<string, SlugMapEntry[]>();
 
   function add(key: string, entry: SlugMapEntry) {
@@ -59,7 +58,7 @@ export function buildSlugMap(
     if (!normalized) return;
     const existing = map.get(normalized);
     if (existing) {
-      if (!existing.some(e => e.noteId === entry.noteId)) {
+      if (!existing.some((e) => e.noteId === entry.noteId)) {
         existing.push(entry);
       }
     } else {
@@ -69,11 +68,12 @@ export function buildSlugMap(
 
   for (const entry of entries) {
     const noteId = entry.id;
-    const isPrivate = inferVisibility({
-      draft: entry.data.draft,
-      private: entry.data.private,
-      visibility: entry.data.visibility,
-    }) === 'private';
+    const isPrivate =
+      inferVisibility({
+        draft: entry.data.draft,
+        private: entry.data.private,
+        visibility: entry.data.visibility,
+      }) === 'private';
     const slugEntry: SlugMapEntry = {
       noteId,
       isPrivate,
@@ -81,6 +81,8 @@ export function buildSlugMap(
       assetId: entry.data.asset_id ?? undefined,
       assetType: entry.data.asset_type ?? undefined,
     };
+
+    if (entry.sourcePath) add(entry.sourcePath.replace(/\.md$/, ''), slugEntry);
 
     // title
     if (entry.data.title) {
@@ -115,7 +117,7 @@ export function buildSlugMap(
 export function resolveWikilinkTarget(
   rawTarget: string,
   slugMap: Map<string, SlugMapEntry[]>,
-  allEntries?: NoteEntry[]
+  allEntries?: NoteEntry[],
 ): ResolveResult {
   const target = rawTarget.toLowerCase().trim();
   if (!target) return { status: 'missing' };
@@ -123,7 +125,7 @@ export function resolveWikilinkTarget(
   // 1-4: exact match on map
   const candidates = slugMap.get(target);
   if (candidates && candidates.length > 0) {
-    const publicCandidates = candidates.filter(c => !c.isPrivate);
+    const publicCandidates = candidates.filter((c) => !c.isPrivate);
     if (publicCandidates.length === 1) {
       const candidate = publicCandidates[0];
       if (candidate.isAsset && candidate.assetId && candidate.assetType) {
@@ -145,7 +147,7 @@ export function resolveWikilinkTarget(
     if (publicCandidates.length > 1) {
       return {
         status: 'ambiguous',
-        candidates: publicCandidates.map(c => c.noteId),
+        candidates: publicCandidates.map((c) => c.noteId),
       };
     }
     // All candidates are private
@@ -154,19 +156,22 @@ export function resolveWikilinkTarget(
     }
     return {
       status: 'ambiguous',
-      candidates: candidates.map(c => c.noteId),
+      candidates: candidates.map((c) => c.noteId),
     };
   }
 
   // 5: endsWith fallback
   if (allEntries) {
-    const matches = allEntries.filter(entry => entry.id.toLowerCase().endsWith('/' + target));
+    const matches = allEntries.filter((entry) => entry.id.toLowerCase().endsWith('/' + target));
     if (matches.length > 0) {
-      const publicMatches = matches.filter(entry => inferVisibility({
-        draft: entry.data.draft,
-        private: entry.data.private,
-        visibility: entry.data.visibility,
-      }) !== 'private');
+      const publicMatches = matches.filter(
+        (entry) =>
+          inferVisibility({
+            draft: entry.data.draft,
+            private: entry.data.private,
+            visibility: entry.data.visibility,
+          }) !== 'private',
+      );
 
       if (publicMatches.length === 1) {
         const match = publicMatches[0];
@@ -190,7 +195,7 @@ export function resolveWikilinkTarget(
       if (publicMatches.length > 1) {
         return {
           status: 'ambiguous',
-          candidates: publicMatches.map(entry => entry.id),
+          candidates: publicMatches.map((entry) => entry.id),
         };
       }
 
@@ -200,7 +205,7 @@ export function resolveWikilinkTarget(
 
       return {
         status: 'ambiguous',
-        candidates: matches.map(entry => entry.id),
+        candidates: matches.map((entry) => entry.id),
       };
     }
   }

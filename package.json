@@ -35,6 +35,7 @@
     "sync:content": "tsx scripts/sync-obsidian.ts && tsx scripts/sync/build-subscriptions.ts",
     "build:indexes": "tsx scripts/sync/build-indexes.ts",
     "astro": "astro",
+    "test:collections:integration": "tsx scripts/verify-content-collections.ts",
     "test:e2e": "playwright test",
     "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts",
     "lint": "pnpm lint:biome && pnpm lint:oxlint && pnpm lint:astro",

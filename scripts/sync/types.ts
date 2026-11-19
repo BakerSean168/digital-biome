@@ -16,12 +16,16 @@ export interface SourceLayout {
   vaultRoot: string;
   notesSource: string;
   assetNotesSource: string;
+  projectsSource: string | null;
+  usesSource: string | null;
   configSource: string | null;
   blogsSource: string | null;
   pagesSource: string | null;
   mediaSource: string;
   notesDest: string;
   assetNotesDest: string;
+  projectsDest: string;
+  usesDest: string;
   configDest: string;
   blogsDest: string;
   pagesDest: string;

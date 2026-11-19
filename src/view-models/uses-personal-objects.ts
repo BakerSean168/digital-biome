@@ -1,33 +1,36 @@
-import { USES_HARDWARE, USES_SOFTWARE } from '../config/uses-profile';
+import summariesData from '../data/indexes/uses-summaries.json';
+import { parseUsesSummaries } from '../domain/uses-summary';
+import { selectResourceEntries, toResourceObject } from '../domain/resource-collections';
+import { getAllNoteEntries } from '../repositories/knowledge-index-loader';
+import { getResourceCollection } from '../repositories/resource-collections-repository';
 import type { TerminalObject } from './terminal-object';
 
-/** Present personal inventory through the same list browser used by other catalogs. */
 export function usesHardwareObjects(): TerminalObject[] {
-  return USES_HARDWARE.map((item, index) => ({
-    id: `hardware-${index}`,
+  const summaries = parseUsesSummaries(summariesData).map((item) => ({
+    order: item.order,
+    id: 'uses-summary-' + item.id,
     kind: 'hardware',
-    title: item.name,
-    description: item.detail,
-    meta: item.group.toLowerCase(),
+    title: item.title,
+    description: item.description,
     href: '/uses#hardware',
-    tags: [item.group.toLowerCase()],
-    facets: { 分类: [item.group] },
+    meta: item.group,
+    tags: [],
     relations: [],
+    facets: { 分类: [item.group] },
   }));
+  const hardware = selectResourceEntries(getAllNoteEntries(), 'uses')
+    .filter((entry) => entry.filePath.startsWith('uses/hardware/'))
+    .map((entry) => ({ ...toResourceObject(entry), order: entry.order }));
+  return [...summaries, ...hardware]
+    .sort(
+      (a, b) =>
+        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
+        a.title.localeCompare(b.title) ||
+        a.id.localeCompare(b.id),
+    )
+    .map(({ order: _order, ...item }) => item);
 }
 
 export function usesSoftwareObjects(): TerminalObject[] {
-  return USES_SOFTWARE.flatMap((group) =>
-    group.items.map((item, index) => ({
-      id: `software-${group.group.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index}`,
-      kind: 'software',
-      title: item.name,
-      description: item.detail,
-      meta: group.group.toLowerCase(),
-      href: '/uses#software',
-      tags: [group.group.toLowerCase()],
-      facets: { 分类: [group.group] },
-      relations: [],
-    })),
-  );
+  return getResourceCollection('uses').filter((item) => item.kind === 'software');
 }

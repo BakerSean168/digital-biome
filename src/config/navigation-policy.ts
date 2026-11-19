@@ -75,6 +75,16 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
     label: 'NAV' as const,
     alias: [item.href, ...item.alias],
   })),
+  ...['bookmarks', 'blogroll', 'carry', 'defaults', 'colophon', 'ai', 'ideas', 'canon'].map(
+    (name) => ({
+      type: 'cmd' as const,
+      label: 'NAV' as const,
+      title: name,
+      desc: name,
+      href: '/' + name,
+      alias: ['/' + name],
+    }),
+  ),
   {
     type: 'cmd',
     label: 'NAV',

@@ -15,6 +15,7 @@ import notesIndexData from '../../data/indexes/notes-index.json';
 
 interface StaticCatalogEntry {
   id: string;
+  sourcePath: string;
   data: {
     title?: string | null;
     aliases?: string[] | null;
@@ -43,6 +44,7 @@ function buildFromIndex(): StaticCatalogCache {
   const indexData = notesIndexData as unknown as NotesIndex;
   const entries: StaticCatalogEntry[] = indexData.entries.map((e) => ({
     id: e.id,
+    sourcePath: e.filePath,
     data: {
       title: e.title ?? null,
       aliases: e.aliases ?? null,

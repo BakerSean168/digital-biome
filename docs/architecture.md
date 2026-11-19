@@ -54,11 +54,14 @@ flowchart LR
 | `/dev`, `/dev/[assetId]` | Legacy collection redirect to `/projects`; historical service-asset detail route retained |
 | `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
 | `/systems` | Personal Systems portal (`pds-catalog-v1`) |
-| `/about`, `/now`, `/about/tags` | Self-contained long-lived introduction, manually updated typed Now activity cards, and tag index |
+| `/about`, `/now`, `/about/tags` | Self-contained long-lived introduction, Obsidian-authored Now activity cards, and tag index |
 | `/blog`, `/friends` | Blog and friends links |
 | `/login` | Cloudflare Access entry |
 | `/404` | Not found |
 | `/data/notes-catalog.json`, `/data/uses-catalog.json`, `/data/terminal/[catalog].json`, `/data/system-launcher-index.json` | Public JSON catalogs |
+
+| `/bookmarks`, `/blogroll`, `/carry`, `/defaults` | Explicit Obsidian resource queries with shared ObjectBrowser |
+| `/colophon`, `/ai`, `/ideas`, `/canon` | Public authored Markdown or an empty state |
 
 已退役且由契约测试阻止回归：Dashboard/BiomeTree UI 与 `DashboardLayout`、Observability 页面、`/discover`、`/about/refactor`。
 
@@ -71,7 +74,7 @@ flowchart LR
 
 | 位置                                    | 职责                      | 是否进入公开构建                              |
 | --------------------------------------- | ------------------------- | --------------------------------------------- |
-| producer `z/`                           | 普通知识笔记              | 通过 `knowledge-public-v1` 进入公开构建       |
+| producer `notes/`                           | 普通知识笔记              | 通过 `knowledge-public-v1` 进入公开构建       |
 | producer `assets/`                      | 资产笔记及媒体            | producer 先做公开投影；消费者继续执行二次脱敏 |
 | producer `config/`                      | Dashboard、技能和运维配置 | public projection 仅携带允许公开的子集        |
 | projection `generated/knowledge-index/` | producer-owned 公开索引   | lock 校验后物化；消费者据此生成站点查询索引   |
@@ -80,7 +83,7 @@ Thought Forest 仍是私有 canonical knowledge repository，但跨仓库边界�
 
 ### 3.2 同步与投影层
 
-CI / Candidate 入口为 `scripts/data-products/prepare-knowledge-public-v1.sh`，它先验证并物化 producer projection；随后复用 `scripts/sync/`。本地直接使用私有 Vault 时仍可运行 `pnpm sync`：
+CI / Candidate 入口为 `scripts/data-products/prepare-knowledge-public-v1.sh`，它先验证并物化 producer projection；随后复用 `scripts/sync/`。本地显式选择外部 Vault 时可运行 `pnpm sync:content`：
 
 1. 解析 `notes.config.ts`，确定 vault 和上游索引位置；
 2. 扫描笔记、资产笔记和配置目录；
@@ -149,6 +152,7 @@ Astro 生成 `dist/`，Pagefind 随后生成搜索索引。`scripts/postbuild.ts
 - 授权用户在浏览器中仍能查看并使用真实入口。
 
 它不保证授权用户无法复制数据。浏览器一旦解锁，授权用户就拥有这些值，这是当前单用户信任模型的一部分。
+
 
 ## 4. 信任边界与数据分类
 
@@ -296,3 +300,27 @@ Access Application、Allow Policy、Pages Secrets、自动构建开关和 GitHub
 - [Cloudflare Pages Functions routing](https://developers.cloudflare.com/pages/functions/routing/)
 - [Validate Cloudflare Access JWTs](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)
 - [Cloudflare Pages Wrangler configuration](https://developers.cloudflare.com/pages/functions/wrangler-configuration/)
+## 11. Obsidian 内容集合
+
+`projects/` 与 `uses/{hardware,software,services,websites}/` 是作者内容源；
+目录在生产者的唯一规范化边界决定资源类型。`asset_id` 保留既有身份，
+物理路径不决定项目详情 URL。`uses/websites/` 的永久 Note ID 保留
+`obsidian/<文件名>`，因此迁移的短网站卡仍保留原公开笔记 URL。
+
+`bookmarked: true` 是唯一收藏资格。既有 425 条书签记录显式保留该属性，
+其中 14 张经逐项审阅的短网站卡移动到 `uses/websites/`，其余技术笔记留在
+`notes/`。两条历史 URL 格式无效，原 External 的安全链接筛选已排除它们；
+迁移继续保留 423 个可打开的 External 对象，不猜测替换地址。
+`homepage_order` 控制首页精选顺序，`status`、`show_on_uses`、`default_for`
+与标签控制 Uses、Carry、Defaults、Blogroll。普通笔记只有 URL 不会进入收藏。
+
+私有设备摘要仅由显式 `publish_uses_summary` 授权，公开字段白名单为
+`id/title/description/group/order`。它们经独立 JSON 物化、严格消费者解析后
+只进入 Uses 硬件视图；该视图标记 `data-pagefind-ignore`，不进入通用 Notes、
+图谱或 JSON catalog。出售、撤销授权、删除或取消公开均在重新同步时清除旧结果。
+服务卡通过 `infra_resource_id` 精确关联公开基础设施 ID，仅替换个人标题与简介，
+运行状态、主机、网络和 Access 入口仍由基础设施拥有。
+
+About/Now 及四个可选撰写页仅从 `pages/` 读取。可选页面缺失时显示空状态。
+新增查询页复用 ObjectBrowser 的延迟目录、搜索、筛选、键盘与移动端交互。
+Schema 2 发布及锁切换顺序见 `scripts/data-products/README.md`。

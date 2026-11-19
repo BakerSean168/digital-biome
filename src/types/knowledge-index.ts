@@ -29,6 +29,12 @@ export interface NoteIndexEntry {
   title: string;
   description?: string;
   usagePriority?: number;
+  homepageOrder?: number;
+  infraResourceId?: string;
+  bookmarked?: boolean;
+  showOnUses?: boolean;
+  defaultFor?: string[];
+  order?: number;
   tags: string[];
   /** ISO 8601 date string */
   created?: string;

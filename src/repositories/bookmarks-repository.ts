@@ -1,3 +1,4 @@
+import { selectResourceEntries, selectHomepageResources } from '../domain/resource-collections';
 /**
  * Bookmarks repository — bookmark and category queries.
  *
@@ -7,19 +8,9 @@
 import type { Bookmark, Category } from '../types/notes';
 import type { NoteIndexEntry } from '../types/knowledge-index';
 import { getAllNoteEntries, getNoteEntryByIdFromIndex } from './knowledge-index-loader';
-import { extractCategories } from '../view-models/bookmark-item';
-import { VISIBILITY_PRIVATE, CONFIG_RESOURCE_TYPES_SLUG } from '../domain/constants';
+import { extractCategories } from '../view-models/bookmark-categories';
+import { CONFIG_RESOURCE_TYPES_SLUG } from '../domain/constants';
 import { parseUsagePriority } from '../domain/resource-order';
-
-const HOMEPAGE_FEATURED_BOOKMARK_SLUGS = [
-  'chatgpt',
-  'bilibili',
-  'youtube',
-  'pinterest',
-  'github',
-  'linux-do',
-  'reddit',
-] as const;
 
 /** Get resource type tags from the config note in the index. */
 function getResourceTypesFromIndex(): string[] {
@@ -34,26 +25,12 @@ function hasUrl(entry: NoteIndexEntry): entry is NoteIndexEntry & { url: string 
   return typeof entry.url === 'string' && entry.url.length > 0;
 }
 
-/** Get all bookmarks (notes with url + website/resource tags). */
+/** Get explicitly bookmarked public resources with a destination URL. */
 export function getBookmarks(): Bookmark[] {
   const entries = getAllNoteEntries();
   const resourceTypes = getResourceTypesFromIndex();
 
-  return entries
-    .filter((entry) => {
-      if (entry.draft || entry.private || entry.visibility === VISIBILITY_PRIVATE) return false;
-      if (entry.isAsset) return false;
-
-      const tags = entry.tags || [];
-      const hasWebsite = tags.some((tag) => tag.toLowerCase() === 'website');
-      const hasResource = tags.some((tag) => tag.toLowerCase() === 'resource');
-
-      const isLegacy = entry.url && tags.some((tag) => tag === 'type/resource');
-      const isNew =
-        entry.url && hasWebsite && hasResource && extractCategories(tags, resourceTypes).length > 0;
-
-      return isLegacy || isNew;
-    })
+  return selectResourceEntries(entries, 'bookmarks')
     .filter(hasUrl)
     .map((entry) => ({
       title: entry.title,
@@ -68,18 +45,11 @@ export function getBookmarks(): Bookmark[] {
 
 /** Get categories with counts. */
 export function getCategories(): Category[] {
-  const entries = getAllNoteEntries();
-  const resourceTypes = getResourceTypesFromIndex();
   const categoryMap = new Map<string, number>();
-
-  entries
-    .filter((e) => !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE && !e.isAsset)
-    .forEach((entry) => {
-      const cats = extractCategories(entry.tags || [], resourceTypes);
-      cats.forEach((cat) => {
-        categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
-      });
-    });
+  for (const bookmark of getBookmarks()) {
+    for (const category of bookmark.categories)
+      categoryMap.set(category, (categoryMap.get(category) ?? 0) + 1);
+  }
 
   return Array.from(categoryMap.entries())
     .map(([name, count]) => ({
@@ -109,11 +79,9 @@ export function getBookmarksByCategory(): Map<string, Bookmark[]> {
 /** Get homepage featured bookmarks. */
 export function getHomepageFeaturedBookmarks(): Bookmark[] {
   const bookmarks = getBookmarks();
-  const bookmarkMap = new Map(
-    bookmarks.map((bookmark) => [bookmark.slug.split('/').pop()?.toLowerCase(), bookmark] as const),
-  );
-
-  return HOMEPAGE_FEATURED_BOOKMARK_SLUGS.map((slug) => bookmarkMap.get(slug)).filter(
-    (bookmark): bookmark is Bookmark => Boolean(bookmark),
-  );
+  const byId = new Map(bookmarks.map((bookmark) => [bookmark.slug, bookmark]));
+  return selectHomepageResources(getAllNoteEntries()).flatMap((entry) => {
+    const bookmark = byId.get(entry.id);
+    return bookmark ? [bookmark] : [];
+  });
 }
