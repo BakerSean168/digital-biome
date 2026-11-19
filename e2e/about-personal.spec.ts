@@ -4,9 +4,7 @@ import { aboutSource, nowSource } from './site-page-expected';
 
 const publishedRelatedBlogs = aboutSource.links;
 
-test('About renders source-authored sections and verified links', async ({
-  page,
-}) => {
+test('About renders source-authored sections and verified links', async ({ page }) => {
   await page.goto('/about/?ui=gui');
   const about = page.locator('article[data-ui-only="gui"]');
 
@@ -49,5 +47,7 @@ test('About retains the same full text in terminal mode and global navigation wo
 
   await page.locator('[data-terminal-dock] a[href^="/now"]').click();
   await expect(page).toHaveURL(/\/now\/?\?ui=tui$/);
-  await expect(page.locator('article[data-ui-only="tui"]')).toContainText(nowSource.entries[0].title);
+  await expect(page.locator('article[data-ui-only="tui"]')).toContainText(
+    nowSource.entries[0].title,
+  );
 });

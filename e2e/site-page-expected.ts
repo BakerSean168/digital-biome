@@ -43,10 +43,20 @@ export const nowSource = (() => {
   const source = pageSource('now');
   const entries = source ? parseNowBody(source.body) : [...NOW_ENTRIES];
   const links = entries.flatMap((entry) => {
-    const blogSlug = 'linkTarget' in entry && typeof entry.linkTarget === 'string' && entry.linkTarget.startsWith('blogs/')
-      ? entry.linkTarget.slice('blogs/'.length)
-      : 'blogSlug' in entry ? entry.blogSlug : undefined;
+    const blogSlug =
+      'linkTarget' in entry &&
+      typeof entry.linkTarget === 'string' &&
+      entry.linkTarget.startsWith('blogs/')
+        ? entry.linkTarget.slice('blogs/'.length)
+        : 'blogSlug' in entry
+          ? entry.blogSlug
+          : undefined;
     return blogSlug && publishedBlogHref(blogSlug) ? [{ title: entry.title, blogSlug }] : [];
   });
-  return { entries, updatedAt: source?.updatedAt ?? NOW_UPDATED_AT, title: source?.title ?? '最近在做什么', links };
+  return {
+    entries,
+    updatedAt: source?.updatedAt ?? NOW_UPDATED_AT,
+    title: source?.title ?? '最近在做什么',
+    links,
+  };
 })();

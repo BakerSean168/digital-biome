@@ -25,21 +25,20 @@ async function pageEntry(name: 'about' | 'now') {
   if (entry.data.draft || entry.data.private || entry.data.visibility !== 'public') {
     throw new Error(`Public singleton page failed Markdown visibility check: pages/${name}.md`);
   }
-  const updatedAt = entry.data.updated
-    ? entry.data.updated.toISOString().slice(0, 10)
-    : undefined;
+  const updatedAt = entry.data.updated ? entry.data.updated.toISOString().slice(0, 10) : undefined;
   if (!updatedAt) throw new Error(`Public singleton page missing updated date: pages/${name}.md`);
   return { body: entry.body, title: entry.data.title, updatedAt };
 }
 
 export async function getAboutPage() {
   const source = await pageEntry('about');
-  if (!source) return {
-    fromObsidian: false as const,
-    title: 'BakerSean',
-    updatedAt: ABOUT_UPDATED_AT,
-    sections: ABOUT_SECTIONS,
-  };
+  if (!source)
+    return {
+      fromObsidian: false as const,
+      title: 'BakerSean',
+      updatedAt: ABOUT_UPDATED_AT,
+      sections: ABOUT_SECTIONS,
+    };
   return {
     fromObsidian: true as const,
     title: source.title ?? 'BakerSean',
@@ -50,12 +49,13 @@ export async function getAboutPage() {
 
 export async function getNowPage() {
   const source = await pageEntry('now');
-  if (!source) return {
-    fromObsidian: false as const,
-    title: '最近在做什么',
-    updatedAt: NOW_UPDATED_AT,
-    entries: NOW_ENTRIES,
-  };
+  if (!source)
+    return {
+      fromObsidian: false as const,
+      title: '最近在做什么',
+      updatedAt: NOW_UPDATED_AT,
+      entries: NOW_ENTRIES,
+    };
   return {
     fromObsidian: true as const,
     title: source.title ?? '最近在做什么',

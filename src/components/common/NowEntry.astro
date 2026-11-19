@@ -11,9 +11,12 @@ interface Props {
 const { entry } = Astro.props;
 const target = 'linkTarget' in entry ? entry.linkTarget : undefined;
 const resolved = target ? resolveStaticWikilink(target) : undefined;
-const blogHref = resolved && (resolved.status === 'resolved' || resolved.status === 'asset')
-  ? resolved.href
-  : ('blogSlug' in entry && entry.blogSlug ? getPublicBlogHref(entry.blogSlug) : undefined);
+const blogHref =
+  resolved && (resolved.status === 'resolved' || resolved.status === 'asset')
+    ? resolved.href
+    : 'blogSlug' in entry && entry.blogSlug
+      ? getPublicBlogHref(entry.blogSlug)
+      : undefined;
 const iconLabels = {
   project: '正在开发',
   game: '正在玩',

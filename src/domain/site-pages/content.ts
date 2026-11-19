@@ -90,9 +90,9 @@ export function parseAboutBody(body: string): AboutSection[] {
 }
 
 const kinds: Record<string, NowKind> = {
-  '正在开发': 'project',
-  '正在玩': 'game',
-  '正在看': 'watching',
+  正在开发: 'project',
+  正在玩: 'game',
+  正在看: 'watching',
 };
 
 export function parseNowBody(body: string): NowPageEntry[] {
@@ -108,7 +108,8 @@ export function parseNowBody(body: string): NowPageEntry[] {
       continue;
     }
     const item = /^- (.+?) — (.+?) \^([a-z0-9-]+)$/.exec(line);
-    if (!item || !kind) throw new Error('pages/now.md: expected a categorized list item with ^stable-id: ' + line);
+    if (!item || !kind)
+      throw new Error('pages/now.md: expected a categorized list item with ^stable-id: ' + line);
     const [, rawTitle, description, id] = item;
     if (seen.has(id)) throw new Error('pages/now.md: duplicate item id ' + id);
     seen.add(id);
@@ -130,8 +131,12 @@ export function parseNowBody(body: string): NowPageEntry[] {
 }
 
 function escapeHtml(value: string): string {
-  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 /** Resolve links only through the public note catalog; unavailable targets stay plain. */

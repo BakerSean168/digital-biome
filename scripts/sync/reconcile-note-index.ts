@@ -110,8 +110,9 @@ export function reconcileNoteIndex(
   const entries = local.entries.map((note) => {
     const sourcePath = toUpstreamSourcePath(note.filePath);
     if (!sourcePath) return note;
-    const upstreamNote = bySourcePath.get(sourcePath)
-      ?? (sourcePath.startsWith('z/') ? bySourcePath.get('notes/' + sourcePath.slice(2)) : undefined);
+    const upstreamNote =
+      bySourcePath.get(sourcePath) ??
+      (sourcePath.startsWith('z/') ? bySourcePath.get('notes/' + sourcePath.slice(2)) : undefined);
     if (!upstreamNote) return note;
     reconciled += 1;
     return reconcileNote(note, upstreamNote, protectedInfrastructureUrls);

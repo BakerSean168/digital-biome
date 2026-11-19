@@ -269,7 +269,9 @@ export function materializeKnowledgePublicV1Source(
   );
   for (const note of projection.payload.notes) {
     if (
-      !['z/', 'notes/', 'assets/', 'config/', 'blogs/', 'pages/'].some((prefix) => note.sourcePath.startsWith(prefix))
+      !['z/', 'notes/', 'assets/', 'config/', 'blogs/', 'pages/'].some((prefix) =>
+        note.sourcePath.startsWith(prefix),
+      )
     ) {
       continue;
     }

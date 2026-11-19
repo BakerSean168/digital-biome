@@ -8,11 +8,11 @@ import type { SourceLayout } from './types';
 
 export function resolveCandidatePath(input: string | string[]): string {
   const candidates = Array.isArray(input) ? input : [input];
-  const resolved = candidates.map(candidate => (
-    path.isAbsolute(candidate) ? candidate : path.join(process.cwd(), candidate)
-  ));
+  const resolved = candidates.map((candidate) =>
+    path.isAbsolute(candidate) ? candidate : path.join(process.cwd(), candidate),
+  );
 
-  const existing = resolved.find(candidate => fs.existsSync(candidate));
+  const existing = resolved.find((candidate) => fs.existsSync(candidate));
   return existing ?? resolved[0];
 }
 
@@ -52,7 +52,9 @@ export function buildSourceLayout(notesConfig: {
     ? resolveCandidatePath(notesConfig.vault.blogsPath)
     : null;
   const blogsDest = path.join(notesDest, 'blogs');
-  const pagesSource = notesConfig.vault.pagesPath ? resolveCandidatePath(notesConfig.vault.pagesPath) : null;
+  const pagesSource = notesConfig.vault.pagesPath
+    ? resolveCandidatePath(notesConfig.vault.pagesPath)
+    : null;
   const pagesDest = path.join(notesDest, 'pages');
 
   return {

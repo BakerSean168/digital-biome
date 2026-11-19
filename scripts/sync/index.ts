@@ -45,7 +45,8 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   console.log(`  assets: ${layout.assetNotesSource} -> ${layout.assetNotesDest}`);
   if (layout.configSource) console.log(`  config: ${layout.configSource} -> ${layout.configDest}`);
   if (layout.blogsSource) console.log(`  blogs : ${layout.blogsSource} -> ${layout.blogsDest}`);
-  if (layout.pagesSource && (await import('node:fs')).existsSync(layout.pagesSource)) console.log(`  pages : ${layout.pagesSource} -> ${layout.pagesDest}`);
+  if (layout.pagesSource && (await import('node:fs')).existsSync(layout.pagesSource))
+    console.log(`  pages : ${layout.pagesSource} -> ${layout.pagesDest}`);
   console.log(`  media : ${layout.mediaSource} -> ${layout.assetsDest}`);
   if (withFavicons) console.log('  favicons: enabled');
   console.log('');
@@ -119,7 +120,15 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
     }
 
     if (layout.pagesSource && fs.existsSync(layout.pagesSource)) {
-      await validateSourceFiles(layout.pagesSource, layout.pagesDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
+      await validateSourceFiles(
+        layout.pagesSource,
+        layout.pagesDest,
+        layout,
+        withFavicons,
+        stats,
+        validationSummary,
+        protectedInfrastructureUrls,
+      );
     }
 
     console.log('\n[dry-run] Sync plan:');
@@ -243,7 +252,14 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   if (layout.pagesSource) {
     const fs = await import('node:fs');
     if (fs.existsSync(layout.pagesSource)) {
-      await syncFiles(layout.pagesSource, layout.pagesDest, layout, withFavicons, stats, protectedInfrastructureUrls);
+      await syncFiles(
+        layout.pagesSource,
+        layout.pagesDest,
+        layout,
+        withFavicons,
+        stats,
+        protectedInfrastructureUrls,
+      );
     }
   }
 
