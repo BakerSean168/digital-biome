@@ -5,6 +5,13 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.15.1](https://github.com/BakerSean168/digital-biome/compare/v0.15.0...v0.15.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **sync:** align upstream metadata comparison with relocated notes ([b2789cd](https://github.com/BakerSean168/digital-biome/commit/b2789cde185048849d90926eaa4fa9d5d836c8e8))
+
 ## [0.15.0](https://github.com/BakerSean168/digital-biome/compare/v0.14.0...v0.15.0) (2026-11-19)
 
 
