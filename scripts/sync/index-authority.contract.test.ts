@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { notesConfig } from '../../notes.config';
-import { sanitizePublishedMetadataText, toUpstreamSourcePath } from './reconcile-note-index';
+import { findUpstreamNoteByLocalPath, sanitizePublishedMetadataText } from './reconcile-note-index';
 
 type LocalNote = {
   id: string;
@@ -44,14 +44,13 @@ function loadIndexes(): { local: LocalNote[]; upstream: UpstreamNote[] } {
 
 test('published note metadata agrees with the Thought Forest full-YAML authority', () => {
   const { local, upstream } = loadIndexes();
-  const bySourcePath = new Map(upstream.map((note) => [note.sourcePath, note]));
+  const bySourcePath = new Map(upstream.map((note) => [note.sourcePath.replace(/\\/g, '/'), note]));
   let compared = 0;
 
   for (const note of local) {
-    const sourcePath = toUpstreamSourcePath(note.filePath);
-    if (!sourcePath) continue;
-    const canonical = bySourcePath.get(sourcePath);
+    const canonical = findUpstreamNoteByLocalPath(bySourcePath, note.filePath);
     if (!canonical) continue;
+    const sourcePath = canonical.sourcePath;
     compared += 1;
 
     assert.equal(
@@ -85,14 +84,13 @@ test('published note metadata agrees with the Thought Forest full-YAML authority
 
 test('Digital Biome may make upstream-public assets stricter but never widens this shared set', () => {
   const { local, upstream } = loadIndexes();
-  const bySourcePath = new Map(upstream.map((note) => [note.sourcePath, note]));
+  const bySourcePath = new Map(upstream.map((note) => [note.sourcePath.replace(/\\/g, '/'), note]));
 
   for (const note of local) {
     if (note.visibility !== 'public') continue;
-    const sourcePath = toUpstreamSourcePath(note.filePath);
-    if (!sourcePath) continue;
-    const canonical = bySourcePath.get(sourcePath);
+    const canonical = findUpstreamNoteByLocalPath(bySourcePath, note.filePath);
     if (!canonical) continue;
+    const sourcePath = canonical.sourcePath;
     assert.equal(
       canonical.visibility,
       'public',

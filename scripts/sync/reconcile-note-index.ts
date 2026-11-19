@@ -67,6 +67,26 @@ export function toUpstreamSourcePath(localFilePath: string): string | null {
   return `z/${normalized}`;
 }
 
+/**
+ * Resolve metadata from either version of Thought Forest's physical Vault layout.
+ * The local index keeps canonical route-oriented relative file paths, while the
+ * producer moved its source from z/ to notes/. Keep the fallback in one place so
+ * consumers and authority tests enforce the same exact source correspondence.
+ */
+export function findUpstreamNoteByLocalPath<T extends { sourcePath: string }>(
+  bySourcePath: ReadonlyMap<string, T>,
+  localFilePath: string,
+): T | undefined {
+  const sourcePath = toUpstreamSourcePath(localFilePath);
+  if (!sourcePath) return undefined;
+  return (
+    bySourcePath.get(sourcePath) ??
+    (sourcePath.startsWith('z/')
+      ? bySourcePath.get(`notes/${sourcePath.slice('z/'.length)}`)
+      : undefined)
+  );
+}
+
 export function reconcileNote(
   local: LocalNote,
   upstream: UpstreamNote | undefined,
@@ -108,11 +128,7 @@ export function reconcileNoteIndex(
 
   let reconciled = 0;
   const entries = local.entries.map((note) => {
-    const sourcePath = toUpstreamSourcePath(note.filePath);
-    if (!sourcePath) return note;
-    const upstreamNote =
-      bySourcePath.get(sourcePath) ??
-      (sourcePath.startsWith('z/') ? bySourcePath.get('notes/' + sourcePath.slice(2)) : undefined);
+    const upstreamNote = findUpstreamNoteByLocalPath(bySourcePath, note.filePath);
     if (!upstreamNote) return note;
     reconciled += 1;
     return reconcileNote(note, upstreamNote, protectedInfrastructureUrls);
