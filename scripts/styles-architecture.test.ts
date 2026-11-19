@@ -66,5 +66,9 @@ test('active reading, terminal, GUI and browser workspace styles are preserved',
     /html\[data-browser-ready\]/,
     'Workspace geometry must be stable before JavaScript initializes object browsers',
   );
-  assert.match(cssFile('workspace.css'), /@view-transition/);
+  assert.doesNotMatch(
+    cssFile('workspace.css'),
+    /@view-transition|::view-transition-(?:old|new)\(/,
+    'Cross-document snapshots must not overlap old and new page content',
+  );
 });
