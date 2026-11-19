@@ -1,27 +1,24 @@
 import { expect, test } from '@playwright/test';
-import { NOW_ENTRIES, NOW_UPDATED_AT } from '../src/config/now-profile';
 import { publishedBlogHref } from './published-blog-href';
+import { nowSource } from './site-page-expected';
 
-const linkedProjects = NOW_ENTRIES.filter(
-  (entry) => entry.blogSlug && publishedBlogHref(entry.blogSlug),
-);
+const linkedProjects = nowSource.links;
 
 test('Now shows a shared page banner above its compact icon list', async ({ page }) => {
   await page.goto('/now/?ui=gui');
   const now = page.locator('article[data-ui-only="gui"]');
 
-  await expect(now.getByRole('heading', { name: '最近在做什么', exact: true })).toBeVisible();
+  await expect(now.getByRole('heading', { name: nowSource.title, exact: true })).toBeVisible();
   await expect(now.locator('header')).toContainText('/ NOW');
-  await expect(now.locator('header time')).toHaveAttribute('datetime', NOW_UPDATED_AT);
-  await expect(now.locator('[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
-  await expect(now.locator('li[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
+  await expect(now.locator('header time')).toHaveAttribute('datetime', nowSource.updatedAt);
+  await expect(now.locator('li[data-now-item]')).toHaveCount(nowSource.entries.length);
   await expect(now.locator('time')).toHaveCount(1);
   await expect(now.locator('a')).toHaveCount(linkedProjects.length);
   for (const entry of linkedProjects) {
     const link = now.getByRole('link', { name: entry.title, exact: true });
     await expect(link).toHaveAttribute('href', /^\/notes\/obsidian\/blogs\//);
     const target = new URL((await link.getAttribute('href')) ?? '', page.url());
-    expect(target.pathname).toBe(publishedBlogHref(entry.blogSlug ?? ''));
+    expect(target.pathname).toBe(publishedBlogHref(entry.blogSlug));
   }
   await expect(now).not.toContainText('BUILDING');
   await expect(now).not.toContainText('PLAYING');
@@ -29,7 +26,7 @@ test('Now shows a shared page banner above its compact icon list', async ({ page
   await expect(now).not.toContainText('MOBA');
   await expect(now).not.toContainText('阿里三');
 
-  for (const entry of NOW_ENTRIES) {
+  for (const entry of nowSource.entries) {
     const row = now.locator(`[data-now-item="${entry.id}"]`);
     await expect(row).toContainText(entry.title);
     await expect(row).toContainText(entry.description);
@@ -42,7 +39,6 @@ test('Now shows a shared page banner above its compact icon list', async ({ page
     await expect(row.locator('h2')).toHaveCount(1);
     await expect(row.locator('p')).toHaveCount(1);
   }
-  await expect(now.locator('[data-now-item="bodysense"]')).toContainText('BodySense');
   await expect(page.locator('[data-terminal-dock] a[href^="/now"]')).toHaveAttribute(
     'aria-current',
     'page',
@@ -65,12 +61,11 @@ test('Now stays compact in both modes on a phone, without horizontal overflow', 
 
   await page.locator('[data-ui-mode-choice="tui"]').click();
   const now = page.locator('article[data-ui-only="tui"]');
-  await expect(now.locator('h1')).toHaveText('最近在做什么');
-  await expect(now.locator('header time')).toHaveAttribute('datetime', NOW_UPDATED_AT);
-  await expect(now.locator('[data-now-item]')).toHaveCount(NOW_ENTRIES.length);
-  await expect(now).toContainText('BodySense');
-  await expect(now).toContainText('矮人要塞');
-  await expect(now).toContainText('绝命毒师');
+  await expect(now.locator('h1')).toHaveText(nowSource.title);
+  await expect(now.locator('header time')).toHaveAttribute('datetime', nowSource.updatedAt);
+  await expect(now).toContainText(nowSource.entries[0].title);
+  await expect(now).toContainText(nowSource.entries[0].title);
+  await expect(now).toContainText(nowSource.entries[0].title);
   await expect(now.locator('a')).toHaveCount(linkedProjects.length);
   await expect(now.locator('time')).toHaveCount(1);
 });

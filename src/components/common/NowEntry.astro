@@ -1,13 +1,19 @@
 ---
 import { Clapperboard, CodeXml, Gamepad2 } from '@lucide/astro';
 import type { NowEntry } from '../../config/now-profile';
+import type { NowPageEntry } from '../../domain/site-pages/content';
+import { resolveStaticWikilink } from '../../domain/note-routing/static-note-catalog';
 import { getPublicBlogHref } from '../../utils/public-blog-links';
 
 interface Props {
-  entry: NowEntry;
+  entry: NowEntry | NowPageEntry;
 }
 const { entry } = Astro.props;
-const blogHref = entry.blogSlug ? getPublicBlogHref(entry.blogSlug) : undefined;
+const target = 'linkTarget' in entry ? entry.linkTarget : undefined;
+const resolved = target ? resolveStaticWikilink(target) : undefined;
+const blogHref = resolved && (resolved.status === 'resolved' || resolved.status === 'asset')
+  ? resolved.href
+  : ('blogSlug' in entry && entry.blogSlug ? getPublicBlogHref(entry.blogSlug) : undefined);
 const iconLabels = {
   project: '正在开发',
   game: '正在玩',

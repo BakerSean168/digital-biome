@@ -1,14 +1,14 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseUsagePriority } from '../../src/domain/resource-order';
 import { assertRecord, assertStringArray } from '../../src/domain/foundation/guards';
+import { parseUsagePriority } from '../../src/domain/resource-order';
 
 export const KNOWLEDGE_PUBLIC_V1_REPOSITORY = 'https://github.com/BakerSean168/thought-forest.git';
 
 export type KnowledgePublicNote = {
   id: string;
-  collection: 'knowledge' | 'asset' | 'docs' | 'config' | 'blog';
+  collection: 'knowledge' | 'asset' | 'docs' | 'config' | 'blog' | 'page';
   sourcePath: string;
   slug: string;
   title: string;
@@ -260,7 +260,7 @@ export function materializeKnowledgePublicV1Source(
   }
   fs.mkdirSync(sourceRoot, { recursive: true });
 
-  for (const directory of ['z', 'assets', 'config', 'blogs', 'sources/attachments']) {
+  for (const directory of ['assets', 'config', 'blogs', 'sources/attachments']) {
     fs.mkdirSync(path.join(sourceRoot, directory), { recursive: true });
   }
 
@@ -269,7 +269,7 @@ export function materializeKnowledgePublicV1Source(
   );
   for (const note of projection.payload.notes) {
     if (
-      !['z/', 'assets/', 'config/', 'blogs/'].some((prefix) => note.sourcePath.startsWith(prefix))
+      !['z/', 'notes/', 'assets/', 'config/', 'blogs/', 'pages/'].some((prefix) => note.sourcePath.startsWith(prefix))
     ) {
       continue;
     }

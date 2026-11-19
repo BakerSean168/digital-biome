@@ -18,11 +18,13 @@ export interface SourceLayout {
   assetNotesSource: string;
   configSource: string | null;
   blogsSource: string | null;
+  pagesSource: string | null;
   mediaSource: string;
   notesDest: string;
   assetNotesDest: string;
   configDest: string;
   blogsDest: string;
+  pagesDest: string;
   assetsDest: string;
   faviconsDest: string;
   assetsUrlPrefix: string;

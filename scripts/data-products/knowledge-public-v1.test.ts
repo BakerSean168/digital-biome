@@ -6,11 +6,11 @@ import path from 'node:path';
 import test from 'node:test';
 import { buildIndexes } from '../sync/build-indexes';
 import {
+  type KnowledgePublicV1,
   knowledgeProjectionSummary,
   knowledgePublicIds,
   materializeKnowledgePublicV1Source,
   parseKnowledgePublicV1,
-  type KnowledgePublicV1,
 } from './knowledge-public-v1';
 
 function fixture(): KnowledgePublicV1 {
@@ -213,6 +213,51 @@ test('fails closed when materialized media bytes do not match producer digest', 
       () => materializeKnowledgePublicV1Source(projection, path.join(root, 'source')),
       /media digest mismatch/,
     );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+
+test('relocated notes and public singleton pages materialize without changing stable note IDs', () => {
+  const projection = fixture();
+  projection.payload.notes[0].sourcePath = 'notes/example.md';
+  projection.payload.notes.push({
+    id: 'obsidian/pages/about',
+    collection: 'page',
+    sourcePath: 'pages/about.md',
+    slug: 'about',
+    title: 'BakerSean',
+    aliases: ['关于我'],
+    tags: ['type/synthesis'],
+    visibility: 'public',
+    updated: '2026-11-19T00:00:00',
+    isAsset: false,
+    isMoc: false,
+    markdown: '---\ntitle: BakerSean\ndraft: false\nvisibility: public\nupdated: 2026-11-19T00:00:00\n---\n\n## 一节\n^about-practice\n\n正文。\n',
+  });
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'knowledge-site-page-consumer-'));
+  try {
+    const source = materializeKnowledgePublicV1Source(
+      parseKnowledgePublicV1(JSON.stringify(projection)),
+      path.join(root, 'source'),
+    );
+    assert.equal(fs.existsSync(path.join(source.sourceRoot, 'z')), false);
+    assert.equal(fs.existsSync(path.join(source.sourceRoot, 'notes/example.md')), true);
+    assert.match(fs.readFileSync(path.join(source.sourceRoot, 'pages/about.md'), 'utf8'), /## 一节/);
+    const index = JSON.parse(
+      fs.readFileSync(path.join(source.sourceRoot, 'generated/knowledge-index/notes-index.json'), 'utf8'),
+    ) as Array<{ id: string; sourcePath: string; collection?: string }>;
+    assert.deepEqual(
+      index.map((entry) => entry.id),
+      ['obsidian/example', 'obsidian/pages/about'],
+    );
+    assert.equal(index[0].sourcePath, 'notes/example.md');
+    assert.equal(index[1].sourcePath, 'pages/about.md');
+    const output = path.join(root, 'local-index');
+    buildIndexes(path.join(source.sourceRoot, 'notes'), output);
+    const consumerIndex = JSON.parse(fs.readFileSync(path.join(output, 'notes-index.json'), 'utf8'));
+    assert.deepEqual(consumerIndex.entries.map((entry: { id: string }) => entry.id), ['obsidian/example']);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

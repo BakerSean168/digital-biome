@@ -12,18 +12,18 @@
 
 import path from 'node:path';
 import { notesConfig } from '../../notes.config';
+import { collectMediaFiles, detectMediaCollisions, syncAssets } from './asset-transform';
+import { clearAstroContentCache } from './astro-content-cache';
+import { buildIndexes } from './build-indexes';
 import { buildSourceLayout } from './config';
+import { copyUpstreamLinkGraph } from './copy-upstream-indexes';
+import { mergeAssetIndex } from './merge-asset-index';
+import { loadProtectedInfrastructureUrls } from './privacy';
+import { rebuildDerivedIndexes } from './rebuild-derived-indexes';
+import { reconcileNoteIndex } from './reconcile-note-index';
 import { collectExpectedFiles, syncFiles, validateSourceFiles } from './source-adapter';
-import { syncAssets, detectMediaCollisions, collectMediaFiles } from './asset-transform';
 import { cleanStaleFiles } from './stale-cleaner';
 import { createStats, printSyncReport } from './sync-report';
-import { buildIndexes } from './build-indexes';
-import { mergeAssetIndex } from './merge-asset-index';
-import { reconcileNoteIndex } from './reconcile-note-index';
-import { rebuildDerivedIndexes } from './rebuild-derived-indexes';
-import { copyUpstreamLinkGraph } from './copy-upstream-indexes';
-import { loadProtectedInfrastructureUrls } from './privacy';
-import { clearAstroContentCache } from './astro-content-cache';
 
 export interface RunSyncOptions {
   /** Enable favicon caching (default: false) */
@@ -45,6 +45,7 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
   console.log(`  assets: ${layout.assetNotesSource} -> ${layout.assetNotesDest}`);
   if (layout.configSource) console.log(`  config: ${layout.configSource} -> ${layout.configDest}`);
   if (layout.blogsSource) console.log(`  blogs : ${layout.blogsSource} -> ${layout.blogsDest}`);
+  if (layout.pagesSource && (await import('node:fs')).existsSync(layout.pagesSource)) console.log(`  pages : ${layout.pagesSource} -> ${layout.pagesDest}`);
   console.log(`  media : ${layout.mediaSource} -> ${layout.assetsDest}`);
   if (withFavicons) console.log('  favicons: enabled');
   console.log('');
@@ -115,6 +116,10 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
         validationSummary,
         protectedInfrastructureUrls,
       );
+    }
+
+    if (layout.pagesSource && fs.existsSync(layout.pagesSource)) {
+      await validateSourceFiles(layout.pagesSource, layout.pagesDest, layout, withFavicons, stats, validationSummary, protectedInfrastructureUrls);
     }
 
     console.log('\n[dry-run] Sync plan:');
@@ -231,6 +236,14 @@ export async function runSync(options: RunSyncOptions = {}): Promise<number> {
         stats,
         protectedInfrastructureUrls,
       );
+    }
+  }
+
+  // Optional convention-based public pages (/about, /now).
+  if (layout.pagesSource) {
+    const fs = await import('node:fs');
+    if (fs.existsSync(layout.pagesSource)) {
+      await syncFiles(layout.pagesSource, layout.pagesDest, layout, withFavicons, stats, protectedInfrastructureUrls);
     }
   }
 

@@ -62,6 +62,7 @@ export function toUpstreamSourcePath(localFilePath: string): string | null {
   const normalized = localFilePath.replace(/\\/g, '/').replace(/^\.\//, '');
   if (!normalized || normalized.startsWith('../')) return null;
   if (normalized.startsWith('blogs/')) return null;
+  if (normalized.startsWith('pages/')) return normalized;
   if (normalized.startsWith('assets/') || normalized.startsWith('config/')) return normalized;
   return `z/${normalized}`;
 }
@@ -109,7 +110,8 @@ export function reconcileNoteIndex(
   const entries = local.entries.map((note) => {
     const sourcePath = toUpstreamSourcePath(note.filePath);
     if (!sourcePath) return note;
-    const upstreamNote = bySourcePath.get(sourcePath);
+    const upstreamNote = bySourcePath.get(sourcePath)
+      ?? (sourcePath.startsWith('z/') ? bySourcePath.get('notes/' + sourcePath.slice(2)) : undefined);
     if (!upstreamNote) return note;
     reconciled += 1;
     return reconcileNote(note, upstreamNote, protectedInfrastructureUrls);
