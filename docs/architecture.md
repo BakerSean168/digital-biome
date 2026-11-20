@@ -1,7 +1,9 @@
+> 分支实施状态：v6 已实施、未发布；生产仍运行 v5 契约与 pds-catalog-v1 钉版。PDS 尚未完成退役。
+
 # Digital Biome 系统架构
 
-> 状态基线：2026-11-02（DB-Q16 对齐 `main`）
-> 本文描述当前已经运行在生产环境中的真实架构，同时明确尚未解决的问题。它不是理想化设计稿。
+> 状态基线：2026-11-19（PDS 退役与 v6 工作树）
+> 本文描述当前实现的架构；v6 尚未部署生产，需先完成 Staging 验收。
 
 ## 1. 系统定位
 
@@ -25,7 +27,9 @@ flowchart LR
   PublicData --> Build["Astro + Pagefind\n静态构建"]
   Build --> LeakGate["postbuild\n泄漏门禁"]
   LeakGate --> Pages["Cloudflare Pages\n静态站点"]
-  Infra["personal-infrastructure\nprivate canonical repo"] --> RuntimeBinding["digital-biome-private-infrastructure-v1\nrevision + SHA-256"]
+  Infra["personal-infrastructure\nprivate canonical repo"] --> InfraProjection["infra-public-v2\nimmutable public projection"]
+  InfraProjection --> ProducerRelease
+  Infra --> RuntimeBinding["digital-biome-private-infrastructure-v1\nrevision + SHA-256"]
   RuntimeBinding --> Exporter["production only\nverify + export:private"]
   Exporter --> Secret["Cloudflare Pages Secret\nPRIVATE_INFRASTRUCTURE_JSON"]
   Secret --> Functions["Pages Functions\n/api/private/*"]
@@ -45,20 +49,18 @@ flowchart LR
 
 布局：`BaseLayout`（唯一 HTML 壳）→ `TerminalLayout`（首页与各列表页，配合 `ObjectBrowser` 提供 GUI/TUI）/ `NotesLayout`（笔记阅读）。
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Home (GUI/TUI) |
-| `/notes`, `/notes/[...slug]` | Knowledge garden list and note pages |
-| `/uses`, `/uses/[assetId]` | Personal hardware/software and complete searchable service, website, host, and network catalog; tool asset detail |
-| `/projects`, `/projects/[assetId]` | Canonical project collection and individual project details |
-| `/dev`, `/dev/[assetId]` | Legacy collection redirect to `/projects`; historical service-asset detail route retained |
-| `/infrastructure`, `/infrastructure/[assetId]` | Public infrastructure showcase (private fields unlocked via Access) |
-| `/systems` | Personal Systems portal (`pds-catalog-v1`) |
-| `/about`, `/now`, `/about/tags` | Self-contained long-lived introduction, Obsidian-authored Now activity cards, and tag index |
-| `/blog`, `/friends` | Blog and friends links |
-| `/login` | Cloudflare Access entry |
-| `/404` | Not found |
-| `/data/notes-catalog.json`, `/data/uses-catalog.json`, `/data/terminal/[catalog].json`, `/data/system-launcher-index.json` | Public JSON catalogs |
+| Route                                                                                                                             | Purpose                                                                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `/`                                                                                                                               | Home (GUI/TUI)                                                                                                    |
+| `/notes`, `/notes/[...slug]`                                                                                                      | Knowledge garden list and note pages                                                                              |
+| `/uses`, `/uses/[assetId]`                                                                                                        | Personal hardware/software and complete searchable service, website, host, and network catalog; tool asset detail |
+| `/projects`, `/projects/[assetId]`                                                                                                | Canonical project collection and individual project details                                                       |
+| `/infrastructure`, `/infrastructure/[assetId]`                                                                                    | Public infrastructure showcase (private fields unlocked via Access)                                               |
+| `/about`, `/now`, `/about/tags`                                                                                                   | Self-contained long-lived introduction, Obsidian-authored Now activity cards, and tag index                       |
+| `/blog`, `/friends`                                                                                                               | Blog and friends links                                                                                            |
+| `/login`                                                                                                                          | Cloudflare Access entry                                                                                           |
+| `/404`                                                                                                                            | Not found                                                                                                         |
+| `/data/notes-catalog.json`, `/data/uses-catalog.json`, `/data/terminal/[catalog].json`, `/data/infrastructure-service-index.json` | Public JSON catalogs                                                                                              |
 
 | `/bookmarks`, `/blogroll`, `/carry`, `/defaults` | Explicit Obsidian resource queries with shared ObjectBrowser |
 | `/colophon`, `/ai`, `/ideas`, `/canon` | Public authored Markdown or an empty state |
@@ -67,23 +69,23 @@ flowchart LR
 
 交付与验证模块：
 
-- `scripts/data-products/`：三份 public lock 的下载、校验与物化；`preflight.ts` 是 `pnpm verify` 的只读离线前置检查，缓存缺失或过期时 fail closed 并提示 `pnpm sync:data-products`。
-- `scripts/delivery/`：`manifest-schema.ts`（schema 身份与 digest；写 v5，接受 v3/v4 rollback）、`manifest-validate.ts`、`manifest-create.ts` 为纯模块，`manifest.ts` 只负责 CLI 参数与文件 I/O。
+- `scripts/data-products/`：两份 public lock 的下载、校验与物化；`preflight.ts` 是 `pnpm verify` 的只读离线前置检查，缓存缺失或过期时 fail closed 并提示 `pnpm sync:data-products`。
+- `scripts/delivery/`：`manifest-schema.ts`（schema 身份与 digest；只接受 v6）、`manifest-validate.ts`、`manifest-create.ts` 为纯模块，`manifest.ts` 只负责 CLI 参数与文件 I/O。
 
 ### 3.1 内容源层
 
 | 位置                                    | 职责                      | 是否进入公开构建                              |
 | --------------------------------------- | ------------------------- | --------------------------------------------- |
-| producer `notes/`                           | 普通知识笔记              | 通过 `knowledge-public-v1` 进入公开构建       |
+| producer `notes/`                       | 普通知识笔记              | 通过 `knowledge-public-v1` 进入公开构建       |
 | producer `assets/`                      | 资产笔记及媒体            | producer 先做公开投影；消费者继续执行二次脱敏 |
 | producer `config/`                      | Dashboard、技能和运维配置 | public projection 仅携带允许公开的子集        |
 | projection `generated/knowledge-index/` | producer-owned 公开索引   | lock 校验后物化；消费者据此生成站点查询索引   |
 
-Thought Forest 仍是私有 canonical knowledge repository，但跨仓库边界已经收敛到 `knowledge-public-v1`。Digital Biome 通过 `data-products/knowledge-public-v1.lock.json` 固定 producer repository、source revision、immutable Release tag、artifact SHA-256 与 manifest SHA-256。基础设施私有事实不再从 Thought Forest source layout 推导：Personal Infrastructure 独立拥有 `digital-biome-private-infrastructure-v1` RuntimeBinding，Digital Biome 用第二个 lock 固定其 exact Git revision、contract path 与 SHA-256。
+Thought Forest 仍是私有 canonical knowledge repository，但跨仓库边界已经收敛到 `knowledge-public-v1`。Digital Biome 通过 `data-products/knowledge-public-v1.lock.json` 固定 producer repository、source revision、immutable Release tag、artifact SHA-256 与 manifest SHA-256。基础设施私有事实不再从 Thought Forest source layout 推导：Personal Infrastructure 独立拥有 `digital-biome-private-infrastructure-v1` RuntimeBinding，Digital Biome 用独立的受保护 RuntimeBinding lock 固定其 exact Git revision、contract path 与 SHA-256；另一个公开 lock 固定 `infra-public-v2`。
 
 ### 3.2 同步与投影层
 
-CI / Candidate 入口为 `scripts/data-products/prepare-knowledge-public-v1.sh`，它先验证并物化 producer projection；随后复用 `scripts/sync/`。本地显式选择外部 Vault 时可运行 `pnpm sync:content`：
+CI / Candidate 入口为 `pnpm sync:data-products`（`scripts/data-products/prepare-all.ts`），验证并物化 `knowledge-public-v1` 与 `infra-public-v2` 两份 committed public lock，再调用 `syncKnowledgeSource` 复用 `scripts/sync/`。本地显式选择外部 Vault 时可运行 `pnpm sync:content`：
 
 1. 解析 `notes.config.ts`，确定 vault 和上游索引位置；
 2. 扫描笔记、资产笔记和配置目录；
@@ -153,7 +155,6 @@ Astro 生成 `dist/`，Pagefind 随后生成搜索索引。`scripts/postbuild.ts
 
 它不保证授权用户无法复制数据。浏览器一旦解锁，授权用户就拥有这些值，这是当前单用户信任模型的一部分。
 
-
 ## 4. 信任边界与数据分类
 
 | 数据               | 存储位置                 | 可见范围        | 主要保护手段             |
@@ -161,7 +162,7 @@ Astro 生成 `dist/`，Pagefind 随后生成搜索索引。`scripts/postbuild.ts
 | 公开笔记正文       | Pages 静态文件           | 互联网          | 发布过滤                 |
 | 公开资产元数据     | 静态 JSON/HTML           | 互联网          | 上游契约与 schema        |
 | 私有/内部链接      | Pages Secret             | Access 授权用户 | Access + JWT 二次校验    |
-| IP、SSH URL        | 私有 vault、Pages Secret | 作者和授权用户  | 私有仓库、脱敏、泄漏门禁 |
+| IP、SSH URL        | Personal Infrastructure private binding、Pages Secret | 作者和授权用户  | 私有仓库、脱敏、泄漏门禁 |
 | Access AUD、团队域 | Pages Secret             | Pages Functions | Cloudflare Secret        |
 | 原始 vault         | GitHub 私有仓库          | GitHub 授权主体 | 仓库权限                 |
 
@@ -192,7 +193,7 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 ### 6.1 已缓解：部署不再依赖单个本地工作区
 
-日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`。当前 v5 manifest 的 provenance 同时绑定主仓库 SHA、source CI、Candidate digest、immutable `knowledge-public-v1` producer identity、`infra-public-v2`、`pds-catalog-v1` producer identity（三份 Protocol-v1 lock，见 [delivery v5](data-product-delivery-v5.md)）、Personal Infrastructure private RuntimeBinding identity 与 Pages artifact digest；v3/v4 仅为已发布 Release 的 rollback 保留。v1/v2 delivery schema 已退休。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
+日常交付路径已拆分为 `candidate-publish.yml`、`release-publish.yml` 与 `deploy-production.yml`。当前 v6 manifest 的 provenance 同时绑定主仓库 SHA、source CI、Candidate digest、immutable `knowledge-public-v1` producer identity、`infra-public-v2` producer identity（两份 Protocol-v1 lock，见 [delivery v6](data-product-delivery-v6.md)）、Personal Infrastructure private RuntimeBinding identity 与 Pages artifact digest；v1–v5 输入全部拒绝；历史提交和 Release 仅供人工恢复。`main` 不再直接触发 Production。本地 `pnpm deploy:cloudflare` 仅保留为 break-glass 恢复手段。
 
 剩余外部依赖是 GitHub App、Production Environment 和 Cloudflare API token 的控制面配置。
 
@@ -202,17 +203,13 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 ### 6.3 已缓解：构建输入漂移
 
-`notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`。当前 v5 Production 与受支持的 v3/v4 rollback 都不需要知识仓库的私有 source layout：它们验证 `knowledge-public-v1` provenance 与 Personal Infrastructure RuntimeBinding；历史 v1/v2 private Thought Forest 兼容路径已经退休。
+`notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`。当前 v6 Production 不需要知识仓库的私有 source layout：它们验证 `knowledge-public-v1` provenance 与 Personal Infrastructure RuntimeBinding；旧版 delivery 与 private Thought Forest 兼容路径已经退休。
 
-### 6.4 P1：同一 frontmatter 存在两套解析器
+### 6.4 已缓解：Frontmatter 使用统一 YAML 解析
 
-本地 `build-indexes.ts` 使用轻量行扫描，上游索引使用完整 YAML 解析。随后 `merge-asset-index.ts` 再覆盖嵌套字段。这形成双重事实源：
+`scripts/sync/build-indexes.ts` 现在使用 `src/domain/markdown/frontmatter.ts` 的 `parseMarkdownFrontmatter`（完整 YAML），不再采用独立的行扫描 Frontmatter 解析器。`scripts/sync/source-adapter.ts` 使用同一适配层提取语法边界。
 
-- 简单字段以本地扫描结果为主；
-- `monitor`、`links`、`homepage` 等依赖上游索引；
-- 两边字段映射和命名规则可能漂移。
-
-长期应共享一个版本化 schema 和同一解析实现，或让上游输出成为唯一索引输入。
+上游索引仍是作者数据产品的一部分，Digital Biome 的派生索引用于自身查询和路由；`merge-asset-index.ts` 负责补充投影的嵌套字段，属于转换链路而非可编辑的第二份事实源。后续如出现真实字段映射漂移，针对字段和测试定点修复，不以历史 P1 描述为由重建同步架构。
 
 ### 6.5 已缓解：私有 payload 与部署编排
 
@@ -300,6 +297,7 @@ Access Application、Allow Policy、Pages Secrets、自动构建开关和 GitHub
 - [Cloudflare Pages Functions routing](https://developers.cloudflare.com/pages/functions/routing/)
 - [Validate Cloudflare Access JWTs](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)
 - [Cloudflare Pages Wrangler configuration](https://developers.cloudflare.com/pages/functions/wrangler-configuration/)
+
 ## 11. Obsidian 内容集合
 
 `projects/` 与 `uses/{hardware,software,services,websites}/` 是作者内容源；

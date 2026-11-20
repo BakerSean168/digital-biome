@@ -1,10 +1,10 @@
 # 笔记同步与公开投影流程
 
-> 状态基线：2026-10-02
+> 状态基线：2026-11-20（v6 功能分支；生产仍为 v5）
 >
-> CI / Candidate 入口：`scripts/data-products/prepare-knowledge-public-v1.sh`
+> CI / Candidate 入口：`pnpm sync:data-products`（`scripts/data-products/prepare-all.ts`）
 >
-> 本地入口：`pnpm sync`（验证并物化 committed public projection lock）
+> 本地入口：`pnpm sync`，等价于双公开产品锁验证与同步
 >
 > 实现：`scripts/data-products/`、`scripts/sync-obsidian.ts` 与 `scripts/sync/`
 
@@ -29,7 +29,11 @@ Digital Biome 不再内嵌 Thought Forest。`pnpm sync` 与 CI 使用同一 comm
 
 | 输入                                                 | 输出                               | 说明                               |
 | ---------------------------------------------------- | ---------------------------------- | ---------------------------------- |
-| `<selected-source>/z/**/*.md`                        | `src/data/obsidian/**/*.md`        | 普通知识笔记                       |
+| `<selected-source>/notes/**/*.md`                    | `src/data/obsidian/**/*.md`        | 普通知识笔记                       |
+| `<selected-source>/projects/**/*.md`                 | `src/data/obsidian/projects/**/*.md` | 项目介绍（非部署事实）            |
+| `<selected-source>/uses/**/*.md`                     | `src/data/obsidian/uses/**/*.md`     | 个人使用与网站入口                |
+| `<selected-source>/blogs/**/*.md`                    | `src/data/obsidian/blogs/**/*.md`    | 公开博客                         |
+| `<selected-source>/pages/**/*.md`                    | `src/data/obsidian/pages/**/*.md`    | About/Now 等作者页面             |
 | `<selected-source>/assets/**/*.md`                   | `src/data/obsidian/assets/**/*.md` | host/service/tool/network 资产笔记 |
 | `<selected-source>/config/**/*.md`                   | `src/data/obsidian/config/**/*.md` | 构建配置；不进入公开知识列表       |
 | `<selected-source>/sources/attachments/**`           | `public/vault-assets/`             | producer 允许公开且被引用的媒体    |
@@ -41,9 +45,9 @@ CI / Candidate 与默认本地同步中的 `<selected-source>` 都是 `.pds-runt
 
 ## 3. 上游索引解析顺序
 
-`notes.config.ts` 只读取当前显式选择的 source root 及其 `generated/`，不会自动搜索父目录、相邻克隆或其他工作区。默认值就是已验证的 `.pds-runtime/knowledge-public-v1/source/`。当前 v4 Production 与受支持的 v3 rollback 的 private payload 都不切换知识 source root，而是单独验证 Personal Infrastructure RuntimeBinding。
+notes.config.ts 默认只从已验证的只读 source root 读取公开内容，不搜索相邻 checkout。v6 的私有基础设施绑定与知识库 source root 相互独立；生产仍运行旧 v5 契约。
 
-`prepare-knowledge-public-v1.sh` 在物化前先验证 committed lock 与 producer Release；`pnpm sync` 直接调用该入口。Thought Forest 私有 checkout 仅保留给显式本地 authoring/debug；受支持的 v3/v4 Production/rollback 都不运行私有知识库的 `kb:index`。发布前必须确认：
+`pnpm sync` 经 `prepare-all.ts` 验证并物化两份 committed public lock。知识子流程由 `scripts/data-products/prepare-knowledge-public-v1.ts` 提供，均须对 producer Release 进行完整性校验。发布前确认以下索引：
 
 ```text
 <resolved-generated>/knowledge-index/asset-index.json
@@ -200,7 +204,7 @@ pnpm build:only
 
 ### 8.3 上游索引缺失
 
-CI 应重新运行 `prepare-knowledge-public-v1.sh`，而不是手工制造 index。只有显式本地 authoring/debug 才运行私有 Thought Forest 的知识索引生成命令；受支持的 v3/v4 Production/rollback 只验证独立 private RuntimeBinding。开发环境确需读取另一个已生成目录时，可显式设置 `NOTES_UPSTREAM_GENERATED`。
+CI 应重新运行 `prepare-knowledge-public-v1.sh`，而不是手工制造 index。只有显式本地 authoring/debug 才运行私有 Thought Forest 的知识索引生成命令；v6 Production 只验证独立 private RuntimeBinding。开发环境确需读取另一个已生成目录时，可显式设置 `NOTES_UPSTREAM_GENERATED`。
 
 ### 8.4 重复 Content ID
 

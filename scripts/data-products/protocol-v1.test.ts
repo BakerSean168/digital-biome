@@ -19,12 +19,11 @@ const examples = JSON.parse(
   fs.readFileSync(new URL('./fixtures/data-product-protocol-v1.json', import.meta.url), 'utf8'),
 );
 
-test('registry has exactly the three public producers and excludes private bindings', () => {
+test('registry has exactly the two public producers and excludes private bindings', () => {
   assert.deepEqual(
     publicDataProducts.map((d) => [d.product, d.producerRepository]),
     [
       ['knowledge-public-v1', 'BakerSean168/thought-forest'],
-      ['pds-catalog-v1', 'BakerSean168/personal-digital-system'],
       ['infra-public-v2', 'BakerSean168/personal-infrastructure'],
     ],
   );
@@ -124,7 +123,7 @@ test('lock and event reject malformed identities with equivalent validation', ()
   }
   assert.throws(() => parsePublicDataProductLock({ ...examples.lock, extra: true }));
   assert.throws(() => parseDataProductPublished({ ...examples.event, consumerMetadata: {} }));
-  assert.deepEqual(parseDataProductPublished(examples.event).product, 'pds-catalog-v1');
+  assert.deepEqual(parseDataProductPublished(examples.event).product, 'knowledge-public-v1');
   for (const invalid of examples.invalid_events)
     assert.throws(() => parseDataProductPublished(invalid.payload));
   for (const invalid of examples.invalid_locks)

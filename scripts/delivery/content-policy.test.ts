@@ -18,7 +18,7 @@ const pr = {
 test('only nonempty public lock modifications are content changes', () => {
   assert.equal(classifyContentChange([file]), true);
   assert.equal(
-    classifyContentChange([{ ...file, filename: 'data-products/pds-catalog-v1.lock.json' }, file]),
+    classifyContentChange([{ ...file, filename: 'data-products/infra-public-v2.lock.json' }, file]),
     true,
   );
   for (const files of [
@@ -32,7 +32,7 @@ test('only nonempty public lock modifications are content changes', () => {
         status: 'modified',
       },
     ],
-    [{ filename: 'src/data/system/pds-catalog-v1.json', status: 'modified' }],
+    [{ filename: 'src/data/system/obsolete-catalog.json', status: 'modified' }],
     [{ filename: '.github/workflows/check.yml', status: 'modified' }],
     [file, file],
   ])
@@ -67,7 +67,7 @@ test('auto-merge additionally requires the exact same-repository bot branch and 
       'knowledge-public-v1',
     ),
   );
-  assert.throws(() => assertTrustedLockPullRequest(pr, [file], 'a'.repeat(40), 'pds-catalog-v1'));
+  assert.throws(() => assertTrustedLockPullRequest(pr, [file], 'a'.repeat(40), 'unknown-product'));
 });
 
 test('production classification compares the deployed base as well as the last commit', async () => {

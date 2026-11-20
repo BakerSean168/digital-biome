@@ -26,7 +26,7 @@ import {
 export function assertCommittedInputs(value: unknown, root: string) {
   assertRecord(value, 'manifest');
   if (![CANDIDATE_SCHEMA, RELEASE_SCHEMA].includes(String(value.schema)))
-    throw new Error('v5 manifest required');
+    throw new Error('v6 manifest required');
   const errors =
     value.schema === CANDIDATE_SCHEMA ? validateCandidate(value) : validateReleaseManifest(value);
   if (errors.length) throw new Error(errors.join('; '));
@@ -99,7 +99,7 @@ async function main() {
         .map(([key, value]) => `${key}=${value}\n`)
         .join(''),
     );
-  console.log('V5_INPUT_REVALIDATION=PASS');
+  console.log('V6_INPUT_REVALIDATION=PASS');
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {

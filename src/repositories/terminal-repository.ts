@@ -4,10 +4,12 @@ import { selectResourceEntries, toResourceObject } from '../domain/resource-coll
 import { getBlogPosts } from './blogs-repository';
 import { formatArchiveMonth } from '../domain/blog/archive-month';
 import { getBookmarks } from './bookmarks-repository';
-import { getPublicNotes, getProjectShowcaseAssets } from '../utils/notes';
+import { getPublicKnowledgeNotes } from './notes-repository';
+import { getAssetsByHomepageSection, sortByOrderThenTitle } from './assets-repository';
+import { toAssetCard } from '../view-models/asset-card';
 import { getInfrastructureResources, getInfrastructureConnections } from '../utils/infrastructure';
-import { getPortalServices } from '../utils/personal-systems';
-import { buildKnowledgeNoteHref } from '../domain/note-routing';
+import { getInfrastructureServices } from '../utils/infrastructure-services';
+import { buildKnowledgeNoteHref } from '../domain/note-routing/url-builder';
 import { sortNoteCatalog, toNoteCatalogItem } from '../view-models/note-list-item';
 import { isSafeTerminalHref, type TerminalObject } from '../view-models/terminal-object';
 import { compareResourcePriority } from '../domain/resource-order';
@@ -30,7 +32,7 @@ export function terminalBlogs(): TerminalObject[] {
 export async function terminalNotes(): Promise<TerminalObject[]> {
   const blogIds = new Set(getBlogPosts().map((post) => post.id.replace(/^note\//, '')));
   return sortNoteCatalog(
-    (await getPublicNotes())
+    (await getPublicKnowledgeNotes())
       .filter((note) => !blogIds.has(note.id.replace(/^note\//, '')))
       .map((note) => toNoteCatalogItem(note)),
   ).map((note) => ({
@@ -46,7 +48,12 @@ export async function terminalNotes(): Promise<TerminalObject[]> {
 }
 
 export function terminalProjects(): TerminalObject[] {
-  return getProjectShowcaseAssets().map((project) => ({
+  const projects = sortByOrderThenTitle(
+    getAssetsByHomepageSection('projects')
+      .filter((asset) => asset.data.asset_type === 'project')
+      .map(toAssetCard),
+  );
+  return projects.map((project) => ({
     id: project.assetId,
     title: project.title,
     kind: 'project',
@@ -105,7 +112,9 @@ export function terminalExternal(): TerminalObject[] {
 
 export function terminalInfrastructure(): TerminalObject[] {
   const resources = getInfrastructureResources();
-  const portals = new Map(getPortalServices().map((service) => [service.resource.id, service]));
+  const portals = new Map(
+    getInfrastructureServices().map((service) => [service.resource.id, service]),
+  );
   const connections = getInfrastructureConnections();
   const objects = [...resources].sort(compareResourcePriority).map((resource) => {
     const portal = portals.get(resource.id);

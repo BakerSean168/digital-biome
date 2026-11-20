@@ -20,7 +20,7 @@ function service(index: number): ServiceResult {
     label: 'SVC',
     title: `Service ${index}`,
     desc: 'Service',
-    href: '/systems',
+    href: '/infrastructure/svc-litellm-model-gateway',
     aliases: [`service-${index}`],
     pinned: true,
   };
@@ -44,7 +44,7 @@ test('Search preserves case-normalized command and service matches without auto-
   );
   assert.deepEqual(
     matchSearchPalette('service-1', routes, [service(0), service(1)]).map((item) => item.href),
-    ['/systems'],
+    ['/infrastructure/svc-litellm-model-gateway'],
   );
 });
 

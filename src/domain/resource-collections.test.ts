@@ -84,22 +84,26 @@ test('sort order is optional and stable for same-title resources', () => {
   );
 });
 
-test('explicit public knowledge bookmarks are resources while plain note URLs never imply membership', () => {
+test('bookmarked knowledge notes never become resource cards; only uses/websites entries do', () => {
   const note = card('websites', 'reference', {
-    filePath: 'reference.md',
+    filePath: 'notes/reference.md',
     id: 'obsidian/reference',
     bookmarked: true,
     tags: ['type/resource', 'blogroll'],
     url: 'https://example.org/',
   });
   const plain = { ...note, id: 'obsidian/plain', bookmarked: undefined };
-  assert.deepEqual(
-    selectResourceEntries([plain, note], 'bookmarks').map((item) => item.id),
-    ['obsidian/reference'],
-  );
+  assert.deepEqual(selectResourceEntries([plain, note], 'bookmarks'), []);
   assert.deepEqual(selectResourceEntries([plain, note], 'blogroll'), []);
   assert.deepEqual(selectResourceEntries([plain, note], 'uses'), []);
-  assert.equal(toResourceObject(note).href, 'https://example.org/');
+  assert.throws(() => toResourceObject(note), /non-public resource/);
+
+  const website = { ...note, filePath: 'uses/websites/reference.md' };
+  assert.deepEqual(
+    selectResourceEntries([note, website], 'bookmarks').map((item) => item.id),
+    ['obsidian/reference'],
+  );
+  assert.equal(toResourceObject(website).href, 'https://example.org/');
 });
 
 test('homepage curation follows edited authored order and drops unbookmarked or private resources', () => {

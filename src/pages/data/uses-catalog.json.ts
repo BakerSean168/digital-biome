@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getBookmarksByCategory } from '../../utils/notes';
+import { getBookmarksByCategory } from '../../repositories/bookmarks-repository';
 import { buildUsesCatalogGroups } from '../../view-models/uses-catalog';
 
 export const prerender = true;

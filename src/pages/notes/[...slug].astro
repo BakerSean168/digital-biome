@@ -1,8 +1,8 @@
 ---
 import { render } from 'astro:content';
 import NotesLayout from '../../layouts/NotesLayout.astro';
-import { getPublicKnowledgeNoteEntries } from '../../utils/notes';
-import { toRouteSlug } from '../../domain/note-routing';
+import { getPublicKnowledgeNoteEntries } from '../../repositories/content-entry-repository';
+import { toRouteSlug } from '../../domain/foundation/note-id';
 import { formatArchiveMonth } from '../../domain/blog/archive-month';
 import type { NoteCollectionEntry } from '../../types/notes';
 

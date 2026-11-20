@@ -1,3 +1,5 @@
+> Historical record. Current architecture supersedes this document: [Delivery v6](../data-product-delivery-v6.md). v6 is implemented on this branch but has not been released. Production still uses the v5 contract and the pinned pds-catalog-v1 publication; PDS retirement is pending Staging acceptance and a later release.
+
 # ADR-0005：统一 Data Product 消费与 Data-only Content Delivery
 
 - 状态：Accepted（实施待完成）

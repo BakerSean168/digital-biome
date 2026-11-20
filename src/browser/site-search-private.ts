@@ -6,7 +6,7 @@ export async function hydratePrivateServiceTargets(
   services: ServiceResult[],
   fetcher: typeof fetch,
 ): Promise<boolean> {
-  // Logged-out visitors retain safe /systems anchors.
+  // Anonymous visitors retain public Infrastructure detail links.
   const payload = await fetchPrivateInfrastructure(fetcher);
   if (!payload) return false;
   for (const service of services) {

@@ -19,13 +19,14 @@ test('global header policy contains exactly Search and Access', () => {
   assert.doesNotMatch(header, /\[ SYSTEMS \]/);
 });
 
-test('Personal Systems remains directly discoverable from Search navigation', () => {
-  const systems = SEARCH_NAVIGATION_INDEX.find((entry) => entry.href === '/systems');
-  assert.ok(systems, 'Personal Systems must remain indexed in Search');
-  assert.equal(systems.title, 'Personal System');
-  assert.ok(systems.alias?.includes('/infrastructure'));
-  assert.ok(systems.alias?.includes('systems'));
-  assert.ok(systems.alias?.includes('infra'));
+test('Infrastructure is the only canonical service directory command', () => {
+  const entry = SEARCH_NAVIGATION_INDEX.find((item) => item.href === '/infrastructure');
+  assert.ok(entry);
+  assert.equal(entry.title, 'Infrastructure');
+  assert.equal(
+    SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/systems'),
+    false,
+  );
 });
 
 test('ADR makes third global controls an explicit architecture decision', () => {

@@ -1,4 +1,4 @@
-import { buildKnowledgeNoteHref } from '../domain/note-routing';
+import { buildKnowledgeNoteHref } from '../domain/note-routing/url-builder';
 import { getPublicKnowledgeNoteEntriesFromIndex } from '../repositories/knowledge-index-loader';
 
 const publishedBlogIds = new Set(

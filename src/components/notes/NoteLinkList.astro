@@ -1,9 +1,9 @@
 ---
+import { buildKnowledgeNoteHref } from '../../domain/note-routing/url-builder';
 import {
-  buildKnowledgeNoteHref,
   getBacklinksForNote,
   getOutgoingLinksForNote,
-} from '../../utils/notes';
+} from '../../repositories/link-graph-repository';
 
 interface Props {
   currentSlug: string;

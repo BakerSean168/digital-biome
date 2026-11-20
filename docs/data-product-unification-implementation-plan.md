@@ -1,3 +1,5 @@
+> Historical record. Superseded by [Delivery v6](data-product-delivery-v6.md). v6 is implemented on this branch but has not been released. Production still uses the v5 contract and the pinned pds-catalog-v1 publication; PDS retirement is pending Staging acceptance and a later release.
+
 # Unified Data Product + Content Delivery 实施方案
 
 > 状态：实施中。三产品消费与 v5 已实现并通过本地门禁；自动内容通道已实现、默认关闭。受保护 CI / 生产激活仍待凭据配置和实际运行证据。详见 `data-product-takeover-status.md`。

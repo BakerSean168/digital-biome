@@ -24,7 +24,7 @@ Digital Biome 是我的个人数字空间：它把 **知识库、项目作品集
 - **About / Now / Uses** —— `/about` 独立记录长期兴趣与思考；`/now` 通过可增删的项目、游戏、影视条目手动维护近期活动；`/uses` 展示公开的硬件、软件、服务与网站。
 - **Uses 个人清单** —— `/uses` 统一展示硬件、软件、完整服务、网站、主机与网络资源，保留原有筛选与访问能力。
 - **基础设施地图** —— 对公开资产、主机、网络和服务关系进行可视化，同时保留 private/internal 边界。
-- **个人系统门户** —— `/systems` 展示 Personal Digital System 目录（`pds-catalog-v1`）。
+- **基础设施** —— 主机、服务与关系来自 Personal Infrastructure；服务搜索提供公开详情与认证后的受保护入口。
 
 ## 内容架构
 
@@ -33,6 +33,8 @@ flowchart LR
     A[Thought Forest / Obsidian] --> B[知识索引]
     B --> C[公开投影 + 脱敏]
     C --> D[Astro 内容 / 数据]
+    PI[Personal Infrastructure] --> IP[infra-public-v2]
+    IP --> D
     D --> E[笔记 / 项目 / 资产]
     E --> F[静态构建 + Pagefind]
     F --> G[Cloudflare Pages]
@@ -141,3 +143,5 @@ Thought Forest 持有规范化的知识和资产元数据；Digital Biome 负责
 Digital Biome 是一个 **公开源码仓库**，但当前 **没有附带开源许可证**。仅公开可见并不代表授予复制、修改或再分发代码的许可；除非未来明确加入许可证，否则版权仍由仓库所有者保留。
 
 Obsidian collections provide /bookmarks, /blogroll, /carry and /defaults. Optional Markdown pages provide /colophon, /ai, /ideas and /canon.
+
+Thought Forest 维护知识与项目记录，Personal Infrastructure 维护主机、服务、部署与恢复；Digital Biome 只消费 `knowledge-public-v1`、`infra-public-v2` 与受保护运行时绑定。v6 已实施未发布，生产仍运行 v5 契约与 pds-catalog-v1 钉版。

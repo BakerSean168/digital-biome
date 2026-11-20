@@ -11,7 +11,7 @@ function fixture() {
   fs.cpSync('data-products', path.join(root, 'data-products'), { recursive: true });
   const read = (product: string) =>
     JSON.parse(fs.readFileSync(path.join(root, `data-products/${product}.lock.json`), 'utf8'));
-  const products = ['knowledge-public-v1', 'pds-catalog-v1', 'infra-public-v2'];
+  const products = ['knowledge-public-v1', 'infra-public-v2'];
   const manifest = createCandidate({
     gitSha: 'a'.repeat(40),
     ciRunId: '123',

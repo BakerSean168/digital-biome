@@ -19,11 +19,6 @@ const payloads = {
     linkGraph: [],
     media: [],
   },
-  'pds-catalog-v1': {
-    domains: [],
-    repositories: [],
-    summary: { domainCount: 0, repositoryCount: 0, projectionCount: 0 },
-  },
   'infra-public-v2': {
     hosts: [],
     deployments: [],
@@ -42,7 +37,7 @@ const payloads = {
 
 function fixture(d: (typeof publicDataProducts)[number]) {
   const artifact = {
-    schemaVersion: d.product === 'pds-catalog-v1' ? 1 : 2,
+    schemaVersion: 2,
     product: d.product,
     producer: d.producer,
     generated: true,
@@ -60,10 +55,7 @@ function fixture(d: (typeof publicDataProducts)[number]) {
       source: { ...artifact.source },
       artifact: {
         path: d.artifactPath,
-        mediaType:
-          d.product === 'pds-catalog-v1'
-            ? 'application/vnd.pds.catalog-v1+json'
-            : `application/vnd.pds.${d.product}+json`,
+        mediaType: `application/vnd.pds.${d.product}+json`,
         generated: true,
         editable: false,
       },
@@ -299,11 +291,6 @@ for (const definition of publicDataProducts) {
             aliases: [],
             tags: [],
           },
-        ];
-        break;
-      case 'pds-catalog-v1':
-        altered.payload.repositories = [
-          { id: 'foreign', domainId: 'missing', relation: 'canonical' },
         ];
         break;
       case 'infra-public-v2':

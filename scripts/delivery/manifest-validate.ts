@@ -10,23 +10,16 @@ import {
 } from '../data-products/private-infrastructure-lock';
 import {
   CANDIDATE_SCHEMA,
-  INFRASTRUCTURE_PRODUCER_REPOSITORY,
-  KNOWLEDGE_PRODUCER_REPOSITORY,
-  PREVIOUS_CANDIDATE_SCHEMA,
-  PREVIOUS_RELEASE_SCHEMA,
-  PRIVATE_INFRASTRUCTURE_CONTRACT_PATH,
   RELEASE_SCHEMA,
   SEMVER_RE,
   SHA256_RE,
   SHA_RE,
-  V4_CANDIDATE_SCHEMA,
-  V4_RELEASE_SCHEMA,
   identityDigest,
   type JsonRecord,
 } from './manifest-schema';
 
 // Pure validators: no filesystem or process access. Error strings are part of the
-// workflow contract (they surface in CI logs) and are pinned by manifest-golden.test.ts.
+// workflow contract (they surface in CI logs).
 
 function validateArtifact(artifact: unknown): string[] {
   const errors: string[] = [];
@@ -34,6 +27,11 @@ function validateArtifact(artifact: unknown): string[] {
     return ['artifact must be an object'];
   }
   const typed = artifact as JsonRecord;
+  try {
+    assertExactKeys(typed, ['file', 'sha256', 'bytes'], 'artifact');
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : 'Unexpected artifact fields');
+  }
   if (typed.file !== 'digital-biome-pages.tar.gz') {
     errors.push('artifact.file must be digital-biome-pages.tar.gz');
   }
@@ -46,81 +44,6 @@ function validateArtifact(artifact: unknown): string[] {
   return errors;
 }
 
-function validateKnowledgeIdentity(value: unknown): string[] {
-  const errors: string[] = [];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return ['knowledge must be an object'];
-  }
-  const knowledge = value as JsonRecord;
-  if (knowledge.producerRepository !== KNOWLEDGE_PRODUCER_REPOSITORY) {
-    errors.push(`knowledge.producerRepository must be ${KNOWLEDGE_PRODUCER_REPOSITORY}`);
-  }
-  const sourceRevision = String(knowledge.sourceRevision ?? '');
-  if (!SHA_RE.test(sourceRevision)) errors.push('knowledge.sourceRevision must be a full Git SHA');
-  if (knowledge.releaseTag !== `knowledge-public-v1-${sourceRevision}`) {
-    errors.push('knowledge.releaseTag must equal knowledge-public-v1-<sourceRevision>');
-  }
-  if (!SHA256_RE.test(String(knowledge.artifactSha256 ?? ''))) {
-    errors.push('knowledge.artifactSha256 must be sha256:<64 hex>');
-  }
-  if (!SHA256_RE.test(String(knowledge.manifestSha256 ?? ''))) {
-    errors.push('knowledge.manifestSha256 must be sha256:<64 hex>');
-  }
-  return errors;
-}
-
-function validatePublicInfrastructureIdentity(value: unknown): string[] {
-  const errors: string[] = [];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return ['publicInfrastructure must be an object'];
-  }
-  const identity = value as JsonRecord;
-  if (identity.producerRepository !== INFRASTRUCTURE_PRODUCER_REPOSITORY) {
-    errors.push(
-      `publicInfrastructure.producerRepository must be ${INFRASTRUCTURE_PRODUCER_REPOSITORY}`,
-    );
-  }
-  const sourceRevision = String(identity.sourceRevision ?? '');
-  if (!SHA_RE.test(sourceRevision)) {
-    errors.push('publicInfrastructure.sourceRevision must be a full Git SHA');
-  }
-  if (identity.releaseTag !== `infra-public-v2-${sourceRevision}`) {
-    errors.push('publicInfrastructure.releaseTag must equal infra-public-v2-<sourceRevision>');
-  }
-  if (!SHA256_RE.test(String(identity.artifactSha256 ?? ''))) {
-    errors.push('publicInfrastructure.artifactSha256 must be sha256:<64 hex>');
-  }
-  if (!SHA256_RE.test(String(identity.manifestSha256 ?? ''))) {
-    errors.push('publicInfrastructure.manifestSha256 must be sha256:<64 hex>');
-  }
-  return errors;
-}
-
-function validatePrivateInfrastructureIdentity(value: unknown): string[] {
-  const errors: string[] = [];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return ['privateInfrastructure must be an object'];
-  }
-  const identity = value as JsonRecord;
-  if (identity.producerRepository !== INFRASTRUCTURE_PRODUCER_REPOSITORY) {
-    errors.push(
-      `privateInfrastructure.producerRepository must be ${INFRASTRUCTURE_PRODUCER_REPOSITORY}`,
-    );
-  }
-  if (!SHA_RE.test(String(identity.sourceRevision ?? ''))) {
-    errors.push('privateInfrastructure.sourceRevision must be a full Git SHA');
-  }
-  if (identity.contractPath !== PRIVATE_INFRASTRUCTURE_CONTRACT_PATH) {
-    errors.push(
-      `privateInfrastructure.contractPath must be ${PRIVATE_INFRASTRUCTURE_CONTRACT_PATH}`,
-    );
-  }
-  if (!SHA256_RE.test(String(identity.sha256 ?? ''))) {
-    errors.push('privateInfrastructure.sha256 must be sha256:<64 hex>');
-  }
-  return errors;
-}
-
 function validateDigest(value: JsonRecord, label: string): string[] {
   if (!SHA256_RE.test(String(value.digest ?? ''))) {
     return [`${label} digest must be sha256:<64 hex>`];
@@ -129,7 +52,7 @@ function validateDigest(value: JsonRecord, label: string): string[] {
   return value.digest === expected ? [] : [`${label} digest mismatch: expected ${expected}`];
 }
 
-/** Parses the v5 `dataProducts` + `privateBindings` inputs through their owning lock parsers. */
+/** Parse exactly two public products and one protected binding. */
 export function parseInputs(value: JsonRecord) {
   assertRecord(value.dataProducts, 'dataProducts');
   assertExactKeys(
@@ -161,26 +84,48 @@ export function parseInputs(value: JsonRecord) {
   };
 }
 
-function validateV5Inputs(value: JsonRecord): string[] {
+function validateInputs(value: JsonRecord): string[] {
   try {
     parseInputs(value);
-    if (['knowledge', 'publicInfrastructure', 'privateInfrastructure'].some((key) => key in value))
-      return ['v5 must not duplicate product identities in legacy fields'];
     return [];
   } catch (error) {
-    return [error instanceof Error ? error.message : 'Invalid v5 inputs'];
+    return [error instanceof Error ? error.message : 'Invalid v6 inputs'];
   }
 }
 
-function validateV3Candidate(candidate: JsonRecord): string[] {
-  const errors: string[] = [];
-  if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
-  if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  errors.push(...validateKnowledgeIdentity(candidate.knowledge));
-  errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
-  errors.push(...validateArtifact(candidate.artifact));
-  errors.push(...validateDigest(candidate, 'candidate'));
-  return errors;
+function validateManifestKeys(value: JsonRecord, kind: 'candidate' | 'release'): string[] {
+  const fields =
+    kind === 'candidate'
+      ? [
+          'schema',
+          'gitSha',
+          'ciRunId',
+          'dataProducts',
+          'privateBindings',
+          'artifact',
+          'generatedAt',
+          'digest',
+        ]
+      : [
+          'schema',
+          'version',
+          'tag',
+          'gitSha',
+          'ciRunId',
+          'candidateRunId',
+          'candidateManifestDigest',
+          'dataProducts',
+          'privateBindings',
+          'artifact',
+          'generatedAt',
+          'digest',
+        ];
+  try {
+    assertExactKeys(value, fields, kind);
+    return [];
+  } catch (error) {
+    return [error instanceof Error ? error.message : 'Unexpected manifest keys'];
+  }
 }
 
 export function validateCandidate(value: unknown): string[] {
@@ -188,26 +133,23 @@ export function validateCandidate(value: unknown): string[] {
     return ['candidate must be an object'];
   }
   const candidate = value as JsonRecord;
-  if (candidate.schema === PREVIOUS_CANDIDATE_SCHEMA) return validateV3Candidate(candidate);
-
-  const errors: string[] = [];
-  if (![CANDIDATE_SCHEMA, V4_CANDIDATE_SCHEMA].includes(String(candidate.schema)))
-    errors.push(`schema must be ${CANDIDATE_SCHEMA} or an accepted rollback schema`);
+  const errors = validateManifestKeys(candidate, 'candidate');
+  if (candidate.schema !== CANDIDATE_SCHEMA) errors.push(`schema must be ${CANDIDATE_SCHEMA}`);
   if (!SHA_RE.test(String(candidate.gitSha ?? ''))) errors.push('gitSha must be a full Git SHA');
   if (!/^\d+$/.test(String(candidate.ciRunId ?? ''))) errors.push('ciRunId must be numeric');
-  if (candidate.schema === CANDIDATE_SCHEMA) errors.push(...validateV5Inputs(candidate));
-  else {
-    errors.push(...validateKnowledgeIdentity(candidate.knowledge));
-    errors.push(...validatePublicInfrastructureIdentity(candidate.publicInfrastructure));
-    errors.push(...validatePrivateInfrastructureIdentity(candidate.privateInfrastructure));
-  }
+  errors.push(...validateInputs(candidate));
   errors.push(...validateArtifact(candidate.artifact));
   errors.push(...validateDigest(candidate, 'candidate'));
   return errors;
 }
 
-function validateReleaseBase(release: JsonRecord): string[] {
-  const errors: string[] = [];
+export function validateReleaseManifest(value: unknown): string[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return ['release must be an object'];
+  }
+  const release = value as JsonRecord;
+  const errors = validateManifestKeys(release, 'release');
+  if (release.schema !== RELEASE_SCHEMA) errors.push(`schema must be ${RELEASE_SCHEMA}`);
   if (!SEMVER_RE.test(String(release.version ?? '')))
     errors.push('version must be semantic version');
   if (release.tag !== `v${release.version}`) errors.push('tag must equal v<version>');
@@ -218,34 +160,7 @@ function validateReleaseBase(release: JsonRecord): string[] {
   if (!SHA256_RE.test(String(release.candidateManifestDigest ?? ''))) {
     errors.push('candidateManifestDigest must be sha256:<64 hex>');
   }
-  return errors;
-}
-
-function validateV3Release(release: JsonRecord): string[] {
-  const errors = validateReleaseBase(release);
-  errors.push(...validateKnowledgeIdentity(release.knowledge));
-  errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
-  errors.push(...validateArtifact(release.artifact));
-  errors.push(...validateDigest(release, 'release'));
-  return errors;
-}
-
-export function validateReleaseManifest(value: unknown): string[] {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return ['release must be an object'];
-  }
-  const release = value as JsonRecord;
-  if (release.schema === PREVIOUS_RELEASE_SCHEMA) return validateV3Release(release);
-
-  const errors = validateReleaseBase(release);
-  if (![RELEASE_SCHEMA, V4_RELEASE_SCHEMA].includes(String(release.schema)))
-    errors.push(`schema must be ${RELEASE_SCHEMA} or an accepted rollback schema`);
-  if (release.schema === RELEASE_SCHEMA) errors.push(...validateV5Inputs(release));
-  else {
-    errors.push(...validateKnowledgeIdentity(release.knowledge));
-    errors.push(...validatePublicInfrastructureIdentity(release.publicInfrastructure));
-    errors.push(...validatePrivateInfrastructureIdentity(release.privateInfrastructure));
-  }
+  errors.push(...validateInputs(release));
   errors.push(...validateArtifact(release.artifact));
   errors.push(...validateDigest(release, 'release'));
   return errors;

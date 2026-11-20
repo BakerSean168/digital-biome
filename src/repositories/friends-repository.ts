@@ -6,7 +6,7 @@
 
 import { getAllNoteEntries } from './knowledge-index-loader';
 import type { NoteIndexEntry } from '../types/knowledge-index';
-import { VISIBILITY_PRIVATE } from '../domain/constants';
+import { VISIBILITY_PRIVATE } from '../domain/foundation/constants';
 
 export interface FriendLink {
   title: string;

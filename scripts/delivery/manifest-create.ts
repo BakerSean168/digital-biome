@@ -1,18 +1,14 @@
 import {
   CANDIDATE_SCHEMA,
-  PREVIOUS_CANDIDATE_SCHEMA,
-  PREVIOUS_RELEASE_SCHEMA,
   RELEASE_SCHEMA,
   SEMVER_RE,
-  V4_CANDIDATE_SCHEMA,
-  V4_RELEASE_SCHEMA,
   identityDigest,
   type JsonRecord,
 } from './manifest-schema';
 import { parseInputs, validateCandidate, validateReleaseManifest } from './manifest-validate';
+import { assertExactKeys } from '../data-products/lock-v1';
 
-// Pure manifest construction. Field insertion order defines the serialized JSON
-// bytes of published manifests and must not change (see manifest-golden.test.ts).
+// Exact current-schema manifest construction. Older artifact bytes remain immutable.
 
 function asObject(value: unknown, label: string): JsonRecord {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -23,7 +19,13 @@ function asObject(value: unknown, label: string): JsonRecord {
 
 export function createCandidate(inputValue: unknown, generatedAt = new Date().toISOString()) {
   const input = asObject(inputValue, 'candidate input');
+  assertExactKeys(
+    input,
+    ['gitSha', 'ciRunId', 'dataProducts', 'privateBindings', 'artifact'],
+    'candidate input',
+  );
   const artifact = asObject(input.artifact, 'candidate artifact');
+  assertExactKeys(artifact, ['file', 'sha256', 'bytes'], 'candidate artifact');
   const candidate: JsonRecord = {
     schema: CANDIDATE_SCHEMA,
     gitSha: input.gitSha,
@@ -52,34 +54,16 @@ export function createReleaseManifest(
   if (!/^\d+$/.test(candidateRunId)) throw new Error('candidate run ID must be numeric');
 
   const candidate = candidateValue as JsonRecord;
-  const schema = candidate.schema;
-  const releaseSchema =
-    schema === PREVIOUS_CANDIDATE_SCHEMA
-      ? PREVIOUS_RELEASE_SCHEMA
-      : schema === V4_CANDIDATE_SCHEMA
-        ? V4_RELEASE_SCHEMA
-        : RELEASE_SCHEMA;
-
   const release: JsonRecord = {
-    schema: releaseSchema,
+    schema: RELEASE_SCHEMA,
     version,
     tag,
     gitSha: candidate.gitSha,
     ciRunId: candidate.ciRunId,
     candidateRunId,
     candidateManifestDigest: candidate.digest,
-    ...(schema === CANDIDATE_SCHEMA
-      ? { dataProducts: candidate.dataProducts, privateBindings: candidate.privateBindings }
-      : schema === PREVIOUS_CANDIDATE_SCHEMA
-        ? {
-            knowledge: candidate.knowledge,
-            privateInfrastructure: candidate.privateInfrastructure,
-          }
-        : {
-            knowledge: candidate.knowledge,
-            publicInfrastructure: candidate.publicInfrastructure,
-            privateInfrastructure: candidate.privateInfrastructure,
-          }),
+    dataProducts: candidate.dataProducts,
+    privateBindings: candidate.privateBindings,
     artifact: candidate.artifact,
     generatedAt,
   };

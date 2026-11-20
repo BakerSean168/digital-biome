@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { generateKeyPair, SignJWT, exportJWK, type JWK } from 'jose';
 import { onRequest as privateMiddleware } from '../functions/api/private/_middleware';
 import { onRequestGet as getPrivateInfrastructure } from '../functions/api/private/infrastructure';
-import { onRequestGet as getPrivateSystems } from '../functions/api/private/systems';
 
 const KID = 'test-key-1';
 const TEAM_DOMAIN = 'https://access-team.cloudflareaccess.com';
@@ -133,22 +132,5 @@ describe('private /infrastructure', () => {
     assert.equal(response.status, 500);
     const body = (await response.json()) as any;
     assert.equal(body.error.code, 'private_infrastructure_configuration_invalid');
-  });
-});
-
-describe('private /systems', () => {
-  test('serves only owner-tier system catalog domains behind the shared Access middleware', async () => {
-    const response = await getPrivateSystems(context({}));
-    assert.equal(response.status, 200);
-    assert.equal(response.headers.get('Cache-Control'), 'private, no-store');
-    const body = (await response.json()) as any;
-    assert.equal(body.version, 1);
-    assert.equal(body.access, 'owner');
-    const ids = body.domains.map((domain: any) => domain.id);
-    assert.ok(ids.includes('products'));
-    assert.ok(ids.includes('personal-config'));
-    assert.ok(!ids.includes('knowledge'));
-    assert.ok(!ids.includes('presentation'));
-    assert.ok(body.facts.domainCount > ids.length);
   });
 });

@@ -9,7 +9,7 @@ import type { Bookmark, Category } from '../types/notes';
 import type { NoteIndexEntry } from '../types/knowledge-index';
 import { getAllNoteEntries, getNoteEntryByIdFromIndex } from './knowledge-index-loader';
 import { extractCategories } from '../view-models/bookmark-categories';
-import { CONFIG_RESOURCE_TYPES_SLUG } from '../domain/constants';
+import { CONFIG_RESOURCE_TYPES_SLUG } from '../domain/foundation/constants';
 import { parseUsagePriority } from '../domain/resource-order';
 
 /** Get resource type tags from the config note in the index. */

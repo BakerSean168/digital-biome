@@ -1,5 +1,7 @@
 # Digital-Biome Delivery Lifecycle
 
+> This document describes the **v6 implementation branch**, not the still-running v5 production deployment. v6 requires Staging acceptance and explicit release/promotion.
+
 Digital-Biome adopts the same three-lifecycle delivery contract used by MemoFlow and BodySense, adapted for Cloudflare Pages.
 
 ## Contract
@@ -42,7 +44,7 @@ The invariants are:
 - Production consumes only a non-draft, non-prerelease GitHub Release that passed exact-SHA main CI.
 - Pages Functions are compiled during Candidate creation. Staging and Production upload the compiled `dist/_worker.js` with `--no-bundle`.
 - Candidate/Release provenance binds the immutable `knowledge-public-v1` producer Release (source revision + artifact/manifest SHA-256) separately from the Pages artifact.
-- Current v3 provenance also binds the Personal Infrastructure `digital-biome-private-infrastructure-v1` RuntimeBinding by exact producer revision, contract path and SHA-256. Production verifies that binding independently; it does not need Thought Forest's private source layout.
+- Current v6 provenance binds both immutable public locks (`knowledge-public-v1` and `infra-public-v2`), plus the separately pinned Personal Infrastructure private RuntimeBinding revision, contract path and SHA-256.
 
 ## 1. Integration and Candidate
 
@@ -63,15 +65,15 @@ A successful main `CI` run is resolved through the GitHub Actions API and must s
 The candidate workflow then:
 
 1. checks out that exact application SHA; Digital Biome contains no private Vault gitlink;
-2. reads `data-products/knowledge-public-v1.lock.json`, downloads the exact private-producer GitHub prerelease through a short-lived read-only App token, and verifies source revision plus artifact/manifest SHA-256;
+2. verifies the committed `knowledge-public-v1` and `infra-public-v2` locks against immutable producer Releases using a short-lived read-only GitHub App token;
 3. materializes the validated producer projection into `.pds-runtime/knowledge-public-v1/source/` and runs the existing synchronization pipeline;
 4. builds `dist/`;
 5. compiles Pages Functions into `dist/_worker.js` and the deployment routes file;
 6. archives `dist/` as `digital-biome-pages.tar.gz`;
-7. records a `digital-biome.candidate/v2` manifest containing application SHA, CI run ID, immutable knowledge projection identity, and Pages artifact SHA-256/size;
+7. records a `digital-biome.candidate/v6` manifest binding both public product identities, the private binding lock, source-CI identity, and Pages artifact digest/size;
 8. retains the candidate artifact for 90 days.
 
-The v2 knowledge identity contains producer repository, exact source revision, immutable `knowledge-public-v1-<SHA>` Release tag, producer artifact SHA-256 and producer manifest SHA-256. Legacy v1 Candidate/Release manifests remain accepted only so an already-published rollback Release can still be deployed.
+The v6 contract accepts only the exact two public products plus one protected private binding; v1-v5 Candidate/Release schemas are rejected by current workflows. Historical releases remain available as manual recovery evidence, not implicit production rollback inputs.
 
 If `STAGING_DEPLOY_ENABLED=true`, the latest main candidate can be promoted to the Cloudflare `staging` preview branch. A freshness check prevents an older concurrent candidate from overwriting a newer staging channel.
 
@@ -131,13 +133,12 @@ Before the production Environment is mutated, the workflow verifies:
 Inside the `production` Environment gate it then:
 
 1. checks out the exact release source;
-2. for v4 and the supported v3 rollback schema, re-fetches the matching `knowledge-public-v1` Release, checks out the exact Personal Infrastructure revision through a production-scoped read-only deploy key, verifies the RuntimeBinding SHA-256, and validates consumer coverage;
-3. for v4, additionally verifies and materializes the pinned `infra-public-v2` producer projection;
-4. renders only the encrypted private Pages binding from the verified Personal Infrastructure contract;
-5. unpacks the already-built Release artifact;
-6. uploads it with Wrangler `pages deploy ... --no-bundle`;
-7. records the Cloudflare deployment identity;
-8. runs public, telemetry and protected-API smoke contracts.
+2. re-fetches and verifies both pinned public producer Releases, checks out the exact Personal Infrastructure private binding revision with a production-scoped read-only deploy key, verifies its SHA-256, and checks public/private reference coverage;
+3. renders only the encrypted private Pages binding from the verified Personal Infrastructure contract;
+4. unpacks the already-built Release artifact;
+5. uploads it with Wrangler `pages deploy ... --no-bundle`;
+6. records the Cloudflare deployment identity;
+7. runs public, telemetry and protected-API smoke contracts.
 
 The public application artifact is never rebuilt in this phase. Candidate Actions artifacts are retained for 90 days, but a Published Release remains deployable after that window because long-lived integrity is anchored by the annotated Release tag plus the attached Release manifest and artifact digest.
 

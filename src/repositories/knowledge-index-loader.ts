@@ -11,7 +11,7 @@ import linkGraphIndexData from '../data/indexes/link-graph.json';
 
 import notesIndexData from '../data/indexes/notes-index.json';
 import tagIndexData from '../data/indexes/tag-index.json';
-import { VISIBILITY_PRIVATE } from '../domain/constants';
+import { VISIBILITY_PRIVATE } from '../domain/foundation/constants';
 import type {
   AssetIndex,
   LinkGraphIndex,

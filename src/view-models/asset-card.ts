@@ -10,7 +10,7 @@ import type {
   AssetLink,
   AssetMonitor,
 } from '../types/notes';
-import { buildAssetHref } from '../domain/note-routing';
+import { buildAssetHref } from '../domain/note-routing/url-builder';
 
 /** Infer asset role from tags and homepage config when not explicitly set. */
 export function inferAssetRole(

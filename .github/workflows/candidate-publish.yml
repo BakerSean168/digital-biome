@@ -76,7 +76,6 @@ jobs:
             digital-biome
             thought-forest
             personal-infrastructure
-            personal-digital-system
           permission-contents: read
 
       - name: Checkout exact application revision
@@ -153,7 +152,6 @@ jobs:
             --arg gitSha "$REVISION" \
             --arg ciRunId "$CI_RUN_ID" \
             --slurpfile knowledge data-products/knowledge-public-v1.lock.json \
-            --slurpfile pds data-products/pds-catalog-v1.lock.json \
             --slurpfile infra data-products/infra-public-v2.lock.json \
             --slurpfile privateBinding data-products/digital-biome-private-infrastructure-v1.lock.json \
             --arg file "$artifact" \
@@ -164,7 +162,6 @@ jobs:
               ciRunId:$ciRunId,
               dataProducts:{
                 "knowledge-public-v1":$knowledge[0],
-                "pds-catalog-v1":$pds[0],
                 "infra-public-v2":$infra[0]
               },
               privateBindings:{"digital-biome-private-infrastructure-v1":$privateBinding[0]},
@@ -276,10 +273,17 @@ jobs:
           set -euo pipefail
           pnpm exec tsx scripts/delivery/manifest.ts validate \
             --file reports/candidate/candidate-manifest.json
+          [[ "$(jq -r .schema reports/candidate/candidate-manifest.json)" == digital-biome.candidate/v6 ]] || { echo 'v6 Candidate required' >&2; exit 1; }
+          pnpm exec tsx -e 'import fs from "node:fs"; import { assertCommittedInputs } from "./scripts/delivery/revalidate"; assertCommittedInputs(JSON.parse(fs.readFileSync("reports/candidate/candidate-manifest.json", "utf8")), process.cwd());'
           [[ "$(jq -r .gitSha reports/candidate/candidate-manifest.json)" == "$EXPECTED_SHA" ]]
           expected="$(jq -r .artifact.sha256 reports/candidate/candidate-manifest.json)"
           actual="sha256:$(sha256sum digital-biome-pages.tar.gz | cut -d ' ' -f 1)"
           [[ "$actual" == "$expected" ]]
+          [[ "$(stat -c %s digital-biome-pages.tar.gz)" == "$(jq -r .artifact.bytes reports/candidate/candidate-manifest.json)" ]]
+          if tar -tzf digital-biome-pages.tar.gz | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
+            echo 'candidate archive contains unsafe path entries' >&2
+            exit 1
+          fi
 
           mkdir release-package
           tar -xzf digital-biome-pages.tar.gz -C release-package

@@ -10,8 +10,8 @@ import type { NoteCollectionEntry } from '../types/notes';
 import type { NoteIndexEntry } from '../types/knowledge-index';
 import { getContentEntriesByIds } from './content-entry-repository';
 import { getPublicKnowledgeNoteEntriesFromIndex } from './knowledge-index-loader';
-import { GIT_TS_MARKER, OBSIDIAN_NOTES_DIR } from '../domain/constants';
-import { noteIdToRelativePath } from '../domain/note-routing';
+import { GIT_TS_MARKER, OBSIDIAN_NOTES_DIR } from '../domain/foundation/constants';
+import { noteIdToRelativePath } from '../domain/foundation/note-id';
 
 const NOTES_PATH = OBSIDIAN_NOTES_DIR;
 

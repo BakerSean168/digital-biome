@@ -1,7 +1,8 @@
 ---
 import { render } from 'astro:content';
 import AssetDetailView from '../../components/assets/AssetDetailView.astro';
-import { getAssetsByType, getRelatedAssetsByParent, toAssetCard } from '../../utils/notes';
+import { getAssetsByType, getRelatedAssetsByParent } from '../../repositories/assets-repository';
+import { toAssetCard } from '../../view-models/asset-card';
 
 export const prerender = true;
 

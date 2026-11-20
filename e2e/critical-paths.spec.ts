@@ -63,7 +63,7 @@ test('Search returns real Pagefind content and service navigation', async ({ pag
   await page.locator('#cmd-input').fill('litellm');
   await expect(page.locator('#cmd-results')).toContainText('LiteLLM');
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/systems\/?\?ui=gui#service-svc-litellm-model-gateway$/);
+  await expect(page).toHaveURL(/\/infrastructure\/svc-litellm-model-gateway\?ui=gui$/);
 });
 
 test('Search recovers a transient Pagefind import failure only after a user retry', async ({
@@ -232,7 +232,6 @@ test('Mobile GUI details close back to the same list, with no outer scrolling', 
     '/now',
     '/friends',
     '/login',
-    '/systems',
     '/infrastructure',
     '/about/tags',
     '/404',
@@ -445,4 +444,38 @@ test('About keeps the reading section visible when the shorter mode reaches its 
         ),
     )
     .toBeLessThan(2);
+});
+
+test('service search resolves authorized targets only through the private Infrastructure API', async ({
+  page,
+  context,
+  request,
+}) => {
+  const response = await request.get('/data/infrastructure-service-index.json');
+  const { services } = await response.json();
+  const service = services.find((entry: { privateRef?: string; title: string }) =>
+    Boolean(entry.privateRef),
+  );
+  expect(service).toBeTruthy();
+  const ownerUrl = 'https://owner.example.test/service';
+  expect(JSON.stringify(services)).not.toContain(ownerUrl);
+  await page.route('**/api/private/session', (route) =>
+    route.fulfill({ json: { authenticated: true } }),
+  );
+  await page.route('**/api/private/infrastructure', (route) =>
+    route.fulfill({ json: { version: 1, values: {}, links: { [service.privateRef]: ownerUrl } } }),
+  );
+  await context.route(ownerUrl, (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<title>Authorized fixture</title>' }),
+  );
+  await page.goto('/?ui=gui');
+  const resolved = page.waitForResponse('**/api/private/infrastructure');
+  await page.keyboard.press('Control+k');
+  await resolved;
+  await page.locator('#cmd-input').fill(service.title);
+  await expect(page.locator('#cmd-results')).toContainText(service.title);
+  const opened = page.waitForEvent('popup');
+  await page.keyboard.press('Enter');
+  const popup = await opened;
+  await expect(popup).toHaveURL(ownerUrl);
 });

@@ -5,13 +5,12 @@ import path from 'node:path';
 import test from 'node:test';
 import { inspectLocalPublicDataProducts, formatPreflightDiagnostics } from './preflight';
 import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
-import { pdsReleaseFixture } from './fixtures/pds-release';
 import { infraReleaseFixture } from './fixtures/infra-release';
 import { sha256 } from './semantic-digest';
 
 function fixtureDir() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'digital-biome-preflight-'));
-  const fixtures = [knowledgeReleaseFixture(), pdsReleaseFixture(), infraReleaseFixture()];
+  const fixtures = [knowledgeReleaseFixture(), infraReleaseFixture()];
   for (const fixture of fixtures) {
     fs.mkdirSync(path.join(root, 'data-products'), { recursive: true });
     fs.writeFileSync(
@@ -30,16 +29,15 @@ function fixtureDir() {
   return { root, fixtures, materialize };
 }
 
-test('clean checkout has three missing products and tells developer the exact recovery command', () => {
+test('clean checkout has two missing products and tells developer the exact recovery command', () => {
   const f = fixtureDir();
   try {
     const results = inspectLocalPublicDataProducts(f.root);
-    assert.equal(results.length, 3);
+    assert.equal(results.length, 2);
     assert.ok(results.every((r) => r.state === 'missing'));
     const output = formatPreflightDiagnostics(results);
     assert.match(output, /knowledge-public-v1\.lock\.json/);
     assert.match(output, /infra-public-v2\.manifest\.json/);
-    assert.match(output, /pds-catalog-v1\.json/);
     assert.match(output, /pnpm sync:data-products/);
     assert.doesNotMatch(output, /skip|--force/);
   } finally {
@@ -47,7 +45,7 @@ test('clean checkout has three missing products and tells developer the exact re
   }
 });
 
-test('exact local data products match all three committed locks without writing or network', () => {
+test('exact local data products match both committed locks without writing or network', () => {
   const f = fixtureDir();
   try {
     f.materialize();
@@ -107,7 +105,7 @@ test('missing manifest is distinct from a different-byte stale manifest', () => 
   const f = fixtureDir();
   try {
     f.materialize();
-    const fixture = f.fixtures[2];
+    const fixture = f.fixtures[1];
     const file = path.join(
       f.root,
       '.pds-runtime',
@@ -115,9 +113,9 @@ test('missing manifest is distinct from a different-byte stale manifest', () => 
       fixture.lock.manifest.name,
     );
     fs.rmSync(file);
-    assert.equal(inspectLocalPublicDataProducts(f.root)[2].state, 'missing');
+    assert.equal(inspectLocalPublicDataProducts(f.root)[1].state, 'missing');
     fs.writeFileSync(file, '{}');
-    assert.equal(inspectLocalPublicDataProducts(f.root)[2].state, 'stale');
+    assert.equal(inspectLocalPublicDataProducts(f.root)[1].state, 'stale');
   } finally {
     fs.rmSync(f.root, { recursive: true, force: true });
   }
@@ -144,7 +142,7 @@ test('forged valid-looking committed SHA for altered cached artifact still fails
   try {
     f.materialize();
     const fixture = f.fixtures[1];
-    const artifact = Buffer.from('{"schemaVersion":1,"product":"pds-catalog-v1","payload":{}}');
+    const artifact = Buffer.from('{"schemaVersion":2,"product":"infra-public-v2","payload":null}');
     fs.writeFileSync(
       path.join(f.root, '.pds-runtime', fixture.lock.product, fixture.lock.artifact.name),
       artifact,
@@ -161,7 +159,7 @@ test('forged valid-looking committed SHA for altered cached artifact still fails
     const results = inspectLocalPublicDataProducts(f.root);
     assert.equal(results[1].state, 'invalid-publication');
     assert.match(formatPreflightDiagnostics(results), /publication integrity/i);
-    assert.ok(results.filter((r) => r.state === 'ready').length === 2);
+    assert.ok(results.filter((r) => r.state === 'ready').length === 1);
   } finally {
     fs.rmSync(f.root, { recursive: true, force: true });
   }

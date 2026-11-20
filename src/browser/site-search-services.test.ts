@@ -8,7 +8,7 @@ const publicService: ServiceResult = {
   label: 'SVC',
   title: 'Private Management',
   desc: 'Protected route',
-  href: '/systems',
+  href: '/infrastructure/svc-litellm-model-gateway',
   aliases: ['private'],
   privateRef: 'service.links.admin',
   pinned: true,
@@ -28,7 +28,7 @@ test('public launcher index loads once and stays usable when Access denies a pri
   assert.equal(requests.filter((item) => item.url.startsWith('/data/')).length, 1);
   assert.deepEqual(services.list(), [publicService]);
   await services.hydratePrivateTargets();
-  assert.equal(services.list()[0].href, '/systems');
+  assert.equal(services.list()[0].href, '/infrastructure/svc-litellm-model-gateway');
   const request = requests.find((item) => item.url === '/api/private/infrastructure');
   assert.equal(request?.init?.redirect, 'manual');
   assert.equal(request?.init?.credentials, 'same-origin');
@@ -54,11 +54,11 @@ test('private target hydration accepts only valid authorized URL schemes and can
   };
   const services = createSiteSearchServices(fetcher as typeof fetch);
   await services.hydratePrivateTargets();
-  assert.equal(services.list()[0].href, '/systems');
+  assert.equal(services.list()[0].href, '/infrastructure/svc-litellm-model-gateway');
   authenticated = true;
   await services.hydratePrivateTargets();
   assert.equal(services.list()[0].href, protectedUrl);
-  assert.equal(services.list()[1].href, '/systems');
+  assert.equal(services.list()[1].href, '/infrastructure/svc-litellm-model-gateway');
 });
 
 test('invalid public catalog and invalid protected payloads cannot mutate browser targets', async () => {
@@ -80,5 +80,5 @@ test('invalid public catalog and invalid protected payloads cannot mutate browse
     });
   }) as typeof fetch);
   await services.hydratePrivateTargets();
-  assert.equal(services.list()[0].href, '/systems');
+  assert.equal(services.list()[0].href, '/infrastructure/svc-litellm-model-gateway');
 });

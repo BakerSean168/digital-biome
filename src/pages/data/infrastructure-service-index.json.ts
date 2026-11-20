@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getPortalServiceSearchIndex } from '../../utils/personal-systems';
+import { getInfrastructureServiceSearchIndex } from '../../utils/infrastructure-services';
 
 export const prerender = true;
 
@@ -7,7 +7,7 @@ export const GET: APIRoute = () =>
   new Response(
     JSON.stringify({
       version: 1,
-      services: getPortalServiceSearchIndex(),
+      services: getInfrastructureServiceSearchIndex(),
     }),
     {
       headers: {

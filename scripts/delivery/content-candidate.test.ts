@@ -31,7 +31,7 @@ function fixture() {
     gitSha: sha,
     ciRunId: '123',
     dataProducts: Object.fromEntries(
-      ['knowledge-public-v1', 'pds-catalog-v1', 'infra-public-v2'].map((p) => [p, read(p)]),
+      ['knowledge-public-v1', 'infra-public-v2'].map((p) => [p, read(p)]),
     ),
     privateBindings: {
       'digital-biome-private-infrastructure-v1': read('digital-biome-private-infrastructure-v1'),

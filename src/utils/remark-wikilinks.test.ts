@@ -3,7 +3,7 @@ import test from 'node:test';
 import type { Link, Root, Text } from 'mdast';
 import { unified } from 'unified';
 import { remarkWikilinks } from './remark-wikilinks';
-import type { ResolveResult } from '../domain/note-routing';
+import type { ResolveResult } from '../domain/note-routing/slug-resolver';
 
 const resolveTarget = (target: string): ResolveResult =>
   target === 'Known Note'

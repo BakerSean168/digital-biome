@@ -35,7 +35,7 @@ function candidate(file: string) {
   assertRecord(value, 'Candidate');
   const errors = validateCandidate(value);
   if (errors.length) throw new Error(errors.join('; '));
-  if (value.schema !== CANDIDATE_SCHEMA) throw new Error('Content promotion requires v5');
+  if (value.schema !== CANDIDATE_SCHEMA) throw new Error('Content promotion requires v6');
   return value;
 }
 function resolve() {
