@@ -24,7 +24,9 @@ test('About renders source-authored sections and verified links', async ({ page 
     const link = about.getByRole('link', { name: relation.phrase, exact: true });
     await expect(link).toHaveAttribute('href', /^\//);
     if (relation.anchor) {
-      expect(await link.getAttribute('href')).toContain(relation.anchor);
+      const href = await link.getAttribute('href');
+      const parsed = new URL(href ?? '', page.url());
+      expect(decodeURIComponent(parsed.hash)).toBe(relation.anchor);
     }
   }
   await expect(about.locator('article, aside, dl, footer')).toHaveCount(0);
