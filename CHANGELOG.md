@@ -5,6 +5,18 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.17.0](https://github.com/BakerSean168/digital-biome/compare/v0.16.0...v0.17.0) (2026-11-20)
+
+
+### Features
+
+* **site:** adopt v6 data products and retire PDS catalog ([#274](https://github.com/BakerSean168/digital-biome/issues/274)) ([166dbeb](https://github.com/BakerSean168/digital-biome/commit/166dbeb5979596ba91b2f21e3fdec7f58a60b764))
+
+
+### Bug Fixes
+
+* **site:** enforce resource directory boundary and align v6 docs ([2bf4d81](https://github.com/BakerSean168/digital-biome/commit/2bf4d8192ebed5ef452fccef7a67639b04e923ea))
+
 ## [0.16.0](https://github.com/BakerSean168/digital-biome/compare/v0.15.1...v0.16.0) (2026-11-19)
 
 
