@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseAboutBody, parseNowBody } from '../src/domain/site-pages/content';
 import { publishedBlogHref } from './published-blog-href';
+import { parseNoteWikilinks } from '../src/domain/foundation/wikilink-parser';
+import { appendWikilinkAnchor } from '../src/domain/note-routing/url-builder';
+import { resolveStaticWikilink } from '../src/domain/note-routing/static-note-catalog';
 import { parsePublishedSitePage } from './site-page-frontmatter';
 
 function pageSource(name: 'about' | 'now') {
@@ -15,9 +18,18 @@ function pageSource(name: 'about' | 'now') {
 export const aboutSource = (() => {
   const source = pageSource('about');
   const sections = parseAboutBody(source.body);
-  const links = [...source.body.matchAll(/\[\[blogs\/([a-z0-9-]+)\|([^\]]+)\]\]/g)]
-    .map((x) => ({ blogSlug: x[1], phrase: x[2] }))
-    .filter(({ blogSlug }) => Boolean(publishedBlogHref(blogSlug)));
+  const links = parseNoteWikilinks(source.body).flatMap((link) => {
+    const target = link.target.startsWith('notes/') ? link.target.slice(6) : link.target;
+    const resolution = resolveStaticWikilink(target);
+    if (
+      (resolution.status !== 'resolved' && resolution.status !== 'asset') ||
+      !resolution.href?.startsWith('/')
+    )
+      return [];
+    return [
+      { phrase: link.display ?? link.target, href: appendWikilinkAnchor(resolution.href, link) },
+    ];
+  });
   return {
     sections,
     updatedAt: source.updatedAt,
