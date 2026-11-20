@@ -162,7 +162,7 @@ Astro 生成 `dist/`，Pagefind 随后生成搜索索引。`scripts/postbuild.ts
 | 公开笔记正文       | Pages 静态文件           | 互联网          | 发布过滤                 |
 | 公开资产元数据     | 静态 JSON/HTML           | 互联网          | 上游契约与 schema        |
 | 私有/内部链接      | Pages Secret             | Access 授权用户 | Access + JWT 二次校验    |
-| IP、SSH URL        | 私有 vault、Pages Secret | 作者和授权用户  | 私有仓库、脱敏、泄漏门禁 |
+| IP、SSH URL        | Personal Infrastructure private binding、Pages Secret | 作者和授权用户  | 私有仓库、脱敏、泄漏门禁 |
 | Access AUD、团队域 | Pages Secret             | Pages Functions | Cloudflare Secret        |
 | 原始 vault         | GitHub 私有仓库          | GitHub 授权主体 | 仓库权限                 |
 
@@ -205,15 +205,11 @@ Candidate 阶段从 committed `knowledge-public-v1` lock 下载并验证 produce
 
 `notes.config.ts` 不搜索相邻 clone 或父目录。默认 source 是经 lock 验证后物化的 `.pds-runtime/knowledge-public-v1/source/`。当前 v6 Production 不需要知识仓库的私有 source layout：它们验证 `knowledge-public-v1` provenance 与 Personal Infrastructure RuntimeBinding；旧版 delivery 与 private Thought Forest 兼容路径已经退休。
 
-### 6.4 P1：同一 frontmatter 存在两套解析器
+### 6.4 已缓解：Frontmatter 使用统一 YAML 解析
 
-本地 `build-indexes.ts` 使用轻量行扫描，上游索引使用完整 YAML 解析。随后 `merge-asset-index.ts` 再覆盖嵌套字段。这形成双重事实源：
+`scripts/sync/build-indexes.ts` 现在使用 `src/domain/markdown/frontmatter.ts` 的 `parseMarkdownFrontmatter`（完整 YAML），不再采用独立的行扫描 Frontmatter 解析器。`scripts/sync/source-adapter.ts` 使用同一适配层提取语法边界。
 
-- 简单字段以本地扫描结果为主；
-- `monitor`、`links`、`homepage` 等依赖上游索引；
-- 两边字段映射和命名规则可能漂移。
-
-长期应共享一个版本化 schema 和同一解析实现，或让上游输出成为唯一索引输入。
+上游索引仍是作者数据产品的一部分，Digital Biome 的派生索引用于自身查询和路由；`merge-asset-index.ts` 负责补充投影的嵌套字段，属于转换链路而非可编辑的第二份事实源。后续如出现真实字段映射漂移，针对字段和测试定点修复，不以历史 P1 描述为由重建同步架构。
 
 ### 6.5 已缓解：私有 payload 与部署编排
 

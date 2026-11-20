@@ -258,7 +258,7 @@ pnpm exec wrangler pages deploy dist \
 
 - `git rev-parse HEAD`；
 - `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 digest；
-- 当前 v4 Production 与受支持的 v3 rollback 都记录 Personal Infrastructure RuntimeBinding revision、contract SHA-256 与 Release manifest identity；历史 v1/v2 Thought Forest private source identity 不再属于受支持部署路径；
+- 本分支 v6 Candidate/Release 固定两份公开产品锁（`knowledge-public-v1`、`infra-public-v2`）及独立 private RuntimeBinding 的 revision、contract SHA-256；生产当前仍为 v5，旧 manifest 仅供历史审计；
 - 上游/物化索引生成时间或摘要；
 - `PRIVATE_INFRASTRUCTURE_JSON` 的 schema version 和 key 数量，不记录值；
 - 构建检查结果；
@@ -468,7 +468,7 @@ rg -n "ssh://|Cf-Access|PRIVATE_INFRASTRUCTURE" dist
 7. 允许 GitHub Actions 使用当前仓库的 `GITHUB_TOKEN` 创建 PR 与 dispatch workflow；
 8. 保持 Cloudflare Git 自动 Production/Preview 构建关闭。
 
-`.github/workflows/sync-knowledge-public-v1.yml` 是唯一的 Thought Forest public-projection consumer-sync authority：它只在 producer 的 immutable publication 成功后响应 dispatch，并在固定 automation branch/PR 中更新 `knowledge-public-v1` lock。读取 producer Release 使用只读 App token，写 Digital Biome PR 使用当前仓库 `GITHUB_TOKEN`；若 bot-authored PR 被仓库策略置为 `action_required`，workflow 仅批准自己生成的该固定分支 CI 并等待结果。当前 v4 Production 与受支持的 v3 rollback 都不检出 Thought Forest 私有 source；它们按 Release provenance 验证 `knowledge-public-v1`，并以 production-scoped read-only deploy key 读取 Personal Infrastructure RuntimeBinding。Published Release 的 Pages artifact 不会重建；Cloudflare deployment URL/ID 作为独立 deployment record 保存。
+v6 Production 不检出 Thought Forest 私有 source；它验证两份公开产品不可变 Release 和 Personal Infrastructure RuntimeBinding 的固定 revision/digest。当前生产 v5 暂不按本分支流程运行，须先完成 Staging 验收。
 
 ## 15. 官方参考
 

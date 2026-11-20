@@ -131,7 +131,7 @@ This file and `docs/architecture.md` are the current design record.
 ## 笔记数据源配置
 
 `notes.config.ts` 默认读取 `.pds-runtime/knowledge-public-v1/source`。该目录由
-`scripts/data-products/prepare-knowledge-public-v1.sh` 根据 committed lock 验证并物化；
+`pnpm sync:data-products` 经 `scripts/data-products/prepare-all.ts` 验证并物化两份 committed public lock；
 不要把 producer source layout 重新编码成仓库内路径。
 
 日常同步：

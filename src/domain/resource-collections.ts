@@ -7,9 +7,9 @@ type ResourceKind = 'hardware' | 'software' | 'services' | 'websites';
 
 function resourceKind(entry: NoteIndexEntry): ResourceKind | undefined {
   const match = /^uses\/(hardware|software|services|websites)\/[^/]+\.md$/.exec(entry.filePath);
-  return (match?.[1] ?? (entry.bookmarked === true ? 'websites' : undefined)) as
-    | ResourceKind
-    | undefined;
+  // Only authored uses/ records are resource cards. A knowledge note with
+  // a URL or bookmarked flag remains a note, not an implicit website.
+  return match?.[1] as ResourceKind | undefined;
 }
 
 function publicResource(entry: NoteIndexEntry): boolean {

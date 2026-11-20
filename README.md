@@ -42,6 +42,8 @@ flowchart LR
 
 CI and Candidate builds pin Thought Forest through `data-products/knowledge-public-v1.lock.json`, which identifies an immutable producer Release by exact source revision and SHA-256. The build downloads and validates that producer-owned public projection before materializing it into the existing sync pipeline. Digital Biome no longer embeds Thought Forest as a gitlink. Protected infrastructure values are owned separately by Personal Infrastructure and pinned through `data-products/digital-biome-private-infrastructure-v1.lock.json`; Production verifies that exact private RuntimeBinding before updating encrypted Pages bindings.
 
+Authoring rules and default Obsidian paths are owned by Thought Forest: [content contract](https://github.com/BakerSean168/thought-forest/blob/main/docs/digital-biome-content-contract.md). Digital Biome only consumes the validated projection; do not duplicate the content schema here.
+
 ## Project showcase model
 
 The `/projects` page consumes **public `asset_type: project` records** from Thought Forest. A featured project can expose three destinations with distinct responsibilities:
