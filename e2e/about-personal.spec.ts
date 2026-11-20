@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { publishedBlogHref } from './published-blog-href';
 import { aboutSource, nowSource } from './site-page-expected';
 
-const publishedRelatedBlogs = aboutSource.links;
+const publishedRelatedLinks = aboutSource.links;
 
 test('About renders source-authored sections and verified links', async ({ page }) => {
   await page.goto('/about/?ui=gui');
@@ -20,12 +19,15 @@ test('About renders source-authored sections and verified links', async ({ page 
     await expect(block.locator('p')).toHaveText(section.paragraphs.map(aboutSource.visibleText));
   }
 
-  await expect(about.locator('a')).toHaveCount(publishedRelatedBlogs.length);
-  for (const relation of publishedRelatedBlogs) {
+  await expect(about.locator('a')).toHaveCount(publishedRelatedLinks.length);
+  for (const relation of publishedRelatedLinks) {
     const link = about.getByRole('link', { name: relation.phrase, exact: true });
-    await expect(link).toHaveAttribute('href', /^\/notes\/obsidian\/blogs\//);
-    const target = new URL((await link.getAttribute('href')) ?? '', page.url());
-    expect(target.pathname).toBe(publishedBlogHref(relation.blogSlug));
+    await expect(link).toHaveAttribute('href', /^\//);
+    if (relation.anchor) {
+      const href = await link.getAttribute('href');
+      const parsed = new URL(href ?? '', page.url());
+      expect(decodeURIComponent(parsed.hash)).toBe(relation.anchor);
+    }
   }
   await expect(about.locator('article, aside, dl, footer')).toHaveCount(0);
 });
@@ -43,7 +45,7 @@ test('About retains the same full text in terminal mode and global navigation wo
     await expect(block.getByRole('heading', { name: section.title, exact: true })).toBeVisible();
     await expect(block.locator('p')).toHaveText(section.paragraphs.map(aboutSource.visibleText));
   }
-  await expect(about.locator('a')).toHaveCount(publishedRelatedBlogs.length);
+  await expect(about.locator('a')).toHaveCount(publishedRelatedLinks.length);
 
   await page.locator('[data-terminal-dock] a[href^="/now"]').click();
   await expect(page).toHaveURL(/\/now\/?\?ui=tui$/);

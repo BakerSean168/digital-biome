@@ -82,3 +82,19 @@ test('WikiLink renderer escapes untrusted text and accepts only public hrefs', (
   assert.ok(html.includes('私密文章'));
   assert.ok(!html.includes('blogs/private'));
 });
+
+test('About renders cross-note heading WikiLinks and hides unresolved targets', () => {
+  const target = 'blogs/home-network-homelab-build-and-recovery';
+  const raw =
+    '[[blogs/home-network-homelab-build-and-recovery#再接上 ImmortalWrt：旁路由、Nikki 与扩容|折腾了软路由]] 和 [[secret#隐私|不公开]]';
+  const html = renderAboutParagraphHtml(raw, (value) =>
+    value === target ? '/notes/obsidian/blogs/home-network-homelab-build-and-recovery' : undefined,
+  );
+  assert.match(
+    html,
+    /href="\/notes\/obsidian\/blogs\/home-network-homelab-build-and-recovery#再接上/,
+  );
+  assert.ok(html.includes('折腾了软路由</a>'));
+  assert.ok(html.includes('不公开'));
+  assert.ok(!html.includes('[[secret'));
+});
