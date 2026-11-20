@@ -15,6 +15,11 @@ describe('toNoteId', () => {
     assert.equal(toNoteId('assets/services/site.md'), 'obsidian/assets/services/site');
   });
 
+  test('preserves friend Note IDs across the site-page migration', () => {
+    assert.equal(toNoteId('pages/friends/aleksiz.md'), 'obsidian/friend-aleksiz');
+    assert.equal(toNoteId('uses/websites/friend-aleksiz.md'), 'obsidian/friend-aleksiz');
+  });
+
   test('keeps paths without an extension unchanged', () => {
     assert.equal(toNoteId('z/foo'), 'obsidian/z/foo');
   });

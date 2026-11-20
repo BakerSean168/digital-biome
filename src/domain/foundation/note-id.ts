@@ -15,6 +15,7 @@
  *
  * Converts a vault-relative file path (with or without .md extension)
  * into the canonical `obsidian/<path-without-extension>` format.
+ * Friends retain their published `obsidian/friend-<slug>` identity after moving to pages/friends/.
  *
  * @example
  *   toNoteId('vue-computed.md')         // 'obsidian/vue-computed'
@@ -23,6 +24,9 @@
  */
 export function toNoteId(relativePath: string): string {
   const normalized = relativePath.replace(/\\/g, '/').replace(/\.md$/, '');
+  if (normalized.startsWith('pages/friends/')) {
+    return `obsidian/friend-${normalized.slice('pages/friends/'.length)}`;
+  }
   if (normalized.startsWith('uses/hardware/')) {
     return `obsidian/tools/${normalized.slice('uses/hardware/'.length)}`;
   }

@@ -6,7 +6,7 @@
 
 import { getAllNoteEntries } from './knowledge-index-loader';
 import type { NoteIndexEntry } from '../types/knowledge-index';
-import { VISIBILITY_PRIVATE } from '../domain/foundation/constants';
+import { VISIBILITY_PUBLIC } from '../domain/foundation/constants';
 
 export interface FriendLink {
   title: string;
@@ -24,32 +24,28 @@ function hasUrl(entry: NoteIndexEntry): entry is NoteIndexEntry & { url: string 
 export function getFriendLinks(): FriendLink[] {
   const entries = getAllNoteEntries();
 
-  return entries
-    .filter((entry) => {
-      if (entry.draft || entry.private || entry.visibility === VISIBILITY_PRIVATE) return false;
-      if (!entry.url) return false;
-
-      const tags = (entry.tags || []).map((t) => t.toLowerCase());
-      const isFriendLink =
-        tags.includes('type/friend-link') ||
-        tags.includes('media/friend-link') ||
-        tags.includes('friend-link') ||
-        tags.includes('friend') ||
-        tags.includes('友链');
-
-      return isFriendLink;
-    })
-    .filter(hasUrl)
-    .map((entry) => {
-      // The public index exposes icon as the friend-avatar surface.
-      const avatar = entry.icon;
-      return {
-        title: entry.title || entry.id.split('/').pop() || 'Untitled',
-        url: entry.url,
-        avatar,
-        description: entry.description,
-        slug: entry.id,
-        tags: entry.tags || [],
-      };
-    });
+  return (
+    entries
+      // Thought Forest owns collection membership through the source path, not tag spelling.
+      .filter(
+        (entry) =>
+          entry.filePath.startsWith('pages/friends/') &&
+          !entry.draft &&
+          !entry.private &&
+          entry.visibility === VISIBILITY_PUBLIC,
+      )
+      .filter(hasUrl)
+      .map((entry) => {
+        // The public index exposes icon as the friend-avatar surface.
+        const avatar = entry.icon;
+        return {
+          title: entry.title || entry.id.split('/').pop() || 'Untitled',
+          url: entry.url,
+          avatar,
+          description: entry.description,
+          slug: entry.id,
+          tags: entry.tags || [],
+        };
+      })
+  );
 }
