@@ -1,3 +1,9 @@
 # Canonical project collection; Astro's prerendered meta redirect remains for local preview.
 /dev /projects 301
 /dev/ /projects/ 301
+
+# Preserve links published before MemoFlow source-file renames.
+/notes/obsidian/daily-use-moc /notes/obsidian/memoflow-early-development-moc 301
+/notes/obsidian/daily-use-moc/ /notes/obsidian/memoflow-early-development-moc/ 301
+/notes/obsidian/blogs/ui-refactor-for-dailyuse-memoflow /notes/obsidian/blogs/memoflow-ai-prototype-design 301
+/notes/obsidian/blogs/ui-refactor-for-dailyuse-memoflow/ /notes/obsidian/blogs/memoflow-ai-prototype-design/ 301

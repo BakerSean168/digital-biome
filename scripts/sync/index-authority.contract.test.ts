@@ -4,6 +4,8 @@ import path from 'node:path';
 import test from 'node:test';
 import { notesConfig } from '../../notes.config';
 import { findUpstreamNoteByLocalPath, sanitizePublishedMetadataText } from './reconcile-note-index';
+import { getFriendLinks } from '../../src/repositories/friends-repository';
+import { getPublicKnowledgeNoteEntriesFromIndex } from '../../src/repositories/knowledge-index-loader';
 
 type LocalNote = {
   id: string;
@@ -18,6 +20,7 @@ type LocalNote = {
 };
 
 type UpstreamNote = {
+  id: string;
   sourcePath: string;
   title: string;
   description?: string;
@@ -80,6 +83,29 @@ test('published note metadata agrees with the Thought Forest full-YAML authority
   }
 
   assert.ok(compared > 1000, `expected a populated authority comparison, got ${compared}`);
+});
+
+test('friend collection is visible under its stable producer Note IDs', () => {
+  const { local, upstream } = loadIndexes();
+  const publishedFriends = upstream.filter(
+    (note) => note.sourcePath.startsWith('pages/friends/') && note.visibility === 'public',
+  );
+  assert.ok(publishedFriends.length > 0, 'expected at least one published friend page');
+
+  const byPath = new Map(local.map((note) => [note.filePath, note]));
+  const displayedIds = new Set(getFriendLinks().map((friend) => friend.slug));
+  const publicKnowledgeIds = new Set(
+    getPublicKnowledgeNoteEntriesFromIndex().map((note) => note.id),
+  );
+  for (const friend of publishedFriends) {
+    assert.equal(
+      byPath.get(friend.sourcePath)?.id,
+      friend.id,
+      `${friend.sourcePath}: Note ID drift`,
+    );
+    assert.ok(displayedIds.has(friend.id), `${friend.sourcePath}: missing from Friends`);
+    assert.ok(!publicKnowledgeIds.has(friend.id), `${friend.sourcePath}: leaked into Notes`);
+  }
 });
 
 test('Digital Biome may make upstream-public assets stricter but never widens this shared set', () => {
