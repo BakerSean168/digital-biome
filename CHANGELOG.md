@@ -5,6 +5,17 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.17.1](https://github.com/BakerSean168/digital-biome/compare/v0.17.0...v0.17.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* **about:** render chapter-anchored wikilinks consistently ([e8c2c69](https://github.com/BakerSean168/digital-biome/commit/e8c2c6964c4f6f7563227c47fd112127eb377b04))
+* **about:** support anchored Wikilinks and verify authored links ([67f2863](https://github.com/BakerSean168/digital-biome/commit/67f2863a44bf317d08f3c2cb02c47e89ad1836b7))
+* **notes:** keep Friends pages out of knowledge routes ([c418b4b](https://github.com/BakerSean168/digital-biome/commit/c418b4b7d40fb357deacb4e841efbf3aded32259))
+* **site:** preserve friends identity and renamed MemoFlow URLs ([3c5e5f9](https://github.com/BakerSean168/digital-biome/commit/3c5e5f9b9ac4d0226fdcd2c65bef0a3afd7de2f2))
+* **site:** preserve friends identity and renamed MemoFlow URLs ([2fc3969](https://github.com/BakerSean168/digital-biome/commit/2fc396948c53f5d4b8da4c19a7d65985c273a173))
+
 ## [0.17.0](https://github.com/BakerSean168/digital-biome/compare/v0.16.0...v0.17.0) (2026-11-20)
 
 
