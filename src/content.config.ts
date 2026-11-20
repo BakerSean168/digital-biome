@@ -1,7 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
-import { toNoteId } from './domain/note-routing';
+import { toNoteId } from './domain/foundation/note-id';
 
 const optionalString = () => z.string().nullable().optional();
 const optionalDate = () => z.union([z.string(), z.date()]).nullable().optional();

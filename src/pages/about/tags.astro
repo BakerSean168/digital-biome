@@ -1,6 +1,6 @@
 ---
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
-import { getAllNoteTags } from '../../utils/notes';
+import { getAllNoteTags } from '../../repositories/notes-repository';
 const allTagsMap = getAllNoteTags();
 const filteredTags = Array.from(allTagsMap.entries())
   .filter(([tag]) => {

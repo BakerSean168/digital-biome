@@ -1,8 +1,9 @@
 import { visit } from 'unist-util-visit';
 import type { Plugin } from 'unified';
 import type { Root, Text, Parent, Link } from 'mdast';
-import { appendWikilinkAnchor, parseNoteWikilinks } from '../domain/note-routing';
-import type { ResolveResult } from '../domain/note-routing';
+import { appendWikilinkAnchor } from '../domain/note-routing/url-builder';
+import { parseNoteWikilinks } from '../domain/foundation/wikilink-parser';
+import type { ResolveResult } from '../domain/note-routing/slug-resolver';
 import {
   getStaticNotePreview,
   resolveStaticWikilink,

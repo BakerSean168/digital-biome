@@ -1,3 +1,5 @@
+> 分支实施状态：v6 已实施、未发布；生产仍运行 v5 契约与 pds-catalog-v1 钉版。PDS 尚未完成退役。
+
 # Digital Biome 系统架构
 
 > 状态基线：2026-11-19（PDS 退役与 v6 工作树）
@@ -53,7 +55,6 @@ flowchart LR
 | `/notes`, `/notes/[...slug]`                                                                                                      | Knowledge garden list and note pages                                                                              |
 | `/uses`, `/uses/[assetId]`                                                                                                        | Personal hardware/software and complete searchable service, website, host, and network catalog; tool asset detail |
 | `/projects`, `/projects/[assetId]`                                                                                                | Canonical project collection and individual project details                                                       |
-| `/dev`, `/dev/[assetId]`                                                                                                          | Legacy collection redirect to `/projects`; historical service-asset detail route retained                         |
 | `/infrastructure`, `/infrastructure/[assetId]`                                                                                    | Public infrastructure showcase (private fields unlocked via Access)                                               |
 | `/about`, `/now`, `/about/tags`                                                                                                   | Self-contained long-lived introduction, Obsidian-authored Now activity cards, and tag index                       |
 | `/blog`, `/friends`                                                                                                               | Blog and friends links                                                                                            |
@@ -80,11 +81,11 @@ flowchart LR
 | producer `config/`                      | Dashboard、技能和运维配置 | public projection 仅携带允许公开的子集        |
 | projection `generated/knowledge-index/` | producer-owned 公开索引   | lock 校验后物化；消费者据此生成站点查询索引   |
 
-Thought Forest 仍是私有 canonical knowledge repository，但跨仓库边界已经收敛到 `knowledge-public-v1`。Digital Biome 通过 `data-products/knowledge-public-v1.lock.json` 固定 producer repository、source revision、immutable Release tag、artifact SHA-256 与 manifest SHA-256。基础设施私有事实不再从 Thought Forest source layout 推导：Personal Infrastructure 独立拥有 `digital-biome-private-infrastructure-v1` RuntimeBinding，Digital Biome 用第二个 lock 固定其 exact Git revision、contract path 与 SHA-256。
+Thought Forest 仍是私有 canonical knowledge repository，但跨仓库边界已经收敛到 `knowledge-public-v1`。Digital Biome 通过 `data-products/knowledge-public-v1.lock.json` 固定 producer repository、source revision、immutable Release tag、artifact SHA-256 与 manifest SHA-256。基础设施私有事实不再从 Thought Forest source layout 推导：Personal Infrastructure 独立拥有 `digital-biome-private-infrastructure-v1` RuntimeBinding，Digital Biome 用独立的受保护 RuntimeBinding lock 固定其 exact Git revision、contract path 与 SHA-256；另一个公开 lock 固定 `infra-public-v2`。
 
 ### 3.2 同步与投影层
 
-CI / Candidate 入口为 `scripts/data-products/prepare-knowledge-public-v1.sh`，它先验证并物化 producer projection；随后复用 `scripts/sync/`。本地显式选择外部 Vault 时可运行 `pnpm sync:content`：
+CI / Candidate 入口为 `pnpm sync:data-products`（`scripts/data-products/prepare-all.ts`），验证并物化 `knowledge-public-v1` 与 `infra-public-v2` 两份 committed public lock，再调用 `syncKnowledgeSource` 复用 `scripts/sync/`。本地显式选择外部 Vault 时可运行 `pnpm sync:content`：
 
 1. 解析 `notes.config.ts`，确定 vault 和上游索引位置；
 2. 扫描笔记、资产笔记和配置目录；

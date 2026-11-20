@@ -33,6 +33,8 @@ flowchart LR
     A[Thought Forest / Obsidian] --> B[知识索引]
     B --> C[公开投影 + 脱敏]
     C --> D[Astro 内容 / 数据]
+    PI[Personal Infrastructure] --> IP[infra-public-v2]
+    IP --> D
     D --> E[笔记 / 项目 / 资产]
     E --> F[静态构建 + Pagefind]
     F --> G[Cloudflare Pages]
@@ -141,3 +143,5 @@ Thought Forest 持有规范化的知识和资产元数据；Digital Biome 负责
 Digital Biome 是一个 **公开源码仓库**，但当前 **没有附带开源许可证**。仅公开可见并不代表授予复制、修改或再分发代码的许可；除非未来明确加入许可证，否则版权仍由仓库所有者保留。
 
 Obsidian collections provide /bookmarks, /blogroll, /carry and /defaults. Optional Markdown pages provide /colophon, /ai, /ideas and /canon.
+
+Thought Forest 维护知识与项目记录，Personal Infrastructure 维护主机、服务、部署与恢复；Digital Biome 只消费 `knowledge-public-v1`、`infra-public-v2` 与受保护运行时绑定。v6 已实施未发布，生产仍运行 v5 契约与 pds-catalog-v1 钉版。

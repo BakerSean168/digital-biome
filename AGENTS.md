@@ -45,7 +45,7 @@ data-products/           # Immutable producer projection locks
 ### Route map
 
 当前公开路由、布局与交付模块以 [`docs/architecture.md` §3.0](docs/architecture.md#30-应用拓扑main-现状) 为准。
-`/projects` 是项目展示集合的 canonical 路由；旧 `/dev` 集合地址只做跳转，`/dev/[assetId]` 的历史服务详情暂时保留。
+`/projects` 是项目展示集合的 canonical 路由；本分支已删除旧 `/dev` 入口与详情。
 `/now` 是与 `/about`、`/uses` 同级的主导航项。
 `/about` 与 `/now` 的唯一文案来源为 Thought Forest `pages/about.md`、`pages/now.md`，保留稳定块引用和已公开 Blog 的句内链接。`/uses` 的个人资源由 `uses/` 的属性筛选，私有设备仅通过独立白名单摘要展示；完整服务、主机、网络目录仍由公开基础设施投影提供。所有页面沿用 TerminalLayout 的 GUI/TUI 模式，内部入口与敏感信息不可出现在公开页面。
 Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
@@ -150,7 +150,7 @@ NOTES_UPSTREAM_GENERATED=/path/to/thought-forest/generated \
 pnpm sync:content
 ```
 
-Production 不依赖仓库 gitlink。当前 Release（manifest v6 only）将公开知识投影与私有基础设施绑定分开：
+Production 不依赖仓库 gitlink。本分支的待发布 Release（manifest v6 only；生产仍运行 v5 + pds-catalog-v1 钉版）将公开知识投影与私有基础设施绑定分开：
 `knowledge-public-v1` 继续由 Thought Forest 发布；受保护 deployment payload 则按 Release manifest
 固定的 Personal Infrastructure revision + SHA-256 读取 `digital-biome-private-infrastructure-v1`
 RuntimeBinding，然后部署既有 immutable Pages artifact。v1–v5 delivery schema 均拒绝；历史发布仅作人工恢复材料。

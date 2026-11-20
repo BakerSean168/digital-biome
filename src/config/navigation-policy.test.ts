@@ -20,14 +20,12 @@ test('dock and first search destinations share the same names, routes and order'
 test('detail routes and Library subtypes resolve to their primary destination', () => {
   for (const path of ['/notes/', '/notes/obsidian/example', '/blog/', '/about/tags'])
     assert.equal(activeNavigation(path), '/notes');
-  for (const path of ['/dev/example', '/projects/example'])
-    assert.equal(activeNavigation(path), '/projects');
+  for (const path of ['/projects/example']) assert.equal(activeNavigation(path), '/projects');
   for (const path of ['/infrastructure/host-example', '/uses/'])
     assert.equal(activeNavigation(path), '/uses');
   assert.equal(activeNavigation('/uses'), '/uses');
   assert.equal(activeNavigation('/uses/'), '/uses');
   assert.equal(pageMode('/uses'), 'USES');
-  assert.equal(activeNavigation('/dev'), '/projects');
   assert.equal(activeNavigation('/projects'), '/projects');
   assert.equal(pageMode('/projects'), 'PROJECTS');
   assert.equal(activeNavigation('/tools'), undefined);

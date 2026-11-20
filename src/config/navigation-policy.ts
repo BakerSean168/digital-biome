@@ -40,7 +40,7 @@ export function activeNavigation(path: string): string | undefined {
   const route = path.replace(/\/+$/, '') || '/';
   if (route === '/') return '/';
   if (/^\/(notes|blog)(\/|$)/.test(route) || route === '/about/tags') return '/notes';
-  if (/^\/(dev|projects)(\/|$)/.test(route)) return '/projects';
+  if (/^\/projects(\/|$)/.test(route)) return '/projects';
   if (/^\/(uses|infrastructure)(\/|$)/.test(route)) return '/uses';
   if (route === '/about') return '/about';
   if (route === '/now') return '/now';

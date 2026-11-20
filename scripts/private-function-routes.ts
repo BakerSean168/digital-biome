@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { NotesIndex } from '../src/types/knowledge-index';
-import { VISIBILITY_PRIVATE } from '../src/domain/constants';
-import { toRouteSlug } from '../src/domain/note-routing';
+import { VISIBILITY_PRIVATE } from '../src/domain/foundation/constants';
+import { toRouteSlug } from '../src/domain/foundation/note-id';
 
 export interface FunctionRouteManifest {
   version: 1;
@@ -15,17 +15,23 @@ const MAX_FUNCTION_ROUTE_RULES = 100;
 
 export function protectedKnowledgeRoutePatterns(index: NotesIndex): string[] {
   const publicRoutes = index.entries
-    .filter(entry => !entry.isAsset && !entry.draft && !entry.private && entry.visibility !== VISIBILITY_PRIVATE)
-    .map(entry => `/notes/${toRouteSlug(entry.id)}`);
+    .filter(
+      (entry) =>
+        !entry.isAsset && !entry.draft && !entry.private && entry.visibility !== VISIBILITY_PRIVATE,
+    )
+    .map((entry) => `/notes/${toRouteSlug(entry.id)}`);
 
   const protectedRoutes = index.entries
-    .filter(entry => !entry.isAsset && (entry.private || entry.draft || entry.visibility === VISIBILITY_PRIVATE))
-    .map(entry => `/notes/${toRouteSlug(entry.id)}`)
+    .filter(
+      (entry) =>
+        !entry.isAsset && (entry.private || entry.draft || entry.visibility === VISIBILITY_PRIVATE),
+    )
+    .map((entry) => `/notes/${toRouteSlug(entry.id)}`)
     .sort();
 
   for (const protectedRoute of protectedRoutes) {
-    const conflictingPublicRoute = publicRoutes.find(route =>
-      route !== protectedRoute && route.startsWith(protectedRoute),
+    const conflictingPublicRoute = publicRoutes.find(
+      (route) => route !== protectedRoute && route.startsWith(protectedRoute),
     );
     if (conflictingPublicRoute) {
       throw new Error(
@@ -34,7 +40,7 @@ export function protectedKnowledgeRoutePatterns(index: NotesIndex): string[] {
     }
   }
 
-  return protectedRoutes.map(route => `${route}*`);
+  return protectedRoutes.map((route) => `${route}*`);
 }
 
 export function buildFunctionRouteManifest(index: NotesIndex): FunctionRouteManifest {
@@ -56,6 +62,10 @@ export function writeFunctionRouteManifest(
   }
   const index = JSON.parse(fs.readFileSync(notesIndexPath, 'utf8')) as NotesIndex;
   const manifest = buildFunctionRouteManifest(index);
-  fs.writeFileSync(path.join(distRoot, '_routes.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(
+    path.join(distRoot, '_routes.json'),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    'utf8',
+  );
   return manifest;
 }

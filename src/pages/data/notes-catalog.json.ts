@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
-import { getPublicNotes } from '../../utils/notes';
+import { getPublicKnowledgeNotes } from '../../repositories/notes-repository';
 import { sortNoteCatalog, toNoteCatalogItem } from '../../view-models/note-list-item';
 
 export const prerender = true;
 
 export const GET: APIRoute = async () => {
-  const notes = await getPublicNotes();
+  const notes = await getPublicKnowledgeNotes();
   const catalog = sortNoteCatalog(notes.map((note) => toNoteCatalogItem(note)));
 
   // The browser reconstructs note hrefs from ids; transmitting both repeats

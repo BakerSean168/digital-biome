@@ -1,4 +1,4 @@
-> Historical record. Current architecture supersedes this document: [Delivery v6](../data-product-delivery-v6.md). PDS is retired; current runtime accepts v6 only.
+> Historical record. Current architecture supersedes this document: [Delivery v6](../data-product-delivery-v6.md). v6 is implemented on this branch but has not been released. Production still uses the v5 contract and the pinned pds-catalog-v1 publication; PDS retirement is pending Staging acceptance and a later release.
 
 # ADR-0004: Keep the global header to Search and Access
 

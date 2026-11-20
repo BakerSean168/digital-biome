@@ -10,9 +10,12 @@
 import { getCollection } from 'astro:content';
 import type { NoteCollectionEntry, AssetNoteEntry } from '../types/notes';
 import { isAssetNoteData } from '../types/notes';
-import { inferVisibility } from '../domain/note-routing';
-import { getPublicKnowledgeNoteEntriesFromIndex, getPublicNotesCountFromIndex } from './knowledge-index-loader';
-import { ASSET_NOTE_PREFIX, VISIBILITY_PUBLIC } from '../domain/constants';
+import { inferVisibility } from '../domain/foundation/visibility';
+import {
+  getPublicKnowledgeNoteEntriesFromIndex,
+  getPublicNotesCountFromIndex,
+} from './knowledge-index-loader';
+import { ASSET_NOTE_PREFIX, VISIBILITY_PUBLIC } from '../domain/foundation/constants';
 
 function fallbackTitle(note: NoteCollectionEntry): string {
   return note.id.split('/').pop()?.replace(/-/g, ' ') ?? note.id;
@@ -33,22 +36,26 @@ export function isAssetEntry(note: NoteCollectionEntry): boolean {
 /** Check whether a note is a public knowledge note (not an asset). */
 export function isPublicNoteEntry(note: NoteCollectionEntry): boolean {
   if (isAssetEntry(note)) return false;
-  return inferVisibility({
-    draft: note.data.draft,
-    private: note.data.private,
-    visibility: note.data.visibility,
-  }) === VISIBILITY_PUBLIC;
+  return (
+    inferVisibility({
+      draft: note.data.draft,
+      private: note.data.private,
+      visibility: note.data.visibility,
+    }) === VISIBILITY_PUBLIC
+  );
 }
 
 /** Check whether a note is a public asset entry. */
 export function isPublicAssetEntry(note: NoteCollectionEntry): note is AssetNoteEntry {
   if (!isAssetNoteData(note.data)) return false;
-  return inferVisibility({
-    draft: note.data.draft,
-    private: note.data.private,
-    visibility: note.data.visibility,
-    isAsset: true,
-  }) === VISIBILITY_PUBLIC;
+  return (
+    inferVisibility({
+      draft: note.data.draft,
+      private: note.data.private,
+      visibility: note.data.visibility,
+      isAsset: true,
+    }) === VISIBILITY_PUBLIC
+  );
 }
 
 /**
@@ -58,7 +65,7 @@ export function isPublicAssetEntry(note: NoteCollectionEntry): note is AssetNote
  */
 export async function getAllContentEntries(): Promise<NoteCollectionEntry[]> {
   const allNotes = await getCollection('notes');
-  return allNotes.map(note => normalizeTitle(note as NoteCollectionEntry));
+  return allNotes.map((note) => normalizeTitle(note as NoteCollectionEntry));
 }
 
 /**
@@ -71,7 +78,7 @@ export async function getAllContentEntries(): Promise<NoteCollectionEntry[]> {
 export async function getContentEntriesByIds(ids: string[]): Promise<NoteCollectionEntry[]> {
   const idSet = new Set(ids);
   const filtered = await getCollection('notes', (entry) => idSet.has(entry.id));
-  return filtered.map(note => normalizeTitle(note as NoteCollectionEntry));
+  return filtered.map((note) => normalizeTitle(note as NoteCollectionEntry));
 }
 
 /**
@@ -82,7 +89,7 @@ export async function getContentEntriesByIds(ids: string[]): Promise<NoteCollect
  * (needed for `render()`).
  */
 export async function getPublicKnowledgeNoteEntries(): Promise<NoteCollectionEntry[]> {
-  const publicIds = getPublicKnowledgeNoteEntriesFromIndex().map(e => e.id);
+  const publicIds = getPublicKnowledgeNoteEntriesFromIndex().map((e) => e.id);
   const entries = await getContentEntriesByIds(publicIds);
   // Preserve index ordering
   const orderMap = new Map(publicIds.map((id, i) => [id, i]));

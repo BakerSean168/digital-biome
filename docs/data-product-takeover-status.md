@@ -1,4 +1,4 @@
-> Historical record. Superseded by [Delivery v6](data-product-delivery-v6.md). PDS is retired; current runtime accepts v6 only.
+> Historical record. Superseded by [Delivery v6](data-product-delivery-v6.md). v6 is implemented on this branch but has not been released. Production still uses the v5 contract and the pinned pds-catalog-v1 publication; PDS retirement is pending Staging acceptance and a later release.
 
 # 数据产品与发布接管记录
 

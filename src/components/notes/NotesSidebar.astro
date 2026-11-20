@@ -4,7 +4,7 @@
  * 自动从 notes collection 生成目录树
  * 支持按 tag 的根维度分类（层级标签: status/growing, tech/dev/frontend, type/debug）
  */
-import { getPublicNotes } from '../../utils/notes';
+import { getPublicKnowledgeNotes } from '../../repositories/notes-repository';
 
 interface Props {
   currentSlug?: string;
@@ -13,7 +13,7 @@ interface Props {
 const { currentSlug = '' } = Astro.props;
 
 // 获取所有笔记
-const allNotes = await getPublicNotes();
+const allNotes = await getPublicKnowledgeNotes();
 
 // 从 tags 中提取分类
 // tag 格式：status/growing, tech/dev/frontend/eng, type/debug, life/material
@@ -29,16 +29,16 @@ const categories = new Map<string, NoteEntry[]>();
 allNotes.forEach((entry) => {
   // 优先使用 category 字段
   let category = entry.data.category;
-  
+
   if (!category && entry.data.tags && entry.data.tags.length > 0) {
     // 从所有标签中提取根维度，优先使用 tech/ 或 type/ 等有意义的分类
     const tags = entry.data.tags as string[];
     // 优先选择 tech > type > status 维度的标签作为分类
     const priorityRoots = ['tech', 'life', 'type'];
     let bestTag: string | null = null;
-    
+
     for (const root of priorityRoots) {
-      const found = tags.find(t => t.startsWith(root + '/'));
+      const found = tags.find((t) => t.startsWith(root + '/'));
       if (found) {
         // 取第二段作为更具体的分类（如果有的话）
         const parts = found.split('/');
@@ -46,21 +46,21 @@ allNotes.forEach((entry) => {
         break;
       }
     }
-    
+
     if (!bestTag && tags.length > 0) {
       // 回退：取第一个标签的根维度
       bestTag = tags[0].split('/')[0];
     }
-    
+
     category = bestTag || undefined;
   }
-  
+
   category = category || '未分类';
 
   if (!categories.has(category)) {
     categories.set(category, []);
   }
-  
+
   const slug = entry.id;
   categories.get(category)!.push({
     slug,
@@ -75,8 +75,8 @@ categories.forEach((entries) => {
 });
 
 // 按分类名排序
-const sortedCategories = Array.from(categories.entries()).sort((a, b) => 
-  a[0].localeCompare(b[0], 'zh-CN')
+const sortedCategories = Array.from(categories.entries()).sort((a, b) =>
+  a[0].localeCompare(b[0], 'zh-CN'),
 );
 ---
 
@@ -84,22 +84,26 @@ const sortedCategories = Array.from(categories.entries()).sort((a, b) =>
   {sortedCategories.length === 0 ? (
     <div class="text-center p-4 text-muted-foreground text-sm">
       <p>暂无笔记</p>
-      <p class="mt-2 text-xs">运行 <code class="bg-card px-1.5 py-0.5 rounded text-xs">pnpm sync</code> 同步笔记</p>
+      <p class="mt-2 text-xs">
+        运行 <code class="bg-card px-1.5 py-0.5 rounded text-xs">pnpm sync</code> 同步笔记
+      </p>
     </div>
   ) : (
     sortedCategories.map(([category, entries]) => (
       <div class="mb-6">
-        <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 pl-2">{category}</h4>
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 pl-2">
+          {category}
+        </h4>
         <ul class="m-0 p-0 list-none space-y-0.5">
           {entries.map((entry) => (
             <li>
-                <a 
-                href={`/notes/${entry.slug}`} 
+              <a
+                href={`/notes/${entry.slug}`}
                 class:list={[
                   'block px-3 py-1.5 rounded-md transition-colors duration-150',
                   currentSlug === entry.slug
                     ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-foreground/80 hover:bg-primary/5 hover:text-primary'
+                    : 'text-foreground/80 hover:bg-primary/5 hover:text-primary',
                 ]}
               >
                 {entry.title}

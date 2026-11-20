@@ -33,6 +33,8 @@ flowchart LR
     A[Thought Forest / Obsidian] --> B[Knowledge index]
     B --> C[Public projection + redaction]
     C --> D[Astro content/data]
+    PI[Personal Infrastructure] --> IP[infra-public-v2]
+    IP --> D
     D --> E[Notes / Projects / Assets]
     E --> F[Static build + Pagefind]
     F --> G[Cloudflare Pages]
@@ -128,7 +130,9 @@ Read:
 
 ## Relationship with Thought Forest
 
-Thought Forest owns the canonical knowledge and asset metadata; Digital Biome owns the public presentation and runtime behavior.
+Thought Forest owns knowledge, project records and personal Uses notes. Personal Infrastructure owns hosts, services, deployments and recovery. Digital Biome consumes only `knowledge-public-v1`, `infra-public-v2` and the protected runtime binding; it owns presentation and runtime behavior.
+
+v6 is implemented on this branch but has not been released. Production still uses the v5 contract and the pinned pds-catalog-v1 publication; PDS retirement is pending Staging acceptance and a later release.
 
 That separation is intentional:
 

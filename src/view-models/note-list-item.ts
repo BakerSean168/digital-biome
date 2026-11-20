@@ -1,7 +1,7 @@
 /** Note metadata shared by the static notes page and its lazy catalog. */
 
 import type { NoteCollectionEntry } from '../types/notes';
-import { buildKnowledgeNoteHref } from '../domain/note-routing';
+import { buildKnowledgeNoteHref } from '../domain/note-routing/url-builder';
 
 export interface NoteListItem {
   title: string;

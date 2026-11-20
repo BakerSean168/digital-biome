@@ -79,8 +79,6 @@ test('Now is a peer in the six-item dock and Projects has a canonical root', asy
   await nav.locator('a[href^="/projects"]').click();
   await expect(page).toHaveURL(/\/projects\/?(?:\?ui=gui)?$/);
   await expect(page.getByRole('navigation', { name: '项目类别' })).toBeVisible();
-  await page.goto('/dev/');
-  await expect(page).toHaveURL(/\/projects\/?$/);
 });
 
 test('Six peer nav links fit in a phone viewport without wrapping or overflow', async ({

@@ -6,23 +6,15 @@
  * with view-models and facade composite queries.
  */
 
-import type {
-  AssetNoteEntry,
-  AssetType,
-  HomepageSection,
-  HomepageConfig,
-} from '../types/notes';
+import type { AssetNoteEntry, AssetType, HomepageSection, HomepageConfig } from '../types/notes';
 import type { AssetIndexEntry } from '../types/knowledge-index';
-import {
-  getAssetIndex,
-  getNoteEntryByIdFromIndex,
-} from './knowledge-index-loader';
+import { getAssetIndex, getNoteEntryByIdFromIndex } from './knowledge-index-loader';
 import {
   VISIBILITY_PRIVATE,
   COLLATION_LOCALE,
   DEFAULT_HOMEPAGE_ORDER,
   CONFIG_RESOURCE_TYPES_SLUG,
-} from '../domain/constants';
+} from '../domain/foundation/constants';
 
 /**
  * Adapter: shape an AssetIndexEntry like an AssetNoteEntry
@@ -77,14 +69,14 @@ function toCompatEntry(entry: AssetIndexEntry): AssetNoteEntry {
 export function getPublicAssets(): AssetNoteEntry[] {
   const index = getAssetIndex();
   return index.entries
-    .filter(e => !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE)
+    .filter((e) => !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE)
     .map(toCompatEntry);
 }
 
 /** Find a single asset by its asset_id. */
 export function getAssetByAssetId(assetId: string): AssetNoteEntry | undefined {
   const index = getAssetIndex();
-  const entry = index.entries.find(e => e.asset_id === assetId);
+  const entry = index.entries.find((e) => e.asset_id === assetId);
   return entry ? toCompatEntry(entry) : undefined;
 }
 
@@ -92,16 +84,17 @@ export function getAssetByAssetId(assetId: string): AssetNoteEntry | undefined {
 export function getAssetsByAssetIds(assetIds: string[]): AssetNoteEntry[] {
   const wanted = new Set(assetIds);
   const index = getAssetIndex();
-  return index.entries
-    .filter(e => wanted.has(e.asset_id))
-    .map(toCompatEntry);
+  return index.entries.filter((e) => wanted.has(e.asset_id)).map(toCompatEntry);
 }
 
 /** Get all assets of a specific type, sorted by title. */
 export function getAssetsByType(assetType: AssetType): AssetNoteEntry[] {
   const index = getAssetIndex();
   return index.entries
-    .filter(e => e.asset_type === assetType && !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE)
+    .filter(
+      (e) =>
+        e.asset_type === assetType && !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE,
+    )
     .map(toCompatEntry)
     .sort((a, b) => a.data.title.localeCompare(b.data.title, COLLATION_LOCALE));
 }
@@ -110,11 +103,19 @@ export function getAssetsByType(assetType: AssetType): AssetNoteEntry[] {
 export function getAssetsByHomepageSection(section: HomepageSection): AssetNoteEntry[] {
   const index = getAssetIndex();
   return index.entries
-    .filter(e => e.homepage?.featured && e.homepage?.section === section
-      && !e.draft && !e.private && e.visibility !== VISIBILITY_PRIVATE)
+    .filter(
+      (e) =>
+        e.homepage?.featured &&
+        e.homepage?.section === section &&
+        !e.draft &&
+        !e.private &&
+        e.visibility !== VISIBILITY_PRIVATE,
+    )
     .map(toCompatEntry)
     .sort((a, b) => {
-      const orderDiff = (a.data.homepage?.order ?? DEFAULT_HOMEPAGE_ORDER) - (b.data.homepage?.order ?? DEFAULT_HOMEPAGE_ORDER);
+      const orderDiff =
+        (a.data.homepage?.order ?? DEFAULT_HOMEPAGE_ORDER) -
+        (b.data.homepage?.order ?? DEFAULT_HOMEPAGE_ORDER);
       if (orderDiff !== 0) return orderDiff;
       return a.data.title.localeCompare(b.data.title, COLLATION_LOCALE);
     });
@@ -124,7 +125,7 @@ export function getAssetsByHomepageSection(section: HomepageSection): AssetNoteE
 export function getRelatedAssetsByParent(assetId: string): AssetNoteEntry[] {
   const index = getAssetIndex();
   return index.entries
-    .filter(e => e.parent_asset_id === assetId || e.host_asset_id === assetId)
+    .filter((e) => e.parent_asset_id === assetId || e.host_asset_id === assetId)
     .map(toCompatEntry)
     .sort((a, b) => a.data.title.localeCompare(b.data.title, COLLATION_LOCALE));
 }
@@ -133,13 +134,15 @@ export function getRelatedAssetsByParent(assetId: string): AssetNoteEntry[] {
 export function getResourceTypes(): string[] {
   const configNote = getNoteEntryByIdFromIndex(CONFIG_RESOURCE_TYPES_SLUG);
   if (configNote?.tags) {
-    return configNote.tags.map(t => t.toLowerCase());
+    return configNote.tags.map((t) => t.toLowerCase());
   }
   return [];
 }
 
 /** Sort items by homepage order, then title. Returns a new array (does not mutate input). */
-export function sortByOrderThenTitle<T extends { title: string; homepage?: HomepageConfig }>(items: T[]): T[] {
+export function sortByOrderThenTitle<T extends { title: string; homepage?: HomepageConfig }>(
+  items: T[],
+): T[] {
   return [...items].sort((a, b) => {
     const aOrder = a.homepage?.order ?? DEFAULT_HOMEPAGE_ORDER;
     const bOrder = b.homepage?.order ?? DEFAULT_HOMEPAGE_ORDER;
