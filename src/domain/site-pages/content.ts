@@ -7,6 +7,9 @@
  * The grammar is intentionally small: malformed content fails the build instead
  * of silently changing the page or inadvertently publishing private markup.
  */
+import { parseNoteWikilinks } from '../foundation/wikilink-parser';
+import { appendWikilinkAnchor } from '../note-routing/url-builder';
+
 export interface AboutSection {
   id: string;
   anchor: string;
@@ -144,18 +147,17 @@ export function renderAboutParagraphHtml(
   text: string,
   resolveHref: (target: string) => string | undefined,
 ): string {
-  const wiki = /\[\[([^|\]#]+)(?:\|([^\]]+))?\]\]/g;
   let result = '';
   let cursor = 0;
-  for (const match of text.matchAll(wiki)) {
-    const position = match.index;
-    result += escapeHtml(text.slice(cursor, position));
-    const label = escapeHtml(match[2] || match[1]);
-    const href = resolveHref(match[1]);
-    result += href?.startsWith('/')
+  for (const link of parseNoteWikilinks(text)) {
+    result += escapeHtml(text.slice(cursor, link.startIndex));
+    const label = escapeHtml(link.display ?? link.target ?? link.rawTarget);
+    const resolved = resolveHref(link.target);
+    const href = resolved?.startsWith('/') ? appendWikilinkAnchor(resolved, link) : undefined;
+    result += href
       ? `<a href="${escapeHtml(href)}" class="text-primary underline decoration-primary/50 underline-offset-4 hover:text-primary-hover">${label}</a>`
       : label;
-    cursor = position + match[0].length;
+    cursor = link.startIndex + link.length;
   }
   return result + escapeHtml(text.slice(cursor));
 }
