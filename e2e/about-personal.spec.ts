@@ -22,7 +22,10 @@ test('About renders source-authored sections and verified links', async ({ page 
   await expect(about.locator('a')).toHaveCount(publishedRelatedLinks.length);
   for (const relation of publishedRelatedLinks) {
     const link = about.getByRole('link', { name: relation.phrase, exact: true });
-    await expect(link).toHaveAttribute('href', relation.href);
+    await expect(link).toHaveAttribute('href', /^\//);
+    if (relation.anchor) {
+      expect(await link.getAttribute('href')).toContain(relation.anchor);
+    }
   }
   await expect(about.locator('article, aside, dl, footer')).toHaveCount(0);
 });

@@ -5,7 +5,6 @@ import { parseAboutBody, parseNowBody } from '../src/domain/site-pages/content';
 import { publishedBlogHref } from './published-blog-href';
 import { parseNoteWikilinks } from '../src/domain/foundation/wikilink-parser';
 import { appendWikilinkAnchor } from '../src/domain/note-routing/url-builder';
-import { resolveStaticWikilink } from '../src/domain/note-routing/static-note-catalog';
 import { parsePublishedSitePage } from './site-page-frontmatter';
 
 function pageSource(name: 'about' | 'now') {
@@ -18,18 +17,12 @@ function pageSource(name: 'about' | 'now') {
 export const aboutSource = (() => {
   const source = pageSource('about');
   const sections = parseAboutBody(source.body);
-  const links = parseNoteWikilinks(source.body).flatMap((link) => {
-    const target = link.target.startsWith('notes/') ? link.target.slice(6) : link.target;
-    const resolution = resolveStaticWikilink(target);
-    if (
-      (resolution.status !== 'resolved' && resolution.status !== 'asset') ||
-      !resolution.href?.startsWith('/')
-    )
-      return [];
-    return [
-      { phrase: link.display ?? link.target, href: appendWikilinkAnchor(resolution.href, link) },
-    ];
-  });
+  // The public About page should link every authored target. Check the browser output
+  // independently of the Astro-only static note catalog.
+  const links = parseNoteWikilinks(source.body).map((link) => ({
+    phrase: link.display ?? link.target,
+    anchor: appendWikilinkAnchor('', link),
+  }));
   return {
     sections,
     updatedAt: source.updatedAt,
