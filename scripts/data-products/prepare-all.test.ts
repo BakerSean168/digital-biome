@@ -6,10 +6,9 @@ import test from 'node:test';
 import { prepareAllPublicDataProducts } from './prepare-all';
 import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
 import { infraReleaseFixture } from './fixtures/infra-release';
-import { pdsReleaseFixture } from './fixtures/pds-release';
 
-test('common preparation materializes all three committed locks using the same Release transport and domain adapters', async () => {
-  const fixtures = [knowledgeReleaseFixture(), pdsReleaseFixture(), infraReleaseFixture()];
+test('common preparation materializes both committed locks using the same Release transport and domain adapters', async () => {
+  const fixtures = [knowledgeReleaseFixture(), infraReleaseFixture()];
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'prepare-all-'));
   try {
     fs.mkdirSync(path.join(root, 'data-products'));
@@ -38,24 +37,16 @@ test('common preparation materializes all three committed locks using the same R
       assert.ok(f.calls.every((call) => !/main|contents|private-infrastructure/.test(call)));
     }
     assert.deepEqual(
-      fs.readFileSync(path.join(root, 'src/data/system/pds-catalog-v1.json')),
-      fixtures[1].artifact,
-    );
-    assert.deepEqual(
       JSON.parse(
         fs.readFileSync(path.join(root, 'src/data/infrastructure/infra-public-v2.json'), 'utf8'),
       ),
-      JSON.parse(fixtures[2].artifact.toString()),
+      JSON.parse(fixtures[1].artifact.toString()),
     );
     // Malformed lock preflight cannot mutate an accepted runtime or fetch any Release.
     for (const f of fixtures) f.calls.length = 0;
-    fs.writeFileSync(path.join(root, 'data-products/pds-catalog-v1.lock.json'), 'null');
+    fs.writeFileSync(path.join(root, 'data-products/infra-public-v2.lock.json'), 'null');
     await assert.rejects(prepareAllPublicDataProducts(transport, root));
     assert.ok(fixtures.every((f) => f.calls.length === 0));
-    assert.deepEqual(
-      fs.readFileSync(path.join(root, 'src/data/system/pds-catalog-v1.json')),
-      fixtures[1].artifact,
-    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

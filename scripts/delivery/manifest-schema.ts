@@ -1,18 +1,10 @@
 import { createHash } from 'node:crypto';
 
-// Immutable delivery manifest schema identities. v5 is written today; v3/v4 stay
-// accepted so previously published Releases remain deployable for rollback.
-export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v5';
-export const V4_CANDIDATE_SCHEMA = 'digital-biome.candidate/v4';
-export const RELEASE_SCHEMA = 'digital-biome.release/v5';
-export const V4_RELEASE_SCHEMA = 'digital-biome.release/v4';
-export const PREVIOUS_CANDIDATE_SCHEMA = 'digital-biome.candidate/v3';
-export const PREVIOUS_RELEASE_SCHEMA = 'digital-biome.release/v3';
+// Only the current two-public-product manifest schema is accepted.
+// Historical releases remain immutable in GitHub, not in today's runtime parsers.
+export const CANDIDATE_SCHEMA = 'digital-biome.candidate/v6';
+export const RELEASE_SCHEMA = 'digital-biome.release/v6';
 
-export const KNOWLEDGE_PRODUCER_REPOSITORY = 'BakerSean168/thought-forest';
-export const INFRASTRUCTURE_PRODUCER_REPOSITORY = 'BakerSean168/personal-infrastructure';
-export const PRIVATE_INFRASTRUCTURE_CONTRACT_PATH =
-  'bindings/digital-biome/private-infrastructure-v1.json';
 export const SHA_RE = /^[0-9a-f]{40}$/i;
 export const SHA256_RE = /^sha256:[0-9a-f]{64}$/i;
 export const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;

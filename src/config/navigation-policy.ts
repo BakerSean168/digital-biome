@@ -41,7 +41,7 @@ export function activeNavigation(path: string): string | undefined {
   if (route === '/') return '/';
   if (/^\/(notes|blog)(\/|$)/.test(route) || route === '/about/tags') return '/notes';
   if (/^\/(dev|projects)(\/|$)/.test(route)) return '/projects';
-  if (/^\/(uses|systems|infrastructure)(\/|$)/.test(route)) return '/uses';
+  if (/^\/(uses|infrastructure)(\/|$)/.test(route)) return '/uses';
   if (route === '/about') return '/about';
   if (route === '/now') return '/now';
   return undefined;
@@ -104,9 +104,9 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
   {
     type: 'cmd',
     label: 'NAV',
-    title: 'Personal System',
-    desc: '个人系统与基础设施',
-    href: '/systems',
-    alias: ['/systems', '/infrastructure', 'systems', 'infra'],
+    title: 'Infrastructure',
+    desc: '当前主机与服务设施',
+    href: '/infrastructure',
+    alias: ['/infrastructure', 'infra'],
   },
 ];

@@ -24,7 +24,7 @@ test('search behavior and data access have separate browser module owners', () =
   assert.match(controller, /export function initSiteSearch/);
   assert.match(controller, /createSearchIntentScheduler/);
   assert.match(controller, /WeakMap/);
-  assert.match(services, /\/data\/system-launcher-index\.json/);
+  assert.match(services, /\/data\/infrastructure-service-index\.json/);
   assert.doesNotMatch(services, /\/api\/private\/infrastructure/);
   assert.match(privateAdapter, /fetchPrivateInfrastructure/);
   assert.match(privateAccess, /\/api\/private\/infrastructure/);

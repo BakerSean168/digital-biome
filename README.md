@@ -24,7 +24,7 @@ It is both an Astro website and an engineering project about turning personal kn
 - **About / Now / Uses** — self-contained personal interests at `/about`, independent, manually editable project/game/media entries at `/now`, and a curated public inventory of hardware, software, services, and sites at `/uses`.
 - **Uses catalog** — `/uses` combines personal hardware and software with the full searchable service, bookmark, host and network catalog in GUI and TUI modes.
 - **Infrastructure atlas** — visualization of public assets, hosts, networks, and service relationships while preserving private/internal boundaries.
-- **Personal Systems portal** — `/systems` presents the Personal Digital System catalog (`pds-catalog-v1`).
+- **Infrastructure** — hosts, services and relationships come from Personal Infrastructure; service search opens public details and resolves protected targets after authentication.
 
 ## Content architecture
 

@@ -7,7 +7,6 @@ import test from 'node:test';
 import { parse } from 'yaml';
 import { infraReleaseFixture } from './fixtures/infra-release';
 import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
-import { pdsReleaseFixture } from './fixtures/pds-release';
 import { publicDataProducts } from './registry';
 
 const root = new URL('../../.github/workflows/', import.meta.url);
@@ -66,16 +65,6 @@ test('only generic sync handles the standard event, with manual exact recovery a
   );
 });
 
-test('PDS projection is generated and never part of the consumer Git write set', () => {
-  const projection = 'src/data/system/pds-catalog-v1.json';
-  const tracked = spawnSync('git', ['ls-files', '--', projection], { encoding: 'utf8' });
-  assert.equal(tracked.status, 0, tracked.stderr);
-  assert.equal(tracked.stdout, '');
-  const ignored = spawnSync('git', ['check-ignore', '--', projection], { encoding: 'utf8' });
-  assert.equal(ignored.status, 0, ignored.stderr);
-  assert.equal(ignored.stdout.trim(), projection);
-});
-
 test('knowledge legacy rollback trigger stays separate and cannot write an obsolete schema lock', () => {
   const raw = read('sync-knowledge-public-v1.yml');
   assert.deepEqual(parse(raw).on.repository_dispatch.types, ['knowledge-public-v1-published']);
@@ -83,7 +72,7 @@ test('knowledge legacy rollback trigger stays separate and cannot write an obsol
   assert.doesNotMatch(raw, /schemaVersion: 1/);
 });
 
-for (const product of ['infra-public-v2', 'pds-catalog-v1']) {
+for (const product of ['infra-public-v2']) {
   test(`legacy ${product} entrypoint is only a manual alias to shared reconciliation, not a second writer`, () => {
     const raw = read(`sync-${product}.yml`);
     const legacy = parse(raw);
@@ -107,7 +96,7 @@ for (const product of ['infra-public-v2', 'pds-catalog-v1']) {
       );
       assert.equal(prepare.env.GH_TOKEN, `\${{ steps.vault-token.outputs.token }}`);
       const token = job.steps.find((step: { id?: string }) => step.id === 'vault-token');
-      assert.match(token.with.repositories, /personal-digital-system/);
+      assert.doesNotMatch(token.with.repositories, /personal-digital-system/);
       assert.equal(token.with['permission-contents'], 'read');
     }
   });
@@ -120,7 +109,7 @@ test('actual workflow route command validates event/manual/reconcile before cred
   try {
     const eventPath = path.join(root, 'event.json');
     const outputPath = path.join(root, 'output');
-    for (const fixture of [knowledgeReleaseFixture, infraReleaseFixture, pdsReleaseFixture]) {
+    for (const fixture of [knowledgeReleaseFixture, infraReleaseFixture]) {
       const f = fixture();
       for (const mode of ['event', 'manual', 'reconcile']) {
         fs.writeFileSync(

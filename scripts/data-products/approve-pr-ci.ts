@@ -14,8 +14,6 @@ export function isTrustedApprovalWorkflowRef(ref: string | undefined, product: s
     ref === `${prefix}reconcile-data-products.yml@refs/heads/main`
   )
     return true;
-  if (ref === `${prefix}sync-pds-catalog-v1.yml@refs/heads/main`)
-    return product === 'pds-catalog-v1';
   if (ref === `${prefix}sync-infra-public-v2.yml@refs/heads/main`)
     return product === 'infra-public-v2';
   return false;

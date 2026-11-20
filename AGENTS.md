@@ -10,7 +10,7 @@ fails CI when the stack versions, layouts or route map below drift from the code
 - Tailwind CSS 4 (via `@tailwindcss/vite`, CSS-first config, no `tailwind.config.*`)
 - Lucide Icons (via `@lucide/astro`)
 - Quality tooling: Biome lint + Oxlint (`lint:astro` covers Astro client scripts), Oxfmt with a format ratchet
-- Pinned public data products: `knowledge-public-v1`, `infra-public-v2`, `pds-catalog-v1` (locks in `data-products/`)
+- Pinned public data products: `knowledge-public-v1`, `infra-public-v2` (locks in `data-products/`)
 
 ## Project Structure
 
@@ -22,7 +22,7 @@ src/
 │   ├── common/          # Header, search, GUI home, private unlock, shared UI
 │   ├── notes/           # Notes navigation and reading views
 │   └── terminal/        # ObjectBrowser / LibraryTabs (TUI catalog views)
-├── browser/             # Client controllers (search, terminal browser, owner systems)
+├── browser/             # Client controllers (search, terminal browser)
 ├── data/                # Generated public projection and indexes (gitignored)
 ├── domain/              # Routing and visibility rules
 ├── layouts/             # BaseLayout, TerminalLayout, NotesLayout
@@ -37,7 +37,7 @@ functions/               # Cloudflare Pages Functions
 edge/                    # Shared edge/Access helpers used by Pages Functions
 scripts/                 # Sync, data-product, validation, and build tooling
 ├── data-products/       # Lock fetch/verify/materialize + `preflight.ts`
-└── delivery/            # Candidate/Release manifest: `manifest-schema.ts` (v5 current, v3/v4 rollback),
+└── delivery/            # Candidate/Release manifest: `manifest-schema.ts` (v6 only),
                          # `manifest-validate.ts`, `manifest-create.ts`, `manifest.ts` (CLI only)
 data-products/           # Immutable producer projection locks
 ```
@@ -55,9 +55,9 @@ This file and `docs/architecture.md` are the current design record.
 
 - **开发指令优先**：开发时优先使用 `pnpm dev:only` 进行开发测试，避免触发不必要的全量笔记同步。
 - **代码诊断优先使用 astro check**：开发过程中，优先使用 `pnpm check` 进行 Astro、内容和 TypeScript 诊断。
-- **可复用验证门禁**：`pnpm verify` 先运行只读离线的 `pnpm preflight:data-products`（逐项对照三份 committed lock 的 SHA-256 并跑完整 publication 校验；缺失/过期缓存会指出具体 lock、文件与摘要，并提示 `pnpm sync:data-products`，绝不改 lock 或跳过校验），再运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
+- **可复用验证门禁**：`pnpm verify` 先运行只读离线的 `pnpm preflight:data-products`（逐项对照两份 committed public lock 的 SHA-256 并跑完整 publication 校验；缺失/过期缓存会指出具体 lock、文件与摘要，并提示 `pnpm sync:data-products`，绝不改 lock 或跳过校验），再运行检查与测试；`pnpm verify:full` 额外运行生产构建、Pagefind、泄漏扫描和性能预算。
 - **代码规模门禁**：维护中的 TS/JS/Astro/CSS/HTML 模块必须不超过 500 行，由 `scripts/code-size-contract.test.ts` 在基础设施单元测试中执行；生成内容、公开数据投影与第三方代码不属于人工维护源码。
-- **提交前运行完整门禁**：CI/Candidate 路径先用 `pnpm sync:data-products` 验证并物化 knowledge、infra、PDS 三份 committed public lock，再运行 `pnpm verify:full`；`pnpm sync` 是同一入口，生成 ignored public projection（含 `src/data/system/pds-catalog-v1.json`），不检出 producer source 或运行 exporter；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
+- **提交前运行完整门禁**：CI/Candidate 路径先用 `pnpm sync:data-products` 验证并物化 knowledge、infra 两份 committed public lock，再运行 `pnpm verify:full`；`pnpm sync` 是同一入口，生成 ignored public projection，不检出 producer source 或运行 exporter；本地确需读取私有 Thought Forest 时通过 `NOTES_VAULT_ROOT` / `NOTES_UPSTREAM_GENERATED` 显式选择外部 checkout。仅需构建已物化内容时使用 `pnpm build:only`。
 
 ## Engineering Principles
 
@@ -150,10 +150,10 @@ NOTES_UPSTREAM_GENERATED=/path/to/thought-forest/generated \
 pnpm sync:content
 ```
 
-Production 不依赖仓库 gitlink。当前 Release（manifest v5；v3/v4 仅保留为已发布 Release 的 rollback）将公开知识投影与私有基础设施绑定分开：
+Production 不依赖仓库 gitlink。当前 Release（manifest v6 only）将公开知识投影与私有基础设施绑定分开：
 `knowledge-public-v1` 继续由 Thought Forest 发布；受保护 deployment payload 则按 Release manifest
 固定的 Personal Infrastructure revision + SHA-256 读取 `digital-biome-private-infrastructure-v1`
-RuntimeBinding，然后部署既有 immutable Pages artifact。v1/v2 delivery schema 已退休。
+RuntimeBinding，然后部署既有 immutable Pages artifact。v1–v5 delivery schema 均拒绝；历史发布仅作人工恢复材料。
 <!-- MANUAL ADDITIONS END -->
 
 ## Obsidian content collections

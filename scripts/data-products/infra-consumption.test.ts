@@ -6,10 +6,9 @@ import test from 'node:test';
 import { computeNextLock, updatePublicDataProductLock } from './update-lock';
 import { knowledgeReleaseFixture } from './fixtures/knowledge-release';
 import { infraReleaseFixture } from './fixtures/infra-release';
-import { pdsReleaseFixture } from './fixtures/pds-release';
 import { sha256 } from './semantic-digest';
 
-const fixtures = [knowledgeReleaseFixture, infraReleaseFixture, pdsReleaseFixture];
+const fixtures = [knowledgeReleaseFixture, infraReleaseFixture];
 
 test('historical infra semantic no-op reconciles despite newer main with no Release for main', async () => {
   const f = infraReleaseFixture();
@@ -78,7 +77,7 @@ for (const fixture of fixtures) {
   });
 }
 
-for (const fixture of [infraReleaseFixture, pdsReleaseFixture]) {
+for (const fixture of [infraReleaseFixture]) {
   for (const fault of [
     'draft',
     'incomplete',
@@ -145,7 +144,7 @@ test('same immutable tag cannot be repinned to divergent bytes or semantic ident
   }
 });
 
-for (const fixture of [infraReleaseFixture, pdsReleaseFixture]) {
+for (const fixture of [infraReleaseFixture]) {
   test(`${fixture().lock.product} draft is not publication evidence; newest published time wins across pages`, async () => {
     const f = fixture();
     const older = {
@@ -202,14 +201,3 @@ for (const fixture of [infraReleaseFixture, pdsReleaseFixture]) {
     }
   });
 }
-
-test('PDS reconciliation ignores newer producer main without a corresponding semantic Release', async () => {
-  const f = pdsReleaseFixture();
-  // Simulated semantic no-op main advance, not a claim about the current hosted main.
-  const newerMain = 'f'.repeat(40);
-  f.responses.set(`${f.base}/commits/main`, { sha: newerMain });
-  assert.equal(f.responses.has(`${f.base}/releases/tags/pds-catalog-v1-${newerMain}`), false);
-  const next = await computeNextLock('reconcile', { product: f.lock.product }, f.transport);
-  assert.deepEqual(next.publication.identity, f.lock);
-  assert.ok(f.calls.every((call) => !call.includes('main') && !call.includes(newerMain)));
-});

@@ -1,3 +1,5 @@
+> Historical record. Current architecture supersedes this document: [Delivery v6](../data-product-delivery-v6.md). PDS is retired; current runtime accepts v6 only.
+
 # ADR-0005：统一 Data Product 消费与 Data-only Content Delivery
 
 - 状态：Accepted（实施待完成）

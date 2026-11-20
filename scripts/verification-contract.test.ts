@@ -1,3 +1,4 @@
+import { parse } from 'yaml';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +18,6 @@ const releaseWorkflow = fixture('.github/workflows/release-publish.yml');
 const productionWorkflow = fixture('.github/workflows/deploy-production.yml');
 const knowledgeSyncWorkflow = fixture('.github/workflows/sync-knowledge-public-v1.yml');
 const infrastructureSyncWorkflow = fixture('.github/workflows/sync-infra-public-v2.yml');
-const pdsCatalogSyncWorkflow = fixture('.github/workflows/sync-pds-catalog-v1.yml');
 
 test('verification discovers nested edge and infrastructure tests', () => {
   assert.equal(packageJson.scripts['test:edge'], "tsx --test 'edge/**/*.test.ts'");
@@ -152,20 +152,21 @@ test('infrastructure legacy sync is a manual alias to the single generic lock-on
   );
 });
 
-test('PDS legacy source-copy writer is retired in favor of the shared lock-only path', () => {
-  assert.match(pdsCatalogSyncWorkflow, /uses: \.\/\.github\/workflows\/sync-data-products\.yml/);
-  assert.match(pdsCatalogSyncWorkflow, /product: pds-catalog-v1/);
-  assert.match(pdsCatalogSyncWorkflow, /reconcile: true/);
-  for (const raw of [pdsCatalogSyncWorkflow, ciWorkflow, candidateWorkflow]) {
-    assert.doesNotMatch(
-      raw,
-      /export_pds_catalog|verify_pds_catalog|PDS_CATALOG_DEPLOY_KEY|repository: BakerSean168\/personal-digital-system|git add .*src\/data\/system/,
-    );
+test('obsolete PDS producer does not exist in any active build or sync workflow', () => {
+  for (const raw of [ciWorkflow, candidateWorkflow, productionWorkflow]) {
+    assert.doesNotMatch(raw, /repository: BakerSean168\/personal-digital-system|pds-catalog-v1/);
   }
-  assert.match(fixture('.gitignore'), /^src\/data\/system\/pds-catalog-v1\.json$/m);
-  assert.match(
-    fixture('scripts/data-products/prepare-pds-catalog-v1.ts'),
-    /readPublicDataProductRelease/,
+  assert.equal(
+    existsSync(
+      fileURLToPath(new URL('../.github/workflows/sync-pds-catalog-v1.yml', import.meta.url)),
+    ),
+    false,
+  );
+  assert.equal(
+    existsSync(
+      fileURLToPath(new URL('../scripts/data-products/prepare-pds-catalog-v1.ts', import.meta.url)),
+    ),
+    false,
   );
 });
 
@@ -239,52 +240,40 @@ test('production server telemetry does not require a Nezha PAT', () => {
   assert.doesNotMatch(productionWorkflow, /AI_USAGE_HUB_(URL|READ_KEY)/);
 });
 
-test('production v4 consumes public infra projection and pinned private RuntimeBinding', () => {
-  const step = productionWorkflow.match(
-    / {6}- name: Revalidate knowledge projection and private deployment source\n[\s\S]*?(?=\n {6}- name: Verify and unpack immutable Pages artifact)/,
-  )?.[0];
-  assert.ok(step, 'knowledge/private source verification step must exist');
-
-  assert.match(
-    productionWorkflow,
-    /repository: BakerSean168\/personal-infrastructure[\s\S]*ssh-key: \$\{\{ secrets\.PERSONAL_INFRASTRUCTURE_DEPLOY_KEY \}\}[\s\S]*path: \.pds-runtime\/personal-infrastructure/,
+test('production v6 revalidates producer locks and protected binding before deployment', () => {
+  const workflow = parse(productionWorkflow);
+  const steps = workflow.jobs.deploy.steps;
+  const validation = steps.findIndex((step: { run?: string }) =>
+    step.run?.includes('scripts/delivery/revalidate.ts'),
   );
-  assert.match(step, /digital-biome\.release\/v4\|digital-biome\.release\/v3/);
-  assert.match(step, /infra-public-v2\.lock\.json/);
-  assert.match(productionWorkflow, /path: \.pds-runtime\/personal-infrastructure-public/);
-  assert.match(step, /prepare-infra-public-v2\.sh/);
-  assert.match(step, /--producer-root \.pds-runtime\/personal-infrastructure-public/);
-  assert.match(step, /PUBLIC_INFRASTRUCTURE_ARTIFACT_SHA256/);
-  assert.match(step, /digital-biome-private-infrastructure-v1\.lock\.json/);
-  assert.match(step, /Personal Infrastructure runtime binding digest mismatch/);
-  assert.match(step, /PDS_PUBLIC_INFRASTRUCTURE_ARTIFACT/);
-  assert.match(step, /PDS_PRIVATE_INFRASTRUCTURE_BINDING/);
-  assert.match(step, /private-infrastructure-binding\.test\.ts/);
-
-  const currentBlock = step.match(
-    /digital-biome\.release\/v4\|digital-biome\.release\/v3\)[\s\S]*?(?=\n {12}\*\))/,
-  )?.[0];
-  assert.ok(currentBlock, 'v4/v3 producer-contract branch must exist');
-  assert.match(currentBlock, /prepare-knowledge-public-v1\.sh/);
-  assert.match(currentBlock, /knowledge_root=\.pds-runtime\/knowledge-public-v1\/source/);
-  assert.match(currentBlock, /NOTES_UPSTREAM_GENERATED=\$knowledge_root\/generated/);
-  assert.match(currentBlock, /MANIFEST_SCHEMA.*digital-biome\.release\/v4/);
-  assert.doesNotMatch(currentBlock, /kb:index/);
-  assert.doesNotMatch(currentBlock, /pnpm sync:content/);
-  assert.doesNotMatch(currentBlock, /private-thought-forest/);
-
-  assert.doesNotMatch(productionWorkflow, /digital-biome\.release\/v2/);
-  assert.doesNotMatch(productionWorkflow, /digital-biome\.release\/v1/);
-  assert.doesNotMatch(productionWorkflow, /private-thought-forest/);
-  assert.doesNotMatch(productionWorkflow, /export:private:legacy/);
-
-  const bindingStep = productionWorkflow.match(
-    / {6}- name: Generate and update encrypted Pages bindings\n[\s\S]*?(?=\n {6}- name: Deploy selected immutable artifact)/,
-  )?.[0];
-  assert.ok(bindingStep, 'encrypted binding step must exist');
-  assert.match(bindingStep, /--contract "\$PDS_PRIVATE_INFRASTRUCTURE_BINDING"/);
-  assert.match(bindingStep, /digital-biome\.release\/v4\|digital-biome\.release\/v3/);
-  assert.doesNotMatch(bindingStep, /export:private:legacy/);
+  const unpack = steps.findIndex(
+    (step: { name?: string }) => step.name === 'Verify and unpack immutable Pages artifact',
+  );
+  const binding = steps.findIndex(
+    (step: { name?: string }) => step.name === 'Generate and update encrypted Pages bindings',
+  );
+  assert.ok(validation >= 0 && validation < unpack && unpack < binding);
+  assert.match(steps[validation].run, /manifest\.ts validate/);
+  assert.match(steps[validation].run, /revalidate\.ts/);
+  const checkout = steps.find(
+    (step: { with?: { repository?: string } }) =>
+      step.with?.repository === 'BakerSean168/personal-infrastructure',
+  );
+  assert.ok(checkout.with.ref.includes('private_infrastructure_source_revision'));
+  assert.ok(steps[binding].run.includes('--contract "$PDS_PRIVATE_INFRASTRUCTURE_BINDING"'));
+  assert.doesNotMatch(
+    productionWorkflow,
+    /digital-biome\.release\/v[1-5]\b|private-thought-forest|export:private:legacy/,
+  );
+  const revalidate = fixture('scripts/delivery/revalidate.ts');
+  for (const gate of [
+    'assertCommittedInputs',
+    'private checkout revision mismatch',
+    'private binding digest mismatch',
+    'prepareAllPublicDataProducts',
+    'private-infrastructure-binding.test.ts',
+  ])
+    assert.ok(revalidate.includes(gate));
 });
 
 test('quality gates are part of the canonical verify contract', () => {

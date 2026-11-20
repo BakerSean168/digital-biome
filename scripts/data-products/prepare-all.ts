@@ -9,7 +9,6 @@ import {
   type GitHubReleaseTransport,
 } from './github-release-transport';
 import { prepareKnowledgePublicV1 } from './prepare-knowledge-public-v1';
-import { preparePdsCatalogV1 } from './prepare-pds-catalog-v1';
 import { prepareInfraPublicV2 } from './prepare-infra-public-v2';
 import { syncKnowledgeSource } from './sync-knowledge-public-v1';
 
@@ -33,14 +32,6 @@ export async function prepareAllPublicDataProducts(
     switch (definition.product) {
       case 'knowledge-public-v1':
         sourceRoot = (await prepareKnowledgePublicV1(raw, runtime, transport)).sourceRoot;
-        break;
-      case 'pds-catalog-v1':
-        await preparePdsCatalogV1(
-          raw,
-          runtime,
-          transport,
-          path.join(root, 'src/data/system/pds-catalog-v1.json'),
-        );
         break;
       case 'infra-public-v2':
         await prepareInfraPublicV2(raw, runtime, transport, infraOutput);

@@ -22,7 +22,7 @@ imports, build-time references or external consumers.
 | Public catalog data      | `src/pages/data/*`                                                                                        | `/data/notes-catalog.json`, `/data/tools-catalog.json`, `/data/terminal/*.json`, system launcher                            |
 | Protected functions      | `functions/api/private/_middleware.ts`, `edge/access.ts`                                                  | Cloudflare Access identity verification; no private data in public SSR/JSON                                                 |
 | Content projection       | `data-products/*.lock.json` and `scripts/data-products/*`                                                 | Exact immutable knowledge, infrastructure and PDS catalog Release identity and SHA-256                                      |
-| Delivery                 | `scripts/delivery/*`, `.github/workflows/{check,candidate-publish,release-publish,deploy-production}.yml` | Manifest v3/v4/v5 compatibility and existing release → candidate → production flow                                          |
+| Delivery                 | `scripts/delivery/*`, `.github/workflows/{check,candidate-publish,release-publish,deploy-production}.yml` | Manifest v6 only and existing release → candidate → production flow                                          |
 
 The new `scripts/engineering-quality-baseline.test.ts` deliberately protects the six
 currently shared terminal-browser routes, the non-reintroduction of retired Dashboard

@@ -14,14 +14,7 @@ import {
 import type { JsonRecord } from './manifest-schema';
 import { validateCandidate, validateReleaseManifest } from './manifest-validate';
 
-export {
-  CANDIDATE_SCHEMA,
-  PREVIOUS_CANDIDATE_SCHEMA,
-  PREVIOUS_RELEASE_SCHEMA,
-  RELEASE_SCHEMA,
-  V4_CANDIDATE_SCHEMA,
-  V4_RELEASE_SCHEMA,
-} from './manifest-schema';
+export { CANDIDATE_SCHEMA, RELEASE_SCHEMA } from './manifest-schema';
 export {
   createCandidate,
   createReleaseManifest,

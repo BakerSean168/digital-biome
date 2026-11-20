@@ -18,7 +18,7 @@ export function createSiteSearchServices(fetcher: typeof fetch = fetch): SiteSea
     if (!serviceIndexPromise) {
       serviceIndexPromise = (async () => {
         try {
-          const response = await fetcher('/data/system-launcher-index.json', {
+          const response = await fetcher('/data/infrastructure-service-index.json', {
             headers: { Accept: 'application/json' },
           });
           if (!response.ok) return;

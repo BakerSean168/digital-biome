@@ -1,3 +1,5 @@
+> Historical record. Superseded by [Delivery v6](data-product-delivery-v6.md). PDS is retired; current runtime accepts v6 only.
+
 # 数据产品与发布接管记录
 
 日期：2026-10-06。当前用户授权包含前端、接管中断的数据实施、合并和发版；本记录区分代码、CI、合并与生产。

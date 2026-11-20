@@ -123,6 +123,7 @@ jobs:
           artifact=reports/release/source/digital-biome-pages.tar.gz
 
           pnpm exec tsx scripts/delivery/manifest.ts validate --file "$candidate"
+          [[ "$(jq -r .schema "$candidate")" == digital-biome.candidate/v6 ]] || { echo 'v6 Candidate required' >&2; exit 1; }
           [[ "$(jq -r .gitSha "$candidate")" == "$CANDIDATE_SHA" ]] || {
             echo 'candidate manifest/source SHA mismatch' >&2
             exit 1
@@ -130,6 +131,7 @@ jobs:
 
           expected_artifact="$(jq -r .artifact.sha256 "$candidate")"
           actual_artifact="sha256:$(sha256sum "$artifact" | cut -d ' ' -f 1)"
+          [[ "$(stat -c %s "$artifact")" == "$(jq -r .artifact.bytes "$candidate")" ]] || { echo 'artifact byte length mismatch' >&2; exit 1; }
           [[ "$actual_artifact" == "$expected_artifact" ]] || {
             echo 'candidate artifact digest mismatch' >&2
             exit 1
@@ -210,6 +212,8 @@ jobs:
 
           pnpm exec tsx scripts/delivery/release-contract.ts --require-release --write-notes reports/release/publish/release-notes.md
           pnpm exec tsx scripts/delivery/manifest.ts release --candidate "$candidate" --version "$RELEASE_VERSION" --tag "$RELEASE_TAG" --candidate-run-id "$CANDIDATE_RUN_ID" --output reports/release/publish/release-manifest.json
+
+          [[ "$(jq -r .schema reports/release/publish/release-manifest.json)" == digital-biome.release/v6 ]] || { echo 'v6 Release required' >&2; exit 1; }
 
           cp "$candidate" reports/release/publish/candidate-manifest.json
           cp reports/release/source/digital-biome-pages.tar.gz reports/release/publish/digital-biome-pages.tar.gz

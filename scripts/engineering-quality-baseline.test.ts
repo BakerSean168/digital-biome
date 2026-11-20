@@ -133,7 +133,7 @@ test('public JSON catalogs and protected Pages Functions remain distinct entry p
     'src/pages/data/notes-catalog.json.ts',
     'src/pages/data/uses-catalog.json.ts',
     'src/pages/data/terminal/[catalog].json.ts',
-    'src/pages/data/system-launcher-index.json.ts',
+    'src/pages/data/infrastructure-service-index.json.ts',
   ]) {
     assert.ok(existsSync(path.join(ROOT, route)), 'Missing public data contract ' + route);
   }

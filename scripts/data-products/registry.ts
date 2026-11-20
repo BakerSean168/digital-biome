@@ -1,5 +1,4 @@
 import { parseKnowledgePublicV1 } from './knowledge-public-v1';
-import { parsePdsCatalogV1 } from '../../src/domain/system/pds-catalog-v1';
 import { parseInfraPublicV2 } from '../../src/domain/infrastructure/infra-public-v2';
 
 // Public transport policy only. Domain validation stays with these existing owners.
@@ -20,22 +19,6 @@ export const publicDataProducts = Object.freeze([
     buildTime: true,
     parseArtifact: parseKnowledgePublicV1,
     materializer: 'scripts/data-products/knowledge-public-v1.ts#materializeKnowledgePublicV1Source',
-  } as const),
-  Object.freeze({
-    product: 'pds-catalog-v1',
-    genericConsumption: true,
-    producerRepository: 'BakerSean168/personal-digital-system',
-    producer: 'pds://system/component/personal-digital-system',
-    artifactName: 'pds-catalog-v1.json',
-    manifestName: 'pds-catalog-v1.manifest.json',
-    artifactPath: 'generated/pds-catalog-v1.json',
-    mediaType: 'application/vnd.pds.catalog-v1+json',
-    contractName: 'pds-catalog',
-    contractVersion: 'v1',
-    lockPath: 'data-products/pds-catalog-v1.lock.json',
-    buildTime: true,
-    parseArtifact: parsePdsCatalogV1,
-    materializer: 'scripts/data-products/prepare-pds-catalog-v1.ts#preparePdsCatalogV1',
   } as const),
   Object.freeze({
     product: 'infra-public-v2',

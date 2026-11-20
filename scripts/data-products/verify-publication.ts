@@ -34,7 +34,7 @@ export function verifyManifest(
   lock: PublicDataProductLock,
   definition: PublicDataProductDefinition,
 ): void {
-  // PDS contracts/data-product-manifest-v1.schema.json closes every object.
+  // The Protocol-v1 manifest contract closes every object.
   assertRecord(value, 'manifest');
   assertExactKeys(value, ['apiVersion', 'kind', 'metadata', 'spec'], 'manifest');
   assertRecord(value.metadata, 'manifest metadata');

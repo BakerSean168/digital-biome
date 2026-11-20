@@ -6,7 +6,7 @@ import { formatArchiveMonth } from '../domain/blog/archive-month';
 import { getBookmarks } from './bookmarks-repository';
 import { getPublicNotes, getProjectShowcaseAssets } from '../utils/notes';
 import { getInfrastructureResources, getInfrastructureConnections } from '../utils/infrastructure';
-import { getPortalServices } from '../utils/personal-systems';
+import { getInfrastructureServices } from '../utils/infrastructure-services';
 import { buildKnowledgeNoteHref } from '../domain/note-routing';
 import { sortNoteCatalog, toNoteCatalogItem } from '../view-models/note-list-item';
 import { isSafeTerminalHref, type TerminalObject } from '../view-models/terminal-object';
@@ -105,7 +105,9 @@ export function terminalExternal(): TerminalObject[] {
 
 export function terminalInfrastructure(): TerminalObject[] {
   const resources = getInfrastructureResources();
-  const portals = new Map(getPortalServices().map((service) => [service.resource.id, service]));
+  const portals = new Map(
+    getInfrastructureServices().map((service) => [service.resource.id, service]),
+  );
   const connections = getInfrastructureConnections();
   const objects = [...resources].sort(compareResourcePriority).map((resource) => {
     const portal = portals.get(resource.id);

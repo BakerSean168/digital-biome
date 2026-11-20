@@ -22,7 +22,7 @@ test('detail routes and Library subtypes resolve to their primary destination', 
     assert.equal(activeNavigation(path), '/notes');
   for (const path of ['/dev/example', '/projects/example'])
     assert.equal(activeNavigation(path), '/projects');
-  for (const path of ['/systems/', '/infrastructure/host-example', '/uses/'])
+  for (const path of ['/infrastructure/host-example', '/uses/'])
     assert.equal(activeNavigation(path), '/uses');
   assert.equal(activeNavigation('/uses'), '/uses');
   assert.equal(activeNavigation('/uses/'), '/uses');
