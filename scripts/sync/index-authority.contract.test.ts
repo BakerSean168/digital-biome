@@ -5,6 +5,7 @@ import test from 'node:test';
 import { notesConfig } from '../../notes.config';
 import { findUpstreamNoteByLocalPath, sanitizePublishedMetadataText } from './reconcile-note-index';
 import { getFriendLinks } from '../../src/repositories/friends-repository';
+import { getPublicKnowledgeNoteEntriesFromIndex } from '../../src/repositories/knowledge-index-loader';
 
 type LocalNote = {
   id: string;
@@ -93,6 +94,9 @@ test('friend collection is visible under its stable producer Note IDs', () => {
 
   const byPath = new Map(local.map((note) => [note.filePath, note]));
   const displayedIds = new Set(getFriendLinks().map((friend) => friend.slug));
+  const publicKnowledgeIds = new Set(
+    getPublicKnowledgeNoteEntriesFromIndex().map((note) => note.id),
+  );
   for (const friend of publishedFriends) {
     assert.equal(
       byPath.get(friend.sourcePath)?.id,
@@ -100,6 +104,7 @@ test('friend collection is visible under its stable producer Note IDs', () => {
       `${friend.sourcePath}: Note ID drift`,
     );
     assert.ok(displayedIds.has(friend.id), `${friend.sourcePath}: missing from Friends`);
+    assert.ok(!publicKnowledgeIds.has(friend.id), `${friend.sourcePath}: leaked into Notes`);
   }
 });
 

@@ -80,8 +80,8 @@ export function getPublicKnowledgeNoteEntriesFromIndex(): NoteIndexEntry[] {
       // Exclude operational/config documents (skills, AGENTS.md, etc.) that are
       // synced from thought-forest/config/ but must not appear as public content.
       !e.id.startsWith(CONFIG_PATH_PREFIX) &&
-      // Special content pages are rendered exclusively at /about and /now.
-      !e.id.startsWith('obsidian/pages/'),
+      // Site pages (About, Now, Friends) have dedicated routes, regardless of their stable Note ID.
+      !e.filePath.startsWith('pages/'),
   );
   publicKnowledgeEntriesCache = result;
   return result;
