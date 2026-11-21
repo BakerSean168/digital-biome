@@ -258,7 +258,7 @@ pnpm exec wrangler pages deploy dist \
 
 - `git rev-parse HEAD`；
 - `data-products/knowledge-public-v1.lock.json` 的 source revision、Release tag 与 digest；
-- 本分支 v6 Candidate/Release 固定两份公开产品锁（`knowledge-public-v1`、`infra-public-v2`）及独立 private RuntimeBinding 的 revision、contract SHA-256；生产当前仍为 v5，旧 manifest 仅供历史审计；
+- v6 Candidate/Release 固定两份公开产品锁（`knowledge-public-v1`、`infra-public-v2`）及独立 private RuntimeBinding 的 revision、contract SHA-256；生产已采用 v6；
 - 上游/物化索引生成时间或摘要；
 - `PRIVATE_INFRASTRUCTURE_JSON` 的 schema version 和 key 数量，不记录值；
 - 构建检查结果；
@@ -468,7 +468,7 @@ rg -n "ssh://|Cf-Access|PRIVATE_INFRASTRUCTURE" dist
 7. 允许 GitHub Actions 使用当前仓库的 `GITHUB_TOKEN` 创建 PR 与 dispatch workflow；
 8. 保持 Cloudflare Git 自动 Production/Preview 构建关闭。
 
-v6 Production 不检出 Thought Forest 私有 source；它验证两份公开产品不可变 Release 和 Personal Infrastructure RuntimeBinding 的固定 revision/digest。当前生产 v5 暂不按本分支流程运行，须先完成 Staging 验收。
+Production 不检出 Thought Forest 私有 source；它验证两份公开产品不可变 Release 和 Personal Infrastructure RuntimeBinding 的固定 revision/digest，并部署已验证的不可变站点产物。这一路径已随 `v0.17.1` 完成 Staging 与 Production 验收。
 
 ## 15. 官方参考
 

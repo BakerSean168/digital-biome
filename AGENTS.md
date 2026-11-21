@@ -150,7 +150,7 @@ NOTES_UPSTREAM_GENERATED=/path/to/thought-forest/generated \
 pnpm sync:content
 ```
 
-Production 不依赖仓库 gitlink。本分支的待发布 Release（manifest v6 only；生产仍运行 v5 + pds-catalog-v1 钉版）将公开知识投影与私有基础设施绑定分开：
+生产 Release `v0.17.1` 已采用 Delivery v6，不依赖仓库 gitlink 或旧 PDS 目录。公开知识与私有基础设施由不同所有者管理：
 `knowledge-public-v1` 继续由 Thought Forest 发布；受保护 deployment payload 则按 Release manifest
 固定的 Personal Infrastructure revision + SHA-256 读取 `digital-biome-private-infrastructure-v1`
 RuntimeBinding，然后部署既有 immutable Pages artifact。v1–v5 delivery schema 均拒绝；历史发布仅作人工恢复材料。

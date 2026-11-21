@@ -6,16 +6,15 @@ import { assertTrustedPRCheckRun } from './pr-ci-evidence';
 
 const repository = 'BakerSean168/digital-biome';
 
-/** Exact allowlist for lock-only PR approval; manual aliases are product-scoped. */
+/** Exact allowlist for trusted lock-only PR approval. */
 export function isTrustedApprovalWorkflowRef(ref: string | undefined, product: string | undefined) {
   const prefix = `${repository}/.github/workflows/`;
+  if (product !== 'knowledge-public-v1' && product !== 'infra-public-v2') return false;
   if (
     ref === `${prefix}sync-data-products.yml@refs/heads/main` ||
     ref === `${prefix}reconcile-data-products.yml@refs/heads/main`
   )
     return true;
-  if (ref === `${prefix}sync-infra-public-v2.yml@refs/heads/main`)
-    return product === 'infra-public-v2';
   return false;
 }
 

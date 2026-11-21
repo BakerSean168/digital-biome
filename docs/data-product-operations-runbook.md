@@ -1,6 +1,6 @@
 # Data Product / Content Delivery 运维与故障恢复 Runbook
 
-> 状态：实现已进入 PR 栈，自动开关当前关闭；生产激活证据见 `data-product-takeover-status.md`。下列恢复操作应按已启用的阶段执行。
+> 当前运行：Delivery v6、Release `v0.17.1` 已完成生产部署；自动合并与自动内容部署开关以 GitHub Repository Variables 为准。仅执行当前工作流及已验证的恢复步骤。
 > 对应：ADR-0005、PDS Data Product Protocol v1
 
 ## 1. 运行模型
