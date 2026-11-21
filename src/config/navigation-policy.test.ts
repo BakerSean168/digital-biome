@@ -9,12 +9,12 @@ import {
 
 test('dock and first search destinations share the same names, routes and order', () => {
   assert.deepEqual(
-    SEARCH_NAVIGATION_INDEX.slice(0, 6).map(({ title, href }) => ({ title, href })),
+    SEARCH_NAVIGATION_INDEX.slice(0, 7).map(({ title, href }) => ({ title, href })),
     PRIMARY_NAVIGATION.map(({ title, href }) => ({ title, href })),
   );
   assert.deepEqual(
     PRIMARY_NAVIGATION.map((item) => item.title),
-    ['Home', 'Library', 'Projects', 'Uses', 'About', 'Now'],
+    ['Home', 'Library', 'Projects', 'Uses', 'About', 'Now', 'Other'],
   );
 });
 test('detail routes and Library subtypes resolve to their primary destination', () => {
@@ -32,6 +32,9 @@ test('detail routes and Library subtypes resolve to their primary destination', 
   assert.equal(activeNavigation('/now'), '/now');
   assert.equal(activeNavigation('/now/'), '/now');
   assert.equal(pageMode('/now'), 'NOW');
+  assert.equal(activeNavigation('/other'), '/other');
+  assert.equal(activeNavigation('/ai'), '/other');
+  assert.equal(pageMode('/other'), 'OTHER');
   assert.equal(activeNavigation('/aboutness'), undefined);
   assert.equal(activeNavigation('/useshed'), undefined);
   assert.equal(pageMode('/friends/'), 'FRIENDS');

@@ -8,21 +8,13 @@ import {
 } from '../../../repositories/terminal-repository';
 import { toCompactNoteRow } from '../../../view-models/terminal-object';
 export const getStaticPaths: GetStaticPaths = () =>
-  [
-    'notes',
-    'external',
-    'services',
-    'hosts',
-    'network',
-    'bookmarks',
-    'blogroll',
-    'carry',
-    'defaults',
-  ].map((catalog) => ({ params: { catalog } }));
+  ['notes', 'external', 'services', 'hosts', 'network', 'blogroll', 'carry', 'defaults'].map(
+    (catalog) => ({ params: { catalog } }),
+  );
 export const GET: APIRoute = async ({ params }) =>
   new Response(
     JSON.stringify(
-      ['bookmarks', 'blogroll', 'carry', 'defaults'].includes(params.catalog ?? '')
+      ['blogroll', 'carry', 'defaults'].includes(params.catalog ?? '')
         ? getResourceCollection(params.catalog as ResourceView)
         : params.catalog === 'notes'
           ? (await terminalNotes()).map(toCompactNoteRow)

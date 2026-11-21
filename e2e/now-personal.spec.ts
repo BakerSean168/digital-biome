@@ -69,10 +69,13 @@ test('Now stays compact in both modes on a phone, without horizontal overflow', 
   await expect(now.locator('a')).toHaveCount(linkedProjects.length);
   await expect(now.locator('time')).toHaveCount(1);
 });
-test('Now is a peer in the six-item dock and Projects has a canonical root', async ({ page }) => {
+test('Now and Other are peers in the seven-item dock and Projects has a canonical root', async ({
+  page,
+}) => {
   await page.goto('/now/?ui=gui');
   const nav = page.getByRole('navigation', { name: '主导航' });
-  await expect(nav.locator('a')).toHaveCount(6);
+  await expect(nav.locator('a')).toHaveCount(7);
+  await expect(nav.locator('a[href^="/other"]')).toBeVisible();
   await expect(nav.locator('a[href^="/now"]')).toHaveAttribute('aria-current', 'page');
   await expect(nav.locator('a[href^="/about"]')).not.toHaveAttribute('aria-current', 'page');
 
@@ -81,13 +84,13 @@ test('Now is a peer in the six-item dock and Projects has a canonical root', asy
   await expect(page.getByRole('navigation', { name: '项目类别' })).toBeVisible();
 });
 
-test('Six peer nav links fit in a phone viewport without wrapping or overflow', async ({
+test('Seven peer nav links fit in a phone viewport without wrapping or overflow', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/now/?ui=gui');
   const dock = page.getByRole('navigation', { name: '主导航' });
-  await expect(dock.locator('a')).toHaveCount(6);
+  await expect(dock.locator('a')).toHaveCount(7);
   const bounds = await dock.evaluate((nav) => {
     const links = [...nav.querySelectorAll('a')];
     return {

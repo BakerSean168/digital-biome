@@ -288,7 +288,7 @@ for (const mode of ['tui', 'gui']) {
     await expect(home.locator('[data-home-bio]')).toContainText('reader');
 
     const slashLinks = home.locator('[data-home-slash-links] a');
-    await expect(slashLinks).toHaveCount(6);
+    await expect(slashLinks).toHaveCount(14);
     for (const route of ['/about', '/now', '/uses', '/projects', '/blog', '/notes'])
       await expect(home.locator(`[data-home-slash-links] a[href^="${route}"]`)).toBeVisible();
     await expect(home.locator('[data-home-slash-links] a[href^="/now"] kbd')).toHaveText('g n');
@@ -379,7 +379,7 @@ test('mobile Home keeps the mark and name together with compact Slash Page links
     expect(layout.markRight).toBeLessThan(layout.nameLeft);
     expect(layout.centerDelta).toBeLessThan(40);
     expect(layout.width).toBeLessThanOrEqual(layout.viewport);
-    await expect(home.locator('[data-home-slash-links] a')).toHaveCount(6);
+    await expect(home.locator('[data-home-slash-links] a')).toHaveCount(14);
     await expect(home.locator('[data-home-recent="blogs"] li')).toHaveCount(3);
     await expect(home.locator('[data-home-recent="notes"] li')).toHaveCount(3);
   }

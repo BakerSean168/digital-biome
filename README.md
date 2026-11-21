@@ -147,4 +147,6 @@ That separation is intentional:
 
 Digital Biome is a **public source repository**, but it currently does **not** include an open-source license. Public visibility alone does not grant permission to copy, modify, or redistribute the code; copyright remains with the repository owner unless a license is added later.
 
-Obsidian collections provide /bookmarks, /blogroll, /carry and /defaults. Optional Markdown pages provide /colophon, /ai, /ideas and /canon.
+Obsidian collections provide /blogroll, /carry and /defaults. Optional Markdown pages provide /colophon, /ai, /ideas and /canon.
+
+`/other` groups the eight public Slash Pages: AI, Ideas, Canon, Colophon, Friends, Blogroll, Carry and Defaults. Home links to each `/other#<tab>` and shows `g o <number>`; `g o` enters Other, then a digit selects a tab. Other is the seventh primary navigation item. `/bookmarks` is removed; Uses → Websites (`/uses#external`) remains the website collection.

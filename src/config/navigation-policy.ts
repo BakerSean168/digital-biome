@@ -1,7 +1,7 @@
 export const HEADER_CONTROLS = ['search', 'access'] as const;
 export type HeaderControl = (typeof HEADER_CONTROLS)[number];
 
-/** Shared product names and destinations for the dock and search. */
+/** Shared primary destinations for the dock, g + letter and search. */
 export const PRIMARY_NAVIGATION = [
   { title: 'Home', href: '/', desc: '个人数字生态入口', alias: ['home', '首页'] },
   {
@@ -34,6 +34,12 @@ export const PRIMARY_NAVIGATION = [
     desc: '最近在做什么、玩什么、看什么',
     alias: ['now', '近况', '最近'],
   },
+  {
+    title: 'Other',
+    href: '/other',
+    desc: 'AI、Ideas、Canon 等 Slash Pages',
+    alias: ['other', 'slash', '其他'],
+  },
 ] as const;
 
 export function activeNavigation(path: string): string | undefined {
@@ -44,6 +50,8 @@ export function activeNavigation(path: string): string | undefined {
   if (/^\/(uses|infrastructure)(\/|$)/.test(route)) return '/uses';
   if (route === '/about') return '/about';
   if (route === '/now') return '/now';
+  if (/^\/(other|ai|ideas|canon|colophon|friends|blogroll|carry|defaults)(\/|$)/.test(route))
+    return '/other';
   return undefined;
 }
 
@@ -53,6 +61,7 @@ export function pageMode(path: string): string {
   if (route === '/friends') return 'FRIENDS';
   if (route === '/login') return 'ACCESS';
   if (route === '/now') return 'NOW';
+  if (route === '/other') return 'OTHER';
   return (
     PRIMARY_NAVIGATION.find((item) => item.href === activeNavigation(route))?.title.toUpperCase() ??
     'READ'
@@ -75,16 +84,14 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
     label: 'NAV' as const,
     alias: [item.href, ...item.alias],
   })),
-  ...['bookmarks', 'blogroll', 'carry', 'defaults', 'colophon', 'ai', 'ideas', 'canon'].map(
-    (name) => ({
-      type: 'cmd' as const,
-      label: 'NAV' as const,
-      title: name,
-      desc: name,
-      href: '/' + name,
-      alias: ['/' + name],
-    }),
-  ),
+  ...['blogroll', 'carry', 'defaults', 'colophon', 'ai', 'ideas', 'canon'].map((name) => ({
+    type: 'cmd' as const,
+    label: 'NAV' as const,
+    title: name,
+    desc: name,
+    href: '/' + name,
+    alias: ['/' + name],
+  })),
   {
     type: 'cmd',
     label: 'NAV',

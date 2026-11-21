@@ -99,8 +99,9 @@ html[data-ui] .browser-page [data-object-list] {
   }
   html[data-ui] [data-terminal-dock] nav a {
     min-width: 0;
-    padding: 0 6px;
-    font-size: 12px;
+    padding: 0 3px;
+    font-size: clamp(10px, 2.8vw, 12px);
+    white-space: nowrap;
   }
   html[data-ui] .browser-page [data-browser-columns] > [data-object-preview] {
     display: none;

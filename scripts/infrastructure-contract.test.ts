@@ -20,13 +20,19 @@ test('Personal Infrastructure projection is authoritative for infrastructure pre
   const resources = projection.payload.resources;
   const ids = new Set(resources.map((resource) => resource.id));
   for (const required of [
-    'host-aliyun-chengdu-dailyuse-vps',
+    'host-huawei-memoflow-prod',
     'host-n100-pve',
     'net-home-lan',
     'svc-homepage-dashboard',
   ]) {
     assert.ok(ids.has(required), `infra-public-v2 is missing ${required}`);
   }
+
+  assert.equal(
+    ids.has('host-aliyun-chengdu-dailyuse-vps'),
+    false,
+    'retired Aliyun host must stay absent',
+  );
 
   const memoflow = resources.find((resource) => resource.id === 'svc-memoflow-dailyuse');
   assert.ok(

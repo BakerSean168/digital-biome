@@ -11,34 +11,23 @@ const summaries = parseUsesSummaries(
   JSON.parse(fs.readFileSync('src/data/indexes/uses-summaries.json', 'utf8')),
 );
 
-test('Bookmarks uses explicit authored membership, deferred browsing, search, facets and mobile layout', async ({
+test('Uses Websites retains public bookmarked resources without a duplicate Bookmarks page', async ({
   page,
   request,
 }) => {
   const expected = selectResourceEntries(entries, 'bookmarks');
-  const response = await request.get('/data/terminal/bookmarks.json');
-  expect(response.ok()).toBe(true);
-  expect((await response.json()).map((row: { id: string }) => row.id)).toEqual(
-    expected.map((row) => row.asset_id ?? row.id),
-  );
-  const html = await (await request.get('/bookmarks/')).text();
-  expect(html.match(/data-object-row/g)).toHaveLength(Math.min(16, expected.length));
-  await page.goto('/bookmarks/?ui=tui');
-  const browser = page.locator('[data-object-browser]');
-  const sample = expected.at(-1);
-  expect(sample).toBeDefined();
-  await browser.locator('[data-object-filter]').fill(sample?.title ?? '');
-  await expect(
-    browser.locator('[data-object-row]').filter({ hasText: sample?.title }),
-  ).toBeVisible();
-  await browser.locator('[data-object-filter]').fill('');
-  await browser.locator('[data-object-sort]').selectOption('title');
-  await browser.locator('[data-facet-trigger]').click();
-  await expect(browser.locator('[data-facet-dialog]')).toBeVisible();
-  await page.keyboard.press('Escape');
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/bookmarks/?ui=gui');
-  expect(await page.evaluate(() => document.body.scrollWidth <= innerWidth)).toBe(true);
+  const external = await request.get('/data/terminal/external.json');
+  expect(external.ok()).toBe(true);
+  const publishedIds = (await external.json()).map((row: { id: string }) => row.id);
+  for (const record of expected) {
+    expect(publishedIds).toContain(record.asset_id ?? record.id);
+  }
+  expect((await request.get('/bookmarks/')).status()).toBe(404);
+  expect((await request.get('/data/terminal/bookmarks.json')).status()).toBe(404);
+  await page.goto('/uses/?ui=gui#external');
+  const browser = page.locator('#external [data-object-browser]');
+  await expect(browser).toBeVisible();
+  await expect(browser.locator('[data-object-row]').first()).toBeVisible();
 });
 
 for (const name of ['blogroll', 'carry', 'defaults'] as const) {
@@ -96,7 +85,6 @@ test('approved device summaries stay confined to Uses and excluded from Pagefind
     'terminal/services',
     'terminal/hosts',
     'terminal/network',
-    'terminal/bookmarks',
     'terminal/blogroll',
     'terminal/carry',
     'terminal/defaults',

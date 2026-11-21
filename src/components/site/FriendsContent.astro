@@ -1,0 +1,45 @@
+---
+import ObjectBrowser from '../terminal/ObjectBrowser.astro';
+import { getFriendLinks } from '../../repositories/friends-repository';
+import { isSafeTerminalHref } from '../../view-models/terminal-object';
+import { SITE_URL } from '../../constants';
+
+interface Props {
+  heading?: 'h1' | 'h2';
+}
+const { heading: Heading = 'h1' } = Astro.props;
+
+const friends = getFriendLinks()
+  .filter((friend) => isSafeTerminalHref(friend.url) && /^https?:/.test(friend.url))
+  .map((friend) => ({
+    id: friend.slug,
+    title: friend.title,
+    kind: 'friend',
+    href: friend.url,
+    description: friend.description ?? '',
+    meta: new URL(friend.url).hostname,
+    tags: [],
+    relations: [],
+  }));
+---
+
+<Heading data-page-title class="mb-2 text-lg text-primary">
+  Friends
+</Heading>
+<p class="mb-5 text-muted-foreground">朋友的站点、独立写作与值得常去的地方。</p>
+<ObjectBrowser items={friends} filter={false} label="友链" />
+<section class="mt-10 max-w-[720px] border-t border-border pt-4">
+  <h2 class="mb-3 text-xs text-muted-foreground">本站信息</h2>
+  <dl class="grid grid-cols-[4em_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+    <dt class="text-muted-foreground">name</dt>
+    <dd class="select-all">Digital Biome</dd>
+    <dt class="text-muted-foreground">url</dt>
+    <dd class="min-w-0 break-all">
+      <a href={SITE_URL} target="_blank" rel="noopener noreferrer" class="text-primary">
+        {SITE_URL}
+      </a>
+    </dd>
+    <dt class="text-muted-foreground">about</dt>
+    <dd class="select-all">个人数字生态：知识、写作、项目与服务。</dd>
+  </dl>
+</section>

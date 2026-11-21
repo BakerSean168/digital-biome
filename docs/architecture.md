@@ -61,8 +61,11 @@ flowchart LR
 | `/404`                                                                                                                            | Not found                                                                                                         |
 | `/data/notes-catalog.json`, `/data/uses-catalog.json`, `/data/terminal/[catalog].json`, `/data/infrastructure-service-index.json` | Public JSON catalogs                                                                                              |
 
-| `/bookmarks`, `/blogroll`, `/carry`, `/defaults` | Explicit Obsidian resource queries with shared ObjectBrowser |
+| `/blogroll`, `/carry`, `/defaults` | Explicit Obsidian resource queries with shared ObjectBrowser |
 | `/colophon`, `/ai`, `/ideas`, `/canon` | Public authored Markdown or an empty state |
+| `/other` | Eight public Slash Pages grouped by local tabs with deep links and keyboard navigation |
+
+`/other` groups the eight public Slash Pages: AI, Ideas, Canon, Colophon, Friends, Blogroll, Carry and Defaults. Home links to each `/other#<tab>` and shows `g o <number>`; `g o` enters Other, then a digit selects a tab. Other is the seventh primary navigation item. `/bookmarks` is removed; Uses → Websites (`/uses#external`) remains the website collection.
 
 已退役且由契约测试阻止回归：Dashboard/BiomeTree UI 与 `DashboardLayout`、Observability 页面、`/discover`、`/about/refactor`。
 

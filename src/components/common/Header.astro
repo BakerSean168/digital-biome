@@ -8,7 +8,7 @@ const loginNext = currentPath !== '/login' ? currentPath : '/';
 const links = PRIMARY_NAVIGATION;
 const current = activeNavigation(currentPath);
 const mode = pageMode(currentPath);
-const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses'].includes(
+const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses', '/other'].includes(
   currentPath.replace(/\/$/, '') || '/',
 );
 ---
@@ -199,8 +199,10 @@ const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses'].includes(
     <dd>全站搜索</dd>
     <dt>i / f / 1–4</dt>
     <dd>筛选当前列表</dd>
-    <dt>g → h / l / p / u / a / n</dt>
-    <dd>首页 / 笔记 / 项目 / Uses / About / Now</dd>
+    <dt>g → h / l / p / u / a / n / o</dt>
+    <dd>首页 / Library / Projects / Uses / About / Now / Other</dd>
+    <dt>1–9</dt>
+    <dd>到达页面后，切换当前页面顶部的 Tab（与 g 组合无关）</dd>
     <dt>r → 1–9</dt>
     <dd>打开所选对象的关联</dd>
     <dt>u</dt>
