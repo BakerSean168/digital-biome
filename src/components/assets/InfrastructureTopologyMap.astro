@@ -26,9 +26,7 @@ const { title, description, tiers } = Astro.props;
 <div class="flex flex-col gap-8 py-8">
   <div class="mb-6 border-b border-border pb-6">
     <SignalTitle as="h2" class="text-2xl font-mono tracking-tight text-foreground" title={title} />
-    <p class="mt-2 text-sm font-mono text-muted-foreground leading-relaxed">
-      {description}
-    </p>
+    <p class="mt-2 text-sm font-mono text-muted-foreground leading-relaxed">{description}</p>
   </div>
 
   <div class="relative flex flex-col items-center gap-12 w-full">
@@ -48,7 +46,7 @@ const { title, description, tiers } = Astro.props;
 
         <!-- Nodes in this Tier -->
         <div class="flex flex-wrap justify-center gap-8 md:gap-16 w-full max-w-5xl">
-          {tier.items.map(item => (
+          {tier.items.map((item) => (
             <TopologyNodeCard node={item.node} services={item.services} />
           ))}
         </div>
@@ -62,7 +60,7 @@ const { title, description, tiers } = Astro.props;
         )}
       </div>
     ))}
-    
+
     <!-- Background vertical connecting line (optional subtle effect) -->
     <div class="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-border/30 to-transparent pointer-events-none z-0"></div>
   </div>

@@ -5,6 +5,6 @@ const pagefindDirectory = path.resolve('dist/pagefind');
 const result = prunePagefindGeneratedUi(pagefindDirectory);
 assertPagefindRuntimeSurface(pagefindDirectory);
 console.log(
-  `Pagefind runtime surface pruned: ${result.removedFiles.length} unused generated UI files, `
-  + `${(result.removedBytes / 1024).toFixed(1)} KiB removed.`,
+  `Pagefind runtime surface pruned: ${result.removedFiles.length} unused generated UI files, ` +
+    `${(result.removedBytes / 1024).toFixed(1)} KiB removed.`,
 );

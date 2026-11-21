@@ -21,7 +21,7 @@ export function getBacklinksForNote(noteId: string): NoteIndexEntry[] {
   const backlinksMap = getBacklinksMapFromIndex();
   const sourceIds = backlinksMap.get(noteId) ?? [];
   return sourceIds
-    .map(id => getNoteEntryByIdFromIndex(id))
+    .map((id) => getNoteEntryByIdFromIndex(id))
     .filter((e): e is NoteIndexEntry => e != null);
 }
 
@@ -34,6 +34,6 @@ export function getOutgoingLinksForNote(noteId: string): NoteIndexEntry[] {
   const outgoingMap = getOutgoingMapFromIndex();
   const targetIds = outgoingMap.get(noteId) ?? [];
   return targetIds
-    .map(id => getNoteEntryByIdFromIndex(id))
+    .map((id) => getNoteEntryByIdFromIndex(id))
     .filter((e): e is NoteIndexEntry => e != null);
 }

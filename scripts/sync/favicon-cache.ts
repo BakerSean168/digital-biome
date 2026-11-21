@@ -13,7 +13,7 @@ import type { SyncStats } from './types';
 export async function cacheFavicon(
   urlStr: string,
   faviconsDest: string,
-  stats: SyncStats
+  stats: SyncStats,
 ): Promise<void> {
   if (!urlStr) return;
   try {

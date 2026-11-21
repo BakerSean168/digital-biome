@@ -7,7 +7,8 @@ import { loadProtectedInfrastructureUrls } from './sync/privacy';
 import { checkPrivateRouteBoundary } from './private-route-boundary';
 import { writeFunctionRouteManifest } from './private-function-routes';
 
-const FULL_IPV4 = /(?<![\d.])(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?![\d.])/g;
+const FULL_IPV4 =
+  /(?<![\d.])(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}(?![\d.])/g;
 const EXACT_IPV4 = /^(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
 
 function escapeRegExp(value: string): string {
@@ -46,7 +47,7 @@ function collectSensitiveValues(): Set<string> {
   ].filter((directory): directory is string => Boolean(directory));
 
   for (const sourceRoot of new Set(markdownSourceRoots)) {
-    for (const sourceFile of collectFiles(sourceRoot).filter(file => file.endsWith('.md'))) {
+    for (const sourceFile of collectFiles(sourceRoot).filter((file) => file.endsWith('.md'))) {
       const content = fs.readFileSync(sourceFile, 'utf-8');
       for (const match of content.matchAll(FULL_IPV4)) {
         if (redactIPv4Addresses(match[0]) !== match[0]) {
@@ -81,19 +82,21 @@ function collectSensitiveValues(): Set<string> {
 
 function assertNoPrivateDataInBuild(): void {
   const distDirectory = path.join(process.cwd(), 'dist');
-  const sensitiveValues = [...collectSensitiveValues()].filter(value => value.length >= 4);
+  const sensitiveValues = [...collectSensitiveValues()].filter((value) => value.length >= 4);
   if (sensitiveValues.length === 0 || !fs.existsSync(distDirectory)) return;
 
-  const sensitiveIpv4 = new Set(sensitiveValues.filter(value => EXACT_IPV4.test(value)));
-  const otherSensitiveValues = sensitiveValues.filter(value => !EXACT_IPV4.test(value));
-  const otherSensitivePattern = otherSensitiveValues.length > 0
-    ? new RegExp(otherSensitiveValues.map(escapeRegExp).join('|'), 'u')
-    : null;
+  const sensitiveIpv4 = new Set(sensitiveValues.filter((value) => EXACT_IPV4.test(value)));
+  const otherSensitiveValues = sensitiveValues.filter((value) => !EXACT_IPV4.test(value));
+  const otherSensitivePattern =
+    otherSensitiveValues.length > 0
+      ? new RegExp(otherSensitiveValues.map(escapeRegExp).join('|'), 'u')
+      : null;
   const leakedFiles: string[] = [];
   for (const buildFile of collectFiles(distDirectory)) {
     const content = fs.readFileSync(buildFile, 'utf8');
-    const containsSensitiveIpv4 = sensitiveIpv4.size > 0 &&
-      [...content.matchAll(FULL_IPV4)].some(match => sensitiveIpv4.has(match[0]));
+    const containsSensitiveIpv4 =
+      sensitiveIpv4.size > 0 &&
+      [...content.matchAll(FULL_IPV4)].some((match) => sensitiveIpv4.has(match[0]));
     const containsOtherSensitiveValue = otherSensitivePattern?.test(content) ?? false;
     if (containsSensitiveIpv4 || containsOtherSensitiveValue) {
       leakedFiles.push(path.relative(process.cwd(), buildFile));
@@ -106,7 +109,9 @@ function assertNoPrivateDataInBuild(): void {
     );
   }
 
-  console.log(`Private infrastructure leakage check passed (${sensitiveValues.length} values checked).`);
+  console.log(
+    `Private infrastructure leakage check passed (${sensitiveValues.length} values checked).`,
+  );
 }
 
 function copyDirectory(source: string, destination: string): void {
@@ -127,9 +132,13 @@ function copyDirectory(source: string, destination: string): void {
 try {
   assertNoPrivateDataInBuild();
   const privateRouteResult = checkPrivateRouteBoundary();
-  console.log(`Private route boundary passed (${privateRouteResult.protectedKnowledgeNotes} protected knowledge notes checked).`);
+  console.log(
+    `Private route boundary passed (${privateRouteResult.protectedKnowledgeNotes} protected knowledge notes checked).`,
+  );
   const functionRoutes = writeFunctionRouteManifest();
-  console.log(`Protected route runtime guard emitted (${functionRoutes.include.length - 1} knowledge-note routes).`);
+  console.log(
+    `Protected route runtime guard emitted (${functionRoutes.include.length - 1} knowledge-note routes).`,
+  );
 
   const source = path.join(process.cwd(), 'dist', 'pagefind');
   const destination = path.join(process.cwd(), 'public', 'pagefind');

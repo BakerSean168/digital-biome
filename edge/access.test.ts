@@ -18,25 +18,34 @@ test('normalizes a Cloudflare Access team domain', () => {
 });
 
 test('accepts only same-origin redirect paths', () => {
-  assert.equal(getSafeNextPath('/infrastructure?view=fleet#node'), '/infrastructure?view=fleet#node');
+  assert.equal(
+    getSafeNextPath('/infrastructure?view=fleet#node'),
+    '/infrastructure?view=fleet#node',
+  );
   assert.equal(getSafeNextPath('https://example.com'), '/');
   assert.equal(getSafeNextPath('//example.com'), '/');
   assert.equal(getSafeNextPath('/api/private/enter'), '/');
 });
 
 test('validates private infrastructure values and link protocols', () => {
-  const payload = parsePrivateInfrastructure(JSON.stringify({
-    version: 1,
-    values: { 'vps.example.ip': '192.0.2.10' },
-    links: { 'host-example.links.ssh': 'ssh://admin@192.0.2.10' },
-  }));
+  const payload = parsePrivateInfrastructure(
+    JSON.stringify({
+      version: 1,
+      values: { 'vps.example.ip': '192.0.2.10' },
+      links: { 'host-example.links.ssh': 'ssh://admin@192.0.2.10' },
+    }),
+  );
 
   assert.equal(payload.values['vps.example.ip'], '192.0.2.10');
-  assert.throws(() => parsePrivateInfrastructure(JSON.stringify({
-    version: 1,
-    values: {},
-    links: { 'host-example.links.ssh': 'javascript:alert(1)' },
-  })));
+  assert.throws(() =>
+    parsePrivateInfrastructure(
+      JSON.stringify({
+        version: 1,
+        values: {},
+        links: { 'host-example.links.ssh': 'javascript:alert(1)' },
+      }),
+    ),
+  );
 });
 
 test('redacts full IPv4 addresses in every synchronized Markdown source', () => {
@@ -65,7 +74,7 @@ test('uses one deterministic key scheme while removing protected URLs from publi
   ] as const;
 
   assert.deepEqual(
-    buildPrivateLinkRefs('host-example', [...links]).map(item => item.privateRef),
+    buildPrivateLinkRefs('host-example', [...links]).map((item) => item.privateRef),
     ['host-example.links.ssh', 'host-example.links.admin', null],
   );
 

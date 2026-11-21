@@ -38,7 +38,7 @@
     "test:e2e": "playwright test",
     "prune:pagefind": "tsx scripts/prune-pagefind-artifacts.ts",
     "lint": "pnpm lint:biome && pnpm lint:oxlint && pnpm lint:astro",
-    "format:check": "tsx scripts/check-format-ratchet.ts",
+    "format:check": "tsx scripts/check-format.ts",
     "quality": "pnpm lint && pnpm format:check",
     "lint:biome": "biome lint --diagnostic-level=warn --error-on-warnings .",
     "lint:oxlint": "oxlint --deny-warnings src scripts functions edge e2e astro.config.mjs notes.config.ts playwright.config.ts",

@@ -20,27 +20,37 @@ const base = {
 };
 
 test('routes only API and protected notes through Pages Functions', () => {
-  const manifest = buildFunctionRouteManifest(fixture([
-    { ...base, id: 'obsidian/public-note' },
-    { ...base, id: 'obsidian/private-note', private: true, visibility: 'private' },
-    { ...base, id: 'obsidian/draft-note', draft: true },
-    { ...base, id: 'obsidian/assets/private-host', isAsset: true, private: true, visibility: 'private' },
-  ]));
+  const manifest = buildFunctionRouteManifest(
+    fixture([
+      { ...base, id: 'obsidian/public-note' },
+      { ...base, id: 'obsidian/private-note', private: true, visibility: 'private' },
+      { ...base, id: 'obsidian/draft-note', draft: true },
+      {
+        ...base,
+        id: 'obsidian/assets/private-host',
+        isAsset: true,
+        private: true,
+        visibility: 'private',
+      },
+    ]),
+  );
 
   assert.deepEqual(manifest, {
     version: 1,
-    include: [
-      '/api/*',
-      '/notes/obsidian/draft-note*',
-      '/notes/obsidian/private-note*',
-    ],
+    include: ['/api/*', '/notes/obsidian/draft-note*', '/notes/obsidian/private-note*'],
     exclude: [],
   });
 });
 
 test('fails closed if a protected wildcard could shadow a public note', () => {
-  assert.throws(() => buildFunctionRouteManifest(fixture([
-    { ...base, id: 'obsidian/topic', private: true, visibility: 'private' },
-    { ...base, id: 'obsidian/topic-public' },
-  ])), /would shadow a public route/);
+  assert.throws(
+    () =>
+      buildFunctionRouteManifest(
+        fixture([
+          { ...base, id: 'obsidian/topic', private: true, visibility: 'private' },
+          { ...base, id: 'obsidian/topic-public' },
+        ]),
+      ),
+    /would shadow a public route/,
+  );
 });

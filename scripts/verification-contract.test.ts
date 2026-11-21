@@ -265,7 +265,7 @@ test('quality gates are part of the canonical verify contract', () => {
   assert.match(packageJson.scripts['lint:oxlint'], /oxlint --deny-warnings/);
   assert.equal(packageJson.scripts['lint:astro'], 'tsx scripts/lint-astro-scripts.ts');
   assert.equal(packageJson.scripts.lint, 'pnpm lint:biome && pnpm lint:oxlint && pnpm lint:astro');
-  assert.equal(packageJson.scripts['format:check'], 'tsx scripts/check-format-ratchet.ts');
+  assert.equal(packageJson.scripts['format:check'], 'tsx scripts/check-format.ts');
   assert.equal(packageJson.scripts.quality, 'pnpm lint && pnpm format:check');
   assert.equal(
     packageJson.scripts['preflight:data-products'],

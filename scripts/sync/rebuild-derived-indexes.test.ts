@@ -9,8 +9,18 @@ const notes = {
   version: 1,
   generatedAt: '2026-09-10T00:00:00.000Z',
   entries: [
-    { id: 'obsidian/public', tags: ['type/concept', 'shared'], visibility: 'public' as const, isAsset: false },
-    { id: 'obsidian/private', tags: ['private-only', 'shared'], visibility: 'private' as const, isAsset: false },
+    {
+      id: 'obsidian/public',
+      tags: ['type/concept', 'shared'],
+      visibility: 'public' as const,
+      isAsset: false,
+    },
+    {
+      id: 'obsidian/private',
+      tags: ['private-only', 'shared'],
+      visibility: 'private' as const,
+      isAsset: false,
+    },
     {
       id: 'obsidian/assets/tool',
       title: 'Canonical Tool',
@@ -53,6 +63,9 @@ test('rewrites derived index files from notes-index.json', () => {
 
   const tags = JSON.parse(fs.readFileSync(path.join(root, 'tag-index.json'), 'utf8'));
   const assets = JSON.parse(fs.readFileSync(path.join(root, 'asset-index.json'), 'utf8'));
-  assert.equal(tags.tags.find((entry: { tag: string }) => entry.tag === 'private-only'), undefined);
+  assert.equal(
+    tags.tags.find((entry: { tag: string }) => entry.tag === 'private-only'),
+    undefined,
+  );
   assert.equal(assets.entries[0].title, 'Canonical Tool');
 });

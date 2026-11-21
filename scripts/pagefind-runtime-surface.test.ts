@@ -11,7 +11,12 @@ import {
 
 function fixture(): string {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'digital-biome-pagefind-'));
-  for (const name of ['pagefind.js', 'pagefind-entry.json', 'wasm.unknown.pagefind', ...PAGEFIND_GENERATED_UI_FILES]) {
+  for (const name of [
+    'pagefind.js',
+    'pagefind-entry.json',
+    'wasm.unknown.pagefind',
+    ...PAGEFIND_GENERATED_UI_FILES,
+  ]) {
     fs.writeFileSync(path.join(directory, name), name);
   }
   fs.writeFileSync(path.join(directory, 'pagefind.zh_test.pf_meta'), 'index');

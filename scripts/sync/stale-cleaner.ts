@@ -35,7 +35,7 @@ function removeEmptyDirs(dir: string): void {
 export function cleanStaleFiles(
   destDir: string,
   expectedFiles: Set<string>,
-  stats: SyncStats
+  stats: SyncStats,
 ): void {
   if (!fs.existsSync(destDir)) return;
 
