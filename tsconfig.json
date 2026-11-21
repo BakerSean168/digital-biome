@@ -1,5 +1,13 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist", "tmp", "thought-forest", "public/pagefind", "edge", "functions", "worker-configuration.d.ts"]
+  "exclude": [
+    "dist",
+    "tmp",
+    "thought-forest",
+    "public/pagefind",
+    "edge",
+    "functions",
+    "worker-configuration.d.ts"
+  ]
 }

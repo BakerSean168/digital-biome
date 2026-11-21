@@ -51,7 +51,9 @@ function splitTargetAndDisplay(inner: string): { rawTarget: string; display?: st
   return { rawTarget: inner };
 }
 
-function stripAnchorParts(rawTarget: string): Pick<ParsedWikilink, 'target' | 'heading' | 'blockRef'> {
+function stripAnchorParts(
+  rawTarget: string,
+): Pick<ParsedWikilink, 'target' | 'heading' | 'blockRef'> {
   let target = rawTarget.trim();
   let heading: string | undefined;
   let blockRef: string | undefined;
@@ -122,5 +124,5 @@ export function parseWikilinks(text: string): ParsedWikilink[] {
  * Parse only note wikilinks (excluding images).
  */
 export function parseNoteWikilinks(text: string): ParsedWikilink[] {
-  return parseWikilinks(text).filter(link => !link.isImage && !IMAGE_EXT.test(link.rawTarget));
+  return parseWikilinks(text).filter((link) => !link.isImage && !IMAGE_EXT.test(link.rawTarget));
 }

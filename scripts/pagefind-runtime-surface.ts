@@ -9,7 +9,11 @@ export const PAGEFIND_GENERATED_UI_FILES = [
   'pagefind-highlight.js',
 ] as const;
 
-const REQUIRED_RUNTIME_FILES = ['pagefind.js', 'pagefind-entry.json', 'wasm.unknown.pagefind'] as const;
+const REQUIRED_RUNTIME_FILES = [
+  'pagefind.js',
+  'pagefind-entry.json',
+  'wasm.unknown.pagefind',
+] as const;
 
 export interface PagefindPruneResult {
   removedFiles: string[];

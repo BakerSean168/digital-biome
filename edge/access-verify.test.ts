@@ -12,9 +12,12 @@ const VALID_ENV = { CF_ACCESS_TEAM_DOMAIN: TEAM_DOMAIN_INPUT, CF_ACCESS_AUD: AUD
 let jwks: { keys: JWK[] };
 let privateKey: CryptoKey;
 
-async function signToken(payload: Record<string, unknown>, overrides: {
-  audience?: string;
-} = {}) {
+async function signToken(
+  payload: Record<string, unknown>,
+  overrides: {
+    audience?: string;
+  } = {},
+) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'RS256', kid: KID })
     .setIssuer(TEAM_DOMAIN)

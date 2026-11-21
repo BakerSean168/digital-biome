@@ -53,7 +53,9 @@ export function buildAssetIndex(notes: NotesIndex): {
   return {
     version: notes.version,
     generatedAt: notes.generatedAt,
-    entries: notes.entries.filter(note => note.isAsset && Boolean(note.asset_id) && Boolean(note.asset_type)),
+    entries: notes.entries.filter(
+      (note) => note.isAsset && Boolean(note.asset_id) && Boolean(note.asset_type),
+    ),
   };
 }
 
@@ -67,8 +69,16 @@ export function rebuildDerivedIndexes(indexDir: string): void {
   const tagIndex = buildTagIndex(notes);
   const assetIndex = buildAssetIndex(notes);
 
-  fs.writeFileSync(path.join(indexDir, 'tag-index.json'), JSON.stringify(tagIndex, null, 2), 'utf8');
-  fs.writeFileSync(path.join(indexDir, 'asset-index.json'), JSON.stringify(assetIndex, null, 2), 'utf8');
+  fs.writeFileSync(
+    path.join(indexDir, 'tag-index.json'),
+    JSON.stringify(tagIndex, null, 2),
+    'utf8',
+  );
+  fs.writeFileSync(
+    path.join(indexDir, 'asset-index.json'),
+    JSON.stringify(assetIndex, null, 2),
+    'utf8',
+  );
   console.log(
     `  [rebuild-derived-indexes] Derived ${tagIndex.tags.length} tags and ${assetIndex.entries.length} assets from reconciled notes`,
   );

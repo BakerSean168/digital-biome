@@ -7,20 +7,20 @@ export interface ProtectableLink {
   label: string;
   url?: string;
   kind?: string;
-  visibility?: "public" | "private" | "internal" | string | null;
+  visibility?: 'public' | 'private' | 'internal' | string | null;
 }
 
 export function toPrivateKeyPart(value: string, fallback: string): string {
   const keyPart = value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
   return keyPart || fallback;
 }
 
 export function isProtectedLinkVisibility(visibility?: string | null): boolean {
-  return visibility === "internal" || visibility === "private";
+  return visibility === 'internal' || visibility === 'private';
 }
 
 /**
@@ -34,7 +34,7 @@ export function buildPrivateLinkRefs(
   const protectedKindCounts = new Map<string, number>();
   for (const link of links) {
     if (isProtectedLinkVisibility(link.visibility)) {
-      const kind = toPrivateKeyPart(link.kind || "other", "other");
+      const kind = toPrivateKeyPart(link.kind || 'other', 'other');
       protectedKindCounts.set(kind, (protectedKindCounts.get(kind) || 0) + 1);
     }
   }
@@ -45,10 +45,9 @@ export function buildPrivateLinkRefs(
       return { link, privateRef: null };
     }
 
-    const kind = toPrivateKeyPart(link.kind || "other", "other");
-    const labelSuffix = (protectedKindCounts.get(kind) || 0) > 1
-      ? `.${toPrivateKeyPart(link.label, "link")}`
-      : "";
+    const kind = toPrivateKeyPart(link.kind || 'other', 'other');
+    const labelSuffix =
+      (protectedKindCounts.get(kind) || 0) > 1 ? `.${toPrivateKeyPart(link.label, 'link')}` : '';
     const baseRef = `${assetId}.links.${kind}${labelSuffix}`;
     const duplicateCount = usedRefs.get(baseRef) || 0;
     usedRefs.set(baseRef, duplicateCount + 1);

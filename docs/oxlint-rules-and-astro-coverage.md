@@ -18,7 +18,7 @@ Related: [#178](https://github.com/BakerSean168/digital-biome/issues/178), paren
 | Biome                       | 228 TS/JS files in the pinned main baseline                 | 230 files, zero warnings/errors; existing recommended rules remain |
 | Oxlint                      | Not part of quality gate                                    | 278 JS/TS/recognized files, 96 enabled rules, zero warnings/errors |
 | Astro script coverage       | Astro check owns templates and types; no explicit lint gate | 14 executable script blocks from 48 Astro files linted by Oxlint   |
-| Legacy formatter exemptions | 69 SHA-frozen files                                         | 67, after graduating exactly two edited legacy files               |
+| Formatter policy          | SHA-frozen historical exemptions                          | All maintained code is checked using pinned Oxfmt; no exemptions    |
 
 All counts are snapshots of this PR's scoped worktree. They are not hard-coded file totals or permanent quotas.
 
@@ -33,7 +33,7 @@ The read-only Oxlint baseline over the current source found seven warning diagno
 | unicorn/prefer-string-starts-ends-with |     1 | Replaced an anchored literal-prefix regex with String.startsWith in markdown-transform.ts.                                                                                                                         |
 | unicorn/no-useless-length-check        |     1 | Removed a redundant empty-array test: Array.every already returns true on an empty array in note-list-item.ts.                                                                                                     |
 
-The two changed historic files were formatted with the already-pinned Oxfmt and their hashes were removed from scripts/format-baseline.json. The other 67 unchanged historical exemptions retain their exact bytes. No other business or published-data source was intentionally reformatted.
+Formatting exceptions were removed after the remaining files were formatted with the pinned Oxfmt. The check now covers every current code target.
 
 ## Astro script liveness gate
 

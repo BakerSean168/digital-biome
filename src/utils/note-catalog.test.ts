@@ -39,44 +39,49 @@ const catalog: NoteCatalogItem[] = [
 
 test('sorts catalog newest first without mutating the input', () => {
   const unsorted = [catalog[1], catalog[0], catalog[2]];
-  assert.deepEqual(sortNoteCatalog(unsorted).map(note => note.id), [
-    'obsidian/alpha',
-    'obsidian/beta',
-    'obsidian/gamma',
-  ]);
-  assert.deepEqual(unsorted.map(note => note.id), [
-    'obsidian/beta',
-    'obsidian/alpha',
-    'obsidian/gamma',
-  ]);
+  assert.deepEqual(
+    sortNoteCatalog(unsorted).map((note) => note.id),
+    ['obsidian/alpha', 'obsidian/beta', 'obsidian/gamma'],
+  );
+  assert.deepEqual(
+    unsorted.map((note) => note.id),
+    ['obsidian/beta', 'obsidian/alpha', 'obsidian/gamma'],
+  );
 });
 
 test('keeps query matching across title, description, id, and tags', () => {
-  assert.deepEqual(filterNoteCatalog(catalog, 'TYPESCRIPT', []).map(note => note.id), [
-    'obsidian/alpha',
-    'obsidian/gamma',
-  ]);
-  assert.deepEqual(filterNoteCatalog(catalog, 'beta', []).map(note => note.id), ['obsidian/beta']);
+  assert.deepEqual(
+    filterNoteCatalog(catalog, 'TYPESCRIPT', []).map((note) => note.id),
+    ['obsidian/alpha', 'obsidian/gamma'],
+  );
+  assert.deepEqual(
+    filterNoteCatalog(catalog, 'beta', []).map((note) => note.id),
+    ['obsidian/beta'],
+  );
 });
 
 test('requires every active tag while retaining hierarchical substring matching', () => {
-  assert.deepEqual(filterNoteCatalog(catalog, '', ['tech/typescript', 'reading']).map(note => note.id), [
-    'obsidian/gamma',
-  ]);
+  assert.deepEqual(
+    filterNoteCatalog(catalog, '', ['tech/typescript', 'reading']).map((note) => note.id),
+    ['obsidian/gamma'],
+  );
 });
 
 test('projects only public card fields into the catalog item', () => {
-  const item = toNoteCatalogItem({
-    id: 'obsidian/alpha',
-    data: {
-      title: 'Alpha note',
-      description: 'Description',
-      tags: ['tech/typescript'],
-      created: new Date('2024-01-01T00:00:00Z'),
-      private: true,
-      draft: true,
-    },
-  } as Parameters<typeof toNoteCatalogItem>[0], new Date('2024-01-03T00:00:00Z'));
+  const item = toNoteCatalogItem(
+    {
+      id: 'obsidian/alpha',
+      data: {
+        title: 'Alpha note',
+        description: 'Description',
+        tags: ['tech/typescript'],
+        created: new Date('2024-01-01T00:00:00Z'),
+        private: true,
+        draft: true,
+      },
+    } as Parameters<typeof toNoteCatalogItem>[0],
+    new Date('2024-01-03T00:00:00Z'),
+  );
 
   assert.deepEqual(Object.keys(item).sort(), [
     'date',

@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createSearchIntentScheduler, type SearchIntent, type SearchIntentTimers } from './search-intent';
+import {
+  createSearchIntentScheduler,
+  type SearchIntent,
+  type SearchIntentTimers,
+} from './search-intent';
 
 function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(value => {
+  const promise = new Promise<T>((value) => {
     resolve = value;
   });
   return { promise, resolve };
@@ -68,9 +72,9 @@ test('invalidates stale search work when a new intent is typed during debounce',
     if (!pendingIntent && selected) executions += 1;
   };
 
-  scheduler.schedule('A', intent => void run(intent));
+  scheduler.schedule('A', (intent) => void run(intent));
   timers.runNext();
-  scheduler.schedule('B', intent => void run(intent));
+  scheduler.schedule('B', (intent) => void run(intent));
   first.resolve('A result');
   await Promise.resolve();
   await Promise.resolve();
@@ -101,7 +105,7 @@ test('modal close invalidates an active and debounced search', async () => {
   const active = deferred<string>();
   const rendered: string[] = [];
   const scheduler = createSearchIntentScheduler(200, timers.timers);
-  scheduler.schedule('A', async intent => {
+  scheduler.schedule('A', async (intent) => {
     const value = await active.promise;
     if (intent.token.isCurrent()) rendered.push(value);
   });
