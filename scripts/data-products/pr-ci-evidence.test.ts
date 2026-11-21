@@ -71,7 +71,7 @@ test('PR approval trusts exact main workflows for both public producers only', (
     assert.equal(isTrustedApprovalWorkflowRef(ref('sync-data-products'), product), true);
     assert.equal(isTrustedApprovalWorkflowRef(ref('reconcile-data-products'), product), true);
   }
-  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-infra-public-v2'), 'infra-public-v2'), true);
+  assert.equal(isTrustedApprovalWorkflowRef(ref('sync-infra-public-v2'), 'infra-public-v2'), false);
   assert.equal(isTrustedApprovalWorkflowRef(ref('sync-pds-catalog-v1'), 'pds-catalog-v1'), false);
   assert.equal(isTrustedApprovalWorkflowRef(ref('deploy-production'), 'infra-public-v2'), false);
   assert.equal(

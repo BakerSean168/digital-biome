@@ -16,8 +16,6 @@ const candidateWorkflow = fixture('.github/workflows/candidate-publish.yml');
 const releasePleaseWorkflow = fixture('.github/workflows/release-please.yml');
 const releaseWorkflow = fixture('.github/workflows/release-publish.yml');
 const productionWorkflow = fixture('.github/workflows/deploy-production.yml');
-const knowledgeSyncWorkflow = fixture('.github/workflows/sync-knowledge-public-v1.yml');
-const infrastructureSyncWorkflow = fixture('.github/workflows/sync-infra-public-v2.yml');
 
 test('verification discovers nested edge and infrastructure tests', () => {
   assert.equal(packageJson.scripts['test:edge'], "tsx --test 'edge/**/*.test.ts'");
@@ -114,35 +112,18 @@ test('staging promotion refreshes the exact pinned private RuntimeBinding before
   assert.match(stagingBlock, /--env preview/);
 });
 
-test('knowledge producer publication updates only its immutable consumer lock through a protected PR', () => {
-  assert.match(knowledgeSyncWorkflow, /knowledge-public-v1-published/);
-  assert.match(knowledgeSyncWorkflow, /automation\/knowledge-public-v1-sync/);
-  assert.match(knowledgeSyncWorkflow, /actions: write/);
-  assert.match(knowledgeSyncWorkflow, /artifact_sha256/);
-  assert.match(knowledgeSyncWorkflow, /manifest_sha256/);
-  assert.match(knowledgeSyncWorkflow, /gh release download/);
-  assert.match(knowledgeSyncWorkflow, /git add data-products\/knowledge-public-v1\.lock\.json/);
-  assert.doesNotMatch(knowledgeSyncWorkflow, /git ls-tree HEAD thought-forest/);
-  assert.doesNotMatch(knowledgeSyncWorkflow, /git submodule/);
-  assert.match(knowledgeSyncWorkflow, /gh pr create/);
-  assert.match(knowledgeSyncWorkflow, /actions\/runs\/\$run_id\/approve/);
-  assert.match(knowledgeSyncWorkflow, /gh run watch "\$run_id"/);
-});
-
-test('infrastructure legacy sync is a manual alias to the single generic lock-only path', () => {
-  assert.match(
-    infrastructureSyncWorkflow,
-    /uses: \.\/\.github\/workflows\/sync-data-products\.yml/,
-  );
-  assert.match(infrastructureSyncWorkflow, /product: infra-public-v2/);
-  assert.match(infrastructureSyncWorkflow, /reconcile: true/);
+test('current consumer shares the verified immutable public-data workflow', () => {
+  const workflow = fixture('.github/workflows/sync-data-products.yml');
+  assert.match(workflow, /data-product-published/);
+  assert.match(workflow, /approve-pr-ci\.ts/);
   assert.doesNotMatch(
-    infrastructureSyncWorkflow,
-    /schedule:|repository_dispatch:|checkout|export_infra|source_sha|git push/,
+    workflow,
+    /export[_-]knowledge|repository: BakerSean168\/personal-digital-system/,
   );
-  const prepare = fixture('scripts/data-products/prepare-infra-public-v2.sh');
-  const fetch = fixture('scripts/data-products/fetch-infra-public-v2.sh');
-  for (const raw of [prepare, fetch]) {
+  for (const raw of [
+    fixture('scripts/data-products/prepare-infra-public-v2.sh'),
+    fixture('scripts/data-products/fetch-infra-public-v2.sh'),
+  ]) {
     assert.match(raw, /prepare-infra-public-v2\.ts/);
     assert.doesNotMatch(raw, /producer-root|export_infra|python|git -C|gh release download/);
   }

@@ -1,9 +1,8 @@
-> 分支实施状态：v6 已实施、未发布；生产仍运行 v5 契约与 pds-catalog-v1 钉版。PDS 尚未完成退役。
+> 当前生产状态：Delivery v6 已在 `v0.17.1` 发布并完成 Cloudflare Production 部署（2026-11-20）；不再消费旧 PDS catalog。
 
 # Digital Biome 系统架构
 
-> 状态基线：2026-11-19（PDS 退役与 v6 工作树）
-> 本文描述当前实现的架构；v6 尚未部署生产，需先完成 Staging 验收。
+> 状态基线：2026-11-21（以已发布 v6 Release 为准）。
 
 ## 1. 系统定位
 

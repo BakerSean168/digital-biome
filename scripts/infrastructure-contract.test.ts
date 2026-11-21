@@ -51,15 +51,13 @@ test('Digital Biome no longer owns infrastructure fact tables', () => {
     path.resolve('src/components/assets/InfrastructureShowcase.astro'),
     'utf8',
   );
-  const legacyTopology = fs.readFileSync(
-    path.resolve('src/data/infrastructure/family-topology.ts'),
-    'utf8',
-  );
-
   assert.doesNotMatch(showcase, /const\s+vpsNodes\s*[:=]/);
   assert.match(showcase, /Personal Infrastructure → infra-public-v2/);
-  assert.match(legacyTopology, /familyTopology:\s*TopologyFlow\[\]\s*=\s*\[\]/);
-  assert.doesNotMatch(legacyTopology, /Azure Japan|Aliyun Chengdu|N100 PVE 主机/);
+  assert.equal(
+    fs.existsSync(path.resolve('src/data/infrastructure/family-topology.ts')),
+    false,
+    'old duplicate infrastructure topology must not reappear',
+  );
 });
 
 test('the tracked subscription snapshot prevents an empty dashboard build', () => {

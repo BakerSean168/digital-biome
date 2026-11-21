@@ -134,7 +134,7 @@ Read:
 
 Thought Forest owns knowledge, project records and personal Uses notes. Personal Infrastructure owns hosts, services, deployments and recovery. Digital Biome consumes only `knowledge-public-v1`, `infra-public-v2` and the protected runtime binding; it owns presentation and runtime behavior.
 
-v6 is implemented on this branch but has not been released. Production still uses the v5 contract and the pinned pds-catalog-v1 publication; PDS retirement is pending Staging acceptance and a later release.
+Delivery v6 is active in production (Release `v0.17.1`, deployed 2026-11-20). Its manifest pins `knowledge-public-v1`, `infra-public-v2`, and `digital-biome-private-infrastructure-v1`; the old PDS catalog is no longer consumed.
 
 That separation is intentional:
 

@@ -1,5 +1,4 @@
 import infraProjectionData from '../data/infrastructure/infra-public-v2.json';
-import type { TopologyNode } from '../data/infrastructure/family-topology';
 import {
   parseInfraPublicV2,
   type InfraPublicV2,
@@ -19,8 +18,15 @@ export interface ResolvedInfrastructureResource extends InfrastructureResource {
   href: string;
 }
 
-// Compatibility types for presentation components that no longer own infrastructure facts.
-export interface ResolvedTopologyNode extends TopologyNode {
+/** Display-only node for the active asset sub-topology component. */
+export interface ResolvedTopologyNode {
+  id: string;
+  title: string;
+  kind: 'external' | 'network' | 'host' | 'hypervisor' | 'vm' | 'service' | 'tool';
+  description: string;
+  assetId?: string;
+  status?: 'active' | 'planned' | 'internal';
+  chips?: string[];
   href?: string;
   primaryUrl?: string;
   monitorUrl?: string;
