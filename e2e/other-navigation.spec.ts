@@ -75,6 +75,8 @@ test('Other tabs fit mobile and original individual routes still resolve', async
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/other/?ui=gui#defaults');
   await expect(page.locator('#defaults [data-object-browser]')).toBeVisible();
+  // Native scrollWidth rounds to whole pixels; allow subpixel edge clipping.
+  await expect(page.locator('[data-other-tab="defaults"]')).toBeInViewport({ ratio: 0.99 });
   const layout = await page.evaluate(() => ({
     documentWidth: document.body.scrollWidth,
     contentWidth: document.getElementById('site-content')?.scrollWidth ?? Infinity,

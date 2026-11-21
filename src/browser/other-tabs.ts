@@ -4,6 +4,17 @@ export function initOtherTabs(): void {
   const tabs = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-other-tab]'));
   const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-other-panel]'));
 
+  function revealActiveTab() {
+    const activeTab = tabs.find((tab) => tab.getAttribute('aria-current') === 'true');
+    const tabList = activeTab?.closest<HTMLElement>('[data-other-tabs]');
+    if (!activeTab || !tabList || tabList.scrollWidth <= tabList.clientWidth) return;
+    const tabBounds = activeTab.getBoundingClientRect();
+    const listBounds = tabList.getBoundingClientRect();
+    if (tabBounds.left < listBounds.left) tabList.scrollLeft -= listBounds.left - tabBounds.left;
+    else if (tabBounds.right > listBounds.right)
+      tabList.scrollLeft += tabBounds.right - listBounds.right;
+  }
+
   function activateOtherTab(forceActivate = false) {
     const requested = location.hash.slice(1);
     const active = panels.find((panel) => panel.id === requested)?.id ?? 'ai';
@@ -19,6 +30,7 @@ export function initOtherTabs(): void {
     for (const tab of tabs) {
       tab.setAttribute('aria-current', String(tab.dataset.otherTab === active));
     }
+    revealActiveTab();
   }
   for (const tab of tabs) {
     tab.addEventListener('click', (event) => {
@@ -57,6 +69,8 @@ export function initOtherTabs(): void {
       main.scrollIntoView({ block: 'start' });
     });
 
+  document.addEventListener('biome:ui-mode', revealActiveTab);
+  window.addEventListener('resize', revealActiveTab);
   window.addEventListener('popstate', () => activateOtherTab());
   window.addEventListener('hashchange', () => activateOtherTab());
   activateOtherTab();

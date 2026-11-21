@@ -53,9 +53,7 @@ const resourceTabs = [
         <span data-ui-only="tui" class="font-mono">
           {i + 1} {tab.label}
         </span>
-        <span data-ui-only="gui">
-          {tab.title} <span class="hidden font-mono text-xs sm:inline">{tab.label}</span>
-        </span>
+        <span data-ui-only="gui">{tab.title}</span>
       </a>
     ))}
   </nav>
