@@ -1,0 +1,114 @@
+---
+import TerminalLayout from '../../layouts/TerminalLayout.astro';
+import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
+import AuthoredPageContent from '../../components/site/AuthoredPageContent.astro';
+import FriendsContent from '../../components/site/FriendsContent.astro';
+import { getAuthoredPage } from '../../repositories/site-page-repository';
+import { getResourceCollection } from '../../repositories/resource-collections-repository';
+import { OTHER_TABS } from '../../config/other-pages';
+
+const [ai, ideas, canon, colophon] = await Promise.all([
+  getAuthoredPage('ai'),
+  getAuthoredPage('ideas'),
+  getAuthoredPage('canon'),
+  getAuthoredPage('colophon'),
+]);
+const resourceTabs = [
+  {
+    id: 'blogroll',
+    label: '阅读与推荐的博客',
+    items: getResourceCollection('blogroll'),
+    empty: '这里会整理长期阅读或推荐的个人博客，内容后续补充。',
+  },
+  {
+    id: 'carry',
+    label: '随身设备',
+    items: getResourceCollection('carry'),
+    empty: '这里会列出平时随身携带的物品与设备，内容后续补充。',
+  },
+  {
+    id: 'defaults',
+    label: '按用途整理的默认工具',
+    items: getResourceCollection('defaults'),
+    empty: '这里会按用途整理默认使用的软件与工具，内容后续补充。',
+  },
+];
+---
+
+<TerminalLayout browser title="Other" description="更多 Slash Pages。">
+  <h1 class="sr-only">Other / 其他页面</h1>
+  <nav
+    aria-label="Other 分类"
+    class="content-tabs mb-3 flex flex-nowrap gap-3 overflow-x-auto sm:flex-wrap sm:overflow-visible"
+    data-other-tabs
+  >
+    {OTHER_TABS.map((tab, i) => (
+      <a
+        href={'#' + tab.id}
+        data-other-tab={tab.id}
+        data-terminal-tab={i + 1}
+        aria-current={i === 0 ? 'true' : 'false'}
+        class="shrink-0 whitespace-nowrap border border-border px-3 py-0.5 text-muted-foreground aria-[current=true]:border-primary aria-[current=true]:text-primary"
+      >
+        <span data-ui-only="tui" class="font-mono">
+          {i + 1} {tab.label}
+        </span>
+        <span data-ui-only="gui">
+          {tab.title} <span class="hidden font-mono text-xs sm:inline">{tab.label}</span>
+        </span>
+      </a>
+    ))}
+  </nav>
+
+  <section id="ai" data-other-panel data-other-section="ai" class="mb-8 scroll-mt-5">
+    <AuthoredPageContent heading="h2" name="ai" page={ai} fallbackTitle="AI" />
+  </section>
+  <section id="ideas" data-other-panel data-other-section="ideas" class="mb-8 scroll-mt-5" hidden>
+    <AuthoredPageContent heading="h2" name="ideas" page={ideas} fallbackTitle="Ideas" />
+  </section>
+  <section id="canon" data-other-panel data-other-section="canon" class="mb-8 scroll-mt-5" hidden>
+    <AuthoredPageContent heading="h2" name="canon" page={canon} fallbackTitle="Canon" />
+  </section>
+  <section
+    id="colophon"
+    data-other-panel
+    data-other-section="colophon"
+    class="mb-8 scroll-mt-5"
+    hidden
+  >
+    <AuthoredPageContent heading="h2" name="colophon" page={colophon} fallbackTitle="Colophon" />
+  </section>
+  <section
+    id="friends"
+    data-other-panel
+    data-other-section="friends"
+    class="mb-8 scroll-mt-5"
+    hidden
+  >
+    <FriendsContent heading="h2" />
+  </section>
+  {resourceTabs.map((group) => (
+    <section
+      id={group.id}
+      data-other-panel
+      data-other-section={group.id}
+      class="mb-8 scroll-mt-5"
+      hidden
+    >
+      <ObjectBrowser
+        items={group.items.slice(0, 16)}
+        total={group.items.length}
+        catalog={group.items.length > 16 ? '/data/terminal/' + group.id + '.json' : undefined}
+        autoFill
+        queryParam="facet"
+        label={group.label}
+        contextPath={'/other#' + group.id}
+        emptyMessage={group.empty}
+      />
+    </section>
+  ))}
+  <script>
+    import { initOtherTabs } from '../../browser/other-tabs';
+    initOtherTabs();
+  </script>
+</TerminalLayout>

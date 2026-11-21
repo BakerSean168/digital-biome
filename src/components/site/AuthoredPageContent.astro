@@ -1,0 +1,26 @@
+---
+import { render } from 'astro:content';
+import type { getAuthoredPage, AuthorPageName } from '../../repositories/site-page-repository';
+
+interface Props {
+  name: AuthorPageName;
+  heading?: 'h1' | 'h2';
+  fallbackTitle: string;
+  page: Awaited<ReturnType<typeof getAuthoredPage>>;
+}
+const { name, fallbackTitle, page, heading: Heading = 'h1' } = Astro.props;
+const Content = page ? (await render(page.entry)).Content : null;
+---
+
+<article data-authored-page={name} data-reading-scroll class="mx-auto w-full max-w-3xl">
+  <Heading class="mb-6 text-2xl font-semibold">{page?.title ?? fallbackTitle}</Heading>
+  {page && Content ? (
+    <div class="prose prose-neutral dark:prose-invert max-w-none">
+      <Content />
+    </div>
+  ) : (
+    <p data-authored-page-empty class="text-sm text-muted-foreground">
+      该页面尚未发布公开内容。
+    </p>
+  )}
+</article>

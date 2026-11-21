@@ -81,6 +81,18 @@ function buildStaticGraph(): Map<string, string[]> {
 const graph = buildStaticGraph();
 const relative = (file: string) => path.relative(ROOT, file).replaceAll(path.sep, '/');
 
+function transitiveImports(file: string): Set<string> {
+  const seen = new Set<string>();
+  const pending = [...(graph.get(file) ?? [])];
+  while (pending.length) {
+    const imported = pending.pop()!;
+    if (seen.has(imported)) continue;
+    seen.add(imported);
+    pending.push(...(graph.get(imported) ?? []));
+  }
+  return seen;
+}
+
 test('public pages share TerminalLayout and catalog pages retain ObjectBrowser', () => {
   for (const route of [
     'src/pages/index.astro',
@@ -89,12 +101,15 @@ test('public pages share TerminalLayout and catalog pages retain ObjectBrowser',
     'src/pages/projects/index.astro',
     'src/pages/blog/index.astro',
     'src/pages/friends.astro',
+    'src/pages/other/index.astro',
   ]) {
     const imports = graph.get(path.join(ROOT, route))?.map(relative) ?? [];
     assert.ok(imports.includes('src/layouts/TerminalLayout.astro'), route + ' lost TerminalLayout');
     if (route !== 'src/pages/index.astro')
       assert.ok(
-        imports.includes('src/components/terminal/ObjectBrowser.astro'),
+        transitiveImports(path.join(ROOT, route)).has(
+          path.join(ROOT, 'src/components/terminal/ObjectBrowser.astro'),
+        ),
         route + ' lost ObjectBrowser',
       );
     else
