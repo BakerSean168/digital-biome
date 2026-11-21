@@ -5,6 +5,15 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.17.2](https://github.com/BakerSean168/digital-biome/compare/v0.17.1...v0.17.2) (2026-11-21)
+
+### Maintenance
+
+* **site:** retire unused public-data sync lanes, old route redirects, and stale v5 plans ([#290](https://github.com/BakerSean168/digital-biome/pull/290)).
+* **data:** pin current Thought Forest knowledge-public-v1 publication ([#291](https://github.com/BakerSean168/digital-biome/pull/291)).
+* **data:** pin current Personal Infrastructure infra-public-v2 publication ([#292](https://github.com/BakerSean168/digital-biome/pull/292)).
+* **quality:** format all remaining grandfathered files and remove format waivers ([#293](https://github.com/BakerSean168/digital-biome/pull/293)).
+
 ## [0.17.1](https://github.com/BakerSean168/digital-biome/compare/v0.17.0...v0.17.1) (2026-11-20)
 
 
