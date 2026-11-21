@@ -5,6 +5,13 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.18.0](https://github.com/BakerSean168/digital-biome/compare/v0.17.2...v0.18.0) (2026-11-21)
+
+
+### Features
+
+* **site:** publish Other slash pages and current host inventory ([#296](https://github.com/BakerSean168/digital-biome/issues/296)) ([9b215bd](https://github.com/BakerSean168/digital-biome/commit/9b215bd8a65884f2585264a514ee709c63a88de5))
+
 ## [0.17.2](https://github.com/BakerSean168/digital-biome/compare/v0.17.1...v0.17.2) (2026-11-21)
 
 ### Maintenance
