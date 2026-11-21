@@ -86,23 +86,9 @@ the same Release reader. It does not perform downstream source/index generation.
   Missing permission, unapproved CI, failure, timeout, or head movement fail
   closed. Opt-in auto-merge additionally verifies the immutable Release and
   performs an expected-SHA merge only after GitHub required checks pass.
-- `sync-knowledge-public-v1.yml` retains its legacy event/manual inputs and branch
-  for rollback. Its final lock generation now also verifies through the common
-  reader so it cannot downgrade the Protocol-v1 lock. Avoid dual legacy/standard
-  dispatch during activation; they intentionally remain separate PR lanes.
-
-- `sync-infra-public-v2.yml` is now only a manual alias to shared reconciliation.
-  It has no schedule, old event listener, source checkout/exporter or second PR lane.
-  Until Personal Infrastructure PR #112 is merged/activated, shared reconciliation
-  recovers legacy/missed notifications from existing published semantic Releases.
-
-Before activation, this consumer must reach the default branch, the reviewed
-producer Protocol-v1 branches must be activated, and their consumer dispatch
-credentials must be valid. Verify a real standard dispatch and
-reconciliation run, lock-only PR, and protected exact-head CI in GitHub. Local
-shadow reads do not prove these hosted write/CI operations. Both automatic lanes
-remain disabled until rollout evidence and credentials are ready. Implementation
-and activation status are tracked in `docs/data-product-takeover-status.md`.
+- Only `sync-data-products.yml` accepts active `data-product-published` producer notifications; `reconcile-data-products.yml` recovers missed events. Deprecated per-product workflows are removed.
+- Current lock-only updates verify immutable producer Releases and protected exact-head CI. Repository variables control automated PR merge and content deployment; inspect their current values rather than assuming an activation state.
+- Delivery v6 is deployed in Release `v0.17.1`. It pins two public data products and one independent private RuntimeBinding. See `docs/data-product-delivery-v6.md`.
 
 ## Infra prepare and scope boundary
 

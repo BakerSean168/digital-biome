@@ -65,42 +65,24 @@ test('only generic sync handles the standard event, with manual exact recovery a
   );
 });
 
-test('knowledge legacy rollback trigger stays separate and cannot write an obsolete schema lock', () => {
-  const raw = read('sync-knowledge-public-v1.yml');
-  assert.deepEqual(parse(raw).on.repository_dispatch.types, ['knowledge-public-v1-published']);
-  assert.match(raw, /update-lock\.ts shadow knowledge-public-v1/);
-  assert.doesNotMatch(raw, /schemaVersion: 1/);
-});
-
-for (const product of ['infra-public-v2']) {
-  test(`legacy ${product} entrypoint is only a manual alias to shared reconciliation, not a second writer`, () => {
-    const raw = read(`sync-${product}.yml`);
-    const legacy = parse(raw);
-    assert.deepEqual(Object.keys(legacy.on), ['workflow_dispatch']);
-    assert.equal(legacy.jobs.reconcile.uses, './.github/workflows/sync-data-products.yml');
-    assert.deepEqual(legacy.jobs.reconcile.with, { product, reconcile: true });
+test('data-product preparation remains restricted to validated immutable locks', () => {
+  for (const name of ['check.yml', 'candidate-publish.yml']) {
+    const workflow = parse(read(name));
+    const job = workflow.jobs.check ?? workflow.jobs['build-candidate'];
+    const text = JSON.stringify(job);
     assert.doesNotMatch(
-      raw,
-      /schedule:|repository_dispatch:|checkout|export_infra|export_pds|source_sha|git push/,
+      text,
+      /producer-root|personal-infrastructure-public|export_infra|export_pds|pip install|PDS_INFRA_PUBLIC_DEPLOY_KEY|PDS_CATALOG_DEPLOY_KEY|repository: BakerSean168\/personal-digital-system/,
     );
-    for (const name of ['check.yml', 'candidate-publish.yml']) {
-      const workflow = parse(read(name));
-      const job = workflow.jobs.check ?? workflow.jobs['build-candidate'];
-      const text = JSON.stringify(job);
-      assert.doesNotMatch(
-        text,
-        /producer-root|personal-infrastructure-public|export_infra|export_pds|pip install|PDS_INFRA_PUBLIC_DEPLOY_KEY|PDS_CATALOG_DEPLOY_KEY|repository: BakerSean168\/personal-digital-system/,
-      );
-      const prepare = job.steps.find(
-        (step: { run?: string }) => step.run === 'pnpm sync:data-products',
-      );
-      assert.equal(prepare.env.GH_TOKEN, `\${{ steps.vault-token.outputs.token }}`);
-      const token = job.steps.find((step: { id?: string }) => step.id === 'vault-token');
-      assert.doesNotMatch(token.with.repositories, /personal-digital-system/);
-      assert.equal(token.with['permission-contents'], 'read');
-    }
-  });
-}
+    const prepare = job.steps.find(
+      (step: { run?: string }) => step.run === 'pnpm sync:data-products',
+    );
+    assert.equal(prepare.env.GH_TOKEN, `\${{ steps.vault-token.outputs.token }}`);
+    const token = job.steps.find((step: { id?: string }) => step.id === 'vault-token');
+    assert.doesNotMatch(token.with.repositories, /personal-digital-system/);
+    assert.equal(token.with['permission-contents'], 'read');
+  }
+});
 
 test('actual workflow route command validates event/manual/reconcile before credentials and emits only registry policy', () => {
   const workflow = parse(read('sync-data-products.yml'));
