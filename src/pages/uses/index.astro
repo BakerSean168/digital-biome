@@ -1,6 +1,7 @@
 ---
 import TerminalLayout from '../../layouts/TerminalLayout.astro';
 import ObjectBrowser from '../../components/terminal/ObjectBrowser.astro';
+import DashboardContent from '../../components/site/DashboardContent.astro';
 import { terminalInfrastructure, terminalExternal } from '../../repositories/terminal-repository';
 import { usesHardwareObjects, usesSoftwareObjects } from '../../view-models/uses-personal-objects';
 
@@ -41,6 +42,7 @@ const tabs = [
   { id: 'hardware', label: 'hardware', title: '硬件设备' },
   { id: 'software', label: 'software', title: '日常软件' },
   ...groups.map(({ id, label, title }) => ({ id, label, title })),
+  { id: 'dashboard', label: 'dashboard', title: '快捷访问' },
 ];
 ---
 
@@ -50,14 +52,9 @@ const tabs = [
   description="我实际使用的硬件、软件、网站、自托管服务以及家庭网络与服务器。"
 >
   <h1 class="sr-only">Uses / 我在使用的东西</h1>
-  <div class="mb-3 flex justify-end">
-    <a href="/dashboard" class="text-sm text-primary hover:underline">
-      /dashboard · 快捷访问
-    </a>
-  </div>
   <nav
     aria-label="Uses 分类"
-    class="content-tabs mb-3 flex flex-nowrap gap-3 overflow-x-auto sm:flex-wrap sm:overflow-visible"
+    class="content-tabs mb-3 flex shrink-0 flex-nowrap gap-3 overflow-x-auto sm:flex-wrap sm:overflow-visible"
     data-uses-tabs
   >
     {tabs.map((tab, i) => (
@@ -139,6 +136,16 @@ const tabs = [
     </section>
   ))}
 
+  <section
+    id="dashboard"
+    data-uses-panel
+    data-uses-section="dashboard"
+    class="mb-8 min-w-0 scroll-mt-5"
+    hidden
+  >
+    <DashboardContent />
+  </section>
+
   <script>
     const tabs = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-uses-tab]'));
     const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-uses-panel]'));
@@ -148,6 +155,29 @@ const tabs = [
       'uses-services': 'services',
       'uses-websites': 'external',
     };
+    function revealActiveTab() {
+      const selected = tabs.find((tab) => tab.getAttribute('aria-current') === 'true');
+      const nav = selected?.closest<HTMLElement>('[data-uses-tabs]');
+      if (!selected || !nav || nav.scrollWidth <= nav.clientWidth) return;
+      const bounds = selected.getBoundingClientRect();
+      const container = nav.getBoundingClientRect();
+      if (bounds.left < container.left) nav.scrollLeft -= container.left - bounds.left;
+      else if (bounds.right > container.right) nav.scrollLeft += bounds.right - container.right;
+    }
+    function updateDashboardDock() {
+      const active = !document.getElementById('dashboard')?.hidden;
+      const normalHints = document.querySelector<HTMLElement>('[data-uses-normal-hints]');
+      const dashboardHints = document.querySelector<HTMLElement>('[data-uses-dashboard-hints]');
+      if (normalHints) normalHints.hidden = active;
+      if (dashboardHints) dashboardHints.hidden = !active;
+      if (!active) return;
+      const path = document.querySelector<HTMLElement>('[data-terminal-path]');
+      if (path) {
+        path.textContent =
+          document.documentElement.dataset.ui === 'gui' ? '/uses#dashboard' : '~/uses#dashboard';
+        path.title = path.textContent;
+      }
+    }
     function activate() {
       const requested = location.hash.slice(1);
       const normalized = aliases[requested] ?? requested;
@@ -166,6 +196,8 @@ const tabs = [
       tabs.forEach((tab) =>
         tab.setAttribute('aria-current', String(tab.dataset.usesTab === active)),
       );
+      revealActiveTab();
+      updateDashboardDock();
     }
     tabs.forEach((tab) =>
       tab.addEventListener('click', (event) => {
@@ -177,6 +209,11 @@ const tabs = [
         activate();
       }),
     );
+    window.addEventListener('resize', revealActiveTab);
+    document.addEventListener('biome:ui-mode', () => {
+      revealActiveTab();
+      updateDashboardDock();
+    });
     window.addEventListener('popstate', activate);
     window.addEventListener('hashchange', activate);
     activate();

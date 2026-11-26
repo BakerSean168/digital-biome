@@ -47,7 +47,7 @@ export function activeNavigation(path: string): string | undefined {
   if (route === '/') return '/';
   if (/^\/(notes|blog)(\/|$)/.test(route) || route === '/about/tags') return '/notes';
   if (/^\/projects(\/|$)/.test(route)) return '/projects';
-  if (/^\/(uses|infrastructure|dashboard)(\/|$)/.test(route)) return '/uses';
+  if (/^\/(uses|infrastructure)(\/|$)/.test(route)) return '/uses';
   if (route === '/about') return '/about';
   if (route === '/now') return '/now';
   if (/^\/(other|ai|ideas|canon|colophon|friends|blogroll|carry|defaults)(\/|$)/.test(route))
@@ -61,7 +61,6 @@ export function pageMode(path: string): string {
   if (route === '/friends') return 'FRIENDS';
   if (route === '/login') return 'ACCESS';
   if (route === '/now') return 'NOW';
-  if (route === '/dashboard') return 'DASHBOARD';
   if (route === '/other') return 'OTHER';
   return (
     PRIMARY_NAVIGATION.find((item) => item.href === activeNavigation(route))?.title.toUpperCase() ??
@@ -112,10 +111,10 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
   {
     type: 'cmd',
     label: 'NAV',
-    title: 'Dashboard',
+    title: 'Uses / Dashboard',
     desc: '常用网站与个人维护入口',
-    href: '/dashboard',
-    alias: ['/dashboard', 'dashboard', '快捷访问', '工作台'],
+    href: '/uses#dashboard',
+    alias: ['/uses#dashboard', '/dashboard', 'dashboard', '快捷访问', '工作台'],
   },
   {
     type: 'cmd',

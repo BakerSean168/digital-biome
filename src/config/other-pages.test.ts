@@ -5,11 +5,11 @@ import { HOME_SLASH_LINKS } from './home-profile';
 import { PRIMARY_NAVIGATION, SEARCH_NAVIGATION_INDEX } from './navigation-policy';
 
 test('the home lists every Slash Page and shows section plus local tab shortcuts', () => {
-  assert.equal(HOME_SLASH_LINKS.length, 15);
+  assert.equal(HOME_SLASH_LINKS.length, 14);
   assert.ok(!HOME_SLASH_LINKS.some((item) => item.href === '/other'));
-  assert.ok(HOME_SLASH_LINKS.some((item) => item.href === '/dashboard'));
+  assert.ok(!HOME_SLASH_LINKS.some((item) => item.href === '/dashboard'));
   assert.deepEqual(
-    HOME_SLASH_LINKS.slice(7).map(({ href, label, shortcut }) => ({ href, label, shortcut })),
+    HOME_SLASH_LINKS.slice(6).map(({ href, label, shortcut }) => ({ href, label, shortcut })),
     OTHER_TABS.map(({ id }, index) => ({
       href: '/other#' + id,
       label: '/' + id,
@@ -23,7 +23,7 @@ test('the home lists every Slash Page and shows section plus local tab shortcuts
       { label: '/notes', shortcut: 'g l 2' },
     ],
   );
-  assert.equal(new Set(HOME_SLASH_LINKS.map((item) => item.href)).size, 15);
+  assert.equal(new Set(HOME_SLASH_LINKS.map((item) => item.href)).size, 14);
   assert.ok(!HOME_SLASH_LINKS.some(({ href }) => href.includes('bookmarks')));
 });
 

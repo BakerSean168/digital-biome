@@ -96,7 +96,7 @@ test('architecture route map matches src/pages exactly and retired routes stay a
   for (const route of documented) {
     assert.ok(routes.includes(route), `architecture §3.0 documents missing route ${route}`);
   }
-  for (const retired of ['/observability', '/discover', '/about/refactor']) {
+  for (const retired of ['/dashboard', '/observability', '/discover', '/about/refactor']) {
     assert.ok(!routes.includes(retired), `${retired} is a retired route`);
     assert.ok(!existsSync(path.join(ROOT, 'src/pages', retired)), `${retired}/ is retired`);
   }

@@ -64,11 +64,10 @@ flowchart LR
 | `/blogroll`, `/carry`, `/defaults` | Explicit Obsidian resource queries with shared ObjectBrowser |
 | `/colophon`, `/ai`, `/ideas`, `/canon` | Public authored Markdown or an empty state |
 | `/other` | Eight public Slash Pages grouped by local tabs with deep links and keyboard navigation |
-| `/dashboard` | Public Markdown-authored website workbench with text filtering, keyboard selection and group opening |
 
 `/other` groups the eight public Slash Pages: AI, Ideas, Canon, Colophon, Friends, Blogroll, Carry and Defaults. Home links to each `/other#<tab>` and shows `g o <number>`; `g o` enters Other, then a digit selects a tab. Other is the seventh primary navigation item. `/bookmarks` is removed; Uses → Websites (`/uses#external`) remains the website collection.
 
-`/dashboard` uses only the public projection of Thought Forest `pages/dashboard.md`. Markdown heading groups and link order are preserved; / or i focuses the local filter, Enter selects the first match, H/J/K/L or arrow keys move, Enter opens, Esc returns to the filter. Group opening requests every direct link of that heading, not its subsections or just the filtered matches.
+`/uses#dashboard` (Uses tab 7; `g u 7`) uses only the public projection of Thought Forest `pages/dashboard.md`. Markdown heading groups and link order are preserved; / or i focuses the local filter, Enter selects the first match, H/J/K/L or arrow keys move, Enter opens, Esc returns to the filter. Group opening requests every direct link of that heading, not its subsections or just the filtered matches.
 
 已退役且由契约测试阻止回归：旧 Dashboard/BiomeTree UI 与 `DashboardLayout`、Observability 页面、`/discover`、`/about/refactor`。
 

@@ -9,15 +9,21 @@ const source = fs.existsSync(sourcePath)
   ? parsePublishedSitePage(fs.readFileSync(sourcePath, 'utf8'), sourcePath)
   : undefined;
 
-test('Dashboard is a public Slash Page with links ordered by the authored Markdown', async ({
-  page,
-}) => {
+test('Dashboard is Uses tab 7 with links ordered by the authored Markdown', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?ui=gui');
-  await page
-    .locator('section[data-ui-only="gui"] [data-home-slash-links] a[href^="/dashboard"]')
-    .click();
-  await expect(page).toHaveURL(/\/dashboard\/?(?:\?ui=gui)?$/);
+  const home = page.locator('section[data-ui-only="gui"] [data-home-slash-links]');
+  await expect(home.locator('a[href^="/dashboard"]')).toHaveCount(0);
+  await home.locator('a[href^="/uses"]').click();
+  await expect(page.locator('[data-uses-tab]')).toHaveCount(7);
+  const dashboardTab = page.locator('[data-uses-tab="dashboard"]');
+  await expect(dashboardTab).toHaveAttribute('data-terminal-tab', '7');
+  await expect(page.locator('html')).toHaveAttribute('data-shortcuts', 'on');
+  await page.keyboard.press('7');
+  await expect(page).toHaveURL(/\/uses\/?(?:\?ui=gui)?#dashboard$/);
+  await expect(dashboardTab).toHaveAttribute('aria-current', 'true');
+  await expect(dashboardTab).toBeInViewport();
+  await expect(page.locator('#hardware')).toBeHidden();
   const article = page.locator('[data-authored-page="dashboard"]');
   await expect(article).toBeVisible();
   if (!source) {
@@ -57,7 +63,7 @@ test('Dashboard filtering, keyboard focus, and group opening work without global
     return;
   }
   await page.setViewportSize({ width: 1200, height: 900 });
-  await page.goto('/dashboard?ui=gui');
+  await page.goto('/uses/?ui=gui#dashboard');
   const root = page.locator('[data-authored-page="dashboard"]');
   const search = root.getByRole('searchbox', { name: '搜索网站' });
   const visible = root.locator('[data-dashboard-target]:visible');
@@ -125,7 +131,7 @@ test('Dashboard navigation follows the responsive grid and ignores IME compositi
 }) => {
   test.skip(!source, 'The locked producer snapshot predates the Dashboard content');
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/dashboard?ui=tui');
+  await page.goto('/uses/?ui=tui#dashboard');
   const root = page.locator('[data-authored-page="dashboard"]');
   const search = root.getByRole('searchbox');
   const links = root.locator('[data-dashboard-target]:visible');
@@ -141,4 +147,53 @@ test('Dashboard navigation follows the responsive grid and ignores IME compositi
   await page.keyboard.press('k');
   await expect(search).toBeFocused();
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('Uses tab 7 integrates with keyboard commands, browser history and global search', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/?ui=tui');
+  await page.keyboard.press('g');
+  await page.keyboard.press('u');
+  await expect(page).toHaveURL(/\/uses\/?\?ui=tui$/);
+  await expect(page.locator('[data-uses-tab="hardware"]')).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('html')).toHaveAttribute('data-shortcuts', 'on');
+  await page.keyboard.press('7');
+  await expect(page.locator('#dashboard')).toBeVisible();
+  await expect(page.locator('[data-uses-dashboard-hints]')).not.toHaveAttribute('hidden', '');
+  await expect(page.locator('[data-terminal-path]')).toHaveText('~/uses#dashboard');
+  await page.keyboard.press('4');
+  await expect(page.locator('#external')).toBeVisible();
+  await expect(page.locator('#dashboard')).toBeHidden();
+  await page.keyboard.press('/');
+  await expect(page.locator('#search-modal')).toBeVisible();
+  await page.locator('#cmd-input').fill('/dashboard');
+  await page.getByRole('option').filter({ hasText: 'Uses / Dashboard' }).click();
+  await expect(page).toHaveURL(/\/uses\/?\?ui=tui#dashboard$/);
+  await expect(page.locator('#search-modal')).not.toBeVisible();
+  await expect(page.locator('#dashboard')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#external')).toBeVisible();
+  await page.goForward();
+  await expect(page.locator('#dashboard')).toBeVisible();
+  expect((await request.get('/dashboard/')).status()).toBe(404);
+});
+
+test('Dashboard scrolls within the Uses workspace on desktop', async ({ page }) => {
+  test.skip(!source, 'The locked producer snapshot predates the Dashboard content');
+  await page.setViewportSize({ width: 1200, height: 600 });
+  await page.goto('/uses/?ui=tui#dashboard');
+  const scroll = page.locator('#dashboard [data-uses-scroll]');
+  const tabs = page.locator('[data-uses-tabs]');
+  const y = (await tabs.boundingBox())?.y;
+  expect(await scroll.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(
+    true,
+  );
+  await scroll.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await expect(page.locator('[data-dashboard-search]')).toBeInViewport();
+  expect((await tabs.boundingBox())?.y).toBe(y);
+  expect(await page.locator('#site-content').evaluate((element) => element.scrollTop)).toBe(0);
 });
