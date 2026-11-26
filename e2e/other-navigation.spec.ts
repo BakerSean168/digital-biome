@@ -14,7 +14,7 @@ const OTHER_SLUGS = [
 test('Home indexes specific Slash Pages and opens the matching Other tab', async ({ page }) => {
   await page.goto('/?ui=gui');
   const home = page.locator('section[data-ui-only="gui"] [data-home-slash-links]');
-  await expect(home.locator('a')).toHaveCount(14);
+  await expect(home.locator('a')).toHaveCount(15);
   await expect(home.locator('a[href="/other"]')).toHaveCount(0);
 
   for (const [index, slug] of OTHER_SLUGS.entries()) {

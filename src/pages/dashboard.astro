@@ -1,0 +1,96 @@
+---
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { ExternalLink, Globe } from '@lucide/astro';
+import TerminalLayout from '../layouts/TerminalLayout.astro';
+import { getAuthoredPage } from '../repositories/site-page-repository';
+import { parseDashboardBody } from '../domain/site-pages/dashboard';
+import { resolveStaticWikilink } from '../domain/note-routing/static-note-catalog';
+
+const page = await getAuthoredPage('dashboard');
+const groups = page ? parseDashboardBody(page.body) : [];
+const total = groups.reduce((sum, group) => sum + group.links.length, 0);
+const favicon = (hostname: string) =>
+  /^[a-z0-9.-]+$/.test(hostname) && existsSync(resolve('public', 'favicons', hostname + '.png'))
+    ? '/favicons/' + hostname + '.png'
+    : undefined;
+---
+
+<TerminalLayout title="Dashboard" description="常用网站、服务供应商与维护入口">
+  <article data-authored-page="dashboard" class="mx-auto w-full max-w-5xl">
+    <header class="mb-6 flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-4">
+      <h1 class="text-2xl font-semibold">{page?.title ?? 'Dashboard'}</h1>
+      <span class="font-mono text-xs text-muted-foreground">{total} links</span>
+    </header>
+    {!page && (
+      <p data-authored-page-empty class="text-sm text-muted-foreground">
+        该页面尚未发布公开内容。
+      </p>
+    )}
+    {groups.map((group) => (
+      <section data-dashboard-group class:list={['mb-6', group.level === 2 ? 'mt-8' : 'mt-4']}>
+        {group.level === 2 ? (
+          <h2 class="mb-3 text-lg font-semibold">{group.title}</h2>
+        ) : (
+          <h3 class="mb-2 text-sm font-medium text-muted-foreground">{group.title}</h3>
+        )}
+        {group.links.length > 0 && (
+          <ul class="grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+            {group.links.map((item) => {
+              const icon = favicon(item.hostname);
+              const note = item.noteTarget ? resolveStaticWikilink(item.noteTarget) : undefined;
+              return (
+                <li
+                  data-dashboard-link
+                  class="flex min-w-0 items-center gap-2 border-b border-border py-2"
+                >
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="group flex min-h-10 min-w-0 flex-1 items-center gap-3 hover:text-primary"
+                  >
+                    {icon ? (
+                      <img
+                        src={icon}
+                        width="20"
+                        height="20"
+                        loading="lazy"
+                        alt=""
+                        class="shrink-0 rounded-sm"
+                      />
+                    ) : (
+                      <Globe size={20} class="shrink-0 text-muted-foreground" aria-hidden="true" />
+                    )}
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-sm font-medium">{item.title}</span>
+                      {item.description && (
+                        <span class="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                          {item.description}
+                        </span>
+                      )}
+                    </span>
+                    <ExternalLink
+                      size={13}
+                      class="shrink-0 text-muted-foreground group-hover:text-primary"
+                      aria-hidden="true"
+                    />
+                  </a>
+                  {note && (note.status === 'resolved' || note.status === 'asset') && (
+                    <a
+                      href={note.href}
+                      class="shrink-0 text-xs text-muted-foreground hover:text-primary"
+                      aria-label={item.title + ' 资源笔记'}
+                    >
+                      笔记
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    ))}
+  </article>
+</TerminalLayout>

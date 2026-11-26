@@ -18,6 +18,7 @@ export const HOME_SLASH_LINKS = [
   { href: '/projects', label: '/projects', shortcut: 'g p' },
   { href: '/blog', label: '/blog', shortcut: 'g l 1' },
   { href: '/notes', label: '/notes', shortcut: 'g l 2' },
+  { href: '/dashboard', label: '/dashboard', shortcut: '' },
   ...OTHER_TABS.map((tab, index) => ({
     href: `/other#${tab.id}`,
     label: `/${tab.id}`,
