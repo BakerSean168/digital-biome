@@ -1,7 +1,7 @@
 ---
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ExternalLink, Globe } from '@lucide/astro';
+import { ExternalLink, Globe, Search } from '@lucide/astro';
 import TerminalLayout from '../layouts/TerminalLayout.astro';
 import { getAuthoredPage } from '../repositories/site-page-repository';
 import { parseDashboardBody } from '../domain/site-pages/dashboard';
@@ -20,35 +20,86 @@ const favicon = (hostname: string) =>
   <article data-authored-page="dashboard" class="mx-auto w-full max-w-5xl">
     <header class="mb-6 flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-4">
       <h1 class="text-2xl font-semibold">{page?.title ?? 'Dashboard'}</h1>
-      <span class="font-mono text-xs text-muted-foreground">{total} links</span>
+      <span data-dashboard-count aria-live="polite" class="font-mono text-xs text-muted-foreground">
+        {total} links
+      </span>
     </header>
     {!page && (
       <p data-authored-page-empty class="text-sm text-muted-foreground">
         该页面尚未发布公开内容。
       </p>
     )}
+    {total > 0 && (
+      <div data-dashboard-controls hidden class="mb-5 space-y-2">
+        <label class="flex min-h-11 items-center gap-3 border border-border px-3 focus-within:border-primary">
+          <Search size={16} class="shrink-0 text-muted-foreground" aria-hidden="true" />
+          <input
+            data-dashboard-search
+            type="search"
+            aria-label="搜索网站"
+            placeholder="搜索名称、分类、域名或描述"
+            autocomplete="off"
+            class="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none"
+          />
+          <kbd class="text-xs text-muted-foreground">/</kbd>
+        </label>
+        <p class="text-xs leading-5 text-muted-foreground">
+          <kbd>/</kbd> 搜索 · <kbd>Enter</kbd> 选择 / 打开 · <kbd>H J K L</kbd> / 方向键移动 ·{' '}
+          <kbd>Esc</kbd> 返回搜索
+        </p>
+        <p
+          data-dashboard-empty
+          hidden
+          class="border-b border-border py-5 text-sm text-muted-foreground"
+        >
+          没有匹配的网站。
+        </p>
+        <p data-dashboard-status role="status" class="text-xs text-muted-foreground"></p>
+      </div>
+    )}
     {groups.map((group) => (
-      <section data-dashboard-group class:list={['mb-6', group.level === 2 ? 'mt-8' : 'mt-4']}>
-        {group.level === 2 ? (
-          <h2 class="mb-3 text-lg font-semibold">{group.title}</h2>
-        ) : (
-          <h3 class="mb-2 text-sm font-medium text-muted-foreground">{group.title}</h3>
-        )}
+      <section
+        data-dashboard-group
+        data-dashboard-level={group.level}
+        data-dashboard-title={group.title}
+        class:list={['mb-6', group.level === 2 ? 'mt-8' : 'mt-4']}
+      >
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          {group.level === 2 ? (
+            <h2 class="text-lg font-semibold">{group.title}</h2>
+          ) : (
+            <h3 class="text-sm font-medium text-muted-foreground">{group.title}</h3>
+          )}
+          {group.links.length > 0 && (
+            <button
+              data-dashboard-open-group
+              hidden
+              type="button"
+              aria-label={`打开 ${group.title} 本组全部网站`}
+              class="inline-flex min-h-8 items-center gap-1.5 border border-border px-2 text-xs text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <ExternalLink size={12} aria-hidden="true" />
+              全部打开 ({group.links.length})
+            </button>
+          )}
+        </div>
         {group.links.length > 0 && (
-          <ul class="grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+          <ul data-dashboard-list class="grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
             {group.links.map((item) => {
               const icon = favicon(item.hostname);
               const note = item.noteTarget ? resolveStaticWikilink(item.noteTarget) : undefined;
               return (
                 <li
                   data-dashboard-link
+                  data-dashboard-search-text={[item.title, item.description, item.href].join(' ')}
                   class="flex min-w-0 items-center gap-2 border-b border-border py-2"
                 >
                   <a
+                    data-dashboard-target
                     href={item.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="group flex min-h-10 min-w-0 flex-1 items-center gap-3 hover:text-primary"
+                    class="group flex min-h-10 min-w-0 flex-1 items-center gap-3 hover:text-primary focus-visible:bg-primary/10 focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-primary"
                   >
                     {icon ? (
                       <img
@@ -94,3 +145,8 @@ const favicon = (hostname: string) =>
     ))}
   </article>
 </TerminalLayout>
+
+<script>
+  import { initDashboard } from '../browser/dashboard-controller';
+  initDashboard();
+</script>

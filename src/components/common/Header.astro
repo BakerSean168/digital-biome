@@ -8,6 +8,7 @@ const loginNext = currentPath !== '/login' ? currentPath : '/';
 const links = PRIMARY_NAVIGATION;
 const current = activeNavigation(currentPath);
 const mode = pageMode(currentPath);
+const isDashboard = currentPath.replace(/\/$/, '') === '/dashboard';
 const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses', '/other'].includes(
   currentPath.replace(/\/$/, '') || '/',
 );
@@ -72,7 +73,12 @@ const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses', '/other'].incl
       -- {mode} --
     </span>
     <span data-dock-hints class="hidden xl:block">
-      {hasBrowser && <span>j k 移动　 ↵ 打开　</span>}/ 搜索　 g 跳转　 u 返回
+      {isDashboard ? (
+        <span>h j k l 移动　 ↵ 打开　 / 筛选　</span>
+      ) : (
+        <>{hasBrowser && <span>j k 移动　 ↵ 打开　</span>}/ 搜索　</>
+      )}
+      g 跳转　 u 返回
     </span>
     <span
       class="hidden min-w-0 truncate text-[10px] sm:inline"
@@ -192,11 +198,15 @@ const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses', '/other'].incl
   </form>
   <dl class="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-2 sm:gap-x-8">
     <dt>j / k / ↑ / ↓</dt>
-    <dd>列表中选择对象；About / Now 用 j/k 滚动</dd>
+    <dd>
+      {isDashboard
+        ? 'Dashboard 用 H/J/K/L 或方向键选择网站'
+        : '列表中选择对象；About / Now 用 j/k 滚动'}
+    </dd>
     <dt>Enter / o</dt>
     <dd>打开选择</dd>
     <dt>/ 或 Ctrl+K</dt>
-    <dd>全站搜索</dd>
+    <dd>{isDashboard ? '/ 筛选工作台；Ctrl+K 全站搜索' : '全站搜索'}</dd>
     <dt>i / f / 1–4</dt>
     <dd>筛选当前列表</dd>
     <dt>g → h / l / p / u / a / n / o</dt>

@@ -209,6 +209,9 @@ document.addEventListener('keydown', (event) => {
     if (!event.repeat) begin(event.key);
     return;
   }
+  const dashboard = document.querySelector('[data-authored-page="dashboard"]');
+  dashboard?.dispatchEvent(new CustomEvent('dashboard-keydown', { detail: event }));
+  if (event.defaultPrevented) return;
   if (event.key === '?') {
     event.preventDefault();
     help?.showModal();

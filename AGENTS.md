@@ -49,7 +49,8 @@ data-products/           # Immutable producer projection locks
 `/now` 是与 `/about`、`/uses` 同级的主导航项。
 `/other` 是第七个主导航项，分组展示 AI、Ideas、Canon、Colophon、Friends、Blogroll、Carry、Defaults。首页列出各 `/other#<tab>`，快捷键先 `g o` 进入，再按数字切换。独立 `/bookmarks` 已删除，网站集合保留在 `/uses#external`。
 `/about` 与 `/now` 的唯一文案来源为 Thought Forest `pages/about.md`、`pages/now.md`，保留稳定块引用和已公开 Blog 的句内链接。`/uses` 的个人资源由 `uses/` 的属性筛选，私有设备仅通过独立白名单摘要展示；完整服务、主机、网络目录仍由公开基础设施投影提供。所有页面沿用 TerminalLayout 的 GUI/TUI 模式，内部入口与敏感信息不可出现在公开页面。
-Retired and guarded by tests: Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
+`/dashboard` 是公开的 Markdown 网站工作台，来源仅为 Thought Forest `pages/dashboard.md` 的公开投影，支持即时搜索、H/J/K/L 与方向键导航、按组打开。
+Retired and guarded by tests: legacy Dashboard/BiomeTree UI and `DashboardLayout`, Observability, `/discover`, `/about/refactor`.
 This file and `docs/architecture.md` are the current design record.
 
 ## Commands & Development Specifications

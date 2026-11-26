@@ -41,3 +41,104 @@ test('Dashboard is a public Slash Page with links ordered by the authored Markdo
   }
   expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+test('Dashboard filtering, keyboard focus, and group opening work without global shortcut conflicts', async ({
+  page,
+  context,
+}) => {
+  if (!source) {
+    test.skip(true, 'The locked producer snapshot predates the Dashboard content');
+    return;
+  }
+  const groups = parseDashboardBody(source.body);
+  const group = groups.find((item) => item.level === 3 && item.links.length >= 2);
+  if (!group) {
+    test.skip(true, 'A multi-link group is required');
+    return;
+  }
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/dashboard?ui=gui');
+  const root = page.locator('[data-authored-page="dashboard"]');
+  const search = root.getByRole('searchbox', { name: '搜索网站' });
+  const visible = root.locator('[data-dashboard-target]:visible');
+  const section = root.locator('[data-dashboard-group]').filter({
+    has: page.getByRole('heading', { name: group.title, exact: true }),
+  });
+  await page.keyboard.press('/');
+  await expect(search).toBeFocused();
+  await expect(page.locator('#search-modal')).not.toBeVisible();
+  await search.fill(group.title);
+  await expect(section.locator('[data-dashboard-target]:visible')).toHaveCount(group.links.length);
+  await search.press('Enter');
+  await expect(visible.first()).toBeFocused();
+  await page.keyboard.press('l');
+  await expect(visible.nth(1)).toBeFocused();
+  await page.keyboard.press('h');
+  await expect(visible.first()).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(visible.nth(1)).toBeFocused();
+  // Actual navigation uses the native external anchor, in a new tab.
+  await context.route('**/*', async (route) => {
+    if (route.request().isNavigationRequest() && route.request().url() === group.links[1].href) {
+      await route.fulfill({ body: 'dashboard test destination' });
+    } else {
+      await route.continue();
+    }
+  });
+  const popup = page.waitForEvent('popup');
+  await page.keyboard.press('Enter');
+  const tab = await popup;
+  await tab.waitForLoadState();
+  await expect(tab).toHaveURL(group.links[1].href);
+  await tab.close();
+  await page.bringToFront();
+  await page.keyboard.press('Escape');
+  await expect(search).toBeFocused();
+  await expect(search).toHaveValue(group.title);
+  await search.fill(group.links[0].title);
+  // Group action still requests every direct link, not only the filtered ones.
+  await page.evaluate(() => {
+    const requests: string[] = [];
+    Object.defineProperty(window, '__dashboardOpenRequests', { value: requests });
+    window.open = (url) => {
+      requests.push(String(url));
+      return null;
+    };
+  });
+  await section.getByRole('button', { name: /本组全部网站/ }).click();
+  const requests = await page.evaluate(
+    () => (window as Window & { __dashboardOpenRequests?: string[] }).__dashboardOpenRequests,
+  );
+  expect(requests).toEqual(group.links.map((link) => link.href));
+  await expect(root.getByRole('status')).toContainText('已请求打开');
+  await search.fill('no-dashboard-match-7e9db');
+  await expect(visible).toHaveCount(0);
+  await expect(root.locator('[data-dashboard-empty]')).toBeVisible();
+  await search.press('Enter');
+  await expect(search).toBeFocused();
+  await search.press('Escape');
+  await expect(visible).toHaveCount(groups.reduce((sum, item) => sum + item.links.length, 0));
+});
+
+test('Dashboard navigation follows the responsive grid and ignores IME composition', async ({
+  page,
+}) => {
+  test.skip(!source, 'The locked producer snapshot predates the Dashboard content');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/dashboard?ui=tui');
+  const root = page.locator('[data-authored-page="dashboard"]');
+  const search = root.getByRole('searchbox');
+  const links = root.locator('[data-dashboard-target]:visible');
+  await search.focus();
+  await search.dispatchEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true });
+  await expect(search).toBeFocused();
+  await search.press('Enter');
+  await expect(links.first()).toBeFocused();
+  await page.keyboard.press('j');
+  await expect(links.nth(1)).toBeFocused();
+  await page.keyboard.press('k');
+  await expect(links.first()).toBeFocused();
+  await page.keyboard.press('k');
+  await expect(search).toBeFocused();
+  expect(await page.evaluate(() => document.body.scrollWidth)).toBeLessThanOrEqual(390);
+});
