@@ -1,0 +1,154 @@
+---
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { ExternalLink, Globe, Search } from '@lucide/astro';
+import { getAuthoredPage } from '../../repositories/site-page-repository';
+import { parseDashboardBody } from '../../domain/site-pages/dashboard';
+import { resolveStaticWikilink } from '../../domain/note-routing/static-note-catalog';
+
+const page = await getAuthoredPage('dashboard');
+const groups = page ? parseDashboardBody(page.body) : [];
+const total = groups.reduce((sum, group) => sum + group.links.length, 0);
+const favicon = (hostname: string) =>
+  /^[a-z0-9.-]+$/.test(hostname) && existsSync(resolve('public', 'favicons', hostname + '.png'))
+    ? '/favicons/' + hostname + '.png'
+    : undefined;
+---
+
+<article
+  data-authored-page="dashboard"
+  class="w-full min-w-0 md:flex md:min-h-0 md:flex-1 md:flex-col"
+>
+  <header class="mb-3 flex shrink-0 flex-wrap items-baseline justify-between gap-3">
+    <h2 class="text-lg font-semibold">{page?.title ?? 'Dashboard'}</h2>
+    <span data-dashboard-count aria-live="polite" class="font-mono text-xs text-muted-foreground">
+      {total} links
+    </span>
+  </header>
+  {!page && (
+    <p data-authored-page-empty class="text-sm text-muted-foreground">
+      该页面尚未发布公开内容。
+    </p>
+  )}
+  {total > 0 && (
+    <div data-dashboard-controls hidden class="mb-3 shrink-0 space-y-2">
+      <label class="flex min-h-11 items-center gap-3 border border-border px-3 focus-within:border-primary">
+        <Search size={16} class="shrink-0 text-muted-foreground" aria-hidden="true" />
+        <input
+          data-dashboard-search
+          type="search"
+          aria-label="搜索网站"
+          placeholder="搜索名称、分类、域名或描述"
+          autocomplete="off"
+          class="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none"
+        />
+        <kbd class="text-xs text-muted-foreground">/</kbd>
+      </label>
+      <p class="text-xs leading-5 text-muted-foreground">
+        <kbd>/</kbd> 搜索 · <kbd>Enter</kbd> 选择 / 打开 · <kbd>H J K L</kbd> / 方向键移动 ·{' '}
+        <kbd>Esc</kbd> 返回搜索
+      </p>
+      <p
+        data-dashboard-empty
+        hidden
+        class="border-b border-border py-5 text-sm text-muted-foreground"
+      >
+        没有匹配的网站。
+      </p>
+      <p data-dashboard-status role="status" class="text-xs text-muted-foreground"></p>
+    </div>
+  )}
+  <div data-uses-scroll class="min-w-0 md:flex-1">
+    {groups.map((group) => (
+      <section
+        data-dashboard-group
+        data-dashboard-level={group.level}
+        data-dashboard-title={group.title}
+        class:list={['mb-6', group.level === 2 ? 'mt-5 first:mt-0' : 'mt-4']}
+      >
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          {group.level === 2 ? (
+            <h3 class="text-lg font-semibold">{group.title}</h3>
+          ) : (
+            <h4 class="text-sm font-medium text-muted-foreground">{group.title}</h4>
+          )}
+          {group.links.length > 0 && (
+            <button
+              data-dashboard-open-group
+              hidden
+              type="button"
+              aria-label={`打开 ${group.title} 本组全部网站`}
+              class="inline-flex min-h-8 items-center gap-1.5 border border-border px-2 text-xs text-muted-foreground hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <ExternalLink size={12} aria-hidden="true" />
+              全部打开 ({group.links.length})
+            </button>
+          )}
+        </div>
+        {group.links.length > 0 && (
+          <ul data-dashboard-list class="grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+            {group.links.map((item) => {
+              const icon = favicon(item.hostname);
+              const note = item.noteTarget ? resolveStaticWikilink(item.noteTarget) : undefined;
+              return (
+                <li
+                  data-dashboard-link
+                  data-dashboard-search-text={[item.title, item.description, item.href].join(' ')}
+                  class="flex min-w-0 items-center gap-2 border-b border-border py-2"
+                >
+                  <a
+                    data-dashboard-target
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="group flex min-h-10 min-w-0 flex-1 items-center gap-3 hover:text-primary focus-visible:bg-primary/10 focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-primary"
+                  >
+                    {icon ? (
+                      <img
+                        src={icon}
+                        width="20"
+                        height="20"
+                        loading="lazy"
+                        alt=""
+                        class="shrink-0 rounded-sm"
+                      />
+                    ) : (
+                      <Globe size={20} class="shrink-0 text-muted-foreground" aria-hidden="true" />
+                    )}
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-sm font-medium">{item.title}</span>
+                      {item.description && (
+                        <span class="mt-0.5 block text-xs leading-5 text-muted-foreground">
+                          {item.description}
+                        </span>
+                      )}
+                    </span>
+                    <ExternalLink
+                      size={13}
+                      class="shrink-0 text-muted-foreground group-hover:text-primary"
+                      aria-hidden="true"
+                    />
+                  </a>
+                  {note && (note.status === 'resolved' || note.status === 'asset') && (
+                    <a
+                      href={note.href}
+                      class="shrink-0 text-xs text-muted-foreground hover:text-primary"
+                      aria-label={item.title + ' 资源笔记'}
+                    >
+                      笔记
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    ))}
+  </div>
+</article>
+
+<script>
+  import { initDashboard } from '../../browser/dashboard-controller';
+  initDashboard();
+</script>

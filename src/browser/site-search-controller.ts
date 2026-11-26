@@ -166,7 +166,16 @@ export function initSiteSearch(
     if (item.type === 'service' && /^https?:/.test(item.href)) {
       window.open(item.href, '_blank', 'noopener,noreferrer');
     } else {
-      window.location.assign(withUiMode(item.href, new URL(location.href)));
+      const current = new URL(location.href);
+      const destination = new URL(withUiMode(item.href, current), current);
+      // Hash-only destinations (Uses / Other tabs) do not unload the current dialog.
+      if (
+        destination.origin === current.origin &&
+        destination.pathname === current.pathname &&
+        destination.search === current.search
+      )
+        closeModal();
+      window.location.assign(destination.href);
     }
   }
 

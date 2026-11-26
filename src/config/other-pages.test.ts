@@ -7,6 +7,7 @@ import { PRIMARY_NAVIGATION, SEARCH_NAVIGATION_INDEX } from './navigation-policy
 test('the home lists every Slash Page and shows section plus local tab shortcuts', () => {
   assert.equal(HOME_SLASH_LINKS.length, 14);
   assert.ok(!HOME_SLASH_LINKS.some((item) => item.href === '/other'));
+  assert.ok(!HOME_SLASH_LINKS.some((item) => item.href === '/dashboard'));
   assert.deepEqual(
     HOME_SLASH_LINKS.slice(6).map(({ href, label, shortcut }) => ({ href, label, shortcut })),
     OTHER_TABS.map(({ id }, index) => ({

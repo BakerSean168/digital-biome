@@ -14,13 +14,13 @@ const expectedHardwareCount = JSON.parse(
   fs.readFileSync('src/data/indexes/uses-summaries.json', 'utf8'),
 ).length;
 
-test('Uses opens with six compact tabs and consistent selectable list browsers', async ({
+test('Uses opens with seven compact tabs and consistent selectable list browsers', async ({
   page,
 }) => {
   await page.goto('/uses/?ui=gui');
 
   await expect(page.getByRole('navigation', { name: 'Uses 分类' })).toBeVisible();
-  await expect(page.locator('[data-uses-tab]')).toHaveCount(6);
+  await expect(page.locator('[data-uses-tab]')).toHaveCount(7);
   await expect(page.locator('main [data-ui-only="gui"] header')).toHaveCount(0);
   await expect(page.locator('[data-uses-tab="hardware"]')).toHaveAttribute('aria-current', 'true');
 

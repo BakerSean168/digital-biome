@@ -4,7 +4,7 @@ import { parseAboutBody, parseNowBody } from '../domain/site-pages/content';
 import { getContentEntriesByIds } from './content-entry-repository';
 import { getNoteEntryByIdFromIndex } from './knowledge-index-loader';
 
-export type AuthorPageName = 'colophon' | 'ai' | 'ideas' | 'canon';
+export type AuthorPageName = 'colophon' | 'ai' | 'ideas' | 'canon' | 'dashboard';
 
 async function pageEntry(name: 'about' | 'now' | AuthorPageName) {
   const id = `obsidian/pages/${name}`;

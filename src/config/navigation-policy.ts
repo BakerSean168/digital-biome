@@ -111,6 +111,14 @@ export const SEARCH_NAVIGATION_INDEX: readonly SearchNavigationCommand[] = [
   {
     type: 'cmd',
     label: 'NAV',
+    title: 'Uses / Dashboard',
+    desc: '常用网站与个人维护入口',
+    href: '/uses#dashboard',
+    alias: ['/uses#dashboard', '/dashboard', 'dashboard', '快捷访问', '工作台'],
+  },
+  {
+    type: 'cmd',
+    label: 'NAV',
     title: 'Infrastructure',
     desc: '当前主机与服务设施',
     href: '/infrastructure',

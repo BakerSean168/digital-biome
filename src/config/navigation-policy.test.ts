@@ -26,6 +26,9 @@ test('detail routes and Library subtypes resolve to their primary destination', 
   assert.equal(activeNavigation('/uses'), '/uses');
   assert.equal(activeNavigation('/uses/'), '/uses');
   assert.equal(pageMode('/uses'), 'USES');
+  assert.equal(activeNavigation('/dashboard'), undefined);
+  assert.ok(!SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/dashboard'));
+  assert.ok(SEARCH_NAVIGATION_INDEX.some((item) => item.href === '/uses#dashboard'));
   assert.equal(activeNavigation('/projects'), '/projects');
   assert.equal(pageMode('/projects'), 'PROJECTS');
   assert.equal(activeNavigation('/tools'), undefined);
