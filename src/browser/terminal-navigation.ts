@@ -1,6 +1,7 @@
 import { PRIMARY_NAVIGATION } from '../config/navigation-policy';
 import { withUiMode } from '../domain/ui-mode';
 import { isImeComposition } from './ime-composition';
+import { allowsNativeScroll, pageScrollTarget } from './page-scroll';
 
 const help = document.querySelector<HTMLDialogElement>('#terminal-help');
 const feedback = document.querySelector<HTMLElement>('[data-command-feedback]');
@@ -169,6 +170,7 @@ document.addEventListener('click', (event) => {
 document.addEventListener('keydown', (event) => {
   const target = event.target as HTMLElement;
   if (
+    event.defaultPrevented ||
     isImeComposition(event) ||
     event.ctrlKey ||
     event.metaKey ||
@@ -231,11 +233,11 @@ document.addEventListener('keydown', (event) => {
       return;
     }
   }
-  if (event.key === 'f') {
+  if (event.key === 'f' && browser) {
     event.preventDefault();
     browser?.querySelector<HTMLButtonElement>('[data-facet-trigger]')?.click();
   }
-  if (event.key === 'i') {
+  if (event.key === 'i' && browser) {
     event.preventDefault();
     browser?.querySelector<HTMLInputElement>('[data-object-filter]')?.focus();
   }
@@ -244,8 +246,23 @@ document.addEventListener('keydown', (event) => {
     history.back();
   }
   if (['j', 'k', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
-    if (browser) {
-      if (target.closest('a, button') && !target.closest('[data-object-row]')) return;
+    const readingKey = event.key === 'j' || event.key === 'k';
+    const preview = target.closest<HTMLElement>('[data-object-preview]');
+    if (preview && allowsNativeScroll(preview) && preview.scrollHeight > preview.clientHeight) {
+      if (readingKey) {
+        event.preventDefault();
+        preview.scrollBy({ top: event.key === 'j' ? 80 : -80, behavior: 'auto' });
+      }
+      return;
+    }
+    const catalogWorkspace =
+      browser?.closest('[data-browser-workspace]') && !browser.closest('[data-page-scroll]');
+    if (
+      browser?.querySelector('[data-object-row]') &&
+      (catalogWorkspace || browser.contains(target))
+    ) {
+      if (!readingKey && target.closest('a, button') && !target.closest('[data-object-row]'))
+        return;
       event.preventDefault();
       browser.dispatchEvent(
         new CustomEvent('terminal-select', {
@@ -258,18 +275,14 @@ document.addEventListener('keydown', (event) => {
       );
       return;
     }
-    // Reading pages scroll inside #site-content, not the document body.
-    // Keep native Arrow key behavior and existing resource-browser selection.
-    if (event.key !== 'j' && event.key !== 'k') return;
-    const content = document.getElementById('site-content');
-    const readingPage = Array.from(
-      content?.querySelectorAll<HTMLElement>('[data-reading-scroll]') ?? [],
-    ).some((article) => article.getClientRects().length > 0);
-    if (!content || !readingPage) return;
+    // Ordinary pages use the same native scrollport as the mouse, without a route allowlist.
+    if (!readingKey) return;
+    const content = pageScrollTarget();
+    if (!content) return;
     event.preventDefault();
     content.scrollBy({ top: event.key === 'j' ? 80 : -80, behavior: 'auto' });
   }
-  if ((event.key === 'Enter' || event.key === 'o') && !target.closest('a, button')) {
+  if (browser && (event.key === 'Enter' || event.key === 'o') && !target.closest('a, button')) {
     event.preventDefault();
     browser?.querySelector<HTMLAnchorElement>('[data-object-open]')?.click();
   }

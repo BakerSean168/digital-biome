@@ -1,8 +1,12 @@
 import { readBrowserSnapshot, withBrowserSnapshot } from '../view-models/browser-snapshot';
+import { pageScrollTarget } from './page-scroll';
 
 export function initOtherTabs(): void {
   const tabs = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-other-tab]'));
   const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-other-panel]'));
+  const readingOffsets = new Map<string, number>();
+  let activePanel: HTMLElement | undefined;
+  let restoreFrame = 0;
 
   function revealActiveTab() {
     const activeTab = tabs.find((tab) => tab.getAttribute('aria-current') === 'true');
@@ -18,6 +22,11 @@ export function initOtherTabs(): void {
   function activateOtherTab(forceActivate = false) {
     const requested = location.hash.slice(1);
     const active = panels.find((panel) => panel.id === requested)?.id ?? 'ai';
+    const changed = activePanel !== undefined && activePanel.id !== active;
+    if (changed && activePanel?.hasAttribute('data-page-scroll')) {
+      const scrollport = pageScrollTarget();
+      if (scrollport) readingOffsets.set(activePanel.id, scrollport.scrollTop);
+    }
     for (const panel of panels) {
       const wasVisible = !panel.hidden;
       const shouldShow = panel.id === active;
@@ -29,6 +38,20 @@ export function initOtherTabs(): void {
     }
     for (const tab of tabs) {
       tab.setAttribute('aria-current', String(tab.dataset.otherTab === active));
+    }
+    activePanel = panels.find((panel) => panel.id === active);
+    if (changed) {
+      const offset = readingOffsets.get(active) ?? 0;
+      const restore = () => {
+        if (activePanel?.id !== active) return;
+        const scrollport = pageScrollTarget();
+        if (scrollport) scrollport.scrollTop = offset;
+      };
+      restore();
+      // Same-document history traversal may scroll to the hash after popstate.
+      // Restore the tab's reading position once the browser has finished that step.
+      cancelAnimationFrame(restoreFrame);
+      restoreFrame = requestAnimationFrame(restore);
     }
     revealActiveTab();
   }
