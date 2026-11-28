@@ -5,6 +5,13 @@ All notable Digital Biome changes are documented here.
 The project follows Semantic Versioning for repository releases. Performance numbers are build
 artifact measurements, not synthetic browser timing claims.
 
+## [0.19.1](https://github.com/BakerSean168/digital-biome/compare/v0.19.0...v0.19.1) (2026-11-28)
+
+
+### Bug Fixes
+
+* **navigation:** unify native and keyboard scrolling ([#306](https://github.com/BakerSean168/digital-biome/issues/306)) ([5702836](https://github.com/BakerSean168/digital-biome/commit/5702836f4a3e7e4f323641da2b52afdf2c53b8f6))
+
 ## [0.19.0](https://github.com/BakerSean168/digital-biome/compare/v0.18.0...v0.19.0) (2026-11-26)
 
 
