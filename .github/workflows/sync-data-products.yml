@@ -164,7 +164,6 @@ jobs:
           # The approver verifies bot identity, event, fixed branch, lock-only PR,
           # exact head and PR number. Approval API failures remain blocking.
           CI_RUN_ID="$run_id" pnpm exec tsx scripts/data-products/approve-pr-ci.ts
-          timeout 35m gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status
           gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json headSha,conclusion,event > "$RUNNER_TEMP/ci-result.json"
           jq -e --arg sha "$HEAD_SHA" '.headSha == $sha and .conclusion == "success" and .event == "pull_request"' "$RUNNER_TEMP/ci-result.json"
           test "$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$HEAD_SHA"
@@ -187,3 +186,9 @@ jobs:
       - name: Report verified no-op
         if: steps.lock.outputs.changed != 'true'
         run: echo 'Verified publication already matches the committed product lock; no PR mutation.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Queue or recover exact-main content delivery
+        if: (steps.lock.outputs.changed == 'true' && vars.DATA_PRODUCT_AUTO_MERGE_ENABLED == 'true') || (steps.lock.outputs.changed != 'true' && steps.route.outputs.product == 'knowledge-public-v1')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: pnpm exec tsx scripts/delivery/content-continuation.ts queue

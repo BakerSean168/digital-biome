@@ -25,11 +25,13 @@ jobs:
     name: Resolve successful exact-SHA main CI
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event.workflow_run.conclusion == 'success' &&
+      !(github.event.workflow_run.event == 'workflow_dispatch' && github.event.workflow_run.actor.login == 'github-actions[bot]'))
     runs-on: ubuntu-latest
     outputs:
       revision: ${{ steps.ci.outputs.revision }}
       ci_run_id: ${{ steps.ci.outputs.ci_run_id }}
+      content_build: ${{ steps.ci.outputs.content_build }}
     steps:
       - id: ci
         name: Verify source CI provenance
@@ -53,7 +55,11 @@ jobs:
 
           revision="$(jq -r .head_sha <<<"$run_json")"
           [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo 'CI run has invalid head SHA' >&2; exit 1; }
+          artifacts="$(gh api "repos/$REPOSITORY/actions/runs/$run_id/artifacts?per_page=100")"
+          count="$(jq --arg name "content-dist-$revision" '[.artifacts[] | select(.name == $name and .expired == false)] | length' <<<"$artifacts")"
+          [[ "$count" -le 1 ]] || { echo 'Ambiguous verified content build' >&2; exit 1; }
           {
+            echo "content_build=$count"
             echo "revision=$revision"
             echo "ci_run_id=$run_id"
           } >> "$GITHUB_OUTPUT"
@@ -99,14 +105,44 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Fetch and materialize all pinned public data products
+        if: needs.resolve.outputs.content_build != '1'
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
         run: pnpm sync:data-products
 
       - name: Build exact-SHA public artifact
+        if: needs.resolve.outputs.content_build != '1'
         run: |
           set -euo pipefail
           pnpm build:only
+
+      - name: Download the verified exact-SHA content build
+        if: needs.resolve.outputs.content_build == '1'
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.resolve.outputs.ci_run_id }}
+          name: content-dist-${{ needs.resolve.outputs.revision }}
+
+      - name: Verify and reuse the content build without rebuilding
+        if: needs.resolve.outputs.content_build == '1'
+        run: |
+          set -euo pipefail
+          test "$(wc -l < content-dist.sha256)" -eq 1
+          grep -Eq '^[0-9a-f]{64}  content-dist.tar.gz$' content-dist.sha256
+          sha256sum --check content-dist.sha256
+          tar -tzf content-dist.tar.gz > "$RUNNER_TEMP/content-dist-files.txt"
+          tar -tvzf content-dist.tar.gz > "$RUNNER_TEMP/content-dist-types.txt"
+          test -s "$RUNNER_TEMP/content-dist-files.txt"
+          if grep -Evq '^dist(/|$)' "$RUNNER_TEMP/content-dist-files.txt" ||
+             grep -Eq '(^|/)\.\.(/|$)' "$RUNNER_TEMP/content-dist-files.txt" ||
+             grep -Eq '^[^d-]' "$RUNNER_TEMP/content-dist-types.txt"; then
+            echo 'Invalid content archive path' >&2
+            exit 1
+          fi
+          test ! -e dist
+          tar -xzf content-dist.tar.gz
+          test -s dist/_routes.json
 
       - name: Compile Pages Functions into the deployable artifact
         run: |

@@ -1,0 +1,40 @@
+name: Continue verified content delivery
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Exact current main public lock-only revision
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: content-delivery-continuation
+  cancel-in-progress: false
+
+jobs:
+  continue:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Resume exact-revision CI, Candidate and content promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CONTENT_REVISION: ${{ inputs.revision }}
+          CONTENT_AUTO_DEPLOY_ENABLED: ${{ vars.CONTENT_AUTO_DEPLOY_ENABLED }}
+        run: pnpm exec tsx scripts/delivery/content-continuation.ts continue

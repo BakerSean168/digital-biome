@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { assertTrustedLockPullRequest } from '../delivery/content-policy';
 import { assertTrustedPRCheckRun } from './pr-ci-evidence';
@@ -30,7 +31,33 @@ function api(route: string): unknown {
   return JSON.parse(gh(['api', `repos/${repository}/${route}`]));
 }
 
-function main() {
+export async function waitForApprovedCI(
+  read: () => ReturnType<typeof assertTrustedPRCheckRun>,
+  pause: () => Promise<unknown>,
+  now: () => number = Date.now,
+  approve: () => void = () => {},
+) {
+  const start = now();
+  let approvedAt: number | undefined;
+  while (now() - start < 35 * 60_000) {
+    const state = read();
+    if (state === 'success') return;
+    // An approval API success can precede propagation of action_required.
+    // Do not immediately interpret that stale state as a terminal failure.
+    if (state === 'approval-required') {
+      if (approvedAt === undefined) {
+        approve();
+        approvedAt = now();
+      } else if (now() - approvedAt >= 90_000) {
+        throw new Error('Required PR CI approval did not propagate');
+      }
+    }
+    await pause();
+  }
+  throw new Error('Timed out waiting for required PR CI');
+}
+
+async function main() {
   // This is not a generic workflow-approval endpoint: it can approve only
   // this repository's bot-authored, one-file, fixed-branch lock updates.
   if (
@@ -59,22 +86,28 @@ function main() {
     sha,
     product,
   );
-  const state = assertTrustedPRCheckRun(api(`actions/runs/${runId}`), prNumber, sha, product);
-  if (state === 'approval-required') {
-    // Requires actions:write. If GitHub rejects approval, fail closed; never
-    // reinterpret a workflow_dispatch success as a required status check.
-    gh(['api', '--method', 'POST', `repos/${repository}/actions/runs/${runId}/approve`]);
-    console.log(`PR_CI_APPROVAL=PASS run_id=${runId} sha=${sha}`);
-  } else {
-    console.log(`PR_CI_APPROVAL=NOT_NEEDED state=${state} run_id=${runId}`);
-  }
+  await waitForApprovedCI(
+    () => assertTrustedPRCheckRun(api(`actions/runs/${runId}`), prNumber, sha, product),
+    () => sleep(5_000),
+    Date.now,
+    () => {
+      // Revalidate the exact current PR immediately before granting approval.
+      assertTrustedLockPullRequest(
+        api(`pulls/${number}`),
+        api(`pulls/${number}/files?per_page=100`),
+        sha,
+        product,
+      );
+      gh(['api', '--method', 'POST', `repos/${repository}/actions/runs/${runId}/approve`]);
+      console.log(`PR_CI_APPROVAL=PASS run_id=${runId} sha=${sha}`);
+    },
+  );
+  console.log(`PR_CI_PASS run_id=${runId} sha=${sha}`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try {
-    main();
-  } catch (error) {
+  main().catch((error) => {
     console.error(error instanceof Error ? error.message : 'PR CI approval failed');
     process.exitCode = 1;
-  }
+  });
 }
