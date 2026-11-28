@@ -74,7 +74,7 @@ const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses', '/other'].incl
     </span>
     <span data-dock-hints class="hidden xl:block">
       <span data-uses-normal-hints={isUses || undefined}>
-        {hasBrowser && <span>j k 移动　 ↵ 打开　</span>}/ 搜索　
+        <span>j k 移动 / 滚动　{hasBrowser && '↵ 打开　'}</span>/ 搜索　
       </span>
       {isUses && (
         <span data-uses-dashboard-hints hidden>
@@ -203,8 +203,8 @@ const hasBrowser = ['/', '/notes', '/blog', '/projects', '/uses', '/other'].incl
     <dt>j / k / ↑ / ↓</dt>
     <dd>
       {isUses
-        ? '列表用 j/k；Dashboard 用 H/J/K/L 或方向键选择网站'
-        : '列表中选择对象；About / Now 用 j/k 滚动'}
+        ? 'j/k 滚动正文或选择对象；Dashboard 用 H/J/K/L 或方向键选择网站'
+        : 'j/k 滚动正文；列表中选择对象；方向键保留原生行为或列表导航'}
     </dd>
     <dt>Enter / o</dt>
     <dd>打开选择</dd>

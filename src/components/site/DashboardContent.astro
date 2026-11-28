@@ -58,7 +58,7 @@ const favicon = (hostname: string) =>
       <p data-dashboard-status role="status" class="text-xs text-muted-foreground"></p>
     </div>
   )}
-  <div data-uses-scroll class="min-w-0 md:flex-1">
+  <div data-uses-scroll data-page-scroll class="min-w-0 md:flex-1">
     {groups.map((group) => (
       <section
         data-dashboard-group

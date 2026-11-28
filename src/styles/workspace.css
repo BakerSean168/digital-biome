@@ -66,29 +66,40 @@ html[data-ui] .browser-page [data-object-list] {
     margin-bottom: 12px;
   }
   html[data-ui] .browser-page [data-uses-panel]:not([hidden]),
-  html[data-ui] .browser-page [data-object-browser] {
+  html[data-ui] .browser-page [data-other-panel]:not([hidden]),
+  html[data-ui] .browser-page [data-object-browser]:not([data-page-scroll] *) {
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
     margin-bottom: 0;
   }
-  html[data-ui] .browser-page [data-browser-columns] {
+  html[data-ui] .browser-page [data-other-panel][data-page-scroll]:not([hidden]) {
+    display: block;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    min-width: 0;
+  }
+  html[data-ui] .browser-page [data-browser-columns]:not([data-page-scroll] *) {
     min-height: 0;
     flex: 1;
     grid-template-rows: minmax(0, 1fr);
     gap: 28px;
   }
   html[data-ui] .browser-page [data-uses-scroll],
-  html[data-ui] .browser-page [data-object-scroll],
-  html[data-ui] .browser-page [data-browser-columns] > [data-object-preview] {
+  html[data-ui] .browser-page [data-object-scroll]:not([data-page-scroll] *),
+  html[data-ui]
+    .browser-page
+    [data-browser-columns]
+    > [data-object-preview]:not([data-page-scroll] *) {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
   }
-  html[data-ui] .browser-page [data-browser-columns] > [data-object-preview] {
+  html[data-ui]
+    .browser-page
+    [data-browser-columns]
+    > [data-object-preview]:not([data-page-scroll] *) {
     align-self: stretch;
     position: static;
   }

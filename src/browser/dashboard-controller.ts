@@ -1,4 +1,5 @@
 import { isImeComposition } from './ime-composition';
+import { catalogSelectionInView, visibleVerticalBounds } from './page-scroll';
 
 type Direction = 'left' | 'right' | 'up' | 'down';
 type Bounds = Pick<DOMRect, 'top' | 'left' | 'width'>;
@@ -158,13 +159,26 @@ export function initDashboard(doc: Document = document): void {
     const links = visibleLinks();
     if (!links.length) return;
     const current = anchor ? links.indexOf(anchor) : -1;
-    const index = dashboardNeighbor(
-      links.map(
-        (link) => link.closest('li')?.getBoundingClientRect() ?? link.getBoundingClientRect(),
-      ),
-      current,
-      direction,
-    );
+    const scrollport = root.querySelector<HTMLElement>('[data-uses-scroll]');
+    const vertical = direction === 'up' || direction === 'down';
+    const visibleSelection =
+      scrollport && vertical
+        ? catalogSelectionInView(
+            links,
+            Math.max(0, current),
+            direction === 'down' ? 1 : -1,
+            visibleVerticalBounds(scrollport),
+          )
+        : undefined;
+    const index =
+      visibleSelection ??
+      dashboardNeighbor(
+        links.map(
+          (link) => link.closest('li')?.getBoundingClientRect() ?? link.getBoundingClientRect(),
+        ),
+        current,
+        direction,
+      );
     event.preventDefault();
     if (index !== undefined) focusLink(links[index]);
     else if (direction === 'up') focusSearch();

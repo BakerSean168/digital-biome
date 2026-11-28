@@ -6,6 +6,7 @@ import {
   withUiMode,
   type UiMode,
 } from '../domain/ui-mode';
+import { pageScrollTarget } from './page-scroll';
 
 const root = document.documentElement;
 const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-ui-mode-choice]'));
@@ -60,7 +61,7 @@ for (const button of buttons) {
   button.addEventListener('click', () => {
     const mode = parseUiMode(button.dataset.uiModeChoice);
     if (!mode) return;
-    const content = document.getElementById('site-content');
+    const content = pageScrollTarget();
     const top = content?.getBoundingClientRect().top ?? 0;
     const anchor = Array.from(
       content?.querySelectorAll<HTMLElement>(
@@ -92,13 +93,10 @@ for (const button of buttons) {
             (node) => node.dataset.readingAnchor === readingKey && node.getClientRects().length,
           )
         : anchor;
-      if (
-        content &&
-        !content.querySelector('[data-browser-workspace]') &&
-        current?.getClientRects().length
-      )
-        content.scrollTop +=
-          current.getBoundingClientRect().top - content.getBoundingClientRect().top - offset;
+      const scrollport = pageScrollTarget();
+      if (scrollport && current?.getClientRects().length)
+        scrollport.scrollTop +=
+          current.getBoundingClientRect().top - scrollport.getBoundingClientRect().top - offset;
       button.focus({ preventScroll: true });
     });
   });

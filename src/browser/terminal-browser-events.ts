@@ -13,6 +13,7 @@ export interface TerminalBrowserEventDependencies {
   browser: TerminalBrowserState;
   signal: AbortSignal;
   select: (index: number, scroll?: boolean) => void;
+  selectionInView?: (delta: number) => number | undefined;
   refresh: () => Promise<void>;
   showMore: () => Promise<void>;
   hasMore: () => boolean;
@@ -34,6 +35,7 @@ export function bindTerminalBrowserEvents(deps: TerminalBrowserEventDependencies
     browser,
     signal,
     select,
+    selectionInView,
     refresh,
     showMore,
     hasMore,
@@ -124,6 +126,12 @@ export function bindTerminalBrowserEvents(deps: TerminalBrowserEventDependencies
         event as CustomEvent<{ delta: number; key: string; repeat: boolean }>
       ).detail;
       if (browser.pending || browser.morePending) return;
+      const visibleSelection = selectionInView?.(delta);
+      if (visibleSelection !== undefined) {
+        browser.boundaryAt = 0;
+        select(visibleSelection, true);
+        return;
+      }
       if (delta > 0 && browser.selected === browser.rows.length - 1) {
         if (!hasMore()) {
           status.textContent = '已到末尾';

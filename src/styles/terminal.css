@@ -83,9 +83,13 @@ html {
   overflow: hidden;
   color-scheme: dark;
 }
-#site-content {
+#site-content,
+[data-page-scroll],
+[data-object-scroll],
+[data-object-preview],
+.custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
+  scrollbar-color: var(--text-muted) transparent;
 }
 @media print {
   html,

@@ -10,6 +10,7 @@ import { createTerminalBrowserState, visibleTerminalItems } from './terminal-bro
 import { bindTerminalBrowserEvents } from './terminal-browser-events';
 import { createTerminalBrowserLoader, TERMINAL_PAGE_SIZE } from './terminal-browser-loader';
 import { initialTerminalSnapshot, updatedTerminalUrl } from './terminal-url';
+import { allowsNativeScroll, catalogSelectionInView, visibleVerticalBounds } from './page-scroll';
 
 const DEFAULT_USES_PANEL_ID = 'hardware';
 
@@ -220,7 +221,7 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     paintTerminalPreview(preview, item, source);
     if (scroll) {
       if (list.contains(document.activeElement)) source.focus({ preventScroll: true });
-      if (getComputedStyle(scroller).overflowY === 'auto') {
+      if (allowsNativeScroll(scroller) && scroller.scrollHeight > scroller.clientHeight) {
         const box = scroller.getBoundingClientRect();
         const row = source.getBoundingClientRect();
         if (row.top < box.top) scroller.scrollTop += row.top - box.top;
@@ -271,6 +272,13 @@ export function mountTerminalBrowser(root: HTMLElement): () => void {
     browser,
     signal,
     select,
+    selectionInView: (delta) =>
+      catalogSelectionInView(
+        browser.rows,
+        browser.selected,
+        delta,
+        visibleVerticalBounds(scroller),
+      ),
     refresh,
     showMore,
     hasMore,

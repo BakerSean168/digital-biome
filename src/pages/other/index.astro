@@ -39,7 +39,7 @@ const resourceTabs = [
   <h1 class="sr-only">Other / 其他页面</h1>
   <nav
     aria-label="Other 分类"
-    class="content-tabs mb-3 flex flex-nowrap gap-3 overflow-x-auto sm:flex-wrap sm:overflow-visible"
+    class="content-tabs mb-3 flex shrink-0 flex-nowrap gap-3 overflow-x-auto sm:flex-wrap sm:overflow-visible"
     data-other-tabs
   >
     {OTHER_TABS.map((tab, i) => (
@@ -58,19 +58,40 @@ const resourceTabs = [
     ))}
   </nav>
 
-  <section id="ai" data-other-panel data-other-section="ai" class="mb-8 scroll-mt-5">
+  <section
+    id="ai"
+    data-other-panel
+    data-other-section="ai"
+    data-page-scroll
+    class="mb-8 scroll-mt-5"
+  >
     <AuthoredPageContent heading="h2" name="ai" page={ai} fallbackTitle="AI" />
   </section>
-  <section id="ideas" data-other-panel data-other-section="ideas" class="mb-8 scroll-mt-5" hidden>
+  <section
+    id="ideas"
+    data-other-panel
+    data-other-section="ideas"
+    data-page-scroll
+    class="mb-8 scroll-mt-5"
+    hidden
+  >
     <AuthoredPageContent heading="h2" name="ideas" page={ideas} fallbackTitle="Ideas" />
   </section>
-  <section id="canon" data-other-panel data-other-section="canon" class="mb-8 scroll-mt-5" hidden>
+  <section
+    id="canon"
+    data-other-panel
+    data-other-section="canon"
+    data-page-scroll
+    class="mb-8 scroll-mt-5"
+    hidden
+  >
     <AuthoredPageContent heading="h2" name="canon" page={canon} fallbackTitle="Canon" />
   </section>
   <section
     id="colophon"
     data-other-panel
     data-other-section="colophon"
+    data-page-scroll
     class="mb-8 scroll-mt-5"
     hidden
   >
@@ -80,6 +101,7 @@ const resourceTabs = [
     id="friends"
     data-other-panel
     data-other-section="friends"
+    data-page-scroll
     class="mb-8 scroll-mt-5"
     hidden
   >
