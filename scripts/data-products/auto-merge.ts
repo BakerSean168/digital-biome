@@ -95,9 +95,7 @@ async function main() {
     !/^[a-f0-9]{40}$/.test(result.sha)
   )
     throw new Error('Merge was not confirmed');
-  // GITHUB_TOKEN merges suppress push workflows. Explicitly dispatch protected main CI;
-  // Candidate verifies that run's main branch, exact SHA and success before any build.
-  gh(['workflow', 'run', 'check.yml', '--repo', repository, '--ref', 'main']);
+  // The sync workflow explicitly queues the serialized content continuation.
   console.log(`AUTO_MERGE=PASS sha=${result.sha}`);
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

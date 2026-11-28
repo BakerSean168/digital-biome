@@ -12,10 +12,11 @@ producer semantic change
  -> immutable product Release
  -> data-product-published
  -> Digital Biome verified lock PR
- -> protected CI
+ -> protected lock-only PR CI (verified materialization; no static build)
  -> auto-merge
- -> main CI
- -> immutable Candidate
+ -> explicit content continuation
+ -> exact-main content CI (one static build + focused content checks)
+ -> immutable Candidate (reuse verified static build)
  -> automatic content promotion
 ```
 
@@ -26,9 +27,14 @@ dispatch missing
  -> scheduled reconciliation
  -> same Release verifier
  -> same lock-only PR
+ -> resume missing exact-revision CI / Candidate / promotion
 ```
 
-应用代码发布仍走 semver Release + manual Production promotion。
+应用代码发布仍走完整 CI、semver Release + manual Production promotion。
+
+纯内容快速路径仅接受可信 public lock-only PR 的实际 Git merge 差异，或者精确的 main lock-only revision；私有 binding、应用、依赖、工作流和其他修改均不能进入该路径。内容 CI 在主分支只做一次 Astro/Pagefind 构建，保留公开数据校验、泄漏检查、性能预算及内容 E2E。Candidate 复用成功 CI 的精确 SHA 构建包并校验 SHA-256，继续生成原有 v6 Candidate、编译 Pages Functions；生产只上传 Candidate，不重建。普通应用 CI 和历史无构建包的 Candidate 恢复仍走原路径。
+
+GITHUB_TOKEN 触发的内容同步不依赖连续 workflow_run 事件：`content-continue.yml` 显式 dispatch 必需的 main CI、Candidate 和 Deploy Content，按 SHA 复用已成功结果，在 main 变化时停止旧 revision。定期 reconciliation 会补齐缺失阶段；已经成功发布的 revision 不会重复部署。
 
 ## 2. 关键原则
 
@@ -98,7 +104,7 @@ L. production smoke
 **PR CI 特例（2026-10）**：由 `GITHUB_TOKEN` 创建的数据锁 PR 会产生
 `action_required` 的 `pull_request` CI。消费者只能在校验 GitHub Actions
 来源、固定数据锁分支、单文件差异、PR 编号和精确 SHA 后尝试批准该运行。
-必须等待该 `pull_request` 工作流的必需检查通过；即使同一 SHA 的
+批准之后通过 API 等待状态传播（而不是立即将残留的 `action_required` 判为失败），并等待该 `pull_request` 工作流的必需检查通过；即使同一 SHA 的
 `workflow_dispatch` CI 成功，也不能视为 PR Required Check。
 若 GitHub 拒绝自动批准，应保持 PR 未合并并排查 Actions 权限，
 **不要**关闭分支保护或直接以手动 CI 成功取代。

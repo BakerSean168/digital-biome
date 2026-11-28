@@ -2,6 +2,11 @@ name: CI
 
 on:
   workflow_dispatch:
+    inputs:
+      content_revision:
+        description: Exact main lock-only SHA (optional; otherwise full application CI)
+        required: false
+        type: string
   push:
     branches: [main]
     paths:
@@ -60,6 +65,7 @@ jobs:
         with:
           token: ${{ steps.vault-token.outputs.token }}
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -73,19 +79,57 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Classify exact checked-out source change
+        id: lane
+        run: pnpm exec tsx scripts/delivery/ci-lane.ts
+
       - name: Fetch and materialize all pinned public data products
         env:
           GH_TOKEN: ${{ steps.vault-token.outputs.token }}
         run: pnpm sync:data-products
 
       - name: Run verification and production build gates
+        if: steps.lane.outputs.lane == 'application'
         env:
           NOTES_VAULT_ROOT: ${{ github.workspace }}/.pds-runtime/knowledge-public-v1/source
           NOTES_UPSTREAM_GENERATED: ${{ github.workspace }}/.pds-runtime/knowledge-public-v1/source/generated
         run: pnpm verify:full
 
+      - name: Verify public content and local publication boundary
+        if: steps.lane.outputs.lane == 'content'
+        run: |
+          pnpm preflight:data-products
+          pnpm exec tsx --test scripts/sync/local-publication-contract.test.ts
+
+      - name: Build and check static content once on main
+        if: steps.lane.outputs.lane == 'content' && github.event_name != 'pull_request'
+        run: pnpm build:only && pnpm check:performance
+
       - name: Install Playwright Chromium
+        if: steps.lane.outputs.lane == 'application' || github.event_name != 'pull_request'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run focused browser E2E
+        if: steps.lane.outputs.lane == 'application'
         run: pnpm test:e2e
+
+      - name: Smoke test generated content routes and collections
+        if: steps.lane.outputs.lane == 'content' && github.event_name != 'pull_request'
+        run: pnpm test:e2e e2e/about-personal.spec.ts e2e/now-personal.spec.ts e2e/content-collections.spec.ts e2e/dashboard.spec.ts e2e/other-navigation.spec.ts
+
+      - name: Archive verified main content build
+        if: steps.lane.outputs.lane == 'content' && github.event_name != 'pull_request'
+        run: |
+          tar -czf content-dist.tar.gz dist
+          sha256sum content-dist.tar.gz > content-dist.sha256
+
+      - name: Retain exact-SHA content build for Candidate
+        if: steps.lane.outputs.lane == 'content' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-dist-${{ github.sha }}
+          path: |
+            content-dist.tar.gz
+            content-dist.sha256
+          if-no-files-found: error
+          retention-days: 7
